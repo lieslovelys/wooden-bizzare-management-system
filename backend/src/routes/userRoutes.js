@@ -1,0 +1,74 @@
+import User from '../controllers/userController.js';
+import express from "express";
+
+const router = express.Router();
+
+router.post('/signup', async (req, res) => {
+    const b = req.body;
+    try{
+        const result = await User.createUser(b.username, b.password, b.firstName, b.middleName, b.lastName, b.suffix, b.userRole);
+        res.status(200).send({message: 'Successfully created user', body: result});
+    }
+    catch(e){
+        res.status(404).send({message: 'Error creating user', body: e});
+    }
+
+    
+});
+
+router.post('/login', async (req, res) => {
+    const result = await User.login(req.body.username, req.body.password);
+    if(!result.err){
+        const user = result.user[0];
+         req.session.user = {
+            user_id: user.user_id, 
+            username: user.username, 
+            user_role: user.user_role,
+            first_name: user.first_name,
+            middle_name: user.middle_name,
+            last_name: user.last_name,
+            suffix: user.suffix
+        };
+
+        req.session.save(err =>{
+            if (err) return res.status(500).send(err);
+            console.log("Session verified inside save:", req.session.user);
+            res.status(200).send({err: false, message: 'Login Successful'});
+        })
+    }
+    else{
+        res.send({message: result.message});
+    }
+});
+
+router.get('/session-user', (req, res) => {
+  if (req.session.user) {
+    res.json(req.session.user);
+  } else {
+    res.status(401).json({ 
+      error: "No user in session", 
+      id: req.sessionID 
+    });
+  }
+});
+
+router.get('/logout', (req, res) => {
+  // Destroy the session data on the server
+  req.session.destroy((err) => {
+    if (err) {
+      console.error('Error destroying session:', err);
+      // Handle the error (e.g., return a 500 error)
+      return res.status(500).send({message: 'Error logging out'});
+    } else {
+      // Clear the session cookie on the client side
+      res.clearCookie('connect.sid'); // Replace 'connect.sid' if you used a custom cookie name
+
+      // Redirect the user or send a success message
+      res.status(200).send({message: 'Successfully logged out'});
+      // or redirect to a login page: res.redirect('/login');
+    }
+  });
+});
+
+
+export default router;
