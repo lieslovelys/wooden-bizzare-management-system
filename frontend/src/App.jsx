@@ -11,8 +11,7 @@ import Inventory from "./Inventory";
 import QualityChecker from "./QualityChecker";
 import Worker from "./Worker";
 
-
-const UserContext = createContext();
+export const UserContext = createContext();
 
 const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -26,20 +25,16 @@ const App = () => {
   const [suffix, setSuffix] = useState('');
   const [userRole, setUserRole] = useState(null);
 
-
   useEffect(() => {
     const fetchSession = async () => {
-      try{
-        const response = await fetch('http://localhost:8080/session-user',
-          {
-            method: 'GET',
-            credentials: 'include'
-          }
-        )
+      try {
+        const response = await fetch('http://localhost:8080/session-user', {
+          method: 'GET',
+          credentials: 'include'
+        });
 
-        if(response.ok){
+        if(response.ok) {
           const data = await response.json();
-          console.log(data);
           setUserID(data.user_id);
           setUsername(data.username);
           setFirstName(data.first_name);
@@ -48,57 +43,47 @@ const App = () => {
           setSuffix(data.suffix);
           setUserRole(data.user_role);
         }
-        
-      }
-      catch(e){
-        console.error("Session fetch failed", err);
-      }
-      finally{
+      } catch(e) {
+        console.error("Session fetch failed", e);
+      } finally {
         setIsLoading(false);
       }
-      
     }
 
     fetchSession();
   }, [isLoggedIn]);
 
-  
-
   if (isLoading) {
     return <div className="loading">Fetching data...</div>;
   }
 
-  console.log(`Galing sa app: ${userRole}`);
   return ( 
     <UserContext.Provider value={{ userID, username, firstName, middleName, lastName, suffix, userRole }}>
       <Router>
-        <div>
+        <div className="app-container">
           <Routes>
             <Route path='/' element={<RoleBasedRedirect role={userRole}/>}/>
             <Route path='/signup' element={<TempSignup />} />
-            <Route path='/login' element={userRole? <Navigate to={'/'}/> : <Login login={() => setIsLoading(false)} />} />
-              
-
+            <Route path='/login' element={userRole ? <Navigate to={'/'}/> : <Login login={() => setIsLoggedIn(true)} />} />
             <Route element={<ProtectedRoute isAllowed={userRole === 'Admin'}/>}>
-              <Route path="/admin" element={<Admin />} />
+              <Route path="/admin/*" element={<Admin />} />
             </Route>
 
             <Route element={<ProtectedRoute isAllowed={userRole === 'Production Manager'}/>}>
-              <Route path="/production" element={<ProductionManager />} />
+              <Route path="/production-manager/*" element={<ProductionManager />} />
             </Route>
 
             <Route element={<ProtectedRoute isAllowed={userRole === 'Inventory Staff'}/>}>
-              <Route path="/inventory" element={<Inventory />} />
+              <Route path="/inventory/*" element={<Inventory />} />
             </Route>
 
             <Route element={<ProtectedRoute isAllowed={userRole === 'Quality Checker'}/>}>
-              <Route path="/quality-check" element={<QualityChecker />} />
+              <Route path="/quality-check/*" element={<QualityChecker />} />
             </Route>
 
             <Route element={<ProtectedRoute isAllowed={userRole === 'Worker'}/>}>
-              <Route path="/worker" element={<Worker />} />
+              <Route path="/worker/*" element={<Worker />} />
             </Route>
-
 
             <Route path='*' element={<Navigate to='/' replace/>}/>
           </Routes>

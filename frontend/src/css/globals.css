@@ -1,4 +1,528 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600&display=swap');
+
 .signup {
     display: block;
     text-align: center;
+}
+
+/* --- Global Layout (Scoped to this page ONLY) --- */
+.login-layout {
+  display: flex;
+  min-height: 100vh;
+  background-color: #ffffff;
+  font-family: 'Inter', sans-serif;
+}
+
+/* --- Left Side: Branding --- */
+.login-layout .login-left {
+  flex: 1;
+  padding: 40px 60px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  border-right: 1px solid #f0f0f0;
+}
+
+.login-layout .brand-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  /* Binawasan ang margin-bottom para umangat ang text sa ilalim */
+  margin-bottom: 90px; 
+}
+
+.login-layout .brand-logo {
+  width: 75px; /* Nilakihan din ng konti para bumagay sa malaking text */
+  height: auto;
+  object-fit: contain;
+}
+
+/* Nilakihan ang The Wooden Bizzare */
+.login-layout .brand-title h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 2.2rem; 
+  margin: 0;
+  color: #000;
+}
+
+/* Nilakihan ang Management System */
+.login-layout .brand-title p {
+  font-size: 1.1rem; 
+  margin: 0;
+  color: #333;
+}
+
+/* Tinaas ang buong hero text container */
+.login-layout .hero-text {
+  margin-top: 20px; 
+  margin-bottom: auto;
+}
+
+.login-layout .hero-text h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: 3.5rem;
+  line-height: 1.2;
+  margin: 0 0 20px 0;
+  color: #000;
+}
+
+.login-layout .gold-text {
+  color: #cca43b;
+}
+
+.login-layout .hero-subtext {
+  font-size: 1.05rem;
+  line-height: 1.6;
+  font-weight: 500;
+  color: #000;
+  margin: 0;
+}
+
+/* --- Right Side: Form --- */
+.login-layout .login-right {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.login-layout .login-container {
+  width: 100%;
+  max-width: 400px;
+  padding: 20px;
+}
+
+.login-layout .form-header {
+  text-align: center;
+  margin-bottom: 50px;
+}
+
+.login-layout .form-header h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 2.5rem;
+  margin: 0 0 5px 0;
+  color: #000;
+}
+
+.login-layout .form-header p {
+  margin: 0;
+  font-size: 1rem;
+  color: #333;
+}
+
+.login-layout .input-group {
+  margin-bottom: 25px;
+}
+
+.login-layout .input-group label {
+  display: block;
+  font-family: 'Playfair Display', serif;
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #000;
+}
+
+.login-layout .input-group input[type="text"],
+.login-layout .input-group input[type="password"] {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid #cca43b;
+  border-radius: 8px;
+  font-family: 'Inter', sans-serif;
+  font-size: 1rem;
+  outline: none;
+  box-sizing: border-box;
+  background: transparent;
+}
+
+.login-layout .input-group input::placeholder {
+  color: #b3b3b3;
+}
+
+/* Password Eye Icon Wrapper */
+.login-layout .password-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.login-layout .eye-btn {
+  position: absolute;
+  right: 15px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #cca43b;
+  display: flex;
+  padding: 0;
+}
+
+.login-layout .eye-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Submit Button */
+.login-layout .submit-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 40px;
+}
+
+.login-layout .submit-btn {
+  background-color: #cca43b;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 0;
+  width: 200px;
+  font-size: 1.1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.login-layout .submit-btn:hover {
+  background-color: #b89132;
+}
+
+/* Footer Text */
+.login-layout .form-footer {
+  text-align: center;
+  margin-top: 40px;
+}
+
+.login-layout .form-footer p {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #000;
+}
+
+.login-layout .form-footer a {
+  color: #cca43b;
+  text-decoration: none;
+}
+
+.login-layout .form-footer a:hover {
+  text-decoration: underline;
+}
+
+/* Responsive adjustment for smaller screens */
+@media (max-width: 900px) {
+  .login-layout {
+    flex-direction: column;
+  }
+  .login-layout .login-left {
+    border-right: none;
+    border-bottom: 1px solid #f0f0f0;
+    padding: 30px;
+  }
+  .login-layout .hero-text h1 {
+    font-size: 2.5rem;
+  }
+}
+
+.login-layout input[type="password"]::-ms-reveal,
+.login-layout input[type="password"]::-ms-clear {
+  display: none;
+}
+
+/* =========================================
+   WOODEN BIZZARE - LOGOUT STYLES (NESTED)
+========================================= */
+
+/* Parent container - ginawa nating specific */
+.wb-logout-page {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 70vh; /* Centered layout */
+    width: 100%;
+}
+
+.wb-logout-card {
+    background-color: #F8F5EB;
+    border: 2px solid #D4AF37; /* Gold border mula sa image mo */
+    border-radius: 4px;
+    width: 100%;
+    max-width: 550px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+/* Header with line */
+.wb-logout-header {
+    padding: 15px 25px;
+    border-bottom: 2px solid #D4AF37;
+}
+
+.wb-logout-header h2 {
+    margin: 0;
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    color: #000;
+}
+
+/* Content Area */
+.wb-logout-content {
+    padding: 30px 40px;
+}
+
+.wb-logout-row {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+    margin-bottom: 30px;
+}
+
+.wb-logout-img {
+    width: 120px;
+    height: auto;
+    object-fit: contain;
+}
+
+.wb-logout-text p {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 500;
+    color: #000;
+}
+
+/* Buttons Logic */
+.wb-logout-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
+
+.wb-logout-buttons button {
+    padding: 10px 35px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 12px; /* Pill shape gaya ng nasa image */
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background-color: #D4AF37;
+    color: white;
+    font-family: 'Inter', sans-serif;
+}
+
+.wb-logout-buttons button:hover {
+    background-color: #B28F2A;
+    transform: translateY(-2px);
+}
+
+/* Specific button adjustment if needed */
+.wb-btn-cancel {
+    background-color: #D4AF37; /* Parehong kulay base sa image */
+}
+
+/* =========================================
+   GLOBAL RESETS
+   (Ito yung nagtatanggal ng default spaces sa gilid)
+========================================= */
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+}
+
+*, *::before, *::after {
+    box-sizing: inherit;
+}
+
+/* =========================================
+   MAIN LAYOUT WRAPPERS (CLEAN VERSION)
+========================================= */
+
+/* Pinaka-root container */
+.app-container {
+    width: 100%;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden; /* Iwas horizontal scroll sa buong app */
+}
+
+/* Wrapper para sa Sidebar + Main Content area */
+.role-layout {
+    display: flex;
+    width: 100%;
+    min-height: 100vh;
+    background-color: #FFFFFF;
+}
+
+/* Ang mismong white space kung saan lumalabas yung Dashboard, Logout, etc. */
+.page-content {
+    flex: 1; /* Sasakop sa natitirang space sa tabi ng sidebar */
+    padding: 40px; /* Mas maluwag na padding para mas premium tignan */
+    background-color: #FFFFFF;
+    
+    /* Crucial ito para sa scrolling behavior: */
+    height: 100vh; 
+    overflow-y: auto; 
+    
+    display: flex;
+    flex-direction: column;
+}
+
+/* Para sa mga mobile screens, baka gusto mong mag-adjust later */
+@media (max-width: 768px) {
+    .page-content {
+        padding: 20px;
+    }
+}
+
+/* =========================================
+   WOODEN NAVBAR (SIDEBAR) EXACT MATCH
+========================================= */
+.wooden-navbar {
+    width: 320px;
+    height: 100vh; /* Sagad mula taas hanggang baba */
+    background-color: #F8F5EB;
+    display: flex;
+    flex-direction: column;
+    font-family: 'Times New Roman', Times, serif; 
+    color: #4A3B12;
+    position: sticky;
+    top: 0;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+    overflow-y: auto; /* Para magka-scrollbar dito kapag sobrang dami ng tabs */
+    flex-shrink: 0; /* Para hindi lumit yung sidebar kapag maliit ang screen */
+
+      .wooden-navbar {
+      width: 320px;
+      height: 100vh; /* Sagad mula taas hanggang baba */
+      background-color: #F8F5EB;
+      display: flex;
+      flex-direction: column;
+      font-family: 'Times New Roman', Times, serif; 
+      color: #4A3B12;
+      position: sticky;
+      top: 0;
+      box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+      overflow-y: auto; /* Para magka-scrollbar dito kapag sobrang dami ng tabs */
+      flex-shrink: 0; /* Para hindi lumit yung sidebar kapag maliit ang screen */
+  }
+
+  /* Custom Scrollbar para sa Navbar */
+  .wooden-navbar::-webkit-scrollbar {
+      width: 6px;
+  }
+  .wooden-navbar::-webkit-scrollbar-thumb {
+      background-color: #D4AF37; 
+      border-radius: 10px;
+  }
+
+  /* Navbar Header & Logo */
+  .navbar-header {
+      display: flex;
+      align-items: center;
+      padding: 25px 20px 10px 20px;
+      gap: 15px;
+  }
+
+  .navbar-header .logo {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      object-fit: cover;
+  }
+
+  .title-group h3 {
+      margin: 0;
+      font-size: 1.3rem;
+      font-weight: bold;
+      color: #000;
+  }
+
+  .title-group p {
+      margin: 0;
+      font-size: 0.85rem;
+      color: #333;
+  }
+
+  /* User Profile Section */
+  .user-profile {
+      display: flex;
+      align-items: center;
+      padding: 15px 20px 30px 30px;
+      gap: 20px;
+  }
+
+  .avatar-circle {
+      width: 55px;
+      height: 55px;
+      background-color: #D4AF37;
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 1.8rem;
+      font-family: Arial, Helvetica, sans-serif;
+  }
+
+  .user-profile h2 {
+      margin: 0;
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #000;
+  }
+
+  /* Navigation Links */
+  .nav-links {
+      display: flex;
+      flex-direction: column;
+      padding-bottom: 20px; /* Dagdag space sa ilalim ng last item (Log out) */
+  }
+
+  .nav-item {
+      display: flex;
+      align-items: center;
+      padding: 12px 30px;
+      gap: 18px;
+      font-size: 1.15rem;
+      font-weight: bold;
+      color: #5C4A1D;
+      transition: background-color 0.2s, color 0.2s;
+      cursor: pointer;
+  }
+
+  /* Icon alignment to match exactly with image */
+  .nav-item i {
+      width: 25px;
+      text-align: center;
+      font-size: 1.3rem;
+  }
+
+  /* Active & Hover States */
+  .nav-item.active {
+      background-color: #5B4412;
+      color: white;
+  }
+
+  .nav-item:hover {
+      background-color: #EBE4D5;
+  }
+
+  .nav-item.active:hover {
+      background-color: #5B4412;
+  }
+
+  /* Utility Class para sa Loading State sa App.jsx */
+  .loading {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      font-family: Arial, sans-serif;
+      font-size: 1.2rem;
+      color: #4A3B12;
+  }
 }
