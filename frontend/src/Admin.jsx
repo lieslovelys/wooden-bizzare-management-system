@@ -1,13 +1,21 @@
+import { useState } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useContext } from "react";
 import { UserContext } from "./App";
 import Navbar from "./globals/Navbar"; 
 import Logout from "./globals/Logout"; 
+import AccountPage from "./admin/pages/AccountPage";
+import AdminDashboard from "./admin/A_Dashboard";
+import WorkerList from "./admin/WorkerList";
+import ProjectVerification from "./globals/ProjectVerification";
+import Profit from "./admin/Profit";
+import WorkerProductivity from "./admin/WorkerProductivity";
+import ProjectHistory from "./admin/ProjectHistory";
+import Notification from "./admin/Notification";
+import JobOrder from "./globals/JobOrder";
+import Attendance from "./globals/Attendance";
 import InventoryTable from "./globals/InventoryTable";
 import CreateProject from "./admin/CreateProject";
-
-const Dashboard = () => <div><h1>Dashboard</h1></div>;
-const AccountCreation = () => <div><h1>Account Creation</h1></div>;
 
 const Admin = () => {
     const { username } = useContext(UserContext);
@@ -34,7 +42,16 @@ const Admin = () => {
             <div className="page-content">
                 <Routes>
                     <Route index element={<Navigate to="dashboard" replace />} />
-                    <Route path="dashboard" element={<Dashboard />} />
+                    <Route path="dashboard" element={<AdminDashboard />} />
+                    <Route path="account-creation" element={<AccountPage />} />
+                    <Route path="job-order" element={<JobOrder />} />
+                    <Route path="worker-list" element={<WorkerList />} />
+                    <Route path="project-verification" element={<ProjectVerification />} />
+                    <Route path="attendance" element={<Attendance />} />
+                    <Route path="profit" element={<Profit />} />
+                    <Route path="productivity" element={<WorkerProductivity />} />
+                    <Route path="project-history" element={<ProjectHistory />} />
+                    <Route path="notification" element={<Notification />} />
                     <Route path="create-project" element={<CreateProject />} />
                     <Route path="inventory" element={<InventoryTable />} />
                     <Route path="logout" element={<Logout />} />

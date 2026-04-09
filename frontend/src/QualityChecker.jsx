@@ -3,8 +3,8 @@ import { useContext } from "react";
 import { UserContext } from "./App";
 import Navbar from "./globals/Navbar"; 
 import Logout from "./globals/Logout"; 
+import QCDashboard from "./quality_checker/QCDashboard";
 
-const QCDashboard = () => <div><h1>QC Dashboard</h1></div>;
 const ProjectVerification = () => <div><h1>Project Verification</h1></div>;
 
 const QualityChecker = () => {

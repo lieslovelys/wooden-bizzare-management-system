@@ -5,9 +5,7 @@ import { useContext } from "react";
 import { UserContext } from "./App";
 import Navbar from "./globals/Navbar"; 
 import Logout from "./globals/Logout"; 
-
-// Dummy component para sa Worker's main page
-const JobOrder = () => <div><h1>Assigned Job Orders</h1></div>;
+import JobOrder from "./globals/JobOrder";
 
 const Worker = () => {
     const { username } = useContext(UserContext);
