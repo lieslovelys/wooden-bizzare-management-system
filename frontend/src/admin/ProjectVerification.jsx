@@ -86,7 +86,7 @@ export default function ProjectVerification() {
       <div style={{ fontFamily: "'Georgia', serif", flex: 1, padding: "32px 40px", backgroundColor: "#ffffff", minHeight: "100vh", boxSizing: "border-box" }}>
 
         {/* Top Info Card */}
-        <div style={{ border: "1.5px solid #c8b840", borderRadius: 14, padding: "24px 28px", background: "#fff", marginBottom: 24, display: "flex", gap: 28 }}>
+        <div style={{ border: "1.5px solid #c8b840", borderRadius: 14, padding: "24px 28px", background: "#fff", marginBottom: 32, display: "flex", gap: 28 }}>
 
           {/* Left: project meta */}
           <div style={{ minWidth: 210 }}>
@@ -106,14 +106,16 @@ export default function ProjectVerification() {
           </div>
 
           {/* Right: scrollable details */}
-          <div style={{ flex: 1, background: "#c8c4b8", borderRadius: 10, padding: "16px 20px", maxHeight: 230, overflowY: "auto" }}>
-            <div style={{ fontSize: 11, fontWeight: "800", color: "#5a4a00", letterSpacing: 1.5, marginBottom: 12, textTransform: "uppercase" }}>PROJECT DETAILS</div>
+          <div style={{ flex: 1, background: "#ddd8cc", borderRadius: 10, padding: "16px 20px", maxHeight: 230, overflowY: "auto" }}>
+            <div style={{ fontSize: 11, fontWeight: "800", color: "#5a4a00", letterSpacing: 1.5, marginBottom: 16, textTransform: "uppercase" }}>PROJECT DETAILS</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
             {Object.entries(proj.details).map(([key, val]) => (
-              <div key={key} style={{ background: "#b8b4a8", borderRadius: 8, padding: "10px 14px", marginBottom: 10 }}>
+              <div key={key} style={{ background: "#c8c4b8", borderRadius: 8, padding: "12px 16px" }}>
                 <div style={{ fontSize: 13, fontWeight: "700", color: "#3a2e00", marginBottom: 4 }}>{key}</div>
                 <div style={{ fontSize: 13, color: "#3a2e00", lineHeight: 1.5 }}>{val}</div>
               </div>
             ))}
+            </div>
           </div>
         </div>
 
@@ -194,7 +196,7 @@ export default function ProjectVerification() {
             <div
               key={project.id}
               onClick={() => setSelectedProject(project)}
-              style={{ display: "flex", alignItems: "center", gap: 24, padding: "16px 24px", background: "transparent", cursor: "pointer", borderRadius: 4, marginBottom: 2, transition: "background 0.15s" }}
+              style={{ display: "flex", alignItems: "center", gap: 24, padding: "16px 24px", background: "transparent", cursor: "pointer", borderRadius: 4, marginBottom: 12, transition: "background 0.15s" }}
               onMouseOver={e => { e.currentTarget.style.background = "rgba(184,160,48,0.15)"; }}
               onMouseOut={e => { e.currentTarget.style.background = "transparent"; }}
             >

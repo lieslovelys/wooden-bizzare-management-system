@@ -1,4 +1,5 @@
 import { useState } from "react";
+import "../css/admin.css";
 
 const regularWorkers = [
   { name: "Juan dela Cruz", role: "Carpenter", early: 1, onTime: 1, overdue: 1, accepted: 2, forRepair: 1 },
@@ -24,17 +25,8 @@ export default function WorkerProductivity() {
   while (rows.length < 4) rows.push(null);
 
   return (
-    <div style={{
-      fontFamily: "'Georgia', serif",
-      flex: 1,
-      padding: "48px 52px",
-      backgroundColor: "#ffffff",
-      minHeight: "100vh",
-      boxSizing: "border-box",
-    }}>
-
-      {/* ── Tabs ── */}
-      <div style={{ display: "flex", alignItems: "flex-end", gap: 0, marginBottom: 0, justifyContent: "center" }}>
+    <div className="productivity-container">
+      <div className="productivity-tabs">
         {[
           { key: "regular",  label: "Regular Workers" },
           { key: "parttime", label: "Part-time Workers" },
@@ -44,18 +36,7 @@ export default function WorkerProductivity() {
             <button
               key={key}
               onClick={() => setActiveTab(key)}
-              style={{
-                padding: "12px 36px",
-                fontSize: 15,
-                fontWeight: active ? "900" : "700",
-                fontFamily: "inherit",
-                cursor: "pointer",
-                border: "none",
-                borderRadius: "8px 8px 0 0",
-                background: active ? "#b8a030" : "transparent",
-                color: active ? "#fff" : "#5a4a00",
-                transition: "background 0.18s, color 0.18s",
-              }}
+              className={`productivity-tab ${active ? "active" : ""}`}
             >
               {label}
             </button>
@@ -63,38 +44,19 @@ export default function WorkerProductivity() {
         })}
       </div>
 
-      {/* ── Divider ── */}
-      <div style={{
-        height: 6,
-        background: "linear-gradient(to right, #b8a040, #d4c47a, #c8b060)",
-        borderRadius: 3,
-        marginBottom: 32,
-      }} />
+      <div className="productivity-divider" />
 
-      {/* ── Table section ── */}
       <div>
-        <div style={{ fontSize: 16, fontWeight: "900", color: "#5a4a00", marginBottom: 16 }}>
+        <div className="productivity-table-title">
           Task Progress &amp; QC Result
         </div>
 
-        <div style={{ border: "1.5px solid #8b7a2a", borderRadius: 10, overflow: "hidden" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", background: "#fff" }}>
+        <div className="productivity-table-container">
+          <table className="productivity-table">
             <thead>
-              <tr style={{ background: "#fff" }}>
+              <tr>
                 {COLS.map((col) => (
-                  <th
-                    key={col}
-                    style={{
-                      padding: col === "Worker" ? "14px 20px" : "14px 12px",
-                      textAlign: col === "Worker" ? "left" : "center",
-                      fontSize: 13,
-                      fontWeight: "700",
-                      color: "#3a2e00",
-                      borderBottom: "2px solid #c8b840",
-                      borderRight: col !== "For Repair" ? "1px solid #e8d98a" : "none",
-                      whiteSpace: col === "For Repair" ? "pre-line" : "nowrap",
-                    }}
-                  >
+                  <th key={col}>
                     {col === "For Repair" ? "For\nRepair" : col}
                   </th>
                 ))}
@@ -102,37 +64,19 @@ export default function WorkerProductivity() {
             </thead>
             <tbody>
               {rows.map((w, i) => (
-                <tr
-                  key={i}
-                  style={{
-                    borderBottom: i < rows.length - 1 ? "1px solid #e8d98a" : "none",
-                    background: "#fff",
-                  }}
-                >
+                <tr key={i}>
                   {w ? (
                     <>
-                      <td style={{ padding: "14px 20px", borderRight: "1px solid #e8d98a" }}>
-                        <div style={{ fontWeight: "900", fontSize: 14, color: "#3a2e00" }}>{w.name}</div>
-                        <div style={{ fontSize: 11, color: "#8b7a2a", marginTop: 2 }}>{w.role}</div>
+                      <td>
+                        <div className="productivity-worker-name">{w.name}</div>
+                        <div className="productivity-worker-role">{w.role}</div>
                       </td>
                       {[w.early, w.onTime, w.overdue, w.accepted, w.forRepair].map((val, j) => (
-                        <td
-                          key={j}
-                          style={{
-                            padding: "14px 12px",
-                            textAlign: "center",
-                            fontSize: 15,
-                            fontWeight: "700",
-                            color: "#3a2e00",
-                            borderRight: j < 4 ? "1px solid #e8d98a" : "none",
-                          }}
-                        >
-                          {val}
-                        </td>
+                        <td key={j}>{val}</td>
                       ))}
                     </>
                   ) : (
-                    <td colSpan={6} style={{ padding: "18px 20px" }}>&nbsp;</td>
+                    <td colSpan={6}></td>
                   )}
                 </tr>
               ))}

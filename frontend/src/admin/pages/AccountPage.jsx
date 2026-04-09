@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { AccountForm } from "../components/AccountForm";
 import { AccountList } from "../components/AccountList";
-import "../../css/account.css";
+import "../../css/admin.css";
 
 const INITIAL_ACCOUNTS = [
   { id: "#001", name: "Juan dela Cruz", role: "Worker", username: "Juan.dc" },

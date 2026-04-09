@@ -1,5 +1,5 @@
 import { useState } from "react";
-import "../../css/account.css";
+import "../../css/admin.css";
 
 const EMPLOYEE_OPTIONS = [
   "Juan dela Cruz",
