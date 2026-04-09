@@ -17,7 +17,6 @@ port: process.env.SQL_PORT
 const testPoolConnection = async() => {
   let client;
   try {
-    // Acquire a client from the pool
     client = await pool.connect();
     console.log('Database connection pool acquired a client successfully!');
 
@@ -32,7 +31,6 @@ const testPoolConnection = async() => {
     return false; // Connection failed
   } 
   finally {
-    // CRITICAL: Always release the client back to the pool
     if (client) {
       client.release();
       console.log('Client released back to the pool.');
@@ -44,4 +42,5 @@ testPoolConnection();
 
 
 export const query = (query, params) => pool.query(query, params);
+export const getClient = () => pool.connect();
 

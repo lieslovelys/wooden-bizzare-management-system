@@ -80,10 +80,11 @@
 
 /* --- Right Side: Form --- */
 .login-layout .login-right {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+    background-color: #FBF5E8;
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .login-layout .login-container {
@@ -515,7 +516,7 @@ html, body {
       background-color: #5B4412;
   }
 
-  /* Utility Class para sa Loading State sa App.jsx */
+  /* Loading State */
   .loading {
       display: flex;
       justify-content: center;
@@ -525,4 +526,381 @@ html, body {
       font-size: 1.2rem;
       color: #4A3B12;
   }
+}
+
+/* --- Create Project Form--- */
+
+.project-form-container {
+  width: 100%;       /* Pinipilit na sakupin ang buong lapad ng screen/container */
+  max-width: 100%;   /* Inalis natin yung limit na 750px */
+  margin: 0;         /* Inalis natin yung margin sa gilid para sumagad */
+  font-family: serif; 
+  box-sizing: border-box; /* Sinasama ang padding sa total width para hindi lumagpas */
+}
+
+.project-form-container .form-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+
+.project-form-container .tab {
+  padding: 10px 30px;
+  font-weight: bold;
+  font-size: 1.1rem;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.project-form-container .tab.active {
+  background-color: #D4AF37; /* Gold color */
+  color: white;
+}
+
+.project-form-container .tab.inactive {
+  color: #5C4033; /* Dark brown */
+}
+
+.project-form-container .tab-divider {
+  height: 8px;
+  background-color: #C1B5A0;
+  margin-bottom: 20px;
+  margin-top: -2px; /* Pull up to touch the active tab */
+}
+
+.project-form-container .project-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.project-form-container .form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.project-form-container .form-group label, 
+.project-form-container .dynamic-section label {
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.project-form-container .edit-banner {
+  background-color: transparent; /* Inalis natin yung dark brown background block */
+  text-align: center;            /* Para pumagitna yung text */
+  margin-bottom: 20px;
+}
+
+.project-form-container .edit-banner h2 {
+  color: #423419;               /* Kulay kagaya ng Project Name labels */
+  font-size: 2rem;
+  font-weight: bold;
+  margin: 0;
+  text-transform: none;         /* Para hindi puro capital letters kung ayaw mo */
+}
+
+
+.project-form-container input, 
+.project-form-container select {
+  padding: 10px;
+  border: 1px solid #666;
+  border-radius: 20px; /* Pill shape */
+  outline: none;
+  font-family: inherit;
+}
+
+.project-form-container .form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.project-form-container .priority-select {
+  appearance: none; 
+  color: #E67E22; 
+}
+
+.project-form-container .dynamic-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.project-form-container .dynamic-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 15px;
+  align-items: center;
+}
+
+.project-form-container .btn-remove {
+  background-color: #D4AF37;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  width: 50px;
+  height: 40px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+.project-form-container .btn-add-variable {
+  background-color: #D4AF37;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 12px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.project-form-container .form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.project-form-container .btn-cancel, 
+.project-form-container .btn-submit {
+  padding: 12px 30px;
+  border: none;
+  border-radius: 10px;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.project-form-container .btn-cancel {
+  background-color: #5C4033; /* Dark brown */
+}
+
+.project-form-container .btn-submit {
+  background-color: #5C4033; /* Dark brown */
+}
+
+/* --- PROJECT LIST --- */
+
+.project-list-container {
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+/* Search Bar */
+.project-list-container .search-container {
+  display: flex;
+  align-items: center;
+  border: 1px solid #ccc;
+  border-radius: 30px;
+  padding: 10px 20px;
+  max-width: 500px;
+  margin: 0 auto 30px auto;
+  background-color: white;
+}
+
+.project-list-container .search-icon {
+  margin-right: 10px;
+  color: #666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Idagdag mo itong bago para ma-kontrol yung size ng SVG */
+.project-list-container .search-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.project-list-container .search-input {
+  border: none;
+  outline: none;
+  width: 100%;
+  font-size: 1rem;
+  font-family: inherit;
+  /* Reset pill shape override from form input */
+  border-radius: 0; 
+  padding: 0;
+}
+
+.project-list-container .list-header-banner h2 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: normal;
+}
+
+/* Table Styles */
+.project-list-container .table-responsive {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.project-list-container .project-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: center;
+}
+
+.project-list-container .project-table th {
+  color: #5C4033;
+  font-weight: bold;
+  padding: 15px 10px;
+  border-bottom: 1px solid transparent; /* No visible lines in mockup */
+  text-align: center;
+}
+
+.project-list-container .project-table td {
+  padding: 15px 10px;
+  vertical-align: middle;
+  color: #333;
+  text-align: center;
+}
+
+/* Action Buttons */
+.project-list-container .action-buttons {
+  display: flex;
+  gap: 10px;
+  text-align: center;
+}
+
+.project-list-container .btn-action {
+  background-color: #5C4033;
+  color: white;
+  border: none;
+  padding: 6px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: bold;
+}
+
+.project-list-container .btn-action:hover {
+  opacity: 0.9;
+}
+
+/* --- PROJECT DETAILS --- */
+
+.details-main-wrapper {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.details-main-wrapper .details-card-container {
+  border: 2px solid #ccc;
+  border-radius: 20px;
+  padding: 30px;
+  background-color: #fff;
+  font-family: serif;
+}
+
+.details-main-wrapper .details-header-section {
+  margin-bottom: 25px;
+}
+
+.details-main-wrapper .details-title {
+  color: #5C4033; /* Dark brown */
+  font-size: 2.5rem;
+  margin: 0;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.details-main-wrapper .details-subtitle {
+  color: #8C7853; /* Lighter brown/gold */
+  font-size: 1.5rem;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.details-main-wrapper .details-summary-row {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.details-main-wrapper .details-box {
+  background-color: #E2CE8F; 
+  flex: 1;
+  padding: 15px;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.details-main-wrapper .box-label {
+  font-weight: bold;
+  color: #000;
+  font-size: 1.1rem;
+}
+
+.details-main-wrapper .box-value {
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+.details-main-wrapper .due-date-value {
+  color: #D32F2F; /* Red text */
+}
+
+.details-main-wrapper .priority-text-high {
+  color: #E67E22; /* Orange text */
+}
+
+.details-main-wrapper .details-variables-section {
+  background-color: #E2CE8F;
+  border-radius: 10px;
+  padding: 20px;
+}
+
+.details-main-wrapper .variables-header {
+  margin: 0 0 15px 0;
+  color: #000;
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.details-main-wrapper .variables-scroll-area {
+  max-height: 300px; /* Fixed height para magka-scrollbar */
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  padding-right: 10px; /* Space para sa scrollbar */
+}
+
+/* Custom styling for the scrollbar inside variables */
+.details-main-wrapper .variables-scroll-area::-webkit-scrollbar {
+  width: 10px;
+}
+.details-main-wrapper .variables-scroll-area::-webkit-scrollbar-track {
+  background: #CDB771; 
+  border-radius: 10px;
+}
+.details-main-wrapper .variables-scroll-area::-webkit-scrollbar-thumb {
+  background: #9A8A55; 
+  border-radius: 10px;
+}
+
+.details-main-wrapper .variable-card {
+  background-color: #fff;
+  border-radius: 20px;
+  padding: 15px 20px;
+}
+
+.details-main-wrapper .variable-title {
+  margin: 0 0 10px 0;
+  font-size: 1.1rem;
+  color: #000;
+}
+
+.details-main-wrapper .variable-desc {
+  margin: 0;
+  color: #333;
 }

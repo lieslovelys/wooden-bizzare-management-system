@@ -1,0 +1,400 @@
+/* =========================================
+   1. MAIN INVENTORY TABLE & LAYOUT
+   ========================================= */
+
+.inventory-container {
+    font-family: Arial, sans-serif;
+    color: #333;
+    padding: 20px;
+}
+
+.inventory-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.filters {
+    display: flex;
+    gap: 10px;
+}
+
+.filter-btn {
+    padding: 10px 20px;
+    border: 1px solid #7d6b38;
+    background: white;
+    border-radius: 20px;
+    color: #4a3b00;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.filter-btn.active {
+    background: #4a3b00; /* Dark brown na background */
+    color: white;        /* White na text para mabasa */
+    border: 1px solid #4a3b00; /* Para pantay ang kulay ng border */
+}
+
+/* Dagdag na rin natin ito para medyo mag-brown din kapag tinapatan lang ng mouse (hover) */
+.filter-btn:hover {
+    background: #f4f1ea; 
+}
+
+.add-btn {
+    background: #4a3b00;
+    color: white;
+    padding: 10px 24px;
+    border: none;
+    border-radius: 12px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.table-wrapper {
+    border: 2px solid #bfa15f;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.inventory-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: center;
+}
+
+.inventory-table th {
+    padding: 20px;
+    color: #4a3b00;
+    font-size: 1.1rem;
+    font-weight: bold;
+}
+
+.inventory-table td {
+    padding: 16px;
+    vertical-align: middle;
+}
+
+.main-row {
+    border-top: 1px solid #bfa15f;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.main-row:hover {
+    background: #fbfbfb;
+}
+
+.item-name {
+    font-weight: bold;
+    color: #000;
+}
+
+/* Pills & Badges */
+.category-pill {
+    background: #4a3b00;
+    color: white;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: bold;
+}
+
+.variants-cell {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+}
+
+.variant-pill {
+    background: #d4b86a;
+    color: #4a3b00;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.status-pill {
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+.status-pill.low {
+    background: #ffb3b3;
+    color: #ff0000;
+}
+
+.status-pill.good {
+    background: #a3ff99;
+    color: #008000;
+}
+
+/* Action Buttons */
+.actions-cell {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.action-btn {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+}
+
+/* =========================================
+   2. EXPANDED VARIANTS ROW
+   ========================================= */
+
+.expanded-row td {
+    padding: 0;
+    border-bottom: 2px solid #bfa15f;
+}
+
+.variants-details {
+    background: #e6e2d6;
+    padding: 15px 40px;
+}
+
+.variant-line {
+    display: flex;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 2px solid #6b5a2e;
+}
+
+.variant-line:last-child {
+    border-bottom: none;
+}
+
+.var-name {
+    width: 120px;
+    font-weight: bold;
+    font-size: 0.95rem;
+    color: #4a3b00;
+}
+
+.progress-bar-container {
+    flex: 1;
+    height: 16px;
+    background: #5c5c5c;
+    border-radius: 10px;
+    margin: 0 30px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    border-radius: 10px;
+}
+
+.progress-bar.low {
+    background: #ff0000;
+}
+
+.progress-bar.good {
+    background: #39ff14;
+}
+
+.var-stock {
+    width: 120px;
+    font-size: 0.9rem;
+}
+
+.min-text {
+    color: #c9a445;
+    font-weight: bold;
+}
+
+.var-adjusters {
+    display: flex;
+    gap: 10px;
+}
+
+.adjust-btn {
+    background: #e6e2d6;
+    border: 1px solid #6b5a2e;
+    color: #000;
+    padding: 4px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+.adjust-btn:hover {
+    background: #d1cbb8;
+}
+
+/* =========================================
+   3. MODAL POP-UP STYLES
+   ========================================= */
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: white;
+    width: 450px;
+    padding: 30px;
+    border-radius: 20px;
+    border: 1px solid #8e8055;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    font-family: serif;
+    
+    /* --- MGA BAGONG LINYA PARA SA SCROLLING --- */
+    max-height: 85vh; /* Limitahan ang taas hanggang 85% lang ng screen mo */
+    overflow-y: auto; /* Papayagan na magka-scrollbar pababa kapag sumobra na ang laman */
+}
+
+/* Custom Scrollbar para sa Modal */
+.modal-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.modal-content::-webkit-scrollbar-track {
+    background: #f4f1ea; 
+    border-radius: 10px;
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+    background: #a89c7c; 
+    border-radius: 10px;
+}
+
+.modal-content::-webkit-scrollbar-thumb:hover {
+    background: #4a3b00; 
+}
+
+.modal-title {
+    color: #4a3b00;
+    margin-top: 0;
+    margin-bottom: 25px;
+    font-size: 1.8rem;
+    font-weight: 700;
+}
+
+.modal-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    font-family: Arial, sans-serif;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-group label {
+    color: #4a3b00;
+    font-weight: bold;
+    font-size: 1rem;
+}
+
+.form-group label span {
+    font-size: 0.8rem;
+    color: #888;
+    font-weight: normal;
+}
+
+.form-group input[type="text"],
+.form-group select {
+    padding: 12px;
+    border: 1px solid #a89c7c;
+    border-radius: 8px;
+    font-size: 1rem;
+    color: #4a3b00;
+    outline: none;
+}
+
+.form-group input::placeholder {
+    color: #b0a896;
+}
+
+.form-group select {
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%234a3b00%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+    background-repeat: no-repeat;
+    background-position: right 15px top 50%;
+    background-size: 15px auto;
+    font-weight: bold;
+}
+
+.variant-input-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.variant-input-row input {
+    flex: 1;
+}
+
+.remove-variant-btn {
+    background: #4a3b00;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    width: 45px;
+    font-weight: bold;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+.add-variant-btn {
+    align-self: flex-start;
+    background: #4a3b00;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 16px;
+    font-weight: bold;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.cancel-btn, .submit-btn {
+    border: none;
+    border-radius: 8px;
+    padding: 12px 24px;
+    font-weight: bold;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+.cancel-btn {
+    background: #4a3b00;
+    color: white;
+}
+
+.submit-btn {
+    background: #4a3b00;
+    color: white;
+}
+
+.cancel-btn:hover, .submit-btn:hover, .add-variant-btn:hover, .remove-variant-btn:hover {
+    background: #332800;
+}

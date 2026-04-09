@@ -8,8 +8,8 @@ const app = express();
 
 // Middlewares
 app.use(cors({
-    origin: 'http://localhost:5173', // Change this to your EXACT frontend URL
-    credentials: true,               // Required for cookies
+    origin: 'http://localhost:5173', 
+    credentials: true,               
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
@@ -25,21 +25,23 @@ app.use(express.json());
 app.use(session({
     secret: process.env.SECRET_KEY,
     resave: false,
-    saveUninitialized: false, // Changed to false: don't create sessions for "ghost" requests
-    proxy: true, // Trust the local connection
+    saveUninitialized: false, 
+    proxy: true, 
     cookie: {
-        secure: false,     // MUST be false for HTTP localhost
-        httpOnly: true,    // Good for security
-        sameSite: 'lax',   // Required for cross-port cookies on Chrome
-        maxAge: 1000 * 60 * 60 // 1 hour
+        secure: false,     
+        httpOnly: true,    
+        sameSite: 'lax',   
+        maxAge: 1000 * 60 * 60 
     }
-
 }));
 
 // Import Routers
 import userRoutes from './routes/userRoutes.js';
+import projectRoutes from './routes/projectRoutes.js';
+
 // Routes
 app.use('/', userRoutes);
+app.use('/api/projects', projectRoutes); 
 
 const url = 'http://localhost:';
 const port = '8080';

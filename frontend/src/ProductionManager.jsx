@@ -3,6 +3,7 @@ import { useContext } from "react";
 import { UserContext } from "./App";
 import Navbar from "./globals/Navbar"; 
 import Logout from "./globals/Logout"; 
+import InventoryTable from "./globals/InventoryTable";
 
 const Dashboard = () => <div><h1>Production Dashboard</h1></div>;
 const JobOrder = () => <div><h1>Job Order Management</h1></div>;
@@ -31,6 +32,7 @@ const ProductionManager = () => {
                     <Route path="dashboard" element={<Dashboard />} />
                     <Route path="job-order" element={<JobOrder />} />
                     <Route path="logout" element={<Logout />} />
+                    <Route path="inventory/*" element={<InventoryTable />} />
                 </Routes>
             </div>
         </div>
