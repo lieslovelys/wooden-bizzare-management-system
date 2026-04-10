@@ -12,8 +12,6 @@ router.post('/signup', async (req, res) => {
     catch(e){
         res.status(404).send({message: 'Error creating user', body: e});
     }
-
-    
 });
 
 router.post('/login', async (req, res) => {
@@ -70,5 +68,11 @@ router.get('/logout', (req, res) => {
   });
 });
 
+// --- BAGONG ROUTE PARA SA ACCOUNT LIST ---
+router.get('/users', User.getUsers);
+router.delete('/users/:id', User.deleteUser);
+router.get('/workers', User.getWorkers);
+router.post('/workers', User.addWorker);
+router.put('/workers/:id', User.updateWorker);
 
 export default router;

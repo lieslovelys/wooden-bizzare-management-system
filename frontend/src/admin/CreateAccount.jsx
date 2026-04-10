@@ -1,93 +1,50 @@
-import { useState } from "react";
+import React, { useState } from 'react';
+import TempSignup from '../TempSignup';
+import AccountList from './AccountList'; 
+import '../css/admin.css'; // Ibinalik ko yung import ng CSS para basahin niya yung design
 
-const CreateAccount = () => {
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
-    const [firstName, setFirstName] = useState('');
-    const [middleName, setMiddleName] = useState('');
-    const [lastName, setLastName] = useState('');
-    const [suffix, setSuffix] = useState('None');
-    const [userRole, setUserRole] = useState('Admin');
+const AccountManagement = () => {
+  const [activeTab, setActiveTab] = useState('creation');
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
-
-        const body = { username, password, firstName, middleName, lastName, suffix, userRole };
-    }
-    
-    return ( 
-        <div className="create-account">
-            
-            <form onSubmit={handleSubmit}>
-                <label htmlFor="username">Username</label> <br />
-                <input 
-                type="text"
-                name="username"
-                id="username"
-                value={username}
-                onChange={e => setUsername(e.target.value)}
-                required /> <br /> <br />
-                
-                <label htmlFor="password">Password</label> <br />
-                <input 
-                type="password"
-                name="password"
-                id="password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                required /> <br /> <br />
-
-                <label htmlFor="first-name">First Name</label> <br /> 
-                <input 
-                type="text"
-                name="first-name"
-                id="first-name"
-                value={firstName}
-                onChange={e => setFirstName(e.target.value)}
-                required /> <br /> <br />
-
-                <label htmlFor="middle_name">Middle Name</label> <br />
-                <input 
-                type="text"
-                name="middle-name"
-                id="middle-name"
-                value={middleName}
-                onChange={e => setMiddleName(e.target.value)}
-                required /> <br /> <br />
-
-                <label htmlFor="last-name">Last Name</label> <br />
-                <input 
-                type="text"
-                name="last-name"
-                id="last-name"
-                value={lastName}
-                onChange={e => setLastName(e.target.value)}
-                required /> <br /> <br />
-
-                <label htmlFor="suffix">Suffix</label> <br />
-                <select name="suffix" id="suffix" value={suffix} onChange={e => setSuffix(e.target.value)}>
-                    <option value="None">None</option>
-                    <option value="Sr.">Sr.</option>
-                    <option value="Jr.">Jr.</option>
-                    <option value="II">II</option>
-                    <option value="III">III</option>
-                    <option value="IV">IV</option>
-                    <option value="V">V</option>
-                </select> <br /> <br />
-
-                <label htmlFor="user-role">User Role</label> <br />
-                <select name="user-role" id="user-role" value={userRole} onChange={e => setUserRole(e.target.value)}>
-                    <option value="Admin">Admin</option>
-                    <option value="Production Manager">Production Manager</option>
-                    <option value="Inventory Staff">Inventory Staff</option>
-                    <option value="Quality Checker">Quality Checker</option>
-                    <option value="Worker">Worker</option>
-                </select> <br /> <br />
-
-                <button type="submit">Sign Up</button>
-            </form>
+  return (
+    /* Ibinalik ko yung create-account wrapper para gumana yung ginawa nating CSS */
+    <div className="create-account">
+      
+      <div className="account-management-wrapper">
+        
+        {/* Tabs Container */}
+        <div className="tabs-header">
+          <button
+            className={`tab-button ${activeTab === 'creation' ? 'active' : ''}`}
+            onClick={() => setActiveTab('creation')}
+          >
+            Account Creation
+          </button>
+          <button
+            className={`tab-button ${activeTab === 'list' ? 'active' : ''}`}
+            onClick={() => setActiveTab('list')}
+          >
+            Account List
+          </button>
         </div>
-     );
-}
- 
-export default CreateAccount;
+
+        {/* Thick horizontal divider (The line under the tabs) */}
+        <div className="tab-divider"></div>
+
+        {/* Tab Content Rendering */}
+        <div className="tab-content-container">
+          {activeTab === 'creation' ? (
+            /* Tinatawag dito yung existing component mo */
+            <TempSignup />
+          ) : (
+            <AccountList />
+          )}
+        </div>
+        
+      </div>
+
+    </div>
+  );
+};
+
+export default AccountManagement;

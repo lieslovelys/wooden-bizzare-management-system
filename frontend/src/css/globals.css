@@ -2073,6 +2073,7 @@ html, body {
 /* --- Create Project Form--- */
 
 .project-form-container {
+  font-family: Arial, sans-serif;
   width: 100%;       /* Pinipilit na sakupin ang buong lapad ng screen/container */
   max-width: 100%;   /* Inalis natin yung limit na 750px */
   margin: 0;         /* Inalis natin yung margin sa gilid para sumagad */
@@ -2112,6 +2113,7 @@ html, body {
 }
 
 .project-form-container .project-form {
+  font-family: Arial, sans-serif;
   display: flex;
   flex-direction: column;
   gap: 15px;
@@ -2129,6 +2131,7 @@ html, body {
 }
 
 .project-form-container .edit-banner {
+  font-family: Arial, sans-serif;
   background-color: transparent; /* Inalis natin yung dark brown background block */
   text-align: center;            /* Para pumagitna yung text */
   margin-bottom: 20px;
@@ -2229,6 +2232,7 @@ html, body {
 /* --- PROJECT LIST --- */
 
 .project-list-container {
+  font-family: Arial, sans-serif;
   width: 100%;
   max-width: 1000px;
   margin: 0 auto;
@@ -2238,17 +2242,17 @@ html, body {
 .project-list-container .search-container {
   display: flex;
   align-items: center;
-  border: 1px solid #ccc;
+  border: 1px solid #d4b54e;
   border-radius: 30px;
   padding: 10px 20px;
   max-width: 500px;
   margin: 0 auto 30px auto;
-  background-color: white;
+  background-color: #d4b54e;
 }
 
 .project-list-container .search-icon {
   margin-right: 10px;
-  color: #666;
+  color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2261,6 +2265,7 @@ html, body {
 }
 
 .project-list-container .search-input {
+  background-color: #d4b54e;
   border: none;
   outline: none;
   width: 100%;
@@ -2269,6 +2274,13 @@ html, body {
   /* Reset pill shape override from form input */
   border-radius: 0; 
   padding: 0;
+  color: #fff;
+  
+}
+
+.project-list-container .search-input::placeholder {
+  color: white;
+  opacity: 1;
 }
 
 .project-list-container .list-header-banner h2 {

@@ -78,7 +78,7 @@ if (viewingProjectId) {
         <input 
           type="text" 
           className="search-input"
-          placeholder="Search order or project name...."
+          placeholder="Search project ID or name...."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />

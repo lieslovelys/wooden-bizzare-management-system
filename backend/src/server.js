@@ -43,6 +43,7 @@ import projectRoutes from './routes/projectRoutes.js';
 app.use('/', userRoutes);
 app.use('/api/projects', projectRoutes); 
 
+
 const url = 'http://localhost:';
 const port = '8080';
 app.listen(port, () => {

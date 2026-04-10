@@ -54,3 +54,15 @@ CREATE TABLE project_variables (
     variable_name VARCHAR(255) NOT NULL,
     variable_detail TEXT
 );
+
+
+-- Worker List
+
+CREATE TABLE worker_details (
+    detail_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    user_id BIGINT REFERENCES users(user_id) ON DELETE CASCADE, -- Ito ang tulay natin
+    job_type VARCHAR(50),  -- Halimbawa: 'Regular', 'Part-Time'
+    job_role VARCHAR(100), -- Halimbawa: 'Carpenter', 'Carver', 'Liha'
+    contact VARCHAR(50),
+    rate NUMERIC(10, 2)    -- Pera format (e.g., 800.00)
+);

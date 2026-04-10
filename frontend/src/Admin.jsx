@@ -4,7 +4,7 @@ import { useContext } from "react";
 import { UserContext } from "./App";
 import Navbar from "./globals/Navbar"; 
 import Logout from "./globals/Logout"; 
-import AccountPage from "./admin/pages/AccountPage";
+import CreateAccount from "./admin/CreateAccount";
 import AdminDashboard from "./admin/A_Dashboard";
 import WorkerList from "./admin/WorkerList";
 import ProjectVerification from "./globals/ProjectVerification";
@@ -43,7 +43,7 @@ const Admin = () => {
                 <Routes>
                     <Route index element={<Navigate to="dashboard" replace />} />
                     <Route path="dashboard" element={<AdminDashboard />} />
-                    <Route path="account-creation" element={<AccountPage />} />
+                    <Route path="account-creation" element={<CreateAccount />} />
                     <Route path="job-order" element={<JobOrder />} />
                     <Route path="worker-list" element={<WorkerList />} />
                     <Route path="project-verification" element={<ProjectVerification />} />

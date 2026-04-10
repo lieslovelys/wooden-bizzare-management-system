@@ -94,7 +94,7 @@ const EditProjectForm = ({ projectId, onCancel, onSuccess }) => {
   return (
     <div className="project-form-container">
       <div className="list-header-banner edit-banner">
-        <h2>Edit Project</h2>
+        <h2>EDIT PROJECT</h2>
       </div>
 
       <form onSubmit={handleSubmit} className="project-form">
