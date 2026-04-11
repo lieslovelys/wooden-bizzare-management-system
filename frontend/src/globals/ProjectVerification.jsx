@@ -1,196 +1,134 @@
-import { useState } from "react";
+import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom'; // <-- 1. IDINAGDAG ITO
+import ProjectVerificationDetail from './ProjectVerificationDetail';
 
-const projects = [
-  {
-    id: "FR-0038",
-    name: "LUXURY FRAME",
-    displayName: "Luxury Frame",
-    dateOrdered: "April 1, 2026",
-    dueDate: "May 25, 2026",
-    dueDateColor: "#cc3300",
-    priority: "High",
-    priorityColor: "#cc3300",
-    details: {
-      Size: "Deep Shadow Boxes (50mm+ depth): Used for 3D memorabilia or to create a 3D float effect, enhancing the depth and presence of an object.",
-      Color: "Brushed Gold & Warm Metallics (Champagne/Brass): The defining metal finish, offering a muted, sophisticated glow rather than bright yellow gold.",
-    },
-    totalStages: 6,
-    stages: [
-      { stage: "Carpenter", worker: "John Kenneth Juralbal", startDate: "04/5/26", dueDate: "04/23/26", status: "approved" },
-      { stage: "Carver", worker: "Laurence Orot", startDate: "04/25/26", dueDate: "05/15/26", status: "pending" },
-    ],
-  },
-  {
-    id: "FR-0088",
-    name: "STRANDED FRAME",
-    displayName: "Stranded Frame",
-    dateOrdered: "March 15, 2026",
-    dueDate: "June 10, 2026",
-    dueDateColor: "#5a4a00",
-    priority: "Medium",
-    priorityColor: "#8b7a2a",
-    details: {
-      Size: "Standard Shadow Box (25mm depth): Ideal for flat memorabilia like photos and certificates.",
-      Color: "Natural Wood Finish: Warm brown tones showcasing the natural grain of the wood.",
-    },
-    totalStages: 4,
-    stages: [
-      { stage: "Carpenter", worker: "Juan dela Cruz", startDate: "03/20/26", dueDate: "04/10/26", status: "approved" },
-    ],
-  },
-  {
-    id: "DR-0022",
-    name: "FRONT DOOR",
-    displayName: "Front Door",
-    dateOrdered: "February 20, 2026",
-    dueDate: "May 30, 2026",
-    dueDateColor: "#cc3300",
-    priority: "High",
-    priorityColor: "#cc3300",
-    details: {
-      Size: "Standard Door (80x200cm): Classic residential front door dimensions.",
-      Color: "Dark Walnut Stain: Rich, deep brown finish with visible grain texture.",
-    },
-    totalStages: 5,
-    stages: [
-      { stage: "Carpenter", worker: "Carlo Cruz", startDate: "03/1/26", dueDate: "03/25/26", status: "approved" },
-      { stage: "Carver", worker: "Maria Santos", startDate: "03/26/26", dueDate: "04/20/26", status: "pending" },
-    ],
-  },
-];
+const ProjectVerification = () => {
+    const [stageFilter, setStageFilter] = useState('All');
+    const [selectedProjectId, setSelectedProjectId] = useState(null);
+    
+    const [tasks, setTasks] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-export default function ProjectVerification() {
-  const [selectedProject, setSelectedProject] = useState(null);
-  const [stageStatuses, setStageStatuses] = useState({});
+    const location = useLocation(); // <-- 2. I-SETUP ANG LOCATION
 
-  const handleApprove = (projId, stageIdx) => {
-    setStageStatuses((prev) => ({ ...prev, [`${projId}-${stageIdx}`]: "approved" }));
-  };
-  const handleRepair = (projId, stageIdx) => {
-    setStageStatuses((prev) => ({ ...prev, [`${projId}-${stageIdx}`]: "repair" }));
-  };
+    useEffect(() => {
+        const fetchQATasks = async () => {
+            try {
+                const response = await fetch('http://localhost:8080/api/qa/tasks');
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    const formattedTasks = data.map(task => ({
+                        id: `WB-${String(task.project_id).padStart(2, '0')}`, 
+                        rawProjectId: task.project_id, 
+                        projectName: task.project_name,
+                        workerName: `${task.first_name} ${task.last_name}`,
+                        stage: task.stage_name,
+                        assignmentId: task.assignment_id 
+                    }));
+                    
+                    setTasks(formattedTasks);
+                }
+            } catch (error) {
+                console.error("Error fetching QA tasks:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
 
-  const getStatus = (projId, stageIdx, defaultStatus) =>
-    stageStatuses[`${projId}-${stageIdx}`] || defaultStatus;
+        fetchQATasks();
+    }, []); 
 
-  const approvedCount = (proj) =>
-    proj.stages.filter((s, i) => getStatus(proj.id, i, s.status) === "approved").length;
+    // --- 3. BAGONG USEEFFECT PARA SA NOTIFICATION ---
+    useEffect(() => {
+        // Kailangan nating hintayin na ma-load yung 'tasks' (tasks.length > 0)
+        // bago natin hanapin yung match ng notification!
+        if (location.state && location.state.targetTaskId && tasks.length > 0) {
+            
+            // Hanapin ang task na may kaparehong assignmentId galing sa Notif
+            const matchedTask = tasks.find(
+                t => String(t.assignmentId) === String(location.state.targetTaskId)
+            );
 
-  if (selectedProject) {
-    const proj = selectedProject;
-    const approved = approvedCount(proj);
-    const progressPct = Math.round((approved / proj.totalStages) * 100);
+            if (matchedTask) {
+                // Kapag nahanap, i-set yung Project ID niya para bumukas ang Details!
+                setSelectedProjectId(matchedTask.rawProjectId);
+                
+                // I-clear ang location state
+                window.history.replaceState({}, document.title);
+            }
+        }
+    }, [location, tasks]); // Babantayan niya ang 'location' at 'tasks'
+    // ------------------------------------------------
+
+    const displayedTasks = stageFilter === 'All' 
+        ? tasks 
+        : tasks.filter(task => task.stage === stageFilter);
+
+    if (selectedProjectId) {
+        return (
+            <ProjectVerificationDetail 
+                projectId={selectedProjectId} 
+                onBack={() => setSelectedProjectId(null)} 
+            />
+        );
+    }
 
     return (
-      <div className="pv-container">
-        <div className="pv-detail-card">
-          <div className="pv-detail-left">
-            <div className="pv-detail-id">{proj.id}</div>
-            <div className="pv-detail-name">{proj.displayName}</div>
-
-            {[
-              { label: "Date Ordered", value: proj.dateOrdered, color: "#3a2e00" },
-              { label: "Due Date", value: proj.dueDate, color: proj.dueDateColor },
-              { label: "Priority", value: proj.priority, color: proj.priorityColor },
-            ].map(({ label, value, color }) => (
-              <div key={label} className="pv-info-box">
-                <div className="pv-info-label">{label}</div>
-                <div className="pv-info-value" style={{ color }}>{value}</div>
-              </div>
-            ))}
-          </div>
-
-          <div className="pv-detail-right">
-            <div className="pv-details-title">PROJECT DETAILS</div>
-            {Object.entries(proj.details).map(([key, val]) => (
-              <div key={key} className="pv-detail-item">
-                <div className="pv-detail-item-title">{key}</div>
-                <div className="pv-detail-item-desc">{val}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="pv-progress-card">
-          <div className="pv-progress-header">
-            <span className="pv-progress-title">Project Progress</span>
-            <div className="pv-progress-bar-container">
-              <div className="pv-progress-bar">
-                <div className="pv-progress-bar-fill" style={{ width: `${progressPct}%` }} />
-              </div>
-              <span className="pv-progress-count">{approved}/{proj.totalStages}</span>
+        <div className="qc-pv-wrapper">
+            <div className="qc-pv-header">
+                <h2 className="qc-pv-title">PROJECT VERIFICATION LIST</h2>
+                <p className="qc-pv-subtitle">Click project to verify</p>
             </div>
-          </div>
 
-          <table className="pv-table">
-            <thead>
-              <tr>
-                {["STAGE", "WORKER", "START DATE", "DUE DATE", "STATUS"].map((col) => (
-                  <th key={col} className={col === "STATUS" ? "pv-table-status" : ""}>{col}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {[...Array(6)].map((_, i) => {
-                const s = proj.stages[i];
-                if (!s) return (
-                  <tr key={i}>
-                    <td colSpan={5}></td>
-                  </tr>
-                );
-                const status = getStatus(proj.id, i, s.status);
-                return (
-                  <tr key={i}>
-                    <td className="pv-table-stage">{s.stage}</td>
-                    <td>{s.worker}</td>
-                    <td>{s.startDate}</td>
-                    <td>{s.dueDate}</td>
-                    <td className="pv-table-status-cell">
-                      {status === "approved" ? (
-                        <span className="pv-status-approved">Approved</span>
-                      ) : status === "repair" ? (
-                        <span className="pv-status-repair">For Repair</span>
-                      ) : (
-                        <div className="pv-action-buttons">
-                          <button onClick={() => handleApprove(proj.id, i)} className="pv-btn-approve">✓ Approve</button>
-                          <button onClick={() => handleRepair(proj.id, i)} className="pv-btn-repair">✕ Repair</button>
+            <div className="qc-pv-controls">
+                <select 
+                    className="qc-pv-dropdown" 
+                    value={stageFilter} 
+                    onChange={(e) => setStageFilter(e.target.value)}
+                >
+                    <option value="All">Stage</option>
+                    <option value="Carpenter">Carpenter</option>
+                    <option value="Carver">Carver</option>
+                    <option value="Liha">Liha</option>
+                    <option value="Painter">Painter</option>
+                    <option value="Delivery">Delivery</option>
+                </select>
+            </div>
+
+            <div className="qc-pv-list">
+                <div className="qc-pv-row qc-pv-list-header">
+                    <div>Project ID</div>
+                    <div>Project Name</div>
+                    <div>Worker Name</div>
+                    <div>Stage</div>
+                </div>
+
+                {loading ? (
+                    <div style={{ padding: '20px', textAlign: 'center', color: '#5b5035' }}>
+                        Loading submitted projects...
+                    </div>
+                ) : displayedTasks.length > 0 ? (
+                    displayedTasks.map((task, index) => (
+                        <div 
+                            key={index} 
+                            className="qc-pv-row qc-pv-item"
+                            onClick={() => setSelectedProjectId(task.rawProjectId)}
+                        >
+                            <div>{task.id}</div>
+                            <div>{task.projectName}</div>
+                            <div>{task.workerName}</div>
+                            <div>{task.stage}</div>
                         </div>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-
-        <div>
-          <button onClick={() => setSelectedProject(null)} className="pv-back-button">← Back to Project List</button>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="pv-container">
-      <h1 className="pv-list-header">PROJECT LIST</h1>
-      <p className="pv-list-subtitle">Click project to verify</p>
-      <div className="pv-list-divider" />
-
-      <div className="pv-list-container">
-        {projects.map((project, idx) => {
-          return (
-            <div
-              key={project.id}
-              onClick={() => setSelectedProject(project)}
-              className="pv-list-item"
-            >
-              <span className="pv-list-item-id">{project.id}</span>
-              <span className="pv-list-item-name">{project.name}</span>
+                    ))
+                ) : (
+                    <div style={{ padding: '20px', textAlign: 'center', color: '#8b816a', fontStyle: 'italic' }}>
+                        No pending projects for Quality Check.
+                    </div>
+                )}
             </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
+        </div>
+    );
+};
+
+export default ProjectVerification;

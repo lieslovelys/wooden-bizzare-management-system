@@ -13,9 +13,6 @@ CREATE TABLE users (
     created_at DATE DEFAULT now();
 );
 
-
-
-
 -- Inventory
 CREATE TABLE inventory_items (
     id SERIAL PRIMARY KEY,

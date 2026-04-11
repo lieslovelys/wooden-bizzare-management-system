@@ -1,61 +1,127 @@
-import { useState } from "react";
-import "../css/admin.css";
+import React, { useState, useEffect } from 'react';
+import '../css/admin.css'; // Siguraduhing tama ang path na ito papunta sa admin.css mo
 
-const historyData = [
-  { id: "FR-0038", name: "Luxury Frame",         dateStarted: "April 2, 2026",  dateCompleted: "April 16, 2026", remark: "Early" },
-  { id: "DR-0039", name: "Slightly Curve Door",  dateStarted: "April 5, 2026",  dateCompleted: "April 30, 2026", remark: "On-time" },
-  { id: "FR-0040", name: "Double Standard Frame", dateStarted: "April 8, 2026", dateCompleted: "May 15, 2026",   remark: "Late" },
-];
+const ProjectHistory = () => {
+  const [historyData, setHistoryData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [remarksFilter, setRemarksFilter] = useState('All');
 
-const remarkClasses = {
-  Early:   "history-remark-early",
-  "On-time": "history-remark-ontime",
-  Late:    "history-remark-late",
-};
+  useEffect(() => {
+    const fetchHistory = async () => {
+      setLoading(true);
+      try {
+        const response = await fetch('http://localhost:8080/api/projects/history');
+        const result = await response.json();
+        if (result.success) {
+          const formattedData = result.data.map(proj => {
+            const remark = calculateRemark(proj.date_completed, proj.due_date);
+            return {
+              ...proj,
+              remark: remark
+            };
+          });
+          setHistoryData(formattedData);
+        }
+      } catch (error) {
+        console.error("Error fetching project history:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-export default function ProjectHistory() {
-  const [selected, setSelected] = useState("FR-0038");
+    fetchHistory();
+  }, []);
+
+  const calculateRemark = (completedStr, dueStr) => {
+    if (!completedStr || !dueStr) return 'Unknown';
+    
+    const completedDate = new Date(completedStr);
+    const dueDate = new Date(dueStr);
+    
+    completedDate.setHours(0, 0, 0, 0);
+    dueDate.setHours(0, 0, 0, 0);
+
+    if (completedDate < dueDate) return 'Early';
+    if (completedDate > dueDate) return 'Late';
+    return 'On-time';
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
+  };
+
+  const displayedHistory = remarksFilter === 'All' 
+    ? historyData 
+    : historyData.filter(proj => proj.remark === remarksFilter);
+
+  // --- DITO NA KUKUHA NG CLASS NAME BASE SA REMARK ---
+  const getBadgeClass = (remark) => {
+    switch (remark) {
+      case 'Early': return 'ph-badge ph-badge-early';
+      case 'On-time': return 'ph-badge ph-badge-ontime';
+      case 'Late': return 'ph-badge ph-badge-late';
+      default: return 'ph-badge';
+    }
+  };
 
   return (
-    <div className="history-container">
-      <h1 className="history-title">
-        PROJECT HISTORY
-      </h1>
+    <div className="ph-container">
+      <h1 className="ph-title">PROJECT HISTORY</h1>
 
-      <div className="history-divider" />
+      <div className="ph-controls">
+        <select 
+          className="ph-filter-select"
+          value={remarksFilter}
+          onChange={(e) => setRemarksFilter(e.target.value)}
+        >
+          <option value="All">Remarks (All)</option>
+          <option value="Early">Early</option>
+          <option value="On-time">On-time</option>
+          <option value="Late">Late</option>
+        </select>
+      </div>
 
-      <table className="history-table">
-        <thead>
-          <tr>
-            {["Project ID", "Project Name", "Date Started", "Date Completed", "Remarks"].map((col) => (
-              <th key={col}>{col}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {historyData.map((row) => {
-            const isSelected = selected === row.id;
-            const remarkClass = remarkClasses[row.remark] || "";
-            return (
-              <tr
-                key={row.id}
-                onClick={() => setSelected(row.id)}
-                className={`history-row ${isSelected ? "selected" : ""}`}
-              >
-                <td>{row.id}</td>
-                <td>{row.name}</td>
-                <td>{row.dateStarted}</td>
-                <td>{row.dateCompleted}</td>
-                <td>
-                  <span className={`history-remark ${remarkClass}`}>
-                    {row.remark}
-                  </span>
+      {loading ? (
+        <p style={{ textAlign: 'center' }}>Loading history...</p>
+      ) : (
+        <table className="ph-table">
+          <thead>
+            <tr>
+              <th className="ph-th">Project ID</th>
+              <th className="ph-th">Project Name</th>
+              <th className="ph-th">Date Started</th>
+              <th className="ph-th">Date Completed</th>
+              <th className="ph-th">Remarks</th>
+            </tr>
+          </thead>
+          <tbody>
+            {displayedHistory.length > 0 ? (
+              displayedHistory.map((proj) => (
+                <tr key={proj.id} className="ph-tr">
+                  <td className="ph-td">{proj.id}</td>
+                  <td className="ph-td ph-project-name">{proj.project_name}</td>
+                  <td className="ph-td">{formatDate(proj.date_started)}</td>
+                  <td className="ph-td">{formatDate(proj.date_completed)}</td>
+                  <td className="ph-td">
+                    <span className={getBadgeClass(proj.remark)}>
+                      {proj.remark}
+                    </span>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="5" className="ph-empty-state">
+                  Walang nakitang history base sa filter.
                 </td>
               </tr>
-            );
-          })}
-        </tbody>
-      </table>
+            )}
+          </tbody>
+        </table>
+      )}
     </div>
   );
-}
+};
+
+export default ProjectHistory;

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom'; // <-- 1. IDINAGDAG ITO
 import EditProjectForm from './EditProjectForm'; 
 import '../css/admin.css';
 import ProjectDetails from './ProjectDetails';
@@ -6,19 +7,38 @@ import ProjectDetails from './ProjectDetails';
 const ProjectList = () => {
   const [projects, setProjects] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('All');
   const [loading, setLoading] = useState(true);
   
-
   const [editingProjectId, setEditingProjectId] = useState(null); 
   const [viewingProjectId, setViewingProjectId] = useState(null);
+
+  const [activeRowId, setActiveRowId] = useState(null);
+
+  const location = useLocation(); // <-- 2. I-SETUP ANG LOCATION
+
+  // --- 3. BAGONG USEEFFECT PARA SA NOTIFICATION ---
+  useEffect(() => {
+    // Kapag may ipinasang state galing sa notification, buksan agad yung Details
+    if (location.state && location.state.targetProjectId) {
+        setViewingProjectId(location.state.targetProjectId);
+        
+        // I-clear ang location state para hindi bumalik sa details view kapag nag-refresh
+        window.history.replaceState({}, document.title);
+    }
+  }, [location]);
+  // ------------------------------------------------
 
   const fetchProjects = async () => {
     setLoading(true);
     try {
       const response = await fetch('http://localhost:8080/api/projects');
       const result = await response.json();
+      
       if (result.success) {
         setProjects(result.data);
+      } else if (Array.isArray(result)) {
+        setProjects(result);
       }
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -32,13 +52,24 @@ const ProjectList = () => {
   }, []);
 
   const filteredProjects = projects.filter((project) => {
+    // 1. TANGGALIN KAPAG TAPOS NA
+    const currentStatus = project.status ? project.status.toLowerCase() : 'pending';
+    if (currentStatus === 'completed' || currentStatus === 'done') {
+        return false; 
+    }
+
+    // 2. STATUS FILTERING LOGIC
+    if (statusFilter !== 'All' && currentStatus !== statusFilter.toLowerCase()) {
+        return false;
+    }
+
+    // 3. SEARCH LOGIC
     const searchLower = searchTerm.toLowerCase();
     return (
       (project.project_name && project.project_name.toLowerCase().includes(searchLower)) ||
       (project.id && project.id.toString().includes(searchLower))
     );
   });
-
 
   if (editingProjectId) {
     return (
@@ -53,7 +84,8 @@ const ProjectList = () => {
     );
   }
 
-if (viewingProjectId) {
+  // --- KUNG MAY VIEWING ID, IPAPAKITA ANG DETAILS ---
+  if (viewingProjectId) {
     return (
       <ProjectDetails 
         projectId={viewingProjectId} 
@@ -62,9 +94,6 @@ if (viewingProjectId) {
     );
   }
 
-
-
-  // KUNG WALA NAMANG INE-EDIT, ANG TABLE ANG LALABAS
   return (
     <div className="project-list-container">
       <div className="search-container">
@@ -85,6 +114,16 @@ if (viewingProjectId) {
       </div>
 
 
+        <select 
+            className="status-filter"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+        >
+            <option value="All">All Status</option>
+            <option value="Pending">Pending</option>
+            <option value="In Progress">In Progress</option>
+        </select>
+      </div>
 
       {loading ? (
         <p style={{textAlign: 'center', marginTop: '20px'}}>Loading projects...</p>
@@ -95,37 +134,52 @@ if (viewingProjectId) {
               <tr>
                 <th>Project ID</th>
                 <th>Project Name</th>
-                <th>Client Name</th>
-                <th>Contact Number</th>
-                <th>Client Payment</th>
-                <th>Due Date</th>
-                <th>Priority Level</th>
+                <th>Status</th>
                 <th className="action-col">ACTION</th>
               </tr>
             </thead>
             <tbody>
               {filteredProjects.length > 0 ? (
                 filteredProjects.map((proj) => (
-                  <tr key={proj.id}>
-                    <td>{proj.id}</td>
+                  <tr 
+                    key={proj.id}
+                    className={activeRowId === proj.id ? 'active-row' : ''}
+                    onClick={() => setActiveRowId(proj.id)}
+                  >
+                    <td> WB{proj.id}</td>
                     <td>{proj.project_name}</td>
-                    <td>{proj.client_name}</td>
-                    <td>{proj.contact_number}</td>
-                    <td>{proj.client_payment ? `₱${parseFloat(proj.client_payment).toFixed(2)}` : 'N/A'}</td>
-                    <td>{proj.due_date ? new Date(proj.due_date).toLocaleDateString() : 'N/A'}</td>
-                    <td className={`priority-${proj.priority_level?.toLowerCase()}`}>
-                      {proj.priority_level}
+                    
+                    <td>
+                        <span className={`status-badge ${proj.status ? proj.status.toLowerCase().replace(' ', '-') : 'pending'}`}>
+                            {proj.status || 'Pending'}
+                        </span>
                     </td>
+
                     <td className="action-buttons">
-                      {/* DITO NATIN NILAGAY YUNG ONCLICK */}
-                      <button className="btn-action edit" onClick={() => setEditingProjectId(proj.id)}>Edit</button>
-                      <button className="btn-action details" onClick={() => setViewingProjectId(proj.id)}>Details</button>
+                      <button 
+                        className="btn-action edit" 
+                        onClick={(e) => {
+                            e.stopPropagation(); 
+                            setEditingProjectId(proj.id);
+                        }}
+                      >
+                        Edit
+                      </button>
+                      <button 
+                        className="btn-action details" 
+                        onClick={(e) => {
+                            e.stopPropagation(); 
+                            setViewingProjectId(proj.id);
+                        }}
+                      >
+                        Details
+                      </button>
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="8" style={{ textAlign: 'center', padding: '20px' }}>
+                  <td colSpan="4" style={{ textAlign: 'center', padding: '20px' }}>
                     No projects found.
                   </td>
                 </tr>

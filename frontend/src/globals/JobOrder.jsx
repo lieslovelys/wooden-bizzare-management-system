@@ -1,158 +1,128 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom'; // <-- 1. IDINAGDAG ITO
+import JobOrderDetails from './JobOrderDetails';
 
-const JobOrder = () => {
-  const [currentView, setCurrentView] = useState('list');
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const [selectedOrder, setSelectedOrder] = useState(null);
-  const [hoveredOrder, setHoveredOrder] = useState(null);
+const JobOrderList = () => {
+    const [jobOrders, setJobOrders] = useState([]);
+    
+    // Binago natin 'to. Imbes na ID lang para ma-highlight, 
+    // ginawa nating state para malaman kung anong view ang ipapakita.
+    const [viewingJobId, setViewingJobId] = useState(null); 
+    
+    const [activePriorities, setActivePriorities] = useState(['High', 'Medium', 'Low']); 
+    
+    const location = useLocation(); // <-- 2. IDINAGDAG ITO PARA SALUHIN ANG LOCATION STATE
 
-  const jobOrders = [
-    { id: 'FR-0038', title: 'LUXURY FRAME' },
-    { id: 'FR-0088', title: 'STRANDED FRAME' },
-    { id: 'DR-0022', title: 'FRONT DOOR' },
-  ];
+    // --- 3. BAGONG USEEFFECT PARA SA NOTIFICATION CLICK ---
+    useEffect(() => {
+        if (location.state && location.state.targetProjectId) {
+            // Kung may ipinadalang ID galing sa Notification, i-set agad para bumukas ang details
+            setViewingJobId(location.state.targetProjectId);
+            
+            // I-clear ang history state para kung i-refresh ni user ang page, hindi siya mag-loop
+            window.history.replaceState({}, document.title);
+        }
+    }, [location]);
+    // -----------------------------------------------------
 
-  const getBackgroundClass = (orderId) => {
-    if (selectedOrder === orderId) return 'job-order-item-selected';
-    if (hoveredOrder === orderId) return 'job-order-item-hover';
-    return 'job-order-item-default';
-  };
+    useEffect(() => {
+        const fetchJobs = async () => {
+            try {
+                const response = await fetch('http://localhost:8080/api/job-orders');
+                const data = await response.json();
+                const initialSorted = sortJobsByDate(data);
+                setJobOrders(initialSorted);
+            } catch (error) {
+                console.error("Failed to fetch job orders:", error);
+            }
+        };
+        fetchJobs();
+    }, []);
 
-  const JobOrderList = () => (
-    <div className="job-order-list">
-      <h1 className="job-order-title">JOB ORDER LIST</h1>
-      <p className="job-order-subtitle">Click order to view</p>
-      <div className="job-order-divider" />
+    const formatUI_Date = (dateString) => {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    };
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-        {jobOrders.map((order) => (
-          <div
-            key={order.id}
-            onClick={() => { setSelectedOrder(order.id); setCurrentView('details'); }}
-            onMouseEnter={() => setHoveredOrder(order.id)}
-            onMouseLeave={() => setHoveredOrder(null)}
-            className={`job-order-item ${getBackgroundClass(order.id)}`}
-          >
-            <span className="job-order-id">{order.id}</span>
-            <span className="job-order-name">{order.title}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+    const sortJobsByDate = (jobs) => {
+        return [...jobs].sort((a, b) => new Date(a.due_date) - new Date(b.due_date));
+    };
 
-  const JobOrderDetails = () => (
-    <div className="job-order-details">
-      <div className="details-card">
-        <div className="details-left">
-          <div className="details-header">
-            <h2>FR-0038</h2>
-            <p>Luxury Frame</p>
-          </div>
-          
-          <div className="details-info">
-            <p className="details-info-label">Date Ordered</p>
-            <p className="details-info-value">April 1, 2026</p>
-          </div>
-          
-          <div className="details-info details-info-urgent">
-            <p className="details-info-label">Due Date</p>
-            <p className="details-info-value details-info-value-urgent">May 25, 2026</p>
-          </div>
+    const handleSortClick = () => {
+        const sorted = sortJobsByDate(jobOrders);
+        setJobOrders(sorted);
+    };
 
-          <div className="details-info details-info-priority">
-            <p className="details-info-label">Priority</p>
-            <p className="details-info-value details-info-value-priority">High</p>
-          </div>
-        </div>
+    const togglePriority = (priority) => {
+        setActivePriorities(prev => {
+            if (prev.includes(priority)) return prev.filter(p => p !== priority);
+            return [...prev, priority];
+        });
+    };
 
-        <div className="details-right">
-            <p className="project-details-label">Project Details</p>
-            <div className="project-details-scroll">
-                <div className="project-detail-item">
-                    <p className="project-detail-title">Size</p>
-                    <p className="project-detail-desc">Deep Shadow Boxes (50mm+ depth): Used for 3D memorabilia or to create a 3D float effect, enhancing the depth and presence of an object.</p>
-                </div>
-                <div className="project-detail-item">
-                    <p className="project-detail-title">Color</p>
-                    <p className="project-detail-desc">Brushed Gold & Warm Metallics (Champagne/Brass): The defining metal finish, offering a muted, sophisticated glow rather than bright yellow gold.</p>
+    const filteredJobs = jobOrders.filter(job => {
+        const priority = job.priority_level 
+            ? job.priority_level.charAt(0).toUpperCase() + job.priority_level.slice(1).toLowerCase() 
+            : 'Low';
+        return activePriorities.includes(priority);
+    });
+
+    // --- VIEW SWITCHER LOGIC ---
+    // Kung may naka-set na viewingJobId, i-render ang Detail Page
+    if (viewingJobId) {
+        return (
+            <JobOrderDetails
+                jobId={viewingJobId} 
+                onBack={() => setViewingJobId(null)} // Reset state para bumalik sa list
+            />
+        );
+    }
+
+    // Kung walang naka-set, i-render ang Job Order List
+    return (
+        <div className="jol-wrapper">
+            <div className="jol-header">
+                <h2 className="jol-title">JOB ORDER LIST</h2>
+                <p className="jol-subtitle">Click order to assign worker</p>
+            </div>
+
+            <div className="jol-controls">
+                <button className="jol-btn" onClick={handleSortClick}>
+                    Sort by Nearest Due Date
+                </button>
+
+                <div className="jol-filter-group">
+                    <span className="jol-filter-label">Filter Priority:</span>
+                    <button className={`jol-btn ${activePriorities.includes('High') ? 'active high' : ''}`} onClick={() => togglePriority('High')}>HIGH</button>
+                    <button className={`jol-btn ${activePriorities.includes('Medium') ? 'active medium' : ''}`} onClick={() => togglePriority('Medium')}>MEDIUM</button>
+                    <button className={`jol-btn ${activePriorities.includes('Low') ? 'active low' : ''}`} onClick={() => togglePriority('Low')}>LOW</button>
                 </div>
             </div>
+
+            <div className="jol-list">
+                {filteredJobs.length > 0 ? (
+                    filteredJobs.map((job) => (
+                        <div
+                            key={job.id}
+                            className="jol-item"
+                            onClick={() => setViewingJobId(job.id)} // Dito tina-trigger yung pag-switch ng view
+                        >
+                            <div className="jol-name">WB-{job.id} {job.project_name}</div>
+                            <div className="jol-date">{formatUI_Date(job.due_date)}</div>
+                            <div className={`jol-priority ${job.priority_level ? job.priority_level.toLowerCase() : ''}`}>
+                                {job.priority_level ? job.priority_level.toUpperCase() : 'N/A'}
+                            </div>
+                        </div>
+                    ))
+                ) : (
+                    <div style={{ padding: '20px', textAlign: 'center', color: '#8b816a' }}>
+                        No projects match the selected priority filters.
+                    </div>
+                )}
+            </div>
         </div>
-      </div>
-
-      <div className="progress-card">
-        <div className="progress-header">
-          <h3 className="progress-title">Project Progress</h3>
-          <div className="progress-bar-container">
-             <div className="progress-bar">
-                <div className="progress-bar-fill"></div>
-             </div>
-             <span className="progress-count">1/6</span>
-          </div>
-        </div>
-
-        <table className="progress-table">
-          <thead>
-            <tr>
-              <th>STAGE</th>
-              <th>WORKER</th>
-              <th>START DATE</th>
-              <th>DUE DATE</th>
-              <th>STATUS</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td className="stage-name">Carpenter</td>
-              <td>John Kenneth Juralbal</td>
-              <td>04/5/26</td>
-              <td>04/23/26</td>
-              <td><span className="status-done">Done</span></td>
-            </tr>
-            <tr>
-              <td className="stage-name">Carver</td>
-              <td>Laurence Orot</td>
-              <td>04/25/26</td>
-              <td>05/15/26</td>
-              <td><span className="status-progress">In progress</span></td>
-            </tr>
-            {[1, 2].map((i) => (
-               <tr key={i} className="empty">
-                 <td></td>
-                 <td></td>
-                 <td></td>
-                 <td></td>
-                 <td></td>
-               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {!isSubmitted ? (
-        <button 
-          onClick={() => setIsSubmitted(true)}
-          className="submit-button"
-        >
-          I AM DONE
-        </button>
-      ) : (
-        <button 
-          onClick={() => {setIsSubmitted(false); setCurrentView('list');}}
-          className="submitted-button"
-        >
-          WORK SUBMITTED
-        </button>
-      )}
-    </div>
-  );
-
-  return (
-    <div className="job-order-container">
-      {currentView === 'list' ? <JobOrderList /> : <JobOrderDetails />}
-    </div>
-  );
+    );
 };
 
-export default JobOrder;
+export default JobOrderList;

@@ -1,8 +1,29 @@
-import { createProjectWithVariables, getAllProjects, getProjectById, updateProject } from '../models/projectModel.js';
+import { 
+    createProjectWithVariables, 
+    getAllProjects, 
+    getProjectById, 
+    updateProject,
+    markProjectAsCompleted,
+    getCompletedProjectsHistory 
+} from '../models/projectModel.js';
+
+// --- IDINAGDAG NATIN ANG IMPORT NA ITO PARA SA NOTIFICATION ---
+import { createNotification } from '../models/adminNotifModel.js'; 
+
 
 export const createProject = async (req, res) => {
   try {
     const projectId = await createProjectWithVariables(req.body);
+    
+    await createNotification(
+        'project', 
+        'New Project Arrived', 
+        `A new project has been created. See Job Orders to view and assign workers.`, 
+        'PM', 
+        projectId 
+    );
+
+
     res.status(201).json({ 
         success: true, 
         message: 'Project created successfully', 
@@ -55,4 +76,33 @@ export const updateExistingProject = async (req, res) => {
     console.error('Update error:', error);
     res.status(500).json({ success: false, message: 'Server error while updating' });
   }
+};
+
+
+
+export const completeProject = async (req, res) => {
+    try {
+        const updatedProject = await markProjectAsCompleted(req.params.id);
+        res.status(200).json({ 
+            success: true, 
+            message: 'Project marked as completed', 
+            data: updatedProject 
+        });
+    } catch (error) {
+        console.error('Error completing project:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Server error while completing project' 
+        });
+    }
+};
+
+export const getProjectHistory = async (req, res) => {
+    try {
+        const history = await getCompletedProjectsHistory();
+        res.status(200).json({ success: true, data: history });
+    } catch (error) {
+        console.error('Error fetching project history:', error);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
 };

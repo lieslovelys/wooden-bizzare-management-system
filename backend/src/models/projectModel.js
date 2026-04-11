@@ -56,7 +56,8 @@ export const getAllProjects = async () => {
         contact_number, 
         client_payment, 
         due_date, 
-        priority_level
+        priority_level,
+        status -- <--- IDINAGDAG ANG STATUS DITO
       FROM projects
       ORDER BY created_at DESC;
     `;
@@ -132,4 +133,46 @@ export const updateProject = async (id, projectData) => {
   } finally {
     client.release();
   }
+};
+
+
+export const markProjectAsCompleted = async (projectId) => {
+    const client = await getClient();
+    try {
+        const sql = `
+            UPDATE projects 
+            SET status = 'Completed', date_completed = CURRENT_DATE -- <--- IDINAGDAG ITO
+            WHERE id = $1 
+            RETURNING *;
+        `;
+        const res = await client.query(sql, [projectId]);
+        return res.rows[0];
+    } catch (error) {
+        throw error;
+    } finally {
+        client.release();
+    }
+};
+
+export const getCompletedProjectsHistory = async () => {
+    const client = await getClient();
+    try {
+        const query = `
+            SELECT 
+                id, 
+                project_name, 
+                date_ordered AS date_started, 
+                date_completed, 
+                due_date
+            FROM projects
+            WHERE status = 'Completed'
+            ORDER BY date_completed DESC;
+        `;
+        const res = await client.query(query);
+        return res.rows;
+    } catch (error) {
+        throw error;
+    } finally {
+        client.release();
+    }
 };

@@ -5,7 +5,7 @@ import { useContext } from "react";
 import { UserContext } from "./App";
 import Navbar from "./globals/Navbar"; 
 import Logout from "./globals/Logout"; 
-import JobOrder from "./globals/JobOrder";
+import JobOrder from "./worker/WorkerJobOrder";
 
 const Worker = () => {
     const { username } = useContext(UserContext);

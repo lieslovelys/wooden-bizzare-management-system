@@ -2087,6 +2087,16 @@ html, body {
   gap: 20px;
 }
 
+.project-form-container .form-title {
+    color: #5b4614;
+    font-size: 1.1rem;
+    font-weight: 900;
+    margin-top: 0;
+    margin-bottom: 30px;
+    text-transform: uppercase;
+    font-family: Georgia, 'Times New Roman', Times, serif;
+}
+
 .project-form-container .tab {
   padding: 10px 30px;
   font-weight: bold;
@@ -2213,6 +2223,7 @@ html, body {
 .project-form-container .btn-cancel, 
 .project-form-container .btn-submit {
   padding: 12px 30px;
+  font-family: Georgia, 'Times New Roman', Times, serif;
   border: none;
   border-radius: 10px;
   color: white;
@@ -2338,6 +2349,111 @@ html, body {
   opacity: 0.9;
 }
 
+.project-list-container {
+    /* =========================================
+       PROJECT LIST HEADER & FILTER
+       ========================================= */
+    .list-top-controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        gap: 15px;
+    }
+
+.status-filter {
+        padding: 10px 40px 10px 20px; /* Pinalaki ang padding-right para hindi matakpan ng icon ang text */
+        border: 2px solid #8b816a; /* Kulay ng border base sa image */
+        border-radius: 30px;
+        background-color: white;
+        color: #8b816a; /* Kulay ng text */
+        outline: none;
+        cursor: pointer;
+        font-size: 1rem;
+        font-weight: bold;
+        
+        /* TINATANGGAL ANG DEFAULT BROWSER ARROW */
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        
+        /* INILALAGAY ANG CUSTOM TRIANGLE ICON */
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%238b816a'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 15px center; /* Posisyon ng icon sa kanan */
+        background-size: 24px; /* Laki ng icon */
+    }
+    
+    /* Para sa Internet Explorer (kung sakali) */
+    .status-filter::-ms-expand {
+        display: none;
+    }
+
+    /* =========================================
+       STATUS BADGES (30px radius)
+       ========================================= */
+    .status-badge {
+        display: inline-block;
+        padding: 6px 16px;
+        border-radius: 30px; /* Eto na yung 30px radius! */
+        font-size: 0.85rem;
+        font-weight: bold;
+        color: white;
+        text-align: center;
+        min-width: 100px;
+    }
+
+    /* Brown para sa Pending at Assigned */
+    .status-badge.pending,
+    .status-badge.assigned {
+        background-color: #8b5a2b; 
+    }
+
+    /* Blue para sa In Progress */
+    .status-badge.in-progress {
+        background-color: #4a90e2; 
+    }
+
+    /* =========================================
+       ACTION BUTTONS ALIGNMENT
+       ========================================= */
+    .action-col {
+        text-align: center !important; /* Pinapagitna yung salitang 'ACTION' sa header */
+    }
+
+    .action-buttons {
+        display: flex;
+        justify-content: center; /* Pinapagitna yung mismong buttons sa column */
+        align-items: center;
+        gap: 8px; /* Espasyo sa gitna ng Edit at Details */
+    }
+
+    /* =========================================
+       ROW HIGHLIGHT (Kulay ng Search Bar pag kinlick)
+       ========================================= */
+    .project-table tbody tr {
+        cursor: pointer;
+        transition: background-color 0.2s ease, color 0.2s ease;
+    }
+
+    /* Light na kulay kapag tinapatan ng mouse */
+    .project-table tbody tr:hover {
+        background-color: #f5eedc; 
+    }
+
+    /* Ito ang magpapalit ng kulay kapag pinindot (o kapag active) */
+    .project-table tbody tr:active,
+    .project-table tbody tr.active-row {
+        background-color: #dcb345; /* Kulay ng search bar mo */
+    }
+
+    /* Papuputiin ang text para mas mabasa sa dark gold na background */
+    .project-table tbody tr:active td,
+    .project-table tbody tr.active-row td {
+        color: white;
+    }
+}
+
 /* --- PROJECT DETAILS --- */
 
 .details-main-wrapper {
@@ -2458,3 +2574,747 @@ html, body {
   margin: 0;
   color: #333;
 }
+
+
+/* Container - made full screen width */
+.jol-wrapper {
+    width: 1000px; /* Binalik natin ang limit sa lapad */
+    margin: 20px auto;
+    font-family: Arial, sans-serif;
+    padding: 20px;
+    color: #5b5035;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.jol-header {
+    border-bottom: 4px solid #c2baa6;
+    padding-bottom: 8px;
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+.jol-title {
+    font-size: 24px;
+    font-weight: bold;
+    color: #6b5a18;
+    margin: 0 0 4px 0;
+    text-transform: uppercase;
+}
+
+.jol-subtitle {
+    font-size: 15px;
+    color: #8b816a;
+    margin: 0;
+    font-weight: bold;
+}
+
+/* Controls - Layout updated for buttons instead of dropdowns */
+.jol-controls {
+    display: flex;
+    justify-content: space-between; /* Hiwalay ang sort at filter */
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 15px;
+    width: 100%;
+}
+
+.jol-filter-group {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.jol-filter-label {
+    font-size: 14px;
+    font-weight: bold;
+    color: #8b816a;
+}
+
+.jol-btn {
+    padding: 8px 16px;
+    border: 1px solid #dcd7c9;
+    color: #5b5035;
+    background: transparent;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+    border-radius: 4px;
+}
+
+.jol-btn:hover {
+    background: #f0ede5;
+}
+
+/* Active states for filter buttons */
+.jol-btn.active.high { background: #ffcccc; border-color: #ff0000; color: #ff0000; }
+.jol-btn.active.medium { background: #ffe6cc; border-color: #ff8c00; color: #ff8c00; }
+.jol-btn.active.low { background: #e6e3da; border-color: #5b5035; color: #5b5035; }
+
+.jol-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+}
+
+/* List Item - full width clickable grid */
+.jol-item {
+    display: grid;
+    grid-template-columns: 3fr 1fr 1fr; /* Adjusted proportions for wider screen */
+    align-items: center;
+    padding: 16px 20px; /* Mas malaking padding para maganda tingnan sa wide screen */
+    cursor: pointer;
+    font-size: 18px;
+    transition: all 0.2s ease-in-out;
+    border-radius: 4px;
+    border-bottom: 1px solid #f0ede5; /* Manipis na linya para mas clear ang separation */
+}
+
+.jol-item:hover {
+    background-color: #d1ab45;
+    color: #3b3320;
+    border-bottom: 1px solid transparent;
+}
+
+.jol-name {
+    text-transform: uppercase;
+    color: #5b5035;
+    font-weight: bold;
+}
+
+.jol-date {
+    text-align: left;
+    color: #5b5035;
+}
+
+.jol-priority {
+    text-align: right;
+    font-weight: bold;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+}
+
+/* Priority Colors */
+.jol-priority.high { color: #ff0000; }
+.jol-priority.medium { color: #ff8c00; }
+.jol-priority.low { color: #5b5035; }
+
+
+/* --- JOB ORDER DETAILS --- */
+
+.jod-wrapper {
+    width: 1000px;
+    font-family: Arial, sans-serif;
+    max-width: 900px; /* Parehas sa list para consistent ang laki */
+    margin: 40px auto; /* Nakagitna */
+    color: #5b5035;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.jod-back-btn {
+    background: none;
+    border: none;
+    color: #8b816a;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-bottom: 20px;
+    padding: 0;
+    display: block; /* Para manatiling nasa kaliwa */
+}
+
+.jod-back-btn:hover {
+    color: #d1ab45;
+}
+
+.jod-container {
+    border: 1px solid #c2baa6;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    background-color: #ffffff;
+    overflow: hidden;
+    width: 100%;
+}
+
+/* --- Container 1: Overview --- */
+.jod-overview-container {
+    padding: 20px;
+}
+
+.jod-ov-header {
+    margin-bottom: 20px;
+}
+
+.jod-ov-id {
+    font-size: 16px;
+    color: #8b816a;
+    margin: 0;
+}
+
+.jod-ov-name {
+  text-transform: uppercase;
+  font-weight: bold;
+    font-size: 28px;
+    color: #6b5a18;
+    margin: 0;
+}
+
+.jod-ov-info-bar {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.jod-ov-info-block {
+    background-color: #d1ab45;
+    border-radius: 6px;
+    padding: 8px 12px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.jod-ov-label {
+    font-size: 11px;
+    font-weight: bold;
+    color: #ffffff;
+    margin-bottom: 4px;
+}
+
+.jod-ov-value {
+    font-size: 13px;
+    font-weight: bold;
+    font-family: Arial, sans-serif;
+}
+.due-date { color: #cc0000; }
+.priority-high { color: #5b5035; }
+
+.jod-ov-details-box {
+    background-color: #d1ab45;
+    border-radius: 8px;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+}
+
+.jod-ov-details-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.jod-ov-details-title {
+  font-weight: bold;
+    font-size: 12px;
+    color: #5b5035;
+}
+
+.jod-ov-scroll-icons {
+    font-size: 10px;
+    color: #8b816a;
+}
+
+.jod-ov-scroll-area {
+    max-height: 120px;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+.jod-ov-detail-item {
+    background-color: #ffffff;
+    padding: 10px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+}
+.jod-ov-detail-item strong { display: block; margin-bottom: 4px; }
+.jod-ov-detail-item p { margin: 0; }
+
+/* --- Container 2: Progress --- */
+.jod-progress-container {
+    padding: 0;
+}
+
+.jod-progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid #c2baa6;
+}
+
+.jod-container-title {
+    margin: 0;
+    font-size: 18px;
+    color: #6b5a18;
+}
+
+.jod-progress-bar-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.jod-progress-bar {
+    width: 200px;
+    height: 15px;
+    background-color: #e6e3da;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.jod-progress-fill {
+    height: 100%;
+    background-color: #d1ab45;
+}
+
+.jod-progress-text {
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.jod-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: Arial, sans-serif;
+    font-size: 13px;
+}
+
+.jod-table th {
+    text-align: center;
+    text-align: center;
+    padding: 12px 20px;
+    color: #6b5a18;
+    border-bottom: 1px solid #c2baa6;
+}
+
+.jod-table td {
+  text-align: center;
+    padding: 12px 20px;
+    border-bottom: 1px solid #c2baa6;
+    height: 40px; 
+}
+
+.jod-status {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: bold;
+}
+.jod-status.done { background-color: #8fbc8f; color: #fff; }
+.jod-status.in-progress { background-color: #a4bdfc; color: #fff; }
+
+/* --- Container 3: Assign Form --- */
+.jod-assign-header {
+    background-color: #d1ab45;
+    padding: 15px 20px;
+}
+
+.jod-container-title-white {
+    margin: 0;
+    color: white;
+    font-size: 20px;
+}
+
+.jod-form {
+    padding: 20px;
+}
+
+.jod-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.jod-form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.jod-form-group label {
+    font-size: 16px;
+    color: #d1ab45;
+    margin-bottom: 5px;
+}
+
+.jod-form-group input {
+    padding: 10px;
+    border: 1px solid #c2baa6;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: Arial, sans-serif;
+    color: #5b5035;
+    outline: none;
+}
+
+.jod-form-group select {
+    padding: 10px 40px 10px 10px; /* Dinagdagan ang padding-right (40px) para hindi pumatong ang text sa arrow */
+    border: 1px solid #c2baa6;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: Arial, sans-serif;
+    color: #5b5035;
+    outline: none;
+    
+    /* TANGGALIN ANG DEFAULT BROWSER ARROW */
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    
+    /* ILAGAY ANG CUSTOM GOLD/BROWN ARROW */
+    background-color: white;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%238b816a'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center; /* Posisyon ng arrow sa kanan */
+    background-size: 24px;
+}
+
+/* Para sa Internet Explorer (kung sakali) */
+.jod-form-group select::-ms-expand {
+    display: none;
+}
+
+.jod-form-actions {
+    display: flex;
+    justify-content: center;
+}
+
+.jod-submit-btn {
+    background-color: #d1ab45;
+    color: white;
+    border: none;
+    padding: 10px 40px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.jod-submit-btn:hover {
+    background-color: #b8963c;
+}
+
+/* --- MARK AS COMPLETED WRAPPER --- */
+.jod-complete-wrapper {
+    background-color: #f7f6f2; 
+    display: flex; /* Tinanggal natin yung justify-content: flex-end dito */
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.jod-complete-btn {
+    width: 100%; /* <--- ITO ANG MAGPAPAHABA SA BUTTON SAKOP ANG BUONG COLUMN */
+    background-color: #1b5e20; 
+    color: white;
+    border: none;
+    padding: 5px; /* Dinagdagan ko konti yung padding para mas proportion sa lapad */
+    border-radius: 0px;
+    font-size: 16px;
+    font-weight: bold;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    text-align: center;
+}
+
+.jod-complete-btn:hover {
+    background-color: #124016; 
+}
+
+.jod-complete-btn:disabled {
+    background-color: #9e9e9e;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+/* ==========================================================================
+   QUALITY CHECKER - PROJECT VERIFICATION LIST (qc-pv-)
+   ========================================================================== */
+
+.qc-pv-wrapper {
+    font-family: Arial, sans-serif;
+    width: 1000px;
+    margin: 40px auto;
+    padding: 20px;
+    color: #5b5035;
+    box-sizing: border-box;
+}
+
+.qc-pv-header {
+    border-bottom: 4px solid #c2baa6;
+    padding-bottom: 8px;
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+.qc-pv-title {
+    font-size: 24px;
+    font-weight: bold;
+    color: #6b5a18;
+    margin: 0 0 4px 0;
+    text-transform: uppercase;
+}
+
+.qc-pv-subtitle {
+    font-size: 15px;
+    color: #8b816a;
+    margin: 0;
+    font-weight: bold;
+}
+
+/* Controls Area */
+.qc-pv-controls {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 20px;
+}
+
+.qc-pv-dropdown {
+    padding: 8px 5px 8px 16px; /* Dinagdagan natin yung padding sa kanan (35px) para may pwesto yung arrow */
+    border: none;
+    font-size: 15px;
+    font-family: Arial, sans-serif;
+    color: white;
+    background-color: #4a4023; /* Dark olive/brown */
+    cursor: pointer;
+    border-radius: 4px;
+    outline: none;
+    min-width: 110px;
+
+    /* TANGGALIN ANG DEFAULT BROWSER ARROW */
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    
+    /* ILAGAY ANG CUSTOM WHITE ARROW */
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ffffff'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: left 80px center; /* Posisyon ng arrow sa kanan */
+    background-size: 30px; /* Laki ng arrow */
+}
+
+/* Para sa Internet Explorer/Lumang Edge (kung sakali) */
+.qc-pv-dropdown::-ms-expand {
+    display: none;
+}
+
+/* List/Table Styles */
+.qc-pv-list {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Grid Layout para pantay-pantay ang columns */
+.qc-pv-row {
+    display: grid;
+    grid-template-columns: 1fr 2fr 2fr 1fr;
+    align-items: center;
+    padding: 15px 20px;
+    font-size: 15px;
+}
+
+/* Table Header (Gold) */
+.qc-pv-list-header {
+    text-align: center;
+    color: #5b5035;
+    font-weight: bold;
+    margin-bottom: 10px;
+    font-size: 16px;
+}
+
+/* Table Items (White/Transparent) */
+.qc-pv-item {
+    color: #5b5035;
+    font-weight: normal;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    border-bottom: 1px solid #e6e3da;
+    text-align: center;
+}
+
+.qc-pv-item:hover {
+    background-color: #d1ab45;
+}
+
+/* Column Alignments */
+.qc-pv-col-center {
+    text-align: left;
+}
+
+/* ==========================================================================
+   QUALITY CHECKER - PROJECT VERIFICATION DETAIL (qc-pvd-)
+   ========================================================================== */
+
+.qc-pvd-wrapper {
+    font-family: Arial, sans-serif;
+    width: 1000px;
+    margin: 40px auto;
+    color: #5b5035;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.qc-pvd-back-btn {
+    background: none;
+    border: none;
+    color: #5b5035;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-bottom: 20px;
+    padding: 0;
+    transition: color 0.2s;
+}
+
+.qc-pvd-back-btn:hover { color: #d1ab45; }
+
+/* Main Containers */
+.qc-pvd-container {
+    border: 1px solid #c2baa6;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    background-color: #ffffff;
+    overflow: hidden;
+    width: 100%;
+}
+
+/* --- Top Section: Project Details --- */
+.qc-pvd-ov-container { padding: 20px; }
+.qc-pvd-header { margin-bottom: 20px; }
+.qc-pvd-id { font-size: 16px; color: #8b816a; margin: 0; }
+.qc-pvd-name { font-size: 24px; color: #6b5a18; margin: 0; font-weight: bold; text-transform: uppercase;}
+
+.qc-pvd-info-bar { display: flex; gap: 15px; margin-bottom: 20px; }
+
+.qc-pvd-info-block {
+    background-color: #d1ab45;
+    border-radius: 6px;
+    padding: 10px 15px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.qc-pvd-label { font-size: 12px; font-weight: bold; color: #ffffff; margin-bottom: 4px; }
+.qc-pvd-value { font-size: 14px; font-weight: bold; font-family: Arial, sans-serif; }
+.qc-pvd-due { color: #cc0000; }
+.qc-pvd-priority { color: #5b5035; }
+
+.qc-pvd-details-box {
+    background-color: #d1ab45;
+    border-radius: 8px;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+}
+
+.qc-pvd-details-header { display: flex; justify-content: space-between; margin-bottom: 10px; }
+.qc-pvd-details-title { font-size: 12px; color: #5b5035; font-weight: normal;}
+
+.qc-pvd-scroll-area { 
+    max-height: 120px; 
+    overflow-y: auto; 
+    padding-right: 10px; 
+}
+
+.qc-pvd-detail-item {
+    background-color: #ffffff;
+    padding: 12px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    font-family: Arial, sans-serif;
+    font-size: 13px;
+}
+.qc-pvd-detail-item strong { display: block; margin-bottom: 4px; font-size: 14px; }
+.qc-pvd-detail-item p { margin: 0; line-height: 1.4; color: #555; }
+
+/* Custom Scrollbar */
+.qc-pvd-scroll-area::-webkit-scrollbar { width: 6px; }
+.qc-pvd-scroll-area::-webkit-scrollbar-track { background: #FFFFFF; }
+.qc-pvd-scroll-area::-webkit-scrollbar-thumb { background: #bbb8b1d1; border-radius: 10px; }
+
+/* --- Bottom Section: Progress Table --- */
+.qc-pvd-progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid #c2baa6;
+}
+
+.qc-pvd-title { margin: 0; font-size: 18px; color: #6b5a18; font-weight: bold;}
+
+.qc-pvd-bar-wrapper { display: flex; align-items: center; gap: 10px; }
+.qc-pvd-bar { width: 150px; height: 14px; background-color: #e6e3da; border-radius: 10px; overflow: hidden; }
+.qc-pvd-fill { height: 100%; background-color: #d1ab45; transition: width 0.3s ease; }
+.qc-pvd-progress-text { font-family: Arial, sans-serif; font-size: 13px; font-weight: bold; }
+
+.qc-pvd-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: Arial, sans-serif;
+    font-size: 13px;
+}
+
+.qc-pvd-table th {
+    text-align: center;
+    padding: 12px 20px;
+    font-family: Arial, sans-serif;
+    color: #6b5a18;
+    border-bottom: 1px solid #c2baa6;
+}
+
+.qc-pvd-table td { 
+   text-align: center;
+    padding: 15px 20px; 
+    border-bottom: 1px solid #c2baa6; 
+    font-weight: bold;
+    color: #5b5035;
+}
+
+/* Action Buttons & Badges inside Table */
+.qc-pvd-status-badge {
+    padding: 6px 16px;
+    border-radius: 15px;
+    font-size: 12px;
+    font-weight: bold;
+    color: white;
+    display: inline-block;
+    text-align: center;
+    background-color: #8fbc8f; /* Green for approved */
+}
+
+.qc-pvd-actions {
+    text-align: center !important; /* Para siguradong nasa gitna yung ACTION header */
+    display: flex;
+    gap: 8px;
+}
+
+.qc-pvd-btn {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 15px;
+    font-size: 12px;
+    font-weight: bold;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: opacity 0.2s;
+}
+
+.qc-pvd-btn:hover { opacity: 0.8; }
+.qc-pvd-btn.approve { background-color: #006400; } /* Dark Green */
+.qc-pvd-btn.repair { background-color: #ff0000; } /* Red */
+
+

@@ -801,87 +801,188 @@
   margin-top: 2;
 }
 
-/* Project History */
-.history-container {
-  font-family: 'Georgia', serif;
+}
+
+/* --- WORKER LIST STYLES --- */
+
+.worker-list-container {
+  width: 100%;
+  padding: 20px;
+  font-family: Arial, sans-serif;
+}
+
+/* Search Header */
+.worker-search-header {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.search-bar {
   flex: 1;
-  padding: 48px 56px;
-  background-color: #ffffff;
-  min-height: 100vh;
-  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  background-color: #D1AA3A; /* Gold color mula sa picture */
+  border-radius: 25px;
+  padding: 5px 15px;
 }
 
-.history-title {
-  margin: 0 0 16px;
-  font-size: 30px;
-  font-weight: 900;
-  color: #5a4a00;
-  letter-spacing: 1.5;
-  text-transform: uppercase;
-  font-family: inherit;
+.search-bar input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: white;
+  padding: 10px;
+  font-size: 1rem;
+  outline: none;
+  font-family: Arial, sans-serif;
 }
 
-.history-divider {
-  height: 6px;
-  background: linear-gradient(to right, #b8a040, #d4c47a, #c8b060);
-  border-radius: 3px;
-  margin-bottom: 28px;
+.search-bar input::placeholder {
+  color: rgba(255, 255, 255, 0.8);
 }
 
-.history-table {
+.filter-dropdown {
+  padding: 10px 40px 10px 15px; /* Dinagdagan natin ng 40px sa right para hindi matakpan ang text ng arrow */
+  border: 1px solid #D1AA3A;
+  border-radius: 25px; 
+  color: #666;
+  font-size: 1rem;
+  outline: none;
+  font-family: Arial, sans-serif;
+  background-color: white;
+  cursor: pointer;
+
+  /* --- ITO YUNG MAGIC PARA PUMASOK YUNG ARROW --- */
+  -webkit-appearance: none; /* Tinatago yung default arrow ng browser */
+  -moz-appearance: none;
+  appearance: none;
+  
+  /* Nilagyan natin ng sariling arrow */
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23666666%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+  background-repeat: no-repeat;
+  
+  /* Inurong natin ng 15px papasok mula sa kanan para hindi lumabas sa oval */
+  background-position: right 15px center; 
+  background-size: 12px auto;
+}
+
+/* Banner */
+.worker-banner {
+  background-color: #D1AA3A;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 10px; /* <-- Binawasan ang radius, ginawang 10px */
+  margin-bottom: 20px;
+}
+
+.worker-banner h2 {
+  text-align: center;
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+/* Table */
+.worker-table {
   width: 100%;
   border-collapse: collapse;
+  border: 2px solid #5C4033; /* Dark brown outer border */
+  border-radius: 8px; /* Rounded corners for the table wrapper */
+  border-style: hidden; /* Fix for rounded corners */
+  box-shadow: 0 0 0 2px #5C4033; /* Trick for rounded corners */
+  margin-bottom: 20px;
 }
 
-.history-table th {
-  padding: 12px 16px;
-  text-align: left;
-  font-size: 14px;
-  font-weight: 900;
-  color: #5a4a00;
-  border-bottom: 2px solid #c8b840;
-  letter-spacing: 0.3;
+.worker-table th {
+  background-color: #FAF4E6; /* Cream background for headers */
+  color: #000;
+  padding: 15px;
+  text-align: center;
+  border: 1px solid #D1AA3A; /* Gold inner borders */
+  font-weight: bold;
 }
 
-.history-table td {
-  padding: 16px 16px;
-  font-size: 14px;
-  font-weight: 700;
-  color: #3a2e00;
-  border-bottom: 1px solid #e8d98a;
+.worker-table td {
+  padding: 15px;
+  text-align: center;
+  border: 1px solid #D1AA3A;
+  color: #000;
 }
-
-.history-row {
-  cursor: pointer;
-  transition: background 0.15s;
-  background: #fff;
-}
-
-.history-row.selected {
-  background: #c8bfa0;
-}
-
-.history-row:hover:not(.selected) {
-  background: rgba(184,160,48,0.08);
-}
-
-.history-remark {
-  border-radius: 20px;
-  padding: 5px 18px;
-  font-size: 13px;
-  font-weight: 700;
+/* Type Badges */
+.type-badge {
+  padding: 5px 5px;
+  border-radius: 15px;
+  font-size: 0.6rem;
+  font-weight: normal;
   display: inline-block;
 }
 
-.history-remark-early {
-  background: #3a7a3a;
-  color: #fff;
+.type-badge.regular {
+  background-color: #d5ad0b; /* Light yellow */
+  color: #ffffff;
 }
 
-.history-remark-ontime {
-  background: #c8e8c8;
-  color: #2a5a2a;
-  border: 1.5px solid #7ab87a;
+.type-badge.part-time {
+  background-color: #584304; /* Light blue */
+  color: #ffffff;
+}
+
+/* Add Worker Button */
+.add-worker-container {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn-add-worker {
+  background-color: #D1AA3A;
+  color: white;
+  border: none;
+  padding: 10px 25px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-family: Arial, sans-serif;
+}
+
+.btn-add-worker:hover {
+  background-color: #B8922A;
+}
+
+
+/* Add Button */
+.add-worker-container {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.btn-add-worker {
+  background-color: #CBA135;
+  color: white;
+  border: none;
+  padding: 10px 30px;
+  border-radius: 10px;
+  font-weight: bold;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.btn-add-worker:hover {
+  opacity: 0.9;
+}
+
+/* --- ADD WORKER MODAL STYLES --- */
+
+/* Background overlay (yung nagpapa-dark sa likod) */
+.modal-overlay {
+  position: fixed;
+  inset: 0; /* Ito ang magic code para sumakop nang pantay kahit may sidebar */
+  background-color: rgba(0, 0, 0, 0.5); /* Medyo pinadilim ko ng konti para mas lutang ang form */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999; /* Tinaasan natin para siguradong nasa pinaka-ibabaw */
 }
 
 .history-remark-late {

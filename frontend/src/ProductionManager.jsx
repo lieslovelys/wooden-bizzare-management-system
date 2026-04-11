@@ -4,9 +4,11 @@ import { UserContext } from "./App";
 import Navbar from "./globals/Navbar"; 
 import Logout from "./globals/Logout"; 
 import InventoryTable from "./globals/InventoryTable";
-
-const Dashboard = () => <div><h1>Production Dashboard</h1></div>;
-const JobOrder = () => <div><h1>Job Order Management</h1></div>;
+import JobOrder from "./globals/JobOrder";
+import ProjectVerification from "./globals/ProjectVerification";
+import ProjectHistory from "./admin/ProjectHistory";
+import PMNotification from "./product_manager/PMNotification";
+import PM_dashboard from "./product_manager/PM_dashboard";
 
 const ProductionManager = () => {
     const { username } = useContext(UserContext);
@@ -29,10 +31,13 @@ const ProductionManager = () => {
             <div className="page-content">
                 <Routes>
                     <Route index element={<Navigate to="dashboard" replace />} />
-                    <Route path="dashboard" element={<Dashboard />} />
                     <Route path="job-order" element={<JobOrder />} />
                     <Route path="logout" element={<Logout />} />
                     <Route path="inventory/*" element={<InventoryTable />} />
+                    <Route path="verification" element={<ProjectVerification />} />
+                    <Route path="history" element={<ProjectHistory />} />
+                    <Route path="notifications" element={<PMNotification />} />
+                    <Route path="dashboard" element={<PM_dashboard />} />
                 </Routes>
             </div>
         </div>

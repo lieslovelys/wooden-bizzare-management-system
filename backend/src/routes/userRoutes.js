@@ -51,19 +51,19 @@ router.get('/session-user', (req, res) => {
 });
 
 router.get('/logout', (req, res) => {
-  // Destroy the session data on the server
+
   req.session.destroy((err) => {
     if (err) {
       console.error('Error destroying session:', err);
-      // Handle the error (e.g., return a 500 error)
+   
       return res.status(500).send({message: 'Error logging out'});
     } else {
-      // Clear the session cookie on the client side
-      res.clearCookie('connect.sid'); // Replace 'connect.sid' if you used a custom cookie name
 
-      // Redirect the user or send a success message
+      res.clearCookie('connect.sid'); 
+
+      
       res.status(200).send({message: 'Successfully logged out'});
-      // or redirect to a login page: res.redirect('/login');
+
     }
   });
 });

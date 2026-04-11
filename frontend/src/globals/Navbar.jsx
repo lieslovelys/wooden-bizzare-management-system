@@ -1,11 +1,24 @@
+import { useContext } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+// Siguraduhing tama ang path pabalik sa App.jsx kung nasaan ang UserContext mo
+import { UserContext } from '../App'; 
 
-const Navbar = ({ tabs, accountType, username }) => {
+const Navbar = ({ tabs, accountType }) => {
     const location = useLocation();
+    
+    // DITO NATIN KUKUNIN YUNG DATA MULA SA APP.JSX!
+    const { userRole, firstName, lastName } = useContext(UserContext);
 
-    const getInitial = () => {
-        if (username) return username.charAt(0).toUpperCase();
-        return 'U';
+    // Function natin kanina
+    const getRoleAbbreviation = (role) => {
+        switch (role) {
+            case 'Admin': return 'A';
+            case 'Production Manager': return 'PM';
+            case 'Quality Checker': return 'QC';
+            case 'Worker': return 'W';
+            case 'Inventory Staff': return 'I';
+            default: return 'U'; 
+        }
     };
 
     return (
@@ -19,10 +32,19 @@ const Navbar = ({ tabs, accountType, username }) => {
             </div>
 
             <div className="user-profile">
+                {/* Ipasa natin yung userRole mula sa context */}
                 <div className="avatar-circle">
-                    {getInitial()}
+                    {getRoleAbbreviation(userRole)}
                 </div>
-                <h2>{username}</h2>
+                
+                <div className="user-info" style={{ marginLeft: '10px' }}>
+                    {/* Display yung userRole */}
+                    <h2 style={{ margin: '0', fontSize: '1.2rem' }}>{userRole}</h2>
+                    {/* Display yung Name mula sa context */}
+                    <p style={{ margin: '0', fontSize: '0.9rem', color: '#666' }}>
+                        {firstName} {lastName}
+                    </p>
+                </div>
             </div>
 
             <nav className="nav-links">

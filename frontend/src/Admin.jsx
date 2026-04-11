@@ -11,7 +11,7 @@ import ProjectVerification from "./globals/ProjectVerification";
 import Profit from "./admin/Profit";
 import WorkerProductivity from "./admin/WorkerProductivity";
 import ProjectHistory from "./admin/ProjectHistory";
-import Notification from "./admin/Notification";
+import AdminNotification from "./admin/AdminNotification";
 import JobOrder from "./globals/JobOrder";
 import Attendance from "./globals/Attendance";
 import InventoryTable from "./globals/InventoryTable";
@@ -51,7 +51,7 @@ const Admin = () => {
                     <Route path="profit" element={<Profit />} />
                     <Route path="productivity" element={<WorkerProductivity />} />
                     <Route path="project-history" element={<ProjectHistory />} />
-                    <Route path="notification" element={<Notification />} />
+                    <Route path="notification" element={<AdminNotification />} />
                     <Route path="create-project" element={<CreateProject />} />
                     <Route path="inventory" element={<InventoryTable />} />
                     <Route path="logout" element={<Logout />} />

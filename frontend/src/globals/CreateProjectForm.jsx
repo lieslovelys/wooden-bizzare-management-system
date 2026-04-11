@@ -73,6 +73,7 @@ const CreateProjectForm = () => {
 
       <form onSubmit={handleSubmit} className="project-form">
         {/* Full Width Row */}
+        <h2 className="form-title">CREATE PROJECT</h2>
         <div className="form-group full-width">
           <label>Project Name</label>
           <input 
@@ -188,7 +189,6 @@ const CreateProjectForm = () => {
 
         {/* Action Buttons */}
         <div className="form-actions">
-          <button type="button" className="btn-cancel">Cancel</button>
           <button type="submit" className="btn-submit">Create Project</button>
         </div>
       </form>

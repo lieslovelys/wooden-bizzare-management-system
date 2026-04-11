@@ -35,13 +35,20 @@ app.use(session({
     }
 }));
 
+
 // Import Routers
 import userRoutes from './routes/userRoutes.js';
 import projectRoutes from './routes/projectRoutes.js';
+import jobOrderRoutes from './routes/jobOrderRoutes.js';
+import adminNotifRoutes from './routes/adminNotifRoutes.js';
+import adminDashboardRoutes from './routes/adminDashboardRoutes.js';
 
 // Routes
 app.use('/', userRoutes);
 app.use('/api/projects', projectRoutes); 
+app.use('/api', jobOrderRoutes);
+app.use('/api/notifications', adminNotifRoutes);
+app.use('/api/dashboard', adminDashboardRoutes);
 
 
 const url = 'http://localhost:';
