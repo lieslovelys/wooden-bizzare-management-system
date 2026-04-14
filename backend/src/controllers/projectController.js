@@ -13,18 +13,23 @@ import { createNotification } from '../models/adminNotifModel.js';
 
 export const createProject = async (req, res) => {
   try {
+    console.log("Received project data:", req.body);
     const projectId = await createProjectWithVariables(req.body);
+    console.log("Project created with ID:", projectId);
     
-    await createNotification(
-        'project', 
-        'New Project Arrived', 
-        `A new project has been created. See Job Orders to view and assign workers.`, 
-        'PM', 
+    try {
+      await createNotification(
+          'project', 
+          'New Project Arrived', 
+          `A new project has been created. See Job Orders to view and assign workers.`, 
+          'PM', 
         projectId 
     );
+    } catch (notifErr) {
+      console.warn("Notification creation failed (table may not exist):", notifErr.message);
+    }
 
-
-    res.status(201).json({ 
+    res.status(201).json({
         success: true, 
         message: 'Project created successfully', 
         projectId 

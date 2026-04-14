@@ -68,6 +68,7 @@ CREATE TABLE worker_details (
     rate NUMERIC(10, 2)    -- Pera format (e.g., 800.00)
 );
 
+
 CREATE TABLE job_assignments (
     assignment_id SERIAL PRIMARY KEY,
     project_id INTEGER REFERENCES projects(id) ON DELETE CASCADE,

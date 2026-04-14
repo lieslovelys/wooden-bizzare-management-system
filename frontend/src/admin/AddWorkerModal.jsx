@@ -6,7 +6,7 @@ const AddWorkerModal = ({ isOpen, onClose, onSave }) => {
     firstName: '',
     middleName: '',
     lastName: '',
-    suffix: 'None', // <-- Ginawa nating 'None' ang default imbes na blangko
+    suffix: 'None',
     username: '',
     password: '',
     workerType: 'Regular',
@@ -14,6 +14,8 @@ const AddWorkerModal = ({ isOpen, onClose, onSave }) => {
     contactNumber: '',
     dailyRate: ''
   });
+  const [profilePicture, setProfilePicture] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
 
   if (!isOpen) return null;
 
@@ -22,13 +24,27 @@ const AddWorkerModal = ({ isOpen, onClose, onSave }) => {
     setFormData({ ...formData, [name]: value });
   };
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setProfilePicture(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewUrl(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSave(formData);
+    onSave({ ...formData, photo: previewUrl });
     setFormData({
       firstName: '', middleName: '', lastName: '', suffix: 'None', username: '', password: '',
       workerType: 'Regular', role: 'Carpenter', contactNumber: '', dailyRate: ''
     });
+    setProfilePicture(null);
+    setPreviewUrl(null);
   };
 
   return (
@@ -42,6 +58,37 @@ const AddWorkerModal = ({ isOpen, onClose, onSave }) => {
         <form onSubmit={handleSubmit} className="modal-form-body">
           <div className="form-grid">
             
+            {/* --- Profile Picture --- */}
+            <div className="form-group" style={{ gridColumn: 'span 2', display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '10px' }}>
+              <div className="profile-picture-upload">
+                {previewUrl ? (
+                  <img src={previewUrl} alt="Profile Preview" className="profile-preview" />
+                ) : (
+                  <div className="profile-placeholder">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="2">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                  </div>
+                )}
+                <label htmlFor="profile-upload" className="upload-btn">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                  </svg>
+                  Upload Photo
+                </label>
+                <input 
+                  type="file" 
+                  id="profile-upload" 
+                  accept="image/*" 
+                  onChange={handleImageChange} 
+                  style={{ display: 'none' }}
+                />
+              </div>
+            </div>
+
             {/* --- Account Credentials --- */}
             <div className="form-group" style={{ gridColumn: 'span 2' }}>
               <strong style={{ borderBottom: '1px solid #ddd', paddingBottom: '5px' }}>Account Credentials</strong>

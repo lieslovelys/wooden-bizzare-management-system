@@ -37,7 +37,7 @@ export const getJobOrderById = async (projectId) => {
 
 export const getWorkers = async () => {
     const sql = `
-        SELECT u.user_id, u.first_name, u.last_name, w.job_role 
+        SELECT u.user_id, u.first_name, u.last_name, u.middle_name, w.job_role, w.detail_id, w.job_type, w.contact, w.photo
         FROM users u
         LEFT JOIN worker_details w ON u.user_id = w.user_id
         WHERE u.user_role = 'Worker'

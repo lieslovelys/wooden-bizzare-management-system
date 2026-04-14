@@ -74,7 +74,7 @@ const getWorkers = async (req, res) => {
 const addWorker = async (req, res) => {
     try {
         // Dinagdag natin ang middleName at suffix dito
-        const { username, password, firstName, middleName, lastName, suffix, workerType, role, contactNumber, dailyRate } = req.body;
+        const { username, password, firstName, middleName, lastName, suffix, workerType, role, contactNumber, dailyRate, photo } = req.body;
 
         const passwordHash = await bcrypt.hash(password, 10);
         
@@ -87,7 +87,7 @@ const addWorker = async (req, res) => {
         if (newUser && newUser.length > 0) {
             const userId = newUser[0].user_id; 
             
-            await User.createWorkerDetails(userId, workerType, role, contactNumber, dailyRate);
+            await User.createWorkerDetails(userId, workerType, role, contactNumber, dailyRate, photo);
 
             res.status(200).json({ success: true, message: 'Worker added successfully' });
         } else {

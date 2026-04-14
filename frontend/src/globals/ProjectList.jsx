@@ -34,11 +34,17 @@ const ProjectList = () => {
     try {
       const response = await fetch('http://localhost:8080/api/projects');
       const result = await response.json();
+      console.log("API Response:", result);
       
-      if (result.success) {
+      if (result.success && result.data) {
         setProjects(result.data);
       } else if (Array.isArray(result)) {
         setProjects(result);
+      } else if (result.data && Array.isArray(result.data)) {
+        setProjects(result.data);
+      } else {
+        console.log("No projects or unexpected format:", result);
+        setProjects([]);
       }
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -52,15 +58,18 @@ const ProjectList = () => {
   }, []);
 
   const filteredProjects = projects.filter((project) => {
-    // 1. TANGGALIN KAPAG TAPOS NA
-    const currentStatus = project.status ? project.status.toLowerCase() : 'pending';
-    if (currentStatus === 'completed' || currentStatus === 'done') {
+    // 1. TANGGALIN KAPAG TAPOS NA - use priority_level or check other fields
+    const projectStatus = project.status || project.priority_level || 'pending';
+    if (projectStatus.toLowerCase() === 'completed' || projectStatus.toLowerCase() === 'done') {
         return false; 
     }
 
-    // 2. STATUS FILTERING LOGIC
-    if (statusFilter !== 'All' && currentStatus !== statusFilter.toLowerCase()) {
+    // 2. STATUS FILTERING LOGIC - allow if status doesn't exist
+    if (statusFilter !== 'All') {
+      const currentStatus = project.status ? project.status.toLowerCase() : 'pending';
+      if (currentStatus !== statusFilter.toLowerCase()) {
         return false;
+      }
     }
 
     // 3. SEARCH LOGIC
@@ -124,8 +133,8 @@ const ProjectList = () => {
             <option value="Pending">Pending</option>
             <option value="In Progress">In Progress</option>
         </select>
-      </div>
-
+   
+    
       {loading ? (
         <p style={{textAlign: 'center', marginTop: '20px'}}>Loading projects...</p>
       ) : (
@@ -151,7 +160,7 @@ const ProjectList = () => {
                     <td>{proj.project_name}</td>
                     
                     <td>
-                        <span className={`status-badge ${proj.status ? proj.status.toLowerCase().replace(' ', '-') : 'pending'}`}>
+                        <span className={`status-badge ${(proj.status || 'pending').toLowerCase().replace(' ', '-')}`}>
                             {proj.status || 'Pending'}
                         </span>
                     </td>

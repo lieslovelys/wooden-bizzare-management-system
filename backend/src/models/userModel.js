@@ -77,14 +77,14 @@ const getAllWorkers = async () => {
     }
 }
 
-const createWorkerDetails = async (user_id, job_type, job_role, contact, rate) => {
+const createWorkerDetails = async (user_id, job_type, job_role, contact, rate, photo = null) => {
     try {
         const text = `
-            INSERT INTO worker_details (user_id, job_type, job_role, contact, rate)
-            VALUES ($1, $2, $3, $4, $5)
+            INSERT INTO worker_details (user_id, job_type, job_role, contact, rate, photo)
+            VALUES ($1, $2, $3, $4, $5, $6)
             RETURNING *;
         `;
-        const result = await query(text, [user_id, job_type, job_role, contact, rate]);
+        const result = await query(text, [user_id, job_type, job_role, contact, rate, photo]);
         return result.rows[0];
     } catch (e) {
         throw e;

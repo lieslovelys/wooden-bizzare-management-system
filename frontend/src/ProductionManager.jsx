@@ -9,6 +9,7 @@ import ProjectVerification from "./globals/ProjectVerification";
 import ProjectHistory from "./admin/ProjectHistory";
 import PMNotification from "./product_manager/PMNotification";
 import PM_dashboard from "./product_manager/PM_dashboard";
+import Attendance from "./globals/Attendance";
 
 const ProductionManager = () => {
     const { username } = useContext(UserContext);
@@ -38,6 +39,7 @@ const ProductionManager = () => {
                     <Route path="history" element={<ProjectHistory />} />
                     <Route path="notifications" element={<PMNotification />} />
                     <Route path="dashboard" element={<PM_dashboard />} />
+                    <Route path="attendance" element={< Attendance />} />
                 </Routes>
             </div>
         </div>

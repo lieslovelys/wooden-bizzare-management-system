@@ -14,3 +14,6 @@ router.get('/qa/tasks', getQATasks);
 router.put('/assignments/:assignmentId/status', updateQAStatus); 
 
 export default router;
+
+// Also export for direct API access
+export { getWorkersList };

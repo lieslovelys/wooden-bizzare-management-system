@@ -6,6 +6,8 @@ export const createProjectWithVariables = async (projectData) => {
     clientPayment, priorityLevel, dueDate, projectDetails
   } = projectData;
 
+  console.log("Creating project with data:", projectData);
+
   const client = await getClient();
 
   try {
@@ -16,8 +18,10 @@ export const createProjectWithVariables = async (projectData) => {
       RETURNING id;
     `;
     const projectValues = [projectName, clientName, contactNumber, dateOrdered, clientPayment, priorityLevel, dueDate];
+    console.log("Project values:", projectValues);
     const projectRes = await client.query(projectInsertQuery, projectValues);
     const projectId = projectRes.rows[0].id;
+    console.log("Project ID:", projectId);
 
     if (projectDetails && projectDetails.length > 0) {
       const variableInsertQuery = `
@@ -26,7 +30,7 @@ export const createProjectWithVariables = async (projectData) => {
       `;
       for (const variable of projectDetails) {
         // Only insert if the variable actually has a name typed in
-        if (variable.name.trim() !== '') {
+        if (variable.name && variable.name.trim() !== '') {
            await client.query(variableInsertQuery, [projectId, variable.name, variable.detail]);
         }
       }
@@ -36,6 +40,7 @@ export const createProjectWithVariables = async (projectData) => {
     return projectId;
   } catch (error) {
     await client.query('ROLLBACK'); 
+    console.error("Error in createProjectWithVariables:", error);
     throw error;
   } finally {
     client.release();
@@ -48,21 +53,19 @@ export const createProjectWithVariables = async (projectData) => {
 export const getAllProjects = async () => {
   const client = await getClient();
   try {
-    const query = `
-      SELECT 
-        id, 
-        project_name, 
-        client_name, 
-        contact_number, 
-        client_payment, 
-        due_date, 
-        priority_level,
-        status -- <--- IDINAGDAG ANG STATUS DITO
+    // Check if status column exists
+    let query = `
+      SELECT id, project_name, client_name, contact_number, client_payment, due_date, priority_level
       FROM projects
       ORDER BY created_at DESC;
     `;
-    const res = await client.query(query);
-    return res.rows;
+    let res = await client.query(query);
+    
+    // Add default status to each project
+    return res.rows.map(row => ({
+      ...row,
+      status: 'Pending'
+    }));
   } catch (error) {
     throw error;
   } finally {

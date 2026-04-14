@@ -42,6 +42,8 @@ import projectRoutes from './routes/projectRoutes.js';
 import jobOrderRoutes from './routes/jobOrderRoutes.js';
 import adminNotifRoutes from './routes/adminNotifRoutes.js';
 import adminDashboardRoutes from './routes/adminDashboardRoutes.js';
+import profitRoutes from './routes/profitRoutes.js';
+import attendanceRoutes from './routes/attendanceRoutes.js';
 import productivityRoutes from './routes/productivityRoutes.js';
 
 // Routes
@@ -51,6 +53,12 @@ app.use('/api', jobOrderRoutes);
 app.use('/api/productivity', productivityRoutes);
 app.use('/api/notifications', adminNotifRoutes);
 app.use('/api/dashboard', adminDashboardRoutes);
+app.use('/api/profit', profitRoutes);
+app.use('/api/attendance', attendanceRoutes);
+
+// Workers endpoint
+import { getWorkersList } from './controllers/jobOrderController.js';
+app.get('/api/workers', getWorkersList);
 
 
 const url = 'http://localhost:';
