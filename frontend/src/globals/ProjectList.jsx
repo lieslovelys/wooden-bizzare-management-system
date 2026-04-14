@@ -96,23 +96,24 @@ const ProjectList = () => {
 
   return (
     <div className="project-list-container">
-      <div className="search-container">
-        <span className="search-icon">
-          {/* Ito ang SVG code para sa magnifying glass */}
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="11" cy="11" r="8"></circle>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-          </svg>
-        </span>
-        <input 
-          type="text" 
-          className="search-input"
-          placeholder="Search project ID or name...."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-      </div>
-
+      
+      {/* HEADER CONTROLS */}
+      <div className="list-top-controls">
+        <div className="search-container" style={{ margin: 0, flex: 1 }}>
+          <span className="search-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+          </span>
+          <input 
+            type="text" 
+            className="search-input"
+            placeholder="Search project ID or name...."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
 
         <select 
             className="status-filter"

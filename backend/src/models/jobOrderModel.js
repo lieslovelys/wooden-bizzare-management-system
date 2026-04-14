@@ -141,24 +141,27 @@ export const updateAssignmentStatus = async (assignmentId, newStatus) => {
     try {
         let sql;
 
-
         if (newStatus === 'Approved') {
             sql = `
                 UPDATE job_assignments 
-                SET 
-                    status = $1, 
-                    date_completed = CURRENT_DATE 
-                WHERE assignment_id = $2 
-                RETURNING *
+                SET status = $1, date_completed = CURRENT_DATE 
+                WHERE assignment_id = $2 RETURNING *
             `;
         } 
-
+        // --- BAGONG LOGIC PARA KAY WORKER (date_submitted) ---
+        else if (newStatus === 'For QA') {
+            sql = `
+                UPDATE job_assignments 
+                SET status = $1, date_submitted = CURRENT_DATE 
+                WHERE assignment_id = $2 RETURNING *
+            `;
+        }
+        // -----------------------------------------------------
         else {
             sql = `
                 UPDATE job_assignments 
                 SET status = $1 
-                WHERE assignment_id = $2 
-                RETURNING *
+                WHERE assignment_id = $2 RETURNING *
             `;
         }
 

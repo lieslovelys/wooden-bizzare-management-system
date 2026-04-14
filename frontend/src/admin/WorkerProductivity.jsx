@@ -1,89 +1,126 @@
-import { useState } from "react";
-import "../css/admin.css";
+import React, { useState, useEffect } from 'react';
+import '../css/admin.css'; 
 
-const regularWorkers = [
-  { name: "Juan dela Cruz", role: "Carpenter", early: 1, onTime: 1, overdue: 1, accepted: 2, forRepair: 1 },
-  { name: "Maria Santos",   role: "Carver",    early: 1, onTime: 1, overdue: 1, accepted: 2, forRepair: 0 },
-  { name: "Carlo Cruz",     role: "Carpenter", early: 1, onTime: 1, overdue: 0, accepted: 2, forRepair: 0 },
-  { name: "Ben Reyes",      role: "Carpenter", early: 0, onTime: 1, overdue: 1, accepted: 0, forRepair: 2 },
-];
+const WorkerProductivity = () => {
+    const [productivityData, setProductivityData] = useState([]);
+    const [loading, setLoading] = useState(true);
+    
+    const [activeTab, setActiveTab] = useState('Regular'); 
+    const [roleFilter, setRoleFilter] = useState('All'); 
 
-const partTimeWorkers = [
-  { name: "Pedro Reyes",       role: "Delivery", early: 1, onTime: 0, overdue: 1, accepted: 1, forRepair: 1 },
-  { name: "Ana Lim",           role: "Liha",     early: 0, onTime: 2, overdue: 0, accepted: 1, forRepair: 0 },
-  { name: "Rico Delos Santos", role: "Painter",  early: 1, onTime: 1, overdue: 0, accepted: 1, forRepair: 1 },
-];
+    useEffect(() => {
+        const fetchProductivity = async () => {
+            try {
+                const response = await fetch('http://localhost:8080/api/productivity');
+                if (response.ok) {
+                    const result = await response.json();
+                    setProductivityData(result);
+                }
+            } catch (error) {
+                console.error("Error fetching productivity data:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
 
-const COLS = ["Worker", "Early", "On-Time", "Overdue", "Accepted", "For Repair"];
+        fetchProductivity();
+    }, []);
 
-export default function WorkerProductivity() {
-  const [activeTab, setActiveTab] = useState("regular");
+    const filteredData = productivityData.filter(worker => {
+        const matchTab = worker.job_type && worker.job_type.toLowerCase() === activeTab.toLowerCase();
+        const matchRole = roleFilter === 'All' || (worker.job_role && worker.job_role.toLowerCase() === roleFilter.toLowerCase());
+        return matchTab && matchRole;
+    });
 
-  const workers = activeTab === "regular" ? regularWorkers : partTimeWorkers;
+    return (
+        <div className="prod-wrapper">
+            <h2 className="prod-header-title">Task Progress & QC Result</h2>
 
-  const rows = [...workers];
-  while (rows.length < 4) rows.push(null);
+            <div className="prod-tabs-container">
+                <button 
+                    className={`prod-tab ${activeTab === 'Regular' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('Regular')}
+                >
+                    Regular Workers
+                </button>
+                <button 
+                    className={`prod-tab ${activeTab === 'Part-Time' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('Part-Time')}
+                >
+                    Part-time Workers
+                </button>
+            </div>
 
-  return (
-    <div className="productivity-container">
-      <div className="productivity-tabs">
-        {[
-          { key: "regular",  label: "Regular Workers" },
-          { key: "parttime", label: "Part-time Workers" },
-        ].map(({ key, label }) => {
-          const active = activeTab === key;
-          return (
-            <button
-              key={key}
-              onClick={() => setActiveTab(key)}
-              className={`productivity-tab ${active ? "active" : ""}`}
-            >
-              {label}
-            </button>
-          );
-        })}
-      </div>
+            <div className="prod-filter-container">
+                <select 
+                    className="prod-dropdown" 
+                    value={roleFilter} 
+                    onChange={(e) => setRoleFilter(e.target.value)}
+                >
+                    <option value="All">All Roles</option>
+                    <option value="Carpenter">Carpenter</option>
+                    <option value="Carver">Carver</option>
+                    <option value="Liha">Liha</option>
+                    <option value="Painter">Painter</option>
+                </select>
+            </div>
 
-      <div className="productivity-divider" />
+            {loading ? (
+                <p style={{ textAlign: 'center', marginTop: '20px' }}>Loading productivity records...</p>
+            ) : (
+                <div className="prod-table-responsive">
+                    <table className="prod-table">
+                        <thead>
+                            <tr>
+                                <th style={{textAlign: 'left', paddingLeft: '20px'}}>Rank & Name</th>
+                                <th>Early</th>
+                                <th>On-Time</th>
+                                <th>Late</th>
+                                <th>Accepted</th>
+                                <th>For Repair</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {filteredData.length > 0 ? (
+                                filteredData.map((worker, index) => {
+                                    // LOGIC PARA SA LEADERBOARD COLORS
+                                    const rankClass = index === 0 ? 'rank-gold' 
+                                                    : index === 1 ? 'rank-silver' 
+                                                    : index === 2 ? 'rank-bronze' 
+                                                    : 'rank-normal';
 
-      <div>
-        <div className="productivity-table-title">
-          Task Progress &amp; QC Result
+                                    return (
+                                        <tr key={worker.user_id} className={`prod-row ${rankClass}`}>
+                                            <td className="rank-col">
+                                                <div className="rank-badge-container">
+                                                    <span className="rank-number">{index + 1}</span>
+                                                </div>
+                                                <div className="rank-details">
+                                                    <span className="rank-name">{worker.worker_name}</span>
+                                                    <span className="rank-role">{worker.job_role || 'Worker'}</span>
+                                                </div>
+                                            </td>
+                                            <td><span className="stat-pill">{worker.early_count}</span></td>
+                                            <td><span className="stat-pill">{worker.on_time_count}</span></td>
+                                            <td><span className="stat-pill error-text">{worker.late_count}</span></td>
+                                            <td><span className="stat-pill success-text">{worker.accepted_count}</span></td>
+                                            <td><span className="stat-pill error-text">{worker.repair_count}</span></td>
+                                        </tr>
+                                    );
+                                })
+                            ) : (
+                                <tr>
+                                    <td colSpan="6" style={{ textAlign: 'center', padding: '30px', color: '#8B7E5C' }}>
+                                        No workers found for this category.
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            )}
         </div>
+    );
+};
 
-        <div className="productivity-table-container">
-          <table className="productivity-table">
-            <thead>
-              <tr>
-                {COLS.map((col) => (
-                  <th key={col}>
-                    {col === "For Repair" ? "For\nRepair" : col}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((w, i) => (
-                <tr key={i}>
-                  {w ? (
-                    <>
-                      <td>
-                        <div className="productivity-worker-name">{w.name}</div>
-                        <div className="productivity-worker-role">{w.role}</div>
-                      </td>
-                      {[w.early, w.onTime, w.overdue, w.accepted, w.forRepair].map((val, j) => (
-                        <td key={j}>{val}</td>
-                      ))}
-                    </>
-                  ) : (
-                    <td colSpan={6}></td>
-                  )}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  );
-}
+export default WorkerProductivity;

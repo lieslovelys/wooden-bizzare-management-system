@@ -733,265 +733,9 @@
   margin-bottom: 32px;
 }
 
-.productivity-table-title {
-  font-size: 16px;
-  font-weight: 900;
-  color: #5a4a00;
-  margin-bottom: 16px;
-}
-
-.productivity-table-container {
-  border: 1.5px solid #8b7a2a;
-  border-radius: 10px;
-  overflow: hidden;
-}
-
-.productivity-table {
-  width: 100%;
-  border-collapse: collapse;
-  background: #fff;
-}
-
-.productivity-table th {
-  padding: 14px 20px;
-  text-align: left;
-  font-size: 13px;
-  font-weight: 700;
-  color: #3a2e00;
-  border-bottom: 2px solid #c8b840;
-  border-right: 1px solid #e8d98a;
-  white-space: nowrap;
-}
-
-.productivity-table th:last-child {
-  border-right: none;
-}
-
-.productivity-table th:not(:first-child) {
-  text-align: center;
-}
-
-.productivity-table td {
-  padding: 14px 20px;
-  border-right: 1px solid #e8d98a;
-  background: #fff;
-}
-
-.productivity-table td:not(:first-child) {
-  padding: 14px 12px;
-  text-align: center;
-  font-size: 15px;
-  font-weight: 700;
-  color: #3a2e00;
-}
-
-.productivity-table td:last-child {
-  border-right: none;
-}
-
-.productivity-worker-name {
-  font-weight: 900;
-  font-size: 14px;
-  color: #3a2e00;
-}
-
-.productivity-worker-role {
-  font-size: 11px;
-  color: #8b7a2a;
-  margin-top: 2;
-}
 
 }
 
-/* --- WORKER LIST STYLES --- */
-
-.worker-list-container {
-  width: 100%;
-  padding: 20px;
-  font-family: Arial, sans-serif;
-}
-
-/* Search Header */
-.worker-search-header {
-  display: flex;
-  gap: 15px;
-  margin-bottom: 20px;
-}
-
-.search-bar {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  background-color: #D1AA3A; /* Gold color mula sa picture */
-  border-radius: 25px;
-  padding: 5px 15px;
-}
-
-.search-bar input {
-  flex: 1;
-  background: transparent;
-  border: none;
-  color: white;
-  padding: 10px;
-  font-size: 1rem;
-  outline: none;
-  font-family: Arial, sans-serif;
-}
-
-.search-bar input::placeholder {
-  color: rgba(255, 255, 255, 0.8);
-}
-
-.filter-dropdown {
-  padding: 10px 40px 10px 15px; /* Dinagdagan natin ng 40px sa right para hindi matakpan ang text ng arrow */
-  border: 1px solid #D1AA3A;
-  border-radius: 25px; 
-  color: #666;
-  font-size: 1rem;
-  outline: none;
-  font-family: Arial, sans-serif;
-  background-color: white;
-  cursor: pointer;
-
-  /* --- ITO YUNG MAGIC PARA PUMASOK YUNG ARROW --- */
-  -webkit-appearance: none; /* Tinatago yung default arrow ng browser */
-  -moz-appearance: none;
-  appearance: none;
-  
-  /* Nilagyan natin ng sariling arrow */
-  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23666666%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
-  background-repeat: no-repeat;
-  
-  /* Inurong natin ng 15px papasok mula sa kanan para hindi lumabas sa oval */
-  background-position: right 15px center; 
-  background-size: 12px auto;
-}
-
-/* Banner */
-.worker-banner {
-  background-color: #D1AA3A;
-  color: white;
-  padding: 10px 20px;
-  border-radius: 10px; /* <-- Binawasan ang radius, ginawang 10px */
-  margin-bottom: 20px;
-}
-
-.worker-banner h2 {
-  text-align: center;
-  margin: 0;
-  font-size: 1.2rem;
-  font-weight: bold;
-}
-
-/* Table */
-.worker-table {
-  width: 100%;
-  border-collapse: collapse;
-  border: 2px solid #5C4033; /* Dark brown outer border */
-  border-radius: 8px; /* Rounded corners for the table wrapper */
-  border-style: hidden; /* Fix for rounded corners */
-  box-shadow: 0 0 0 2px #5C4033; /* Trick for rounded corners */
-  margin-bottom: 20px;
-}
-
-.worker-table th {
-  background-color: #FAF4E6; /* Cream background for headers */
-  color: #000;
-  padding: 15px;
-  text-align: center;
-  border: 1px solid #D1AA3A; /* Gold inner borders */
-  font-weight: bold;
-}
-
-.worker-table td {
-  padding: 15px;
-  text-align: center;
-  border: 1px solid #D1AA3A;
-  color: #000;
-}
-/* Type Badges */
-.type-badge {
-  padding: 5px 5px;
-  border-radius: 15px;
-  font-size: 0.6rem;
-  font-weight: normal;
-  display: inline-block;
-}
-
-.type-badge.regular {
-  background-color: #d5ad0b; /* Light yellow */
-  color: #ffffff;
-}
-
-.type-badge.part-time {
-  background-color: #584304; /* Light blue */
-  color: #ffffff;
-}
-
-/* Add Worker Button */
-.add-worker-container {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.btn-add-worker {
-  background-color: #D1AA3A;
-  color: white;
-  border: none;
-  padding: 10px 25px;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 1rem;
-  font-family: Arial, sans-serif;
-}
-
-.btn-add-worker:hover {
-  background-color: #B8922A;
-}
-
-
-/* Add Button */
-.add-worker-container {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 20px;
-}
-
-.btn-add-worker {
-  background-color: #CBA135;
-  color: white;
-  border: none;
-  padding: 10px 30px;
-  border-radius: 10px;
-  font-weight: bold;
-  font-size: 1rem;
-  cursor: pointer;
-}
-
-.btn-add-worker:hover {
-  opacity: 0.9;
-}
-
-/* --- ADD WORKER MODAL STYLES --- */
-
-/* Background overlay (yung nagpapa-dark sa likod) */
-.modal-overlay {
-  position: fixed;
-  inset: 0; /* Ito ang magic code para sumakop nang pantay kahit may sidebar */
-  background-color: rgba(0, 0, 0, 0.5); /* Medyo pinadilim ko ng konti para mas lutang ang form */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999; /* Tinaasan natin para siguradong nasa pinaka-ibabaw */
-}
-
-.history-remark-late {
-  background: #f08080;
-  color: #fff;
-}
-}
-
-/* --- SCOPED WORKER LIST STYLES --- */
 /* --- WORKER LIST STYLES --- */
 
 .worker-list-container {
@@ -1285,3 +1029,438 @@
 .add-worker-modal .btn-add:hover {
   opacity: 0.9;
 }
+/* --- Project History Container --- */
+.ph-container {
+    padding: 20px;
+    font-family: Arial, sans-serif; /* Pinalitan mula serif tungo sa Arial */
+}
+
+.ph-title {
+    color: #5b5035;
+    font-size: 2rem;
+    border-bottom: 4px solid #cdc6b4;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+    font-family: inherit;
+}
+
+.ph-controls {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 20px;
+}
+
+/* Updated Select with Custom Arrow */
+.ph-filter-select {
+    padding: 8px 35px 8px 15px;
+    border: 1px solid #a39b85;
+    border-radius: 20px; /* Pill shape para sa controls */
+    color: #5b5035;
+    outline: none;
+    cursor: pointer;
+    background-color: white;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%238b816a'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 20px;
+}
+
+/* --- Table Styles --- */
+.ph-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: center;
+}
+
+.ph-table thead tr {
+    color: #5b5035;
+}
+
+.ph-th {
+    padding: 15px;
+    font-weight: bold;
+}
+
+.ph-td {
+    padding: 15px;
+}
+
+.ph-project-name {
+    font-weight: bold;
+    color: #5b5035;
+}
+
+/* --- ROW STATES (Hover and Click) --- */
+.ph-tr {
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+/* Hover effect */
+.ph-tr:hover {
+    background-color: #dcb345 !important; /* Light cream hover */
+}
+
+/* Active/Selected row effect */
+.ph-tr.active-row {
+    background-color: #dcb345 !important; /* Gold/Mustard highlight */
+}
+
+.ph-tr.active-row .ph-td, 
+.ph-tr.active-row .ph-project-name {
+    color: #dcb345 !important; /* Puting text kapag selected ang row */
+}
+
+/* --- Remarks Badges (30px Radius) --- */
+.ph-badge {
+    padding: 6px 16px;
+    border-radius: 30px; /* Mas bilog na badge */
+    font-size: 0.85rem;
+    font-weight: bold;
+    display: inline-block;
+    min-width: 80px;
+}
+
+.ph-badge-early {
+    background-color: #1b5e20;
+    color: white;
+}
+
+.ph-badge-ontime {
+    background-color: #a5d6a7;
+    color: #1b5e20;
+}
+
+.ph-badge-late {
+    background-color: #ff8a80;
+    color: #b71c1c;
+}
+
+.ph-empty-state {
+    padding: 20px;
+    font-style: italic;
+    color: #8b816a;
+}
+
+/* =========================================
+   NOTIFICATIONS PAGE STYLES
+   ========================================= */
+
+.notif-container {
+    font-family: Arial, sans-serif;
+    width: 1000px; 
+    margin: 40px auto;
+    padding: 0px;
+    font-family: Arial, sans-serif;
+}
+
+.notif-header {
+    font-family: Georgia, 'Times New Roman', Times, serif;
+    font-size: 2rem;
+    color: #5a4a00; 
+    margin-bottom: 30px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.notif-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+.notif-item {
+  border-left: #5a4a00 10px solid; /* Green left border for emphasis */
+    background-color: #a88a28; /* Solid gold/mustard background */
+    color: white;
+    border-radius: 8px;
+    padding: 18px 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: transform 0.2s, opacity 0.2s;
+}
+
+/* Kapag 'read' na, bababa ng kaunti ang opacity para maiba sa 'unread' */
+.notif-item.read {
+    opacity: 0.8;
+}
+
+.notif-content {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.notif-title {
+    font-size: 1.1rem;
+    font-weight: bold;
+    font-family: Arial, sans-serif;
+}
+
+.notif-message {
+    font-size: 0.95rem;
+    font-family: Arial, sans-serif;
+}
+
+.notif-delete-btn {
+    background: transparent;
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 10px;
+    opacity: 1.0;
+    transition: opacity 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.notif-delete-btn:hover {
+    color: #ffdb3c;
+    opacity: 1;
+}
+
+.notif-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+}
+
+.notif-btn-primary, .notif-btn-secondary {
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-family: Arial,sans-serif;
+    font-weight: bold;
+    font-size: 1rem;
+    cursor: pointer;
+    border: none;
+    transition: background-color 0.2s;
+}
+
+.notif-btn-primary {
+    background-color: #5a4a00; /* Very dark brown */
+    color: white;
+}
+
+.notif-btn-primary:hover {
+    background-color: #241a00;
+}
+
+.notif-btn-secondary {
+    background-color: #5a4a00; /* Dark brown */
+    color: white;
+}
+
+.notif-btn-secondary:hover {
+    background-color: #241a00;
+}
+
+.notif-empty {
+    text-align: center;
+    padding: 40px;
+    color: #8b816a;
+    font-style: italic;
+    font-size: 1.1rem;
+}
+
+/* WORKER PRODUCTIVITY LEADERBOARD STYLES */
+.prod-wrapper {
+    background-color: #faf9f6; /* Very light earth tone background */
+    padding: 25px;
+    border-radius: 12px;
+    margin-top: 20px;
+    font-family: Arial, sans-serif; /* ARIAL FONT APPLIED HERE */
+}
+
+.prod-header-title {
+    color: #5B4826;
+    font-size: 1.4rem;
+    font-weight: 900;
+    margin-bottom: 25px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-align: center; /* <-- ITO ANG NAGPAGITNA */
+}
+
+/* Tabs */
+.prod-tabs-container {
+    display: flex;
+    justify-content: center; /* <-- ITO ANG NAGPAGITNA SA TABS */
+    border-bottom: 4px solid #E3DBCB;
+    margin-bottom: 20px;
+}
+
+.prod-tab {
+    padding: 12px 30px;
+    background-color: transparent;
+    color: #8B7E5C;
+    font-weight: bold;
+    font-size: 1rem;
+    border: none;
+    cursor: pointer;
+    font-family: Arial, sans-serif;
+    transition: all 0.3s ease;
+}
+
+.prod-tab:hover {
+    color: #5B4826;
+}
+
+.prod-tab.active {
+    background-color: #D4AF37;
+    color: white;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    box-shadow: 0 -4px 10px rgba(212, 175, 55, 0.2);
+}
+
+/* Dropdown */
+.prod-filter-container {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 20px;
+}
+
+/* Dropdown */
+.prod-dropdown {
+    /* Dinagdagan ko yung padding sa kanan (40px) para hindi pumatong ang text sa arrow */
+    padding: 10px 40px 10px 20px; 
+    border: 2px solid #D4AF37;
+    background-color: white;
+    border-radius: 30px;
+    color: #5B4826;
+    font-weight: bold;
+    font-family: Arial, sans-serif;
+    outline: none;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+
+    /* --- MGA BAGONG CODE PARA SA MAKAPAL NA ARROW --- */
+    appearance: none; /* Tinatanggal nito ang default na manipis na arrow */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    
+    /* Custom SVG Arrow (Naka-set sa stroke-width="4" para makapal, kulay #5B4826) */
+    background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23666666%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+    background-repeat: no-repeat;
+    background-position: right 15px center; /* Pwesto ng arrow (15px mula sa kanan) */
+    background-size: 14px; /* Laki ng mismong arrow */
+}
+
+/* Optional: Para hindi pumangit sa Internet Explorer kung sakaling may gumagamit pa */
+.prod-dropdown::-ms-expand {
+    display: none;
+}
+
+/* Leaderboard Table */
+.prod-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 12px; /* Spacing between rows */
+}
+
+.prod-table th {
+    color: #8B7E5C;
+    font-weight: bold;
+    padding: 10px 15px;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+}
+
+/* Individual Card Rows */
+.prod-row {
+    background-color: white;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.04);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.prod-row:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 15px rgba(0,0,0,0.08);
+}
+
+.prod-table td {
+    padding: 15px;
+    text-align: center;
+    vertical-align: middle;
+    border-top: 1px solid transparent;
+    border-bottom: 1px solid transparent;
+}
+
+.prod-table td:first-child {
+    border-top-left-radius: 10px;
+    border-bottom-left-radius: 10px;
+}
+
+.prod-table td:last-child {
+    border-top-right-radius: 10px;
+    border-bottom-right-radius: 10px;
+}
+
+/* Rank Column Styling */
+.rank-col {
+    display: flex;
+    align-items: center;
+    text-align: left;
+}
+
+.rank-badge-container {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    background-color: #E3DBCB; /* Default circle */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-right: 15px;
+    color: #5B4826;
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.rank-details {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start; /* <-- ITO ANG MAGPAPANTAY SA KANILA PA-KALIWA */
+}
+
+.rank-role {
+    color: #A29373;
+    font-size: 0.85rem;
+    margin-top: 3px;
+    margin-left: 0; /* <-- SIGURADUHING WALANG EXTRA SPACE SA KALIWA */
+}
+.rank-name {
+    color: #333;
+    font-size: 1.05rem;
+    font-weight: bold;
+}
+
+/* Numbers/Pills styling */
+.stat-pill {
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: #555;
+}
+
+.success-text { color: #2E7D32; } /* Green for accepted */
+.error-text { color: #C62828; } /* Red for late/repair */
+
+/* LEADERBOARD TOP 3 COLORS (Gold, Silver, Bronze) */
+.rank-gold td:first-child { border-left: 5px solid #D4AF37; }
+.rank-gold .rank-badge-container { background-color: #D4AF37; color: white; box-shadow: 0 0 10px rgba(212, 175, 55, 0.4); }
+
+.rank-silver td:first-child { border-left: 5px solid #B0BEC5; }
+.rank-silver .rank-badge-container { background-color: #B0BEC5; color: white; }
+
+.rank-bronze td:first-child { border-left: 5px solid #CD7F32; }
+.rank-bronze .rank-badge-container { background-color: #CD7F32; color: white; }
+
+.rank-normal td:first-child { border-left: 5px solid #E3DBCB; }

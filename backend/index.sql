@@ -52,6 +52,10 @@ CREATE TABLE project_variables (
     variable_detail TEXT
 );
 
+ALTER TABLE projects ADD COLUMN status VARCHAR(50) DEFAULT 'Pending';
+UPDATE projects SET status = 'Pending' WHERE status IS NULL;
+
+ALTER TABLE projects ADD COLUMN date_completed DATE;
 
 -- Worker List
 
@@ -63,3 +67,29 @@ CREATE TABLE worker_details (
     contact VARCHAR(50),
     rate NUMERIC(10, 2)    -- Pera format (e.g., 800.00)
 );
+
+CREATE TABLE job_assignments (
+    assignment_id SERIAL PRIMARY KEY,
+    project_id INTEGER REFERENCES projects(id) ON DELETE CASCADE,
+    worker_id BIGINT REFERENCES users(user_id) ON DELETE SET NULL,
+    stage_name VARCHAR(100) NOT NULL, -- Halimbawa: 'Carpenter', 'Carver', 'Liha', 'Painter', 'Delivery'
+    status VARCHAR(50) DEFAULT 'Pending', -- Halimbawa: 'Pending', 'In Progress', 'For QA', 'Verified'
+    start_date DATE,
+    due_date DATE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TYPE task_status AS ENUM ('Assigned', 'In Progress', 'For QA', 'Approved', 'Repair', 'Rework');
+
+CREATE TABLE notifications (
+    id SERIAL PRIMARY KEY,
+    type VARCHAR(50), -- (e.g., 'project', 'verification')
+    title VARCHAR(255) NOT NULL,
+    message TEXT NOT NULL,
+    is_read BOOLEAN DEFAULT FALSE,
+    target_role VARCHAR(50), -- Para alam kung sino makakakita (e.g., 'PM', 'Admin', 'QC')
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+ALTER TABLE notifications ADD COLUMN reference_id INTEGER;
+
+ALTER TABLE job_assignments ADD COLUMN date_submitted DATE;

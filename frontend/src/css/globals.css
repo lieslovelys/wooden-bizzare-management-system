@@ -2123,6 +2123,9 @@ html, body {
 }
 
 .project-form-container .project-form {
+  border: 1px solid #5C4033;
+  border-radius: 12px; /* Para medyo rounded yung corners ng box */
+  padding: 30px; /* Espasyo sa loob ng box para hindi dikit ang form sa border */
   font-family: Arial, sans-serif;
   display: flex;
   flex-direction: column;
