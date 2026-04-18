@@ -3,8 +3,16 @@ import session from 'express-session';
 import cors from 'cors';
 import dotenv from 'dotenv';
 
+// --- BAGONG IMPORTS PARA SA PATH AT ES MODULES ---
+import path from 'path';
+import { fileURLToPath } from 'url';
+
 dotenv.config();
 const app = express();
+
+// --- SETUP PARA SA __dirname SA ES MODULES ---
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Middlewares
 app.use(cors({
@@ -19,14 +27,13 @@ app.use((req, res, next) => {
   next();
 });
 
-// --- DITO YUNG BINAGO NATIN (Tinaasan ang limit para sa profile picture) ---
+// JSON Limit para sa profile picture
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
-// ---------------------------------------------------------------------------
 
 // Session
 app.use(session({
-    secret: process.env.SECRET_KEY,
+    secret: process.env.SECRET_KEY || 'default_secret_key', // Nilagyan ng fallback just in case
     resave: false,
     saveUninitialized: false, 
     proxy: true, 
@@ -49,7 +56,7 @@ import profitRoutes from './routes/profitRoutes.js';
 import attendanceRoutes from './routes/attendanceRoutes.js';
 import productivityRoutes from './routes/productivityRoutes.js';
 
-// Routes
+// API Routes (Dapat nauuna ang mga ito kaysa sa React static files)
 app.use('/', userRoutes);
 app.use('/api/projects', projectRoutes); 
 app.use('/api', jobOrderRoutes);
@@ -64,8 +71,23 @@ import { getWorkersList } from './controllers/jobOrderController.js';
 app.get('/api/workers', getWorkersList);
 
 
-const url = 'http://localhost:';
-const port = '8080';
+// =======================================================================
+// --- BAGONG CODE PARA SA FRONTEND DEPLOYMENT (OPTION A) ---
+// =======================================================================
+
+// 1. Sabihin sa Express na i-serve ang 'dist' folder (kung saan nandoon ang compiled React app mo)
+// Note: Kung 'build' ang pangalan ng folder mo imbes na 'dist', palitan mo lang yung word na 'dist' dito.
+app.use(express.static(path.join(__dirname, 'dist')));
+
+// 2. CATCH-ALL ROUTE: Kapag may ni-refresh na page ang user (e.g., /admin/dashboard), 
+// hindi iisipin ng Express na API route ito, ibabato niya pabalik sa React.
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+});
+
+// =======================================================================
+
+const port = process.env.PORT || 8080; // Dinagdag ang process.env.PORT para sa Render
 app.listen(port, () => {
-    console.log(`Server running on ${url}${port}`);
+    console.log(`Server running on port ${port}`);
 });
