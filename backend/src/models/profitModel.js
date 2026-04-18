@@ -102,3 +102,24 @@ export async function deleteProfitByProjectId(projectId) {
   );
   return rowCount > 0;
 }
+
+// ============================================================
+// DASHBOARD STATS (Idagdag sa ibaba ng file mo)
+// ============================================================
+
+export async function getMonthlyProfit() {
+  try {
+    const { rows } = await query(`
+      SELECT COALESCE(SUM(net_profit), 0) AS total_monthly_profit
+      FROM project_profit
+      WHERE EXTRACT(MONTH FROM updated_at) = EXTRACT(MONTH FROM CURRENT_DATE)
+        AND EXTRACT(YEAR FROM updated_at) = EXTRACT(YEAR FROM CURRENT_DATE);
+    `);
+    
+    // Ibabalik nito ang computed profit (e.g., 34000)
+    return parseFloat(rows[0].total_monthly_profit); 
+  } catch (err) {
+    console.error("Error getting monthly profit:", err);
+    return 0; // Para safe at hindi mag-crash, ibabalik ay 0 kapag may error
+  }
+}

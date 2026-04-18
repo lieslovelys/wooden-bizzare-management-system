@@ -34,7 +34,7 @@ const WorkerProductivity = () => {
 
     return (
         <div className="prod-wrapper">
-            <h2 className="prod-header-title">Task Progress & QC Result</h2>
+            <h2 className="prod-header-title">Task Progress and QC Result</h2>
 
             <div className="prod-tabs-container">
                 <button 

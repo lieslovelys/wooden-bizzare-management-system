@@ -1,9 +1,18 @@
 import React, { useState, useEffect } from 'react';
+import '../css/admin.css'; // Make sure it's pointing to the correct CSS file for toasts
 
 const ProjectVerificationDetail = ({ projectId, onBack }) => {
     const [projectInfo, setProjectInfo] = useState(null);
     const [tasks, setTasks] = useState([]);
     const [loading, setLoading] = useState(true);
+
+    // --- BAGONG STATE PARA SA POP-UP (TOAST) ---
+    const [toast, setToast] = useState({ visible: false, message: '', type: '' });
+
+    const showToast = (message, type = 'success') => {
+        setToast({ visible: true, message, type });
+        setTimeout(() => setToast({ visible: false, message: '', type: '' }), 3000);
+    };
 
     useEffect(() => {
         const fetchDetails = async (idToFetch) => {
@@ -54,15 +63,18 @@ const ProjectVerificationDetail = ({ projectId, onBack }) => {
                     task.id === assignmentId ? { ...task, status: newStatus } : task
                 ));
 
+                // --- GINAMIT ANG TOAST IMBES NA ALERT ---
                 if (newStatus === 'Repair') {
-                    alert("⚠️ Ibinalik na ang task na ito sa Worker para maayos!");
+                    showToast("Ibinalik na ang task na ito sa Worker para maayos!", "error");
+                } else if (newStatus === 'Approved') {
+                    showToast("Task successfully approved!", "success");
                 }
             } else {
-                console.error("Failed to update status in backend.");
+                showToast("Failed to update status in backend.", "error");
             }
         } catch (error) {
             console.error("Error updating status:", error);
-            alert("Hindi ma-update ang status. Paki-check ang connection.");
+            showToast("Hindi ma-update ang status. Paki-check ang connection.", "error");
         }
     };
 
@@ -81,6 +93,16 @@ const ProjectVerificationDetail = ({ projectId, onBack }) => {
 
     return (
         <div className="qc-pvd-wrapper">
+
+            {/* RENDER TOAST KUNG VISIBLE */}
+            {toast.visible && (
+                <div className="wb-toast-container">
+                    <div className={`wb-toast ${toast.type}`}>
+                        {toast.type === 'success' ? '' : ''} {toast.message}
+                    </div>
+                </div>
+            )}
+
             <button className="qc-pvd-back-btn" onClick={onBack}>← Back to Project List</button>
 
             <div className="qc-pvd-container qc-pvd-ov-container">
@@ -168,7 +190,7 @@ const ProjectVerificationDetail = ({ projectId, onBack }) => {
                                             </button>
                                         </div>
                                     ) : task.status === 'Repair' ? (
-                                        <span className="qc-pvd-status-badge" style={{backgroundColor: '#ff0000'}}>Needs Repair</span>
+                                        <span className="qc-pvd-status-badge" style={{backgroundColor: '#ff0000', color: '#ffffff'}}>Needs Repair</span>
                                     ) : (
                                         <span className="qc-pvd-status-badge">{task.status}</span>
                                     )}

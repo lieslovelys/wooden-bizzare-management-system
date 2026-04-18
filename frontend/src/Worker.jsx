@@ -3,8 +3,7 @@ import './css/worker.css'
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useContext } from "react";
 import { UserContext } from "./App";
-import Navbar from "./globals/Navbar"; 
-import Logout from "./globals/Logout"; 
+import Navbar from "./globals/Navbar";  
 import JobOrder from "./worker/WorkerJobOrder";
 
 const Worker = () => {
@@ -13,7 +12,6 @@ const Worker = () => {
     // Eto lang ang tabs ni Worker base sa image
     const workerTabs = [
         { name: 'Job Order', url: 'job-order', key: 'jo', icon: 'fas fa-clipboard-list' },
-        { name: 'Log Out', url: 'logout', key: 'lg', icon: 'fas fa-sign-out-alt' }
     ];
 
     return (
@@ -24,8 +22,6 @@ const Worker = () => {
                 <Routes>
                     <Route index element={<Navigate to="job-order" replace />} />
                     <Route path="job-order" element={<JobOrder />} />
-                    
-                    <Route path="logout" element={<Logout />} />
                     
                     {/* Catch-all */}
                     <Route path="*" element={<Navigate to="job-order" replace />} />

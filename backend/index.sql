@@ -45,17 +45,16 @@ CREATE TABLE projects (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+ALTER TABLE projects ADD COLUMN date_completed DATE;
+ALTER TABLE projects ADD COLUMN status VARCHAR(50) DEFAULT 'Pending';
+UPDATE projects SET status = 'Pending' WHERE status IS NULL;
+
 CREATE TABLE project_variables (
     id SERIAL PRIMARY KEY,
     project_id INTEGER REFERENCES projects(id) ON DELETE CASCADE,
     variable_name VARCHAR(255) NOT NULL,
     variable_detail TEXT
 );
-
-ALTER TABLE projects ADD COLUMN status VARCHAR(50) DEFAULT 'Pending';
-UPDATE projects SET status = 'Pending' WHERE status IS NULL;
-
-ALTER TABLE projects ADD COLUMN date_completed DATE;
 
 -- Worker List
 
@@ -68,7 +67,9 @@ CREATE TABLE worker_details (
     rate NUMERIC(10, 2)    -- Pera format (e.g., 800.00)
 );
 
+ALTER TABLE worker_details ADD COLUMN photo TEXT;
 
+CREATE TYPE task_status AS ENUM ('Assigned', 'In Progress', 'For QA', 'Approved', 'Repair', 'Rework');
 CREATE TABLE job_assignments (
     assignment_id SERIAL PRIMARY KEY,
     project_id INTEGER REFERENCES projects(id) ON DELETE CASCADE,
@@ -79,8 +80,8 @@ CREATE TABLE job_assignments (
     due_date DATE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+ALTER TABLE job_assignments ADD COLUMN date_submitted DATE;
 
-CREATE TYPE task_status AS ENUM ('Assigned', 'In Progress', 'For QA', 'Approved', 'Repair', 'Rework');
 
 CREATE TABLE notifications (
     id SERIAL PRIMARY KEY,
@@ -93,4 +94,3 @@ CREATE TABLE notifications (
 );
 ALTER TABLE notifications ADD COLUMN reference_id INTEGER;
 
-ALTER TABLE job_assignments ADD COLUMN date_submitted DATE;

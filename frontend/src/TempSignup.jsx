@@ -1,5 +1,5 @@
 import { useState } from "react";
-import './css/TempSignup.css'; // Make sure the path is correct based on your folder structure
+import './css/TempSignup.css'; 
 
 const TempSignup = () => {
     const [username, setUsername] = useState('');
@@ -10,44 +10,60 @@ const TempSignup = () => {
     const [suffix, setSuffix] = useState('None');
     const [userRole, setUserRole] = useState('Admin');
 
-    const [message, setMessage] = useState('');
+    // --- BAGONG STATE PARA SA POP-UP (TOAST) ---
+    const [toast, setToast] = useState({ visible: false, message: '', type: '' });
+
+    const showToast = (message, type = 'success') => {
+        setToast({ visible: true, message, type });
+        setTimeout(() => setToast({ visible: false, message: '', type: '' }), 3000);
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
         const body = { username, password, firstName, middleName, lastName, suffix, userRole };
 
-        const response = await fetch('http://localhost:8080/signup',
-            {
+        try {
+            const response = await fetch('http://localhost:8080/signup', {
                 method: 'POST',
                 headers: {'Content-type' : 'application/json'},
                 body: JSON.stringify(body)
-            }
-        )
+            });
 
-        if(response.ok){
-            const data = await response.json();
-            alert("Account successfully created!"); 
-            
-            setUsername('');
-            setPassword('');
-            setFirstName('');
-            setMiddleName('');
-            setLastName('');
-            setSuffix('None');
-            setUserRole('Admin');
-            setMessage(''); 
-        }
-        else{
-            alert("Failed to create account. Please try again.");
-            return;
+            if(response.ok){
+                // Pinalitan na natin ang alert ng magandang Toast!
+                showToast("Account successfully created!", "success"); 
+                
+                setUsername('');
+                setPassword('');
+                setFirstName('');
+                setMiddleName('');
+                setLastName('');
+                setSuffix('None');
+                setUserRole('Admin');
+            }
+            else{
+                showToast("Failed to create account. Please try again.", "error");
+            }
+        } catch (error) {
+            console.error("Error creating account:", error);
+            showToast("Server connection error.", "error");
         }
     }
 
     return ( 
         <div className="signup-wrapper">
+            
+            {/* RENDER TOAST KUNG VISIBLE */}
+            {toast.visible && (
+                <div className="wb-toast-container">
+                    <div className={`wb-toast ${toast.type}`}>
+                        {toast.type === 'success' ? '' : ''} {toast.message}
+                    </div>
+                </div>
+            )}
+
             <div className="signup-container">
-                {/* IDINAGDAG NATIN YUNG TITLE DITO PARA MATCH SA PICTURE */}
                 <h2 className="form-title">CREATE ACCOUNT</h2>
 
                 <form onSubmit={handleSubmit} className="signup-form">
@@ -55,17 +71,37 @@ const TempSignup = () => {
                     {/* ROW 1 */}
                     <div className="input-group">
                         <label htmlFor="first-name">First Name</label>
-                        <input type="text" name="first-name" id="first-name" value={firstName} onChange={e => setFirstName(e.target.value)} required />
+                        <input 
+                            type="text" 
+                            name="first-name" 
+                            id="first-name" 
+                            value={firstName} 
+                            onChange={e => setFirstName(e.target.value.replace(/[0-9]/g, ''))} /* Bawal numbers */
+                            required 
+                        />
                     </div>
 
                     <div className="input-group">
                         <label htmlFor="middle-name">Middle Name</label>
-                        <input type="text" name="middle-name" id="middle-name" value={middleName} onChange={e => setMiddleName(e.target.value)} />
+                        <input 
+                            type="text" 
+                            name="middle-name" 
+                            id="middle-name" 
+                            value={middleName} 
+                            onChange={e => setMiddleName(e.target.value.replace(/[0-9]/g, ''))} /* Bawal numbers */
+                        />
                     </div>
 
                     <div className="input-group">
                         <label htmlFor="last-name">Last Name</label>
-                        <input type="text" name="last-name" id="last-name" value={lastName} onChange={e => setLastName(e.target.value)} required />
+                        <input 
+                            type="text" 
+                            name="last-name" 
+                            id="last-name" 
+                            value={lastName} 
+                            onChange={e => setLastName(e.target.value.replace(/[0-9]/g, ''))} /* Bawal numbers */
+                            required 
+                        />
                     </div>
 
                     <div className="input-group suffix-group">
@@ -104,7 +140,7 @@ const TempSignup = () => {
                         </select>
                     </div>
 
-                    {/* ROW 4 (KAHILERA NG ROLE) */}
+                    {/* ROW 4 */}
                     <div className="submit-group">
                         <button type="submit">Create Account</button>
                     </div>

@@ -57,8 +57,14 @@ const getAllWorkers = async () => {
     try {
         const text = `
             SELECT 
-                u.user_id,         /* <-- IDINAGDAG NATIN ITO PARA PANG-UPDATE */
-                u.username,        /* <-- IDINAGDAG NATIN ITO PARA MAKITA MO YUNG USERNAME */
+                u.user_id,         
+                u.username,        
+                u.first_name,      
+                u.middle_name,     
+                u.last_name,       
+                u.suffix,
+                w.detail_id,       
+                w.photo,           /* <--- SIGURADUHING NANDITO ITO PARA SA PICTURE */
                 'W-' || LPAD(u.user_id::text, 2, '0') AS formatted_id,
                 TRIM(CONCAT_WS(' ', u.first_name, u.middle_name, u.last_name, NULLIF(u.suffix::text, 'None'))) AS full_name,
                 w.job_type,
@@ -91,28 +97,28 @@ const createWorkerDetails = async (user_id, job_type, job_role, contact, rate, p
     }
 }
 
-const updateWorkerDetails = async (user_id, job_type, job_role, contact, rate) => {
+// IDINAGDAG ANG 'photo' SA PARAMETERS
+const updateWorkerDetails = async (user_id, job_type, job_role, contact, rate, photo = null) => {
     try {
-        // I-check muna natin kung may record na siya sa worker_details table
         const checkQuery = `SELECT * FROM worker_details WHERE user_id = $1`;
         const checkResult = await query(checkQuery, [user_id]);
 
         if (checkResult.rows.length > 0) {
-            // KUNG MERON NA: I-u-update lang natin yung columns
+            // IDINAGDAG ANG 'photo = $5' SA UPDATE QUERY
             const updateQuery = `
                 UPDATE worker_details 
-                SET job_type = $1, job_role = $2, contact = $3, rate = $4
-                WHERE user_id = $5 RETURNING *;
+                SET job_type = $1, job_role = $2, contact = $3, rate = $4, photo = $5
+                WHERE user_id = $6 RETURNING *;
             `;
-            const result = await query(updateQuery, [job_type, job_role, contact, rate, user_id]);
+            const result = await query(updateQuery, [job_type, job_role, contact, rate, photo, user_id]);
             return result.rows[0];
         } else {
-            // KUNG WALA PA (Blangko talaga): I-i-insert natin yung bagong data niya
+            // IDINAGDAG ANG 'photo' SA INSERT QUERY (in case wala pang details)
             const insertQuery = `
-                INSERT INTO worker_details (user_id, job_type, job_role, contact, rate)
-                VALUES ($1, $2, $3, $4, $5) RETURNING *;
+                INSERT INTO worker_details (user_id, job_type, job_role, contact, rate, photo)
+                VALUES ($1, $2, $3, $4, $5, $6) RETURNING *;
             `;
-            const result = await query(insertQuery, [user_id, job_type, job_role, contact, rate]);
+            const result = await query(insertQuery, [user_id, job_type, job_role, contact, rate, photo]);
             return result.rows[0];
         }
     } catch (e) {

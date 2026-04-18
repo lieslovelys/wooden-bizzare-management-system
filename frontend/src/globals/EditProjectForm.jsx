@@ -11,6 +11,14 @@ const EditProjectForm = ({ projectId, onCancel, onSuccess }) => {
   
   const [projectDetails, setProjectDetails] = useState([{ name: '', detail: '' }]);
 
+  // --- BAGONG STATE PARA SA POP-UP (TOAST) ---
+  const [toast, setToast] = useState({ visible: false, message: '', type: '' });
+
+  const showToast = (message, type = 'success') => {
+    setToast({ visible: true, message, type });
+    setTimeout(() => setToast({ visible: false, message: '', type: '' }), 3000);
+  };
+
   useEffect(() => {
     const fetchProjectData = async () => {
       try {
@@ -49,8 +57,26 @@ const EditProjectForm = ({ projectId, onCancel, onSuccess }) => {
     fetchProjectData();
   }, [projectId]);
 
+  // --- ERROR HANDLER PARA SA TEXT INPUTS ---
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+
+    // ERROR HANDLER: Client Name (Bawal ang numbers)
+    if (name === 'clientName') {
+      const noNumbers = value.replace(/[0-9]/g, ''); 
+      setFormData(prev => ({ ...prev, [name]: noNumbers }));
+      return;
+    }
+
+    // ERROR HANDLER: Contact Number (Puro numbers lang at max 11 digits)
+    if (name === 'contactNumber') {
+      const onlyNumbers = value.replace(/[^0-9]/g, ''); 
+      if (onlyNumbers.length <= 11) {
+        setFormData(prev => ({ ...prev, [name]: onlyNumbers }));
+      }
+      return;
+    }
+
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
@@ -69,6 +95,13 @@ const EditProjectForm = ({ projectId, onCancel, onSuccess }) => {
   // I-save ang pagbabago
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // DOUBLE CHECK: Bawal mauna ang Due Date sa Date Ordered
+    if (formData.dueDate && formData.dateOrdered && formData.dueDate < formData.dateOrdered) {
+        showToast('Due date cannot be earlier than Date Ordered.', 'error');
+        return;
+    }
+
     const payload = { ...formData, projectDetails };
 
     try {
@@ -79,13 +112,17 @@ const EditProjectForm = ({ projectId, onCancel, onSuccess }) => {
       });
 
       if (response.ok) {
-        alert('Project successfully updated!');
-        onSuccess(); 
+        showToast('Project successfully updated!', 'success');
+        // Maghihintay ng 1.5 seconds bago bumalik para mabasa ang message
+        setTimeout(() => {
+            onSuccess(); 
+        }, 1500);
       } else {
-        alert('Failed to update project.');
+        showToast('Failed to update project.', 'error');
       }
     } catch (error) {
       console.error('Update error:', error);
+      showToast('Server error. Please try again.', 'error');
     }
   };
 
@@ -93,6 +130,16 @@ const EditProjectForm = ({ projectId, onCancel, onSuccess }) => {
 
   return (
     <div className="project-form-container">
+        
+      {/* RENDER TOAST KUNG VISIBLE */}
+      {toast.visible && (
+        <div className="wb-toast-container">
+            <div className={`wb-toast ${toast.type}`}>
+                {toast.type === 'success' ? '' : ''} {toast.message}
+            </div>
+        </div>
+      )}
+
       <div className="list-header-banner edit-banner">
         <h2>EDIT PROJECT</h2>
       </div>
@@ -110,7 +157,13 @@ const EditProjectForm = ({ projectId, onCancel, onSuccess }) => {
           </div>
           <div className="form-group">
             <label>Contact Number</label>
-            <input type="text" name="contactNumber" value={formData.contactNumber} onChange={handleInputChange} />
+            <input 
+                type="text" 
+                name="contactNumber" 
+                value={formData.contactNumber} 
+                onChange={handleInputChange} 
+                maxLength="11" 
+            />
           </div>
         </div>
 
@@ -136,7 +189,13 @@ const EditProjectForm = ({ projectId, onCancel, onSuccess }) => {
           </div>
           <div className="form-group">
             <label>Due Date</label>
-            <input type="date" name="dueDate" value={formData.dueDate} onChange={handleInputChange} />
+            <input 
+                type="date" 
+                name="dueDate" 
+                value={formData.dueDate} 
+                onChange={handleInputChange} 
+                min={formData.dateOrdered} /* HTML restriction base sa Date Ordered */
+            />
           </div>
         </div>
 

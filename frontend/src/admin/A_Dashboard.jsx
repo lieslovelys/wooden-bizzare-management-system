@@ -3,13 +3,17 @@ import InfoCard from '../globals/InfoCard';
 import AdminNotification from './AdminNotification';
 
 const AdminDashboard = () => {
-  // State para sa stats na kukunin natin sa database
   const [stats, setStats] = useState({
     activeProjects: 0,
     totalWorkers: 0,
-    monthlyProfit: 34000 
+    monthlyProfit: 0 // Ginawa na nating 0 ang default
   });
 
+  // Dynamic na pagkuha ng Current Month at Year (e.g., "April, 2026")
+  const currentMonthYear = new Date().toLocaleString('default', { 
+    month: 'long', 
+    year: 'numeric' 
+  });
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -19,8 +23,9 @@ const AdminDashboard = () => {
           const data = await response.json();
           setStats(prev => ({
             ...prev,
-            activeProjects: data.activeProjects,
-            totalWorkers: data.totalWorkers
+            activeProjects: data.activeProjects || 0,
+            totalWorkers: data.totalWorkers || 0,
+            monthlyProfit: data.monthlyProfit || 0 // Sinalo natin yung monthlyProfit galing backend
           }));
         }
       } catch (error) {
@@ -47,7 +52,7 @@ const AdminDashboard = () => {
         <InfoCard 
             label="MONTHLY PROFIT" 
             value={stats.monthlyProfit.toLocaleString()} 
-            sub="April, 2026" 
+            sub={currentMonthYear} // Ipinalit natin dito yung dynamic date
             variant="blue" 
         />
       </div>

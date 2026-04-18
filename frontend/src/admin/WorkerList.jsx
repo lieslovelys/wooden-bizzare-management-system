@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import '../css/admin.css';
-import AddWorkerModal from './AddWorkerModal'; 
-import EditWorkerModal from './EditWorkerModal';
+import AddWorkerModal from './addWorkerModal'; 
+import EditWorkerModal from './editWorkerModal';
 
 const WorkerList = () => {
   const [workers, setWorkers] = useState([]);
@@ -12,10 +12,18 @@ const WorkerList = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedWorker, setSelectedWorker] = useState(null);
 
-  // --- BAGONG STATES PARA SA SEARCH AT FILTERS ---
+  // Search and Filters
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRole, setSelectedRole] = useState('Role');
   const [selectedType, setSelectedType] = useState('Type');
+
+  // --- BAGONG STATE PARA SA POP-UP (TOAST) ---
+  const [toast, setToast] = useState({ visible: false, message: '', type: '' });
+
+  const showToast = (message, type = 'success') => {
+    setToast({ visible: true, message, type });
+    setTimeout(() => setToast({ visible: false, message: '', type: '' }), 3000);
+  };
 
   const fetchWorkers = async () => {
     try {
@@ -36,7 +44,7 @@ const WorkerList = () => {
   }, []);
 
   // --- Handlers para sa Modals ---
-const handleSaveNewWorker = async (newWorkerData) => {
+  const handleSaveNewWorker = async (newWorkerData) => {
     try {
       const response = await fetch('http://localhost:8080/workers', {
         method: 'POST', 
@@ -46,19 +54,19 @@ const handleSaveNewWorker = async (newWorkerData) => {
       const result = await response.json();
       
       if (result.success) {
-        alert("✅ Worker successfully added to database!"); // <-- Binalik ang success message
+        showToast("Worker successfully added to database! ", "success"); 
         setIsAddModalOpen(false); 
         fetchWorkers(); 
       } else {
-        alert("❌ Failed to add worker: " + result.message); // <-- Dagdag na rin natin yung error message para sure
+        showToast("Failed to add worker: " + result.message, "error"); 
       }
     } catch (error) {
       console.error('Error saving worker:', error);
-      alert("❌ An error occurred while saving.");
+      showToast("An error occurred while saving.", "error"); 
     }
   };
 
-const handleUpdateWorker = async (updatedData) => {
+  const handleUpdateWorker = async (updatedData) => {
     try {
       const response = await fetch(`http://localhost:8080/workers/${selectedWorker.user_id}`, {
         method: 'PUT', 
@@ -68,45 +76,48 @@ const handleUpdateWorker = async (updatedData) => {
       const result = await response.json();
       
       if (result.success) {
-        alert("✅ Worker details updated successfully!"); // <-- Binalik ang success message
+        showToast("Worker details updated successfully! ", "success"); 
         setIsEditModalOpen(false);
         fetchWorkers();
       } else {
-        alert("❌ Failed to update worker: " + result.message);
+        showToast("Failed to update worker: " + result.message, "error"); 
       }
     } catch (error) {
       console.error('Error updating worker:', error);
-      alert("❌ An error occurred while updating.");
+      showToast("An error occurred while updating.", "error"); 
     }
   };
 
-  // --- LOGIC PARA SA SEARCH AT FILTER ---
   const filteredWorkers = workers.filter((worker) => {
-    // Check kung nagma-match sa search (Name o ID)
     const matchesSearch = 
       worker.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       worker.formatted_id.toLowerCase().includes(searchTerm.toLowerCase());
     
-    // Check kung nagma-match sa Role dropdown
     const matchesRole = selectedRole === 'Role' || worker.job_role === selectedRole;
-    
-    // Check kung nagma-match sa Type dropdown
     const matchesType = selectedType === 'Type' || worker.job_type === selectedType;
 
     return matchesSearch && matchesRole && matchesType;
   });
 
   return (
-    // Ibinalot ko sa div na may style para maging Arial lahat
     <div className="worker-list-container" style={{ fontFamily: 'Arial, sans-serif' }}>
       
+      {/* --- RENDER TOAST NOTIFICATION --- */}
+      {toast.visible && (
+        <div className="wb-toast-container">
+            <div className={`wb-toast ${toast.type}`}>
+                {toast.type === 'success' ? '' : ''} {toast.message}
+            </div>
+        </div>
+      )}
+
       {/* Search Header Area */}
       <div className="worker-search-header">
         <div className="search-bar">
           <span className="search-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            {/* PINALITAN ANG stroke="white" NG stroke="#D1AA3A" DITO */}
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D1AA3A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
           </span>
-          {/* Nakakonekta na sa state yung input */}
           <input 
             type="text" 
             placeholder="Search worker's name" 
@@ -115,7 +126,6 @@ const handleUpdateWorker = async (updatedData) => {
           />
         </div>
         
-        {/* Nakakonekta na sa state yung mga dropdown */}
         <select 
           className="filter-dropdown" 
           value={selectedRole} 
@@ -156,12 +166,11 @@ const handleUpdateWorker = async (updatedData) => {
               <th>ROLE</th>
               <th>CONTACT</th>
               <th>RATE</th>
-              <th>ACTION</th> {/* Iniwan ko to para sa Edit */}
+              <th>ACTION</th> 
             </tr>
           </thead>
           <tbody>
             {filteredWorkers.length > 0 ? (
-              // Ginamit natin yung 'filteredWorkers' imbes na 'workers'
               filteredWorkers.map((worker, index) => (
                 <tr key={index}>
                   <td className="fw-bold" style={{ fontWeight: 'normal' }}>{worker.formatted_id}</td>
@@ -194,7 +203,6 @@ const handleUpdateWorker = async (updatedData) => {
                 <td colSpan="7" style={{ textAlign: 'center', padding: '20px' }}>No workers found.</td>
               </tr>
             )}
-            {/* Dagdag na blank rows para mapunan yung table space tulad ng sa picture */}
             {Array.from({ length: Math.max(0, 5 - filteredWorkers.length) }).map((_, i) => (
               <tr key={`blank-${i}`}>
                 <td style={{height: '40px'}}></td><td></td><td></td><td></td><td></td><td></td><td></td>

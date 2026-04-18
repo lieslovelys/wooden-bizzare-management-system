@@ -7,6 +7,15 @@ const WorkerJobOrderDetail = ({ projectId, assignmentId, workerStatus, onBack })
     const [assignments, setAssignments] = useState([]);
     const [loading, setLoading] = useState(true);
 
+    // --- BAGONG STATES PARA SA POP-UPS ---
+    const [toast, setToast] = useState({ visible: false, message: '', type: '' });
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
+
+    const showToast = (message, type = 'success') => {
+        setToast({ visible: true, message, type });
+        setTimeout(() => setToast({ visible: false, message: '', type: '' }), 3000);
+    };
+
     useEffect(() => {
         const fetchProjectData = async () => {
             setLoading(true);
@@ -33,7 +42,15 @@ const WorkerJobOrderDetail = ({ projectId, assignmentId, workerStatus, onBack })
         return new Date(dateString).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
     };
 
-    const handleActionClick = async () => {
+    // --- BINAGONG LOGIC: Papalabasin muna ang modal ---
+    const handleActionClick = () => {
+        setShowConfirmModal(true);
+    };
+
+    // --- BAGONG LOGIC: Ito ang mag-e-execute kapag nag-YES sa Modal ---
+    const executeSubmitWork = async () => {
+        setShowConfirmModal(false); // Itago agad yung confirmation modal
+        
         try {
             const response = await fetch(`http://localhost:8080/api/assignments/${assignmentId}/status`, {
                 method: 'PUT',
@@ -52,13 +69,20 @@ const WorkerJobOrderDetail = ({ projectId, assignmentId, workerStatus, onBack })
                     )
                 );
                 
-                alert("Naipasa na sa Quality Checker!");
+                // Ipakita ang Success Toast imbes na alert()
+                showToast("Work submitted to Quality Checker!", "success");
+                
+                // Automatic babalik sa Job Order List after 1.5 seconds!
+                setTimeout(() => {
+                    onBack();
+                }, 1500);
+
             } else {
-                console.error("Failed to update status.");
+                showToast("Failed to update status.", "error");
             }
         } catch (error) {
             console.error("Error submitting work:", error);
-            alert("May problema sa connection sa server.");
+            showToast("May problema sa connection sa server.", "error");
         }
     };
 
@@ -90,6 +114,30 @@ const WorkerJobOrderDetail = ({ projectId, assignmentId, workerStatus, onBack })
 
     return (
         <div className="wjo-detail-wrapper">
+            
+            {/* RENDER TOAST NOTIFICATION */}
+            {toast.visible && (
+                <div className="wb-toast-container">
+                    <div className={`wb-toast ${toast.type}`}>
+                        {toast.type === 'success' ? '' : ''} {toast.message}
+                    </div>
+                </div>
+            )}
+
+            {/* RENDER CUSTOM CONFIRMATION MODAL */}
+            {showConfirmModal && (
+                <div className="wb-modal-overlay">
+                    <div className="wb-modal-box">
+                        <h3 className="wb-modal-title">Submit Work?</h3>
+                        <p className="wb-modal-text">Sigurado ka bang tapos na ito at ipapasa na sa Quality Checker?</p>
+                        <div className="wb-modal-actions">
+                            <button className="wb-btn-no" onClick={() => setShowConfirmModal(false)}>Cancel</button>
+                            <button className="wb-btn-yes" onClick={executeSubmitWork}>Yes, Submit</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <button className="wjo-back-btn" onClick={onBack}>← Back to Job Order List</button>
 
             <div className="wjo-container wjo-ov-container">

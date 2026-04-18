@@ -1,348 +1,508 @@
+/* =========================================
+   WORKER JOB ORDERS LIST (PREMIUM MODERN)
+========================================= */
 
 .wjo-wrapper,
 .wjo-detail-wrapper {
-    font-family: Arial, sans-serif;
-    width: 1000px;
+    width: 100%;
+    max-width: 1000px;
     margin: 40px auto;
+    font-family: 'Inter', sans-serif;
+    color: #1A1612; /* Dark Espresso */
     padding: 20px;
-    color: #5b5035;
     box-sizing: border-box;
 }
 
+/* --- HEADER --- */
 .wjo-header {
-    border-bottom: 4px solid #c2baa6;
-    padding-bottom: 8px;
-    margin-bottom: 20px;
+    border-bottom: 2px solid #eaeaea; /* Manipis at malinis na linya */
+    padding-bottom: 12px;
+    margin-bottom: 25px;
     width: 100%;
 }
 
 .wjo-title {
-    font-size: 24px;
-    font-weight: bold;
-    color: #6b5a18;
-    margin: 0 0 4px 0;
+    font-family: 'Playfair Display', serif;
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: #1A1612;
+    margin: 0 0 6px 0;
     text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .wjo-subtitle {
-    font-size: 15px;
+    font-size: 0.95rem;
     color: #8b816a;
     margin: 0;
-    font-weight: bold;
+    font-weight: 600;
 }
 
-/* Controls Area */
+/* --- CONTROLS & DROPDOWNS --- */
 .wjo-controls {
     display: flex;
     justify-content: flex-end;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 20px;
+    gap: 15px;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+}
+
+/* --- STANDALONE DARK BUTTON (Para sa "Due" sort button) --- */
+.wjo-btn-dark {
+    padding: 10px 24px;
+    border: none;
+    border-radius: 25px; /* Pill Shape para pumantay sa iba */
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #ffffff;
+    background-color: #1A1612; /* Dark Espresso */
+    cursor: pointer;
+    outline: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.wjo-btn-dark:hover {
+    background-color: #cca43b; /* Magiging Gold kapag hinover */
+    color: #ffffff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(204, 164, 59, 0.2);
 }
 
 .wjo-filter-label {
-    font-size: 14px;
+    font-size: 0.9rem;
     color: #8b816a;
-    margin-right: 5px;
+    font-weight: 600;
 }
 
-.wjo-btn-dark {
-    font-family: Arial, sans-serif;
-    padding: 6px 16px;
-    border: none;
-    font-size: 14px;
-    font-family: Georgia, serif;
-    color: white;
-    background-color: #4a4023;
-    cursor: pointer;
-    border-radius: 4px;
-    outline: none;
-}
-
+/* Dropdown */
 .wjo-btn-dark.dropdown {
-    padding: 5px 5px 8px 16px; /* Dinagdagan natin yung padding sa kanan (35px) para may pwesto yung arrow */
-    border: none;
-    font-size: 15px;
-    font-family: Arial, sans-serif;
-    color: white;
-    background-color: #4a4023; /* Dark olive/brown */
+    padding: 10px 40px 10px 20px;
+    border: 1.5px solid #eaeaea;
+    font-size: 0.95rem;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    color: #1A1612;
+    background-color: #ffffff;
     cursor: pointer;
-    border-radius: 4px;
+    border-radius: 25px; /* Pill Shape */
     outline: none;
-    min-width: 100px;
-
-    /* TANGGALIN ANG DEFAULT BROWSER ARROW */
+    min-width: 140px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+    
     appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;
-    
-    /* ILAGAY ANG CUSTOM WHITE ARROW */
-    background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ffffff'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+    /* Dark Espresso Arrow */
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%231A1612'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
-    background-position: left 70px center; /* Posisyon ng arrow sa kanan */
-    background-size: 30px; /* Laki ng arrow */
+    background-position: right 15px center;
+    background-size: 20px;
 }
 
+.wjo-btn-dark.dropdown:focus,
+.wjo-btn-dark.dropdown:hover {
+    border-color: #cca43b;
+    box-shadow: 0 0 0 3px rgba(204, 164, 59, 0.15);
+}
+
+/* Filter Buttons (Pill shaped din) */
 .wjo-filter-btn {
-    font-family: Arial, sans-serif;
-    padding: 6px 20px;
+    font-family: 'Inter', sans-serif;
+    padding: 10px 24px;
     border: none;
-    font-size: 14px;
-    font-weight: bold;
+    font-size: 0.9rem;
+    font-weight: 600;
     color: white;
     cursor: pointer;
-    border-radius: 4px;
-    transition: opacity 0.2s;
+    border-radius: 25px;
+    transition: all 0.3s ease;
 }
 
-.wjo-filter-btn:hover { opacity: 0.8; }
-.wjo-filter-btn.assigned { background-color: #d1ab45; }
-.wjo-filter-btn.repair { background-color: #4a4023; }
-.wjo-filter-btn:not(.active) { opacity: 0.4; }
+.wjo-filter-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+.wjo-filter-btn.assigned { background-color: #cca43b; } /* Gold */
+.wjo-filter-btn.repair { background-color: #1A1612; } /* Dark Espresso */
+.wjo-filter-btn:not(.active) { opacity: 0.5; background-color: #b3b3b3; color: #ffffff; }
 
+/* --- LIST ITEMS (MODERN CARDS) --- */
 .wjo-list {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 12px;
     width: 100%;
 }
 
-/* List Items - 5 Columns Grid */
 .wjo-item {
     display: grid;
-    grid-template-columns: 1fr 2fr 1fr 1fr 1fr;
+    grid-template-columns: 1fr 2.5fr 1fr 1fr 1fr; /* In-adjust para mas may space yung pangalan */
     align-items: center;
-    padding: 12px 20px;
+    padding: 18px 25px;
     cursor: pointer;
-    transition: all 0.2s ease-in-out;
-    border-radius: 4px;
+    transition: all 0.3s ease;
+    border-radius: 12px;
     background-color: #ffffff;
-    color: #5b5035;
-    font-family: Arial, sans-serif;
-    font-size: 15px;
+    color: #1A1612;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.95rem;
     font-weight: 500;
+    border: 1px solid #f0ede5;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.02);
 }
 
-.wjo-item:hover, .wjo-item.active {
-    background-color: #d1ab45;
-    color: white;
+/* Hover and Active State */
+.wjo-item:hover {
+    background-color: #fcfaf5;
+    border-color: #cca43b;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(204, 164, 59, 0.1);
+}
+
+.wjo-item.active {
+    background-color: #fbf5e8;
+    border-color: #cca43b;
+    box-shadow: 0 4px 12px rgba(204, 164, 59, 0.15);
 }
 
 .wjo-item-center { text-align: left; }
 
-.wjo-priority.high { color: #cc0000; font-weight: bold; }
-.wjo-priority.medium { color: #ff8c00; font-weight: bold; }
-.wjo-priority.low { color: #5b5035; font-weight: bold; }
+.wjo-item-id {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #8b816a;
+}
+.wjo-item-name {
+    font-weight: 700;
+    font-size: 1rem;
+    color: #1A1612;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
 
-.wjo-item:hover .wjo-priority, .wjo-item.active .wjo-priority { color: white; }
+/* Priority Text */
+.wjo-priority { font-weight: 700; }
+.wjo-priority.high { color: #d32f2f; }
+.wjo-priority.medium { color: #f57c00; }
+.wjo-priority.low { color: #2e6b3b; }
 
+/* Status Badge */
 .wjo-badge-container {
     display: flex;
     justify-content: flex-end;
 }
 
 .wjo-badge {
-    padding: 4px 16px;
-    border-radius: 12px;
-    font-size: 13px;
-    font-family: Arial, sans-serif;
-    font-weight: bold;
-    color: white;
+    padding: 6px 14px;
+    border-radius: 25px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #cca43b;
+    background-color: rgba(204, 164, 59, 0.1); /* Soft Gold Background */
     text-align: center;
-    min-width: 70px;
+    min-width: 80px;
+    letter-spacing: 0.5px;
 }
 
-.wjo-badge.assigned { background-color: #d1ab45; }
-.wjo-badge.repair { background-color: #d1ab45; } 
-
-.wjo-item.active .wjo-badge,
-.wjo-item:hover .wjo-badge {
-    background-color: #4a4023; 
-    color: white;
+.wjo-badge.repair { 
+    color: #1A1612;
+    background-color: rgba(26, 22, 18, 0.1); /* Soft Espresso Background */
 }
 
-.wjo-item-id {
-    font-family: Arial, sans-serif;
-    font-size: 16px;
-    font-weight: bold;
-    color: #6b5a18;
-}
-.wjo-item-name {
-    font-weight: bold;
-    font-family: Arial, sans-serif;
-    font-size: 16px;
-    color: #6b5a18;
+/* Invert colors when row is active or hovered */
+.wjo-item.active .wjo-item-id,
+.wjo-item.active .wjo-item-name,
+.wjo-item:hover .wjo-item-id,
+.wjo-item:hover .wjo-item-name {
+    color: #cca43b;
 }
 
+/* Responsive adjustment */
+@media (max-width: 768px) {
+    .wjo-item {
+        grid-template-columns: 1fr;
+        gap: 10px;
+        text-align: left;
+    }
+    .wjo-badge-container {
+        justify-content: flex-start;
+    }
+}
 
-/* --------------------------------------------------------------------------
-   3. STYLES PARA SA DETAIL PAGE (WorkerJobOrderDetail.jsx)
-   -------------------------------------------------------------------------- */
+/* ==========================================================================
+   WORKER JOB ORDER DETAIL VIEW (PREMIUM MODERN)
+   ========================================================================== */
+
+/* --- BACK BUTTON --- */
 .wjo-back-btn {
-    background: none;
+    background: transparent;
     border: none;
     color: #8b816a;
-    font-size: 14px;
-    font-weight: bold;
+    font-size: 0.95rem;
+    font-weight: 600;
     cursor: pointer;
     margin-bottom: 20px;
     padding: 0;
-    transition: color 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: color 0.2s ease;
 }
 
-.wjo-back-btn:hover { color: #d1ab45; }
+.wjo-back-btn:hover { 
+    color: #cca43b; 
+}
 
+/* --- MAIN CONTAINER CARDS --- */
 .wjo-container {
-    border: 1px solid #c2baa6;
-    border-radius: 12px;
-    margin-bottom: 20px;
     background-color: #ffffff;
+    border: 1px solid #f0ede5;
+    border-radius: 16px;
+    margin-bottom: 25px;
     overflow: hidden;
     width: 100%;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.wjo-ov-container { padding: 20px; }
-.wjo-ov-header { margin-bottom: 20px; }
-.wjo-ov-id { font-size: 16px; color: #8b816a; margin: 0; }
-.wjo-ov-name { font-size: 28px; color: #6b5a18; margin: 0; font-weight: bold; text-transform: uppercase;}
+.wjo-container:hover {
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.06);
+}
 
-.wjo-ov-info-bar { display: flex; gap: 15px; margin-bottom: 20px; }
+/* =========================================
+   TOP SECTION: OVERVIEW
+========================================= */
+.wjo-ov-container { 
+    padding: 30px; 
+}
+
+.wjo-ov-header { 
+    margin-bottom: 25px; 
+}
+
+.wjo-ov-id { 
+    font-size: 0.95rem; 
+    font-weight: 600; 
+    color: #8b816a; 
+    margin: 0 0 5px 0; 
+    letter-spacing: 1px; 
+}
+
+.wjo-ov-name { 
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    font-size: 2.2rem;
+    color: #1A1612; /* DARK ESPRESSO */
+    margin: 0; 
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+/* Info Blocks (Cream + Gold Accent) */
+.wjo-ov-info-bar { 
+    display: flex; 
+    gap: 15px; 
+    margin-bottom: 25px; 
+    flex-wrap: wrap; 
+}
 
 .wjo-ov-info-block {
-    background-color: #d1ab45;
-    border-radius: 6px;
-    padding: 8px 12px;
+    background-color: #fcfaf5;
+    border: 1px solid #eaeaea;
+    border-left: 5px solid #cca43b; /* Gold Accent */
+    border-radius: 10px;
+    padding: 12px 20px;
     flex: 1;
+    min-width: 120px;
     display: flex;
     flex-direction: column;
 }
 
-.wjo-ov-label { font-size: 11px; font-weight: bold; color: #ffffff; margin-bottom: 4px; }
-.wjo-ov-value { font-size: 13px; font-weight: bold; font-family: Arial, sans-serif; }
-.due-date { color: #cc0000; }
-.priority-high { color: #ff8c00; }
+.wjo-ov-label { 
+    font-size: 0.75rem; 
+    font-weight: 700; 
+    color: #888888; 
+    text-transform: uppercase; 
+    letter-spacing: 1px; 
+    margin-bottom: 6px; 
+}
 
+.wjo-ov-value { 
+    font-size: 1.05rem; 
+    font-weight: 700; 
+    color: #1A1612; /* DARK ESPRESSO */
+}
+
+.due-date { color: #d32f2f; }
+.priority-high { color: #d32f2f; }
+
+/* Details Box */
 .wjo-ov-details-box {
-    background-color: #d1ab45;
-    border-radius: 8px;
-    padding: 15px;
+    background-color: #fbf5e8; /* Soft Cream */
+    border-radius: 12px;
+    padding: 20px;
     display: flex;
     flex-direction: column;
 }
 
-.wjo-ov-details-header { display: flex; justify-content: space-between; margin-bottom: 10px; }
-.wjo-ov-details-title { font-size: 12px; color: #5b5035; }
+.wjo-ov-details-header { 
+    display: flex; 
+    justify-content: space-between; 
+    margin-bottom: 15px; 
+}
+
+.wjo-ov-details-title { 
+    font-weight: 700; 
+    font-size: 0.9rem; 
+    text-transform: uppercase; 
+    letter-spacing: 1px; 
+    color: #5c4a11; 
+}
 
 .wjo-ov-scroll-area { 
-    max-height: 120px; 
+    max-height: 150px; 
     overflow-y: auto; 
     padding-right: 10px; 
 }
 
-.wjo-ov-detail-item {
-    background-color: #ffffff;
-    padding: 10px;
-    border-radius: 6px;
-    margin-bottom: 10px;
-    font-family: Arial, sans-serif;
-    font-size: 12px;
-}
-.wjo-ov-detail-item strong { display: block; margin-bottom: 4px; font-size: 13px; }
-.wjo-ov-detail-item p { margin: 0; line-height: 1.4; }
-
+/* Custom Scrollbar */
 .wjo-ov-scroll-area::-webkit-scrollbar { width: 6px; }
 .wjo-ov-scroll-area::-webkit-scrollbar-track { background: transparent; }
-.wjo-ov-scroll-area::-webkit-scrollbar-thumb { background: #ffffff; border-radius: 10px; }
-.wjo-ov-scroll-area::-webkit-scrollbar-thumb:hover { background: #8b816a; }
+.wjo-ov-scroll-area::-webkit-scrollbar-thumb { background-color: #cca43b; border-radius: 10px; }
 
+.wjo-ov-detail-item {
+    background-color: #ffffff;
+    padding: 12px 15px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    font-size: 0.95rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    border: 1px solid #eaeaea;
+}
+
+.wjo-ov-detail-item strong { 
+    display: block; 
+    margin-bottom: 5px; 
+    color: #1A1612; 
+    font-size: 1rem; 
+}
+
+.wjo-ov-detail-item p { 
+    margin: 0; 
+    line-height: 1.4; 
+    color: #666; 
+}
+
+/* =========================================
+   BOTTOM SECTION: PROGRESS TABLE
+========================================= */
 .wjo-progress-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 15px 20px;
-    border-bottom: 1px solid #c2baa6;
+    padding: 20px 30px;
+    border-bottom: 1px solid #f0ede5;
 }
 
-.wjo-container-title { margin: 0; font-size: 18px; color: #6b5a18; }
-
-.wjo-progress-bar-wrapper {
-    display: flex;
-    align-items: center;
-    gap: 10px;
+.wjo-container-title { 
+    margin: 0; 
+    font-family: 'Playfair Display', serif; 
+    font-size: 1.5rem; 
+    color: #1A1612; 
+    font-weight: 700; 
 }
 
-.wjo-progress-bar {
-    width: 150px;
-    height: 12px;
-    background-color: #e6e3da;
-    border-radius: 10px;
-    overflow: hidden;
-}
+/* Sleek Progress Bar */
+.wjo-progress-bar-wrapper { display: flex; align-items: center; gap: 15px; }
+.wjo-progress-bar { width: 250px; height: 10px; background-color: #eaeaea; border-radius: 20px; overflow: hidden; }
+.wjo-progress-fill { height: 100%; background: linear-gradient(to right, #b8a040, #d4c47a); border-radius: 20px; transition: width 0.5s ease; }
+.wjo-progress-text { font-size: 0.95rem; font-weight: 700; color: #5c4a11; }
 
-.wjo-progress-fill {
-    height: 100%;
-    background-color: #d1ab45;
-    transition: width 0.3s ease;
-}
-
-.wjo-progress-text {
-    font-family: Arial, sans-serif;
-    font-size: 12px;
-    font-weight: bold;
-}
-
+/* Modern Clean Table */
 .wjo-table {
     width: 100%;
     border-collapse: collapse;
-    font-family: Arial, sans-serif;
-    font-size: 13px;
+    font-size: 0.95rem;
 }
 
 .wjo-table th {
     text-align: center;
-    padding: 12px 20px;
-    font-family: Arial, sans-serif;
-    color: #6b5a18;
-    border-bottom: 1px solid #c2baa6;
+    padding: 15px 20px;
+    color: #8b816a;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-bottom: 2px solid #eaeaea;
+    font-weight: 700;
 }
 
-.wjo-table td { padding: 12px 20px; border-bottom: 1px solid #c2baa6; height: 40px; text-align: center; }
-
-.wjo-status {
-    padding: 4px 12px;
-    border-radius: 12px;
-    font-size: 11px;
-    font-weight: bold;
-    color: white;
-    display: inline-block;
+.wjo-table td { 
     text-align: center;
-    min-width: 60px;
+    padding: 15px 20px; 
+    border-bottom: 1px solid #f4f4f4; 
+    color: #1A1612; 
+    font-weight: 500;
+    vertical-align: middle;
 }
 
-.wjo-status.approved { background-color: #8fbc8f; }
-.wjo-status.in-progress { background-color: #a4bdfc; }
-.wjo-status.rework { background-color: #ff0000; }
-.wjo-status.assigned { background-color: #d1ab45; }
-.wjo-status.for-qa { background-color: #4a4023; }
+.wjo-table tr:hover td { background-color: #faf7f0; }
 
-.wjo-action-container { margin-top: 20px; }
+/* Modern Pill Status Badges */
+.wjo-status {
+    padding: 6px 14px;
+    border-radius: 25px; /* Pill Shape */
+    font-size: 0.85rem;
+    font-weight: 700;
+    display: inline-block;
+    letter-spacing: 0.5px;
+    min-width: 80px;
+    text-align: center;
+}
+
+.wjo-status.approved { background-color: rgba(46, 107, 59, 0.1); color: #2e6b3b; }
+.wjo-status.in-progress { background-color: rgba(43, 76, 126, 0.1); color: #2b4c7e; }
+.wjo-status.rework { background-color: rgba(211, 47, 47, 0.1); color: #d32f2f; }
+.wjo-status.assigned { background-color: rgba(204, 164, 59, 0.1); color: #cca43b; }
+.wjo-status.for-qa { background-color: #fbf5e8; color: #1A1612; }
+
+/* =========================================
+   ACTION BUTTON (MARK AS DONE)
+========================================= */
+.wjo-action-container { 
+    margin-top: 0; 
+    background-color: transparent; 
+}
 
 .wjo-action-btn {
     width: 100%;
-    padding: 16px;
+    padding: 18px; /* Mas makapal para tap-friendly */
     border: none;
-    border-radius: 8px;
-    font-size: 18px;
-    font-weight: bold;
-    font-family: Georgia, serif;
+    border-radius: 0 0 16px 16px; /* Rounded lang sa bottom ng card */
+    font-size: 1.05rem;
+    font-weight: 700;
+    font-family: 'Inter', sans-serif;
     color: white;
     cursor: pointer;
-    transition: opacity 0.2s;
+    transition: all 0.3s ease;
     text-transform: uppercase;
     letter-spacing: 1px;
 }
 
 .wjo-action-btn:hover { opacity: 0.9; }
-.wjo-action-btn.done { background-color: #1b5e20; } 
-.wjo-action-btn.repair { background-color: #1b5e20; } 
-.wjo-action-btn.submitted { background-color: #4caf50; cursor: not-allowed; opacity: 0.8; }
+
+/* Deep Workshop Green */
+.wjo-action-btn.done,
+.wjo-action-btn.repair { 
+    background-color: #2e6b3b; 
+} 
+.wjo-action-btn.done:hover,
+.wjo-action-btn.repair:hover { 
+    background-color: #1e5631; 
+}
+
+.wjo-action-btn.submitted { 
+    background-color: #eaeaea; 
+    color: #888888;
+    cursor: not-allowed; 
+}

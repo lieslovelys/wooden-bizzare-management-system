@@ -101,10 +101,15 @@ const addWorker = async (req, res) => {
 
 const updateWorker = async (req, res) => {
     try {
-        const userId = req.params.id; // Kukunin natin yung ID mula sa URL link
-        const { workerType, role, contactNumber, dailyRate } = req.body; // Kukunin ang laman ng form
+        const userId = req.params.id; 
+        const { workerType, role, contactNumber, dailyRate, photo } = req.body; 
 
-        await User.updateWorkerDetails(userId, workerType, role, contactNumber, dailyRate);
+        // DITO ANG FIX: Kapag empty string ang dailyRate, gagawin nating 0.
+        // Kung may laman, pananatilihin natin yung value niya.
+        const validRate = dailyRate === "" || dailyRate === null ? 0 : dailyRate;
+
+        // Ipapasa na natin ang 'validRate' imbes na 'dailyRate'
+        await User.updateWorkerDetails(userId, workerType, role, contactNumber, validRate, photo);
         
         res.status(200).json({ success: true, message: 'Worker details updated successfully' });
     } catch (error) {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom'; // <-- 1. IDINAGDAG ITO
+import { useLocation } from 'react-router-dom'; 
 import EditProjectForm from './EditProjectForm'; 
 import '../css/admin.css';
 import ProjectDetails from './ProjectDetails';
@@ -15,36 +15,26 @@ const ProjectList = () => {
 
   const [activeRowId, setActiveRowId] = useState(null);
 
-  const location = useLocation(); // <-- 2. I-SETUP ANG LOCATION
+  const location = useLocation(); 
 
-  // --- 3. BAGONG USEEFFECT PARA SA NOTIFICATION ---
+  // --- BAGONG USEEFFECT PARA SA NOTIFICATION ---
   useEffect(() => {
-    // Kapag may ipinasang state galing sa notification, buksan agad yung Details
     if (location.state && location.state.targetProjectId) {
         setViewingProjectId(location.state.targetProjectId);
-        
-        // I-clear ang location state para hindi bumalik sa details view kapag nag-refresh
         window.history.replaceState({}, document.title);
     }
   }, [location]);
-  // ------------------------------------------------
 
   const fetchProjects = async () => {
     setLoading(true);
     try {
       const response = await fetch('http://localhost:8080/api/projects');
       const result = await response.json();
-      console.log("API Response:", result);
       
-      if (result.success && result.data) {
+      if (result.success) {
         setProjects(result.data);
       } else if (Array.isArray(result)) {
         setProjects(result);
-      } else if (result.data && Array.isArray(result.data)) {
-        setProjects(result.data);
-      } else {
-        console.log("No projects or unexpected format:", result);
-        setProjects([]);
       }
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -58,21 +48,15 @@ const ProjectList = () => {
   }, []);
 
   const filteredProjects = projects.filter((project) => {
-    // 1. TANGGALIN KAPAG TAPOS NA - use priority_level or check other fields
-    const projectStatus = project.status || project.priority_level || 'pending';
-    if (projectStatus.toLowerCase() === 'completed' || projectStatus.toLowerCase() === 'done') {
+    const currentStatus = project.status ? project.status.toLowerCase() : 'pending';
+    if (currentStatus === 'completed' || currentStatus === 'done') {
         return false; 
     }
 
-    // 2. STATUS FILTERING LOGIC - allow if status doesn't exist
-    if (statusFilter !== 'All') {
-      const currentStatus = project.status ? project.status.toLowerCase() : 'pending';
-      if (currentStatus !== statusFilter.toLowerCase()) {
+    if (statusFilter !== 'All' && currentStatus !== statusFilter.toLowerCase()) {
         return false;
-      }
     }
 
-    // 3. SEARCH LOGIC
     const searchLower = searchTerm.toLowerCase();
     return (
       (project.project_name && project.project_name.toLowerCase().includes(searchLower)) ||
@@ -93,7 +77,6 @@ const ProjectList = () => {
     );
   }
 
-  // --- KUNG MAY VIEWING ID, IPAPAKITA ANG DETAILS ---
   if (viewingProjectId) {
     return (
       <ProjectDetails 
@@ -133,39 +116,44 @@ const ProjectList = () => {
             <option value="Pending">Pending</option>
             <option value="In Progress">In Progress</option>
         </select>
-   
-    
+      </div>
+
+      {/* REPLACED TABLE WITH MODERN GRID/CARDS */}
       {loading ? (
         <p style={{textAlign: 'center', marginTop: '20px'}}>Loading projects...</p>
       ) : (
-        <div className="table-responsive">
-          <table className="project-table">
-            <thead>
-              <tr>
-                <th>Project ID</th>
-                <th>Project Name</th>
-                <th>Status</th>
-                <th className="action-col">ACTION</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredProjects.length > 0 ? (
-                filteredProjects.map((proj) => (
-                  <tr 
-                    key={proj.id}
-                    className={activeRowId === proj.id ? 'active-row' : ''}
-                    onClick={() => setActiveRowId(proj.id)}
-                  >
-                    <td> WB{proj.id}</td>
-                    <td>{proj.project_name}</td>
-                    
-                    <td>
-                        <span className={`status-badge ${(proj.status || 'pending').toLowerCase().replace(' ', '-')}`}>
-                            {proj.status || 'Pending'}
-                        </span>
-                    </td>
+        <div className="pl-grid-wrapper">
+          
+          {/* GRID HEADER */}
+          <div className="pl-header">
+            <div className="pl-col">Project ID</div>
+            <div className="pl-col">Project Name</div>
+            <div className="pl-col">Status</div>
+            <div className="pl-col action-col">Action</div>
+          </div>
 
-                    <td className="action-buttons">
+          {/* GRID CARDS (LIST ITEMS) */}
+          <div className="pl-list">
+            {filteredProjects.length > 0 ? (
+              filteredProjects.map((proj) => (
+                <div 
+                  key={proj.id}
+                  className={`pl-item ${activeRowId === proj.id ? 'active' : ''}`}
+                  onClick={() => setActiveRowId(proj.id)}
+                >
+                  <div className="pl-col id-col">WB{proj.id}</div>
+                  <div className="pl-col name-col">{proj.project_name}</div>
+                  
+                  {/* Status Badge */}
+                  <div className="pl-col">
+                    <span className={`status-badge ${proj.status ? proj.status.toLowerCase().replace(' ', '-') : 'pending'}`}>
+                        {proj.status || 'Pending'}
+                    </span>
+                  </div>
+
+                  {/* Action Buttons (Details removed) */}
+                  <div className="pl-col action-col">
+                    <div className="action-buttons">
                       <button 
                         className="btn-action edit" 
                         onClick={(e) => {
@@ -175,27 +163,16 @@ const ProjectList = () => {
                       >
                         Edit
                       </button>
-                      <button 
-                        className="btn-action details" 
-                        onClick={(e) => {
-                            e.stopPropagation(); 
-                            setViewingProjectId(proj.id);
-                        }}
-                      >
-                        Details
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="4" style={{ textAlign: 'center', padding: '20px' }}>
-                    No projects found.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div style={{ textAlign: 'center', padding: '30px', color: '#8b816a', backgroundColor: '#ffffff', borderRadius: '12px' }}>
+                No projects match your search or filter.
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

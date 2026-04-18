@@ -19,7 +19,10 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(express.json());
+// --- DITO YUNG BINAGO NATIN (Tinaasan ang limit para sa profile picture) ---
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
+// ---------------------------------------------------------------------------
 
 // Session
 app.use(session({

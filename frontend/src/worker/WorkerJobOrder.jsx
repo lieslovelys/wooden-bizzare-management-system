@@ -1,12 +1,9 @@
-import React, { useState, useEffect, useContext } from 'react'; // <-- Idagdag ang useContext
+import React, { useState, useEffect, useContext, useCallback } from 'react'; 
 import '../css/worker.css';
 import WorkerJobOrderDetail from './WorkerJobOrderDetail';
-
-// IMPORTANTE: I-adjust mo ang '../App' base sa kung nasaan ang App.jsx mo mula dito sa file na ito.
 import { UserContext } from '../App'; 
 
 const WorkerJobOrder = () => {
-    // --- KUNIN ANG USER ID MULA SA CONTEXT ---
     const { userID } = useContext(UserContext); 
 
     const [activeFilter, setActiveFilter] = useState('Assigned');
@@ -15,36 +12,34 @@ const WorkerJobOrder = () => {
     const [selectedTaskId, setSelectedTaskId] = useState(null);
     const [tasks, setTasks] = useState([]);
 
-    // --- BACKEND FETCH LOGIC ---
-    useEffect(() => {
-        // Huwag mag-fetch kung wala pang userID (e.g., naglo-load pa yung session sa App.jsx)
+    // --- BINAGONG LOGIC: Inilabas natin ang fetchMyTasks para pwedeng tawagin kahit saan ---
+    const fetchMyTasks = useCallback(async () => {
         if (!userID) return;
-
-        const fetchMyTasks = async () => {
-            try {
-                // Gagamitin na natin ang tunay na userID mula sa Context!
-                const response = await fetch(`http://localhost:8080/api/workers/${userID}/tasks`);
-                if (response.ok) {
-                    const data = await response.json();
-                    
-                    const formattedTasks = data.map(task => ({
-                        id: `WB-${String(task.project_id).padStart(2, '0')}`,
-                        name: task.project_name,
-                        dueDate: task.due_date,
-                        priority: task.priority || 'Normal',
-                        status: task.status,
-                        assignmentId: task.assignment_id
-                    }));
-                    
-                    setTasks(formattedTasks);
-                }
-            } catch (error) {
-                console.error("Error fetching worker tasks:", error);
+        try {
+            const response = await fetch(`http://localhost:8080/api/workers/${userID}/tasks`);
+            if (response.ok) {
+                const data = await response.json();
+                
+                const formattedTasks = data.map(task => ({
+                    id: `WB-${String(task.project_id).padStart(2, '0')}`,
+                    name: task.project_name,
+                    dueDate: task.due_date,
+                    priority: task.priority || 'Normal',
+                    status: task.status,
+                    assignmentId: task.assignment_id
+                }));
+                
+                setTasks(formattedTasks);
             }
-        };
+        } catch (error) {
+            console.error("Error fetching worker tasks:", error);
+        }
+    }, [userID]); 
 
+    // Tatawagin niya ito kapag nag-load ang page (dahil sa userID)
+    useEffect(() => {
         fetchMyTasks();
-    }, [userID]); // <-- Mag-re-run ang fetch kapag nakuha na ng Context ang userID
+    }, [fetchMyTasks]);
     // ----------------------------------
 
     const formatUI_Date = (dateString) => {
@@ -57,16 +52,19 @@ const WorkerJobOrder = () => {
     if (priorityFilter !== 'All') displayedTasks = displayedTasks.filter(task => task.priority === priorityFilter);
     if (sortByDue) displayedTasks.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
 
-if (selectedTaskId) {
+    if (selectedTaskId) {
         const selectedTaskData = tasks.find(t => t.id === selectedTaskId);
         const numericId = selectedTaskId.replace('WB-', '').replace(/^0+/, ''); 
 
         return (
             <WorkerJobOrderDetail 
                 projectId={numericId} 
-                assignmentId={selectedTaskData.assignmentId} // <-- IPASA ITO
+                assignmentId={selectedTaskData.assignmentId} 
                 workerStatus={selectedTaskData.status} 
-                onBack={() => setSelectedTaskId(null)} 
+                onBack={() => {
+                    setSelectedTaskId(null); // Itago ang details
+                    fetchMyTasks(); // <-- TATAWAGIN NATIN ULIT YUNG BACKEND PARA MAG-REFRESH!
+                }} 
             />
         );
     }

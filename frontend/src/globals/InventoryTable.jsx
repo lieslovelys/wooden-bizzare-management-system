@@ -299,9 +299,19 @@ const InventoryTable = () => {
                                 </select>
                             </div>
 
-                            <div className="form-group">
+<div className="form-group">
                                 <label>Unit of measurement</label>
-                                <input type="text" placeholder="e.g. pcs, liters, kg" value={formData.unit} onChange={(e) => setFormData({...formData, unit: e.target.value})} required />
+                                <input 
+                                    type="text" 
+                                    placeholder="e.g. pcs, liters, kg" 
+                                    value={formData.unit} 
+                                    onChange={(e) => {
+                                        // ERROR HANDLER: Tanggalin lahat ng numbers (0-9)
+                                        const noNumbers = e.target.value.replace(/[0-9]/g, '');
+                                        setFormData({...formData, unit: noNumbers});
+                                    }} 
+                                    required 
+                                />
                             </div>
 
                             <div className="form-group variants-group">

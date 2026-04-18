@@ -248,6 +248,7 @@
 }
 
 .modal-content {
+     margin-left: 300px;
     background: white;
     width: 450px;
     padding: 30px;

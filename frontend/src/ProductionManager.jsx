@@ -2,7 +2,6 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { useContext } from "react";
 import { UserContext } from "./App";
 import Navbar from "./globals/Navbar"; 
-import Logout from "./globals/Logout"; 
 import InventoryTable from "./globals/InventoryTable";
 import JobOrder from "./globals/JobOrder";
 import ProjectVerification from "./globals/ProjectVerification";
@@ -22,7 +21,6 @@ const ProductionManager = () => {
         { name: 'Attendance', url: 'attendance', key: 'at', icon: 'fas fa-user-check' },
         { name: 'Project History', url: 'history', key: 'ph', icon: 'fas fa-history' },
         { name: 'Notifications', url: 'notifications', key: 'nt', icon: 'fas fa-bell' },
-        { name: 'Log Out', url: 'logout', key: 'lg', icon: 'fas fa-sign-out-alt' }
     ];
 
     return (
@@ -33,7 +31,6 @@ const ProductionManager = () => {
                 <Routes>
                     <Route index element={<Navigate to="dashboard" replace />} />
                     <Route path="job-order" element={<JobOrder />} />
-                    <Route path="logout" element={<Logout />} />
                     <Route path="inventory/*" element={<InventoryTable />} />
                     <Route path="verification" element={<ProjectVerification />} />
                     <Route path="history" element={<ProjectHistory />} />

@@ -50,22 +50,32 @@ export const createProjectWithVariables = async (projectData) => {
 
 // PROJECT LIST
 
+// PROJECT LIST
 export const getAllProjects = async () => {
   const client = await getClient();
   try {
-    // Check if status column exists
-    let query = `
-      SELECT id, project_name, client_name, contact_number, client_payment, due_date, priority_level
-      FROM projects
-      ORDER BY created_at DESC;
+    // Binago natin ang query para mag-check sa job_assignments table
+    const query = `
+      SELECT 
+        p.id, 
+        p.project_name, 
+        p.client_name, 
+        p.contact_number, 
+        p.client_payment, 
+        p.due_date, 
+        p.priority_level,
+        CASE 
+            WHEN p.status = 'Completed' THEN 'Completed'
+            WHEN EXISTS (SELECT 1 FROM job_assignments ja WHERE ja.project_id = p.id) THEN 'In Progress'
+            ELSE COALESCE(p.status, 'Pending')
+        END as status
+      FROM projects p
+      ORDER BY p.created_at DESC;
     `;
-    let res = await client.query(query);
+    const res = await client.query(query);
     
-    // Add default status to each project
-    return res.rows.map(row => ({
-      ...row,
-      status: 'Pending'
-    }));
+    // Wala na yung .map() dito dahil database na ang bahala sa pag-compute ng tamang status!
+    return res.rows;
   } catch (error) {
     throw error;
   } finally {

@@ -19,13 +19,12 @@ async function fetchProjects() {
 
 async function fetchProfit(projectId) {
   const res = await fetch(`${API}/profit/${projectId}`);
-  // If 404, return empty profit data instead of throwing error
   if (res.status === 404) {
     return {
-      client_payment: 0,
-      worker_wages: 0,
-      materials_cost: 0,
-      other_expenses: 0,
+      client_payment: "",
+      worker_wages: "",
+      materials_cost: "",
+      other_expenses: "",
       expense_items: []
     };
   }
@@ -53,11 +52,17 @@ function SpinnerInput({ value, onChange }) {
       <input
         type="number"
         value={value}
-        onChange={(e) => onChange(Number(e.target.value) || 0)}
+        placeholder="0"
+        onChange={(e) => {
+          const val = e.target.value;
+          // Kapag binura lahat ng text, hayaan lang maging blangko ("")
+          onChange(val === "" ? "" : Number(val));
+        }}
       />
       <div className="profit-spinner-buttons">
-        <button type="button" onClick={() => onChange(value + 500)}>▲</button>
-        <button type="button" onClick={() => onChange(Math.max(0, value - 500))}>▼</button>
+        {/* Sinisiguro natin na mako-convert sa number ang blank ("") bago mag-add */}
+        <button type="button" onClick={() => onChange((Number(value) || 0) + 500)}>▲</button>
+        <button type="button" onClick={() => onChange(Math.max(0, (Number(value) || 0) - 500))}>▼</button>
       </div>
     </div>
   );
@@ -68,10 +73,11 @@ export default function Profit() {
   const [selectedProjectId, setSelectedProjectId] = useState("");
   const [projectName, setProjectName] = useState("");
 
-  const [clientPayment, setClientPayment] = useState(0);
-  const [workerWages, setWorkerWages] = useState(0);
-  const [materialsCost, setMaterialsCost] = useState(0);
-  const [otherExpenses, setOtherExpenses] = useState(0);
+  // Pinalitan natin ng "" (empty string) ang default imbes na 0
+  const [clientPayment, setClientPayment] = useState("");
+  const [workerWages, setWorkerWages] = useState("");
+  const [materialsCost, setMaterialsCost] = useState("");
+  const [otherExpenses, setOtherExpenses] = useState("");
   const [breakdown, setBreakdown] = useState([]);
 
   const [saved, setSaved] = useState(null);
@@ -82,9 +88,8 @@ export default function Profit() {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
 
-  // New expense item form
   const [newItemDesc, setNewItemDesc] = useState("");
-  const [newItemAmount, setNewItemAmount] = useState(0);
+  const [newItemAmount, setNewItemAmount] = useState("");
 
   useEffect(() => {
     fetchProjects()
@@ -125,10 +130,11 @@ export default function Profit() {
   }, [selectedProjectId, loadProfitData]);
 
   function applyData(data) {
-    setClientPayment(Number(data.client_payment) || 0);
-    setWorkerWages(Number(data.worker_wages) || 0);
-    setMaterialsCost(Number(data.materials_cost) || 0);
-    setOtherExpenses(Number(data.other_expenses) || 0);
+    // Kapag zero o wala pang laman sa DB, ibabato niya as "" (blangko) para hindi "0" agad ang nakasulat
+    setClientPayment(data.client_payment ? Number(data.client_payment) : "");
+    setWorkerWages(data.worker_wages ? Number(data.worker_wages) : "");
+    setMaterialsCost(data.materials_cost ? Number(data.materials_cost) : "");
+    setOtherExpenses(data.other_expenses ? Number(data.other_expenses) : "");
     setBreakdown(data.expense_items || []);
   }
 
@@ -143,10 +149,11 @@ export default function Profit() {
     setSuccess(false);
     try {
       const payload = {
-        client_payment: clientPayment,
-        worker_wages: workerWages,
-        materials_cost: materialsCost,
-        other_expenses: otherExpenses,
+        // Kino-convert natin sa number ang mga blangko para hindi mag-error ang database
+        client_payment: Number(clientPayment) || 0,
+        worker_wages: Number(workerWages) || 0,
+        materials_cost: Number(materialsCost) || 0,
+        other_expenses: Number(otherExpenses) || 0,
         expense_items: breakdown,
       };
       const updated = await saveProfit(selectedProjectId, payload);
@@ -162,9 +169,7 @@ export default function Profit() {
   }
 
   function handleCancel() {
-    if (saved) applyData(saved);
-    setError(null);
-    setSuccess(false);
+    window.location.reload();
   }
 
   function handleProjectChange(e) {
@@ -186,7 +191,7 @@ export default function Profit() {
     };
     setBreakdown([...breakdown, newItem]);
     setNewItemDesc("");
-    setNewItemAmount(0);
+    setNewItemAmount("");
   }
 
   function removeExpenseItem(index) {
@@ -195,12 +200,18 @@ export default function Profit() {
 
   function updateExpenseItem(index, field, value) {
     const updated = [...breakdown];
-    updated[index][field] = field === "amount" ? Number(value) : value;
+    updated[index][field] = field === "amount" ? (value === "" ? "" : Number(value)) : value;
     setBreakdown(updated);
   }
 
-  const totalExpenses = workerWages + materialsCost + otherExpenses;
-  const netProfit = clientPayment - totalExpenses;
+  // Ligtas na pag-compute kahit blangko ang textbox
+  const calcWages = Number(workerWages) || 0;
+  const calcMaterials = Number(materialsCost) || 0;
+  const calcOther = Number(otherExpenses) || 0;
+  const calcPayment = Number(clientPayment) || 0;
+
+  const totalExpenses = calcWages + calcMaterials + calcOther;
+  const netProfit = calcPayment - totalExpenses;
   const fmt = (n) => "₱" + Number(n).toLocaleString("en-PH");
 
   if (loadingProjects) {
@@ -217,6 +228,19 @@ export default function Profit() {
 
   return (
     <div className="profit-container">
+      
+      {/* CSS FIX PARA MA-HIDE ANG DEFAULT BROWSER ARROWS */}
+      <style>{`
+        .profit-spinner input[type="number"]::-webkit-inner-spin-button,
+        .profit-spinner input[type="number"]::-webkit-outer-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+        .profit-spinner input[type="number"] {
+          -moz-appearance: textfield;
+        }
+      `}</style>
+
       <div className="profit-card">
         <h2 className="profit-title">
           Profit Detail {projectName ? `— ${projectName}` : ""}
@@ -234,7 +258,7 @@ export default function Profit() {
               value={selectedProjectId}
               onChange={handleProjectChange}
             >
-              <option value="">-- Select a Project --</option>
+              <option value="">Select a Project</option>
               {projects.map((proj) => (
                 <option key={proj.id} value={proj.id}>
                   {proj.project_name || proj.id}
@@ -339,7 +363,8 @@ export default function Profit() {
                             <td>
                               <input
                                 type="number"
-                                value={row.amount}
+                                value={row.amount === 0 && row.amount !== "" ? "" : row.amount}
+                                placeholder="0"
                                 onChange={(e) => updateExpenseItem(i, "amount", e.target.value)}
                                 className="profit-table-input profit-table-amount"
                               />
@@ -349,6 +374,7 @@ export default function Profit() {
                                 type="button"
                                 onClick={() => removeExpenseItem(i)}
                                 className="profit-delete-btn"
+                                title="Delete"
                               >
                                 🗑
                               </button>

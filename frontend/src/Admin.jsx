@@ -3,7 +3,6 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { useContext } from "react";
 import { UserContext } from "./App";
 import Navbar from "./globals/Navbar"; 
-import Logout from "./globals/Logout"; 
 import CreateAccount from "./admin/CreateAccount";
 import AdminDashboard from "./admin/A_Dashboard";
 import WorkerList from "./admin/WorkerList";
@@ -32,7 +31,6 @@ const Admin = () => {
         { name: 'Worker Productivity', url: 'productivity', key: 'wp', icon: 'fas fa-chart-line' },
         { name: 'Project History', url: 'project-history', key: 'ph', icon: 'fas fa-clock-rotate-left' },
         { name: 'Notification', url: 'notification', key: 'nt', icon: 'fas fa-bell' },
-        { name: 'Log Out', url: 'logout', key: 'lg', icon: 'fas fa-sign-out-alt' }
     ];
 
     return (
@@ -54,7 +52,6 @@ const Admin = () => {
                     <Route path="notification" element={<AdminNotification />} />
                     <Route path="create-project" element={<CreateProject />} />
                     <Route path="inventory" element={<InventoryTable />} />
-                    <Route path="logout" element={<Logout />} />
                 </Routes>
             </div>
         </div>

@@ -17,10 +17,35 @@ const AddWorkerModal = ({ isOpen, onClose, onSave }) => {
   const [profilePicture, setProfilePicture] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
 
+  // --- BAGONG STATE PARA SA POP-UP (TOAST) ---
+  const [toast, setToast] = useState({ visible: false, message: '', type: '' });
+
+  const showToast = (message, type = 'success') => {
+    setToast({ visible: true, message, type });
+    setTimeout(() => setToast({ visible: false, message: '', type: '' }), 3000);
+  };
+
   if (!isOpen) return null;
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+
+    // ERROR HANDLER: Bawal ang numbers sa Pangalan
+    if (['firstName', 'middleName', 'lastName'].includes(name)) {
+      const noNumbers = value.replace(/[0-9]/g, ''); 
+      setFormData(prev => ({ ...prev, [name]: noNumbers }));
+      return;
+    }
+
+    // ERROR HANDLER: Puro numbers lang at hanggang 11 digits sa Contact Number
+    if (name === 'contactNumber') {
+      const onlyNumbers = value.replace(/[^0-9]/g, ''); 
+      if (onlyNumbers.length <= 11) {
+        setFormData(prev => ({ ...prev, [name]: onlyNumbers }));
+      }
+      return;
+    }
+
     setFormData({ ...formData, [name]: value });
   };
 
@@ -36,21 +61,54 @@ const AddWorkerModal = ({ isOpen, onClose, onSave }) => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onSave({ ...formData, photo: previewUrl });
-    setFormData({
-      firstName: '', middleName: '', lastName: '', suffix: 'None', username: '', password: '',
-      workerType: 'Regular', role: 'Carpenter', contactNumber: '', dailyRate: ''
-    });
-    setProfilePicture(null);
-    setPreviewUrl(null);
+
+    // Optional: I-check kung eksaktong 11 numbers ang nilagay (para hindi kulang)
+    if (formData.contactNumber && formData.contactNumber.length < 11) {
+        showToast('Contact number must be exactly 11 digits.', 'error');
+        return;
+    }
+
+    try {
+        // Ipinapasa ang data pabalik sa parent component (WorkerList)
+        await onSave({ ...formData, photo: previewUrl });
+        
+        // Magpapakita ng Success Message
+        showToast('Worker successfully added! 🎉', 'success');
+
+        // I-clear ang form
+        setFormData({
+            firstName: '', middleName: '', lastName: '', suffix: 'None', username: '', password: '',
+            workerType: 'Regular', role: 'Carpenter', contactNumber: '', dailyRate: ''
+        });
+        setProfilePicture(null);
+        setPreviewUrl(null);
+
+        // Bibigyan natin ng 1.5 seconds delay bago isara ang modal para mabasa nila yung success message
+        setTimeout(() => {
+            onClose();
+        }, 1500);
+
+    } catch (error) {
+        console.error(error);
+        showToast('Failed to add worker.', 'error');
+    }
   };
 
   return (
-    // Nilagyan natin ng font-family Arial dito para sakop lahat
     <div className="modal-overlay" style={{ fontFamily: 'Arial, sans-serif' }}>
-      <div className="add-worker-modal" style={{ maxWidth: '700px' }}> {/* Pinaliit ng konti yung width */}
+      
+      {/* RENDER TOAST KUNG VISIBLE */}
+      {toast.visible && (
+        <div className="wb-toast-container">
+            <div className={`wb-toast ${toast.type}`}>
+                {toast.type === 'success' ? '✅' : '⚠️'} {toast.message}
+            </div>
+        </div>
+      )}
+
+      <div className="add-worker-modal" style={{ maxWidth: '700px' }}>
         <div className="modal-header">
           <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 'bold' }}>Add Worker Account & Details</h3>
         </div>
@@ -108,7 +166,6 @@ const AddWorkerModal = ({ isOpen, onClose, onSave }) => {
               <input type="text" name="lastName" value={formData.lastName} onChange={handleChange} required />
             </div>
             
-            {/* --- BAGONG SUFFIX DROPDOWN --- */}
             <div className="form-group">
               <label>Suffix</label>
               <select name="suffix" value={formData.suffix} onChange={handleChange}>
@@ -157,7 +214,15 @@ const AddWorkerModal = ({ isOpen, onClose, onSave }) => {
 
             <div className="form-group">
               <label>Contact Number</label>
-              <input type="text" name="contactNumber" value={formData.contactNumber} onChange={handleChange} required />
+              <input 
+                type="text" 
+                name="contactNumber" 
+                value={formData.contactNumber} 
+                onChange={handleChange} 
+                required 
+                maxLength="11" /* HTML Fallback Restriction */
+                placeholder="09..."
+              />
             </div>
 
             <div className="form-group">
@@ -167,9 +232,18 @@ const AddWorkerModal = ({ isOpen, onClose, onSave }) => {
 
           </div>
 
-          <div className="modal-actions">
+<div className="modal-actions">
             <button type="button" className="btn-cancel" onClick={onClose}>Cancel</button>
-            <button type="submit" className="btn-add">Add Worker</button>
+            
+            {/* Dinagdagan natin ng disabled condition */}
+            <button 
+                type="submit" 
+                className="btn-add" 
+                disabled={!previewUrl} 
+                style={{ opacity: !previewUrl ? 0.5 : 1, cursor: !previewUrl ? 'not-allowed' : 'pointer' }}
+            >
+                Add Worker
+            </button>
           </div>
         </form>
       </div>
