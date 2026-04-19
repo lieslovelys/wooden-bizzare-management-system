@@ -16,7 +16,8 @@ const WorkerJobOrder = () => {
     const fetchMyTasks = useCallback(async () => {
         if (!userID) return;
         try {
-            const response = await fetch(`http://localhost:8080/api/workers/${userID}/tasks`);
+            // FIX: Tinanggal ang localhost at ginawang relative path
+            const response = await fetch(`/api/workers/${userID}/tasks`);
             if (response.ok) {
                 const data = await response.json();
                 
