@@ -28,11 +28,12 @@ app.use((req, res, next) => {
     "Content-Security-Policy", 
     "default-src 'self'; " +
     "connect-src 'self'; " +
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
-    "font-src 'self' https://fonts.gstatic.com; " +
-    // FIX: Idinagdag ang 'data:' at 'https:' para sa images at icons
+    // FIX: Idinagdag ang https://cdnjs.cloudflare.com sa style-src
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; " +
+    // FIX: Idinagdag ang https://cdnjs.cloudflare.com sa font-src para sa mismong icons
+    "font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; " +
     "img-src 'self' data: https:; " + 
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval';"
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com;"
   );
   next();
 });
