@@ -18,7 +18,8 @@ const AdminDashboard = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await fetch('http://localhost:8080/api/dashboard/stats');
+        // FIX: Tinanggal ang localhost dito
+        const response = await fetch('/api/dashboard/stats');
         if (response.ok) {
           const data = await response.json();
           setStats(prev => ({
