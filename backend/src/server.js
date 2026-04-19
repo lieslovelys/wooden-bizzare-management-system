@@ -34,7 +34,7 @@ app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 // Session
 app.use(session({
-    secret: process.env.SECRET_KEY || 'default_secret_key', // Nilagyan ng fallback just in case
+    secret: process.env.SECRET_KEY || 'default_secret_key', 
     resave: false,
     saveUninitialized: false, 
     proxy: true, 
@@ -76,19 +76,16 @@ app.get('/api/workers', getWorkersList);
 // --- BAGONG CODE PARA SA FRONTEND DEPLOYMENT (OPTION A) ---
 // =======================================================================
 
-// 1. Sabihin sa Express na i-serve ang 'dist' folder (kung saan nandoon ang compiled React app mo)
-// Note: Kung 'build' ang pangalan ng folder mo imbes na 'dist', palitan mo lang yung word na 'dist' dito.
 app.use(express.static(path.join(__dirname, 'dist')));
 
-// 2. CATCH-ALL ROUTE: Kapag may ni-refresh na page ang user (e.g., /admin/dashboard), 
-// hindi iisipin ng Express na API route ito, ibabato niya pabalik sa React.
-app.get('*', (req, res) => {
+// 2. CATCH-ALL ROUTE (NA-FIX NA ANG ERROR DITO): 
+app.get(/.*/, (req, res) => {
     res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
 // =======================================================================
 
-const port = process.env.PORT || 8080; // Dinagdag ang process.env.PORT para sa Render
+const port = process.env.PORT || 8080; 
 app.listen(port, () => {
     console.log(`Server running on port ${port}`);
 });
