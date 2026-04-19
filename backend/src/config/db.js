@@ -6,11 +6,15 @@ dotenv.config();
 const { Pool } = pg;
 
 const pool = new Pool({
-user: process.env.SQL_USER,
-host: process.env.SQL_HOST,
-database: process.env.SQL_DB,
-password: process.env.SQL_PASS,
-port: process.env.SQL_PORT
+  user: process.env.SQL_USER,
+  host: process.env.SQL_HOST,
+  database: process.env.SQL_DB,
+  password: process.env.SQL_PASS,
+  port: process.env.SQL_PORT,
+  
+  // --- ITO YUNG DINAGDAG NATIN PARA SA NEON.TECH ---
+  // Pinipilit nito na gumamit ng secure connection (SSL) ang server mo
+  ssl: { rejectUnauthorized: false }
 });
 
 
@@ -40,7 +44,5 @@ const testPoolConnection = async() => {
 
 testPoolConnection();
 
-
 export const query = (query, params) => pool.query(query, params);
 export const getClient = () => pool.connect();
-

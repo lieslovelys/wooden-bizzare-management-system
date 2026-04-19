@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import '../css/inventory.css'; 
 
-
-
 const InventoryTable = () => {
+    // FIX 1: Pinalitan ang initialData ng empty array [] para hindi mag-error kapag walang laman
     const [items, setItems] = useState(() => {
         const savedData = localStorage.getItem('my_inventory_data');
-        return savedData ? JSON.parse(savedData) : initialData;
+        return savedData ? JSON.parse(savedData) : [];
     });
 
     const [expandedRow, setExpandedRow] = useState(null);
@@ -116,7 +115,6 @@ const InventoryTable = () => {
                 ...formData,
                 total_stock: 0,
                 status: "Low",
-                // TAMA NA ITO: 0 ang stock, pero 5 ang default minimum
                 variants: formData.variants.map(v => ({ ...v, current: 0, min: 5 })) 
             };
             setItems([...items, newItem]);
@@ -127,9 +125,7 @@ const InventoryTable = () => {
                         const originalVariant = item.variants.find(orig => orig.id === v.id);
                         return {
                             ...v,
-                            // Kung bago, 0 ang stock
                             current: originalVariant && originalVariant.current !== undefined ? originalVariant.current : 0,
-                            // Kung bago, 5 ang default minimum para gumana yung "Low" status agad
                             min: originalVariant && originalVariant.min !== undefined ? originalVariant.min : 5 
                         };
                     });
@@ -154,7 +150,8 @@ const InventoryTable = () => {
         closeModal();
     };
 
-    const filteredItems = items.filter(item => {
+    // FIX 2: Nilagyan ng (items || []) para kahit ma-corrupt ang data, hindi magka-crash
+    const filteredItems = (items || []).filter(item => {
         if (activeFilter === 'All') return true;
         if (activeFilter === 'Raw materials') return item.category === 'Raw Material';
         if (activeFilter === 'Tools') return item.category === 'Tool';
@@ -194,8 +191,8 @@ const InventoryTable = () => {
                     <tbody>
                         {filteredItems.length === 0 ? (
                             <tr>
-                                <td colSpan="6" style={{ padding: '30px', color: '#888' }}>
-                                    No items found in this category.
+                                <td colSpan="6" style={{ padding: '30px', color: '#888', textAlign: 'center' }}>
+                                    No items found in this category. Click "+ Add Item" to start.
                                 </td>
                             </tr>
                         ) : (
@@ -212,7 +209,7 @@ const InventoryTable = () => {
                                                 ))}
                                             </td>
                                             <td className="stock-cell"><strong>{item.total_stock}</strong> {item.unit}</td>
-                                            <td><span className={`status-pill ${item.status.toLowerCase()}`}>{item.status}</span></td>
+                                            <td><span className={`status-pill ${item.status?.toLowerCase()}`}>{item.status}</span></td>
                                             
                                             <td className="actions-cell">
                                                 <button className="action-btn edit-btn" onClick={(e) => openEditModal(e, item)} title="Edit">
@@ -299,14 +296,13 @@ const InventoryTable = () => {
                                 </select>
                             </div>
 
-<div className="form-group">
+                            <div className="form-group">
                                 <label>Unit of measurement</label>
                                 <input 
                                     type="text" 
                                     placeholder="e.g. pcs, liters, kg" 
                                     value={formData.unit} 
                                     onChange={(e) => {
-                                        // ERROR HANDLER: Tanggalin lahat ng numbers (0-9)
                                         const noNumbers = e.target.value.replace(/[0-9]/g, '');
                                         setFormData({...formData, unit: noNumbers});
                                     }} 
