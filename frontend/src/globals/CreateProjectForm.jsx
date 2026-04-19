@@ -61,14 +61,14 @@ const CreateProjectForm = () => {
     const payload = { ...formData, projectDetails };
 
     try {
-      const response = await fetch('http://localhost:8080/api/projects', {
+      // FIX: Tinanggal ang http://localhost:8080 at ginawang relative path
+      const response = await fetch('/api/projects', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
 
       if (response.ok) {
-        // PINALITAN ANG ALERT
         showToast('Project successfully created!', 'success');
         setFormData({
             projectName: '', clientName: '', contactNumber: '',
