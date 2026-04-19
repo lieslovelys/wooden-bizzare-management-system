@@ -11,7 +11,8 @@ const WorkerProductivity = () => {
     useEffect(() => {
         const fetchProductivity = async () => {
             try {
-                const response = await fetch('http://localhost:8080/api/productivity');
+                // FIX: Tinanggal ang localhost dito
+                const response = await fetch('/api/productivity');
                 if (response.ok) {
                     const result = await response.json();
                     setProductivityData(result);
