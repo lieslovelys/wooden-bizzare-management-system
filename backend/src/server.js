@@ -26,10 +26,17 @@ app.use(cors({
 app.use((req, res, next) => {
   res.setHeader(
     "Content-Security-Policy", 
-    "default-src 'self'; connect-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; script-src 'self' 'unsafe-inline' 'unsafe-eval';"
+    "default-src 'self'; " +
+    "connect-src 'self'; " +
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+    "font-src 'self' https://fonts.gstatic.com; " +
+    // FIX: Idinagdag ang 'data:' at 'https:' para sa images at icons
+    "img-src 'self' data: https:; " + 
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval';"
   );
   next();
 });
+
 // JSON Limit para sa profile picture
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
