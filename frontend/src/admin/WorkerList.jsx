@@ -27,7 +27,8 @@ const WorkerList = () => {
 
   const fetchWorkers = async () => {
     try {
-      const response = await fetch('http://localhost:8080/workers');
+      // FIX 1: Tinanggal ang localhost dito
+      const response = await fetch('/workers');
       const result = await response.json();
       if (result.success) {
         setWorkers(result.data);
@@ -46,7 +47,8 @@ const WorkerList = () => {
   // --- Handlers para sa Modals ---
   const handleSaveNewWorker = async (newWorkerData) => {
     try {
-      const response = await fetch('http://localhost:8080/workers', {
+      // FIX 2: Tinanggal ang localhost dito sa POST request
+      const response = await fetch('/workers', {
         method: 'POST', 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newWorkerData), 
@@ -68,7 +70,8 @@ const WorkerList = () => {
 
   const handleUpdateWorker = async (updatedData) => {
     try {
-      const response = await fetch(`http://localhost:8080/workers/${selectedWorker.user_id}`, {
+      // FIX 3: Tinanggal ang localhost dito sa PUT request
+      const response = await fetch(`/workers/${selectedWorker.user_id}`, {
         method: 'PUT', 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedData), 
