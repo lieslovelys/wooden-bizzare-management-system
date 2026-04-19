@@ -28,7 +28,8 @@ const App = () => {
   useEffect(() => {
     const fetchSession = async () => {
       try {
-        const response = await fetch('http://localhost:8080/session-user', {
+        // FIX: Tinanggal ang http://localhost:8080 at ginawang relative path
+        const response = await fetch('/session-user', {
           method: 'GET',
           credentials: 'include'
         });
@@ -65,6 +66,7 @@ const App = () => {
             <Route path='/' element={<RoleBasedRedirect role={userRole}/>}/>
             <Route path='/signup' element={<TempSignup />} />
             <Route path='/login' element={userRole ? <Navigate to={'/'}/> : <Login login={() => setIsLoggedIn(true)} />} />
+            
             <Route element={<ProtectedRoute isAllowed={userRole === 'Admin'}/>}>
               <Route path="/admin/*" element={<Admin />} />
             </Route>
