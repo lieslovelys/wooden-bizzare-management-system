@@ -6,10 +6,13 @@ const Login = ({ login }) => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
+    
     const handleSubmit = async (e) => {
         e.preventDefault();
         const body = { username, password };
-        const response = await fetch('http://localhost:8080/login', {
+        
+        // FIX: Tinanggal ang http://localhost:8080, ginawang relative path na lang
+        const response = await fetch('/login', {
             method: 'POST',
             headers: { 'Content-type': 'application/json' },
             body: JSON.stringify(body),

@@ -24,7 +24,8 @@ const TempSignup = () => {
         const body = { username, password, firstName, middleName, lastName, suffix, userRole };
 
         try {
-            const response = await fetch('http://localhost:8080/signup', {
+            // FIX: Tinanggal ang http://localhost:8080 at ginawang relative path
+            const response = await fetch('/signup', {
                 method: 'POST',
                 headers: {'Content-type' : 'application/json'},
                 body: JSON.stringify(body)
