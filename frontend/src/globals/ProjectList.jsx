@@ -28,7 +28,8 @@ const ProjectList = () => {
   const fetchProjects = async () => {
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:8080/api/projects');
+      // FIX: Tinanggal ang localhost at ginawang relative path
+      const response = await fetch('/api/projects');
       const result = await response.json();
       
       if (result.success) {
