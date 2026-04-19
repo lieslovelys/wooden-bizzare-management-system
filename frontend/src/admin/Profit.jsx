@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import "../css/admin.css";
 
-const API = "http://localhost:8080/api";
+// FIX: Pinalitan ang localhost at ginawang relative path
+const API = "/api";
 
 async function fetchProjects() {
   try {
