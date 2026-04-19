@@ -14,7 +14,8 @@ const ProjectVerification = () => {
     useEffect(() => {
         const fetchQATasks = async () => {
             try {
-                const response = await fetch('http://localhost:8080/api/qa/tasks');
+                // FIX: Tinanggal ang localhost at ginawang relative path
+                const response = await fetch('/api/qa/tasks');
                 if (response.ok) {
                     const data = await response.json();
                     
