@@ -132,7 +132,7 @@ const WorkerJobOrderDetail = ({ projectId, assignmentId, workerStatus, onBack })
                 <div className="wb-modal-overlay">
                     <div className="wb-modal-box">
                         <h3 className="wb-modal-title">Submit Work?</h3>
-                        <p className="wb-modal-text">Sigurado ka bang tapos na ito at ipapasa na sa Quality Checker?</p>
+                        <p className="wb-modal-text">Are you sure to submit your work to Quality Checker?</p>
                         <div className="wb-modal-actions">
                             <button className="wb-btn-no" onClick={() => setShowConfirmModal(false)}>Cancel</button>
                             <button className="wb-btn-yes" onClick={executeSubmitWork}>Yes, Submit</button>
