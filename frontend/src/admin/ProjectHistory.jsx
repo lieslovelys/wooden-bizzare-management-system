@@ -15,7 +15,8 @@ const ProjectHistory = () => {
     const fetchHistory = async () => {
       setLoading(true);
       try {
-        const response = await fetch('http://localhost:8080/api/projects/history');
+        // FIX 1: Tinanggal ang localhost
+        const response = await fetch('/api/projects/history');
         const result = await response.json();
         
         const dataArray = result.success ? result.data : (Array.isArray(result) ? result : []);
@@ -41,9 +42,10 @@ const ProjectHistory = () => {
     setDetailsLoading(true);
     
     try {
+        // FIX 2 & 3: Tinanggal ang localhost sa parehong fetch requests
         const [detailsRes, tasksRes] = await Promise.all([
-            fetch(`http://localhost:8080/api/job-orders/${projectId}`),
-            fetch(`http://localhost:8080/api/job-orders/${projectId}/assignments`)
+            fetch(`/api/job-orders/${projectId}`),
+            fetch(`/api/job-orders/${projectId}/assignments`)
         ]);
 
         const detailsData = await detailsRes.json();
