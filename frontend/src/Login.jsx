@@ -37,7 +37,7 @@ const Login = ({ login }) => {
         <div className="login-layout">
             <div className="login-left">
                 <div className="brand-header">
-                    <img src="/public/wblogo.png" alt="Gavel" className="brand-logo" />
+                    <img src="/wblogo.png" alt="Gavel" className="brand-logo" />
                     <div className="brand-title">
                         <h2>The Wooden Bizzare</h2>
                         <p>Management System</p>
