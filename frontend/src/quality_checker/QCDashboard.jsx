@@ -11,7 +11,8 @@ const QCDashboard = () => {
     // Gagamitin natin yung existing API mo para sa QA tasks
     const fetchQATasks = async () => {
       try {
-        const response = await fetch('http://localhost:8080/api/qa/tasks');
+        // FIX: Tinanggal ang localhost at ginawang relative path
+        const response = await fetch('/api/qa/tasks');
         if (response.ok) {
           const data = await response.json();
           // Bibilangin lang natin kung ilang tasks ang ibinalik ng database
