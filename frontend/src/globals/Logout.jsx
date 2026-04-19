@@ -5,7 +5,8 @@ const Logout = ({ onCancel }) => {
     
     const handleLogout = async () => {
         try {
-            const response = await fetch('http://localhost:8080/logout', {
+            // FIX: Tinanggal ang http://localhost:8080 at ginawang relative path
+            const response = await fetch('/logout', {
                 method: 'GET',
                 credentials: 'include'
             });

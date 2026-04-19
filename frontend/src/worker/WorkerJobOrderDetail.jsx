@@ -20,10 +20,12 @@ const WorkerJobOrderDetail = ({ projectId, assignmentId, workerStatus, onBack })
         const fetchProjectData = async () => {
             setLoading(true);
             try {
-                const detailsRes = await fetch(`http://localhost:8080/api/job-orders/${projectId}`);
+                // FIX 1: Tinanggal ang localhost dito
+                const detailsRes = await fetch(`/api/job-orders/${projectId}`);
                 if (detailsRes.ok) setProjectDetails(await detailsRes.json());
 
-                const assignRes = await fetch(`http://localhost:8080/api/job-orders/${projectId}/assignments`);
+                // FIX 2: Tinanggal ang localhost dito
+                const assignRes = await fetch(`/api/job-orders/${projectId}/assignments`);
                 if (assignRes.ok) setAssignments(await assignRes.json());
 
             } catch (error) {
@@ -52,7 +54,8 @@ const WorkerJobOrderDetail = ({ projectId, assignmentId, workerStatus, onBack })
         setShowConfirmModal(false); // Itago agad yung confirmation modal
         
         try {
-            const response = await fetch(`http://localhost:8080/api/assignments/${assignmentId}/status`, {
+            // FIX 3: Tinanggal ang localhost dito sa PUT request
+            const response = await fetch(`/api/assignments/${assignmentId}/status`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status: 'For QA' })

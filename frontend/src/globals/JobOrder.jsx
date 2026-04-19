@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom'; // <-- 1. IDINAGDAG ITO
+import { useLocation } from 'react-router-dom'; 
 import JobOrderDetails from './JobOrderDetails';
 
 const JobOrderList = () => {
@@ -11,7 +11,7 @@ const JobOrderList = () => {
     
     const [activePriorities, setActivePriorities] = useState(['High', 'Medium', 'Low']); 
     
-    const location = useLocation(); // <-- 2. IDINAGDAG ITO PARA SALUHIN ANG LOCATION STATE
+    const location = useLocation(); 
 
     // --- 3. BAGONG USEEFFECT PARA SA NOTIFICATION CLICK ---
     useEffect(() => {
@@ -28,7 +28,8 @@ const JobOrderList = () => {
     useEffect(() => {
         const fetchJobs = async () => {
             try {
-                const response = await fetch('http://localhost:8080/api/job-orders');
+                // FIX: Tinanggal ang localhost at ginawang relative path
+                const response = await fetch('/api/job-orders');
                 const data = await response.json();
                 const initialSorted = sortJobsByDate(data);
                 setJobOrders(initialSorted);

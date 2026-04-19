@@ -14,16 +14,16 @@ const ManagerDashboard = () => {
     // Kukunin natin nang sabay ang data mula sa dalawang magkaibang API
     const fetchDashboardData = async () => {
       try {
-        // 1. Kunin ang Active Projects count
-        const statsResponse = await fetch('http://localhost:8080/api/dashboard/stats');
+        // FIX 1: Tinanggal ang localhost dito
+        const statsResponse = await fetch('/api/dashboard/stats');
         let activeProjCount = 0;
         if (statsResponse.ok) {
           const statsData = await statsResponse.json();
           activeProjCount = statsData.activeProjects;
         }
 
-        // 2. Kunin ang To Verify count
-        const qaResponse = await fetch('http://localhost:8080/api/qa/tasks');
+        // FIX 2: Tinanggal din ang localhost dito
+        const qaResponse = await fetch('/api/qa/tasks');
         let verifyCount = 0;
         if (qaResponse.ok) {
           const qaData = await qaResponse.json();

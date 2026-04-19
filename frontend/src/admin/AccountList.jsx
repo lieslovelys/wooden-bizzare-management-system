@@ -18,7 +18,8 @@ const AccountList = () => {
 
   const fetchAccounts = async () => {
     try {
-      const response = await fetch('http://localhost:8080/users');
+      // FIX 1: Tinanggal ang localhost at ginawang relative path
+      const response = await fetch('/users');
       const result = await response.json();
       if (result.success) {
         setAccounts(result.data);
@@ -48,7 +49,8 @@ const AccountList = () => {
     setShowConfirmModal(false); // Itago yung modal
     
     try {
-      const response = await fetch(`http://localhost:8080/users/${accountToDelete.id}`, {
+      // FIX 2: Tinanggal ang localhost dito sa DELETE request
+      const response = await fetch(`/users/${accountToDelete.id}`, {
         method: 'DELETE',
       });
       const result = await response.json();

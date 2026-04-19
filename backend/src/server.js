@@ -24,7 +24,8 @@ app.use(cors({
 }));
 
 app.use((req, res, next) => {
-  res.setHeader("Content-Security-Policy", "default-src 'self'; connect-src 'self' http://localhost:8080;");
+  // FIX: Tinanggal ang localhost dito para pumayag siyang kumonekta sa live Render URL
+  res.setHeader("Content-Security-Policy", "default-src 'self'; connect-src 'self';");
   next();
 });
 
@@ -39,7 +40,8 @@ app.use(session({
     saveUninitialized: false, 
     proxy: true, 
     cookie: {
-        secure: false,     
+        // FIX: Gagawing true kung nasa Render (HTTPS), false kung local lang
+        secure: process.env.NODE_ENV === 'production',     
         httpOnly: true,    
         sameSite: 'lax',   
         maxAge: 1000 * 60 * 60 

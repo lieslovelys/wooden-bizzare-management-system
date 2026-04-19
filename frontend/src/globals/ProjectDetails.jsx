@@ -8,7 +8,8 @@ const ProjectDetails = ({ projectId, onBack }) => {
   useEffect(() => {
     const fetchProjectDetails = async () => {
       try {
-        const response = await fetch(`http://localhost:8080/api/projects/${projectId}`);
+        // FIX: Tinanggal ang localhost at ginawang relative path
+        const response = await fetch(`/api/projects/${projectId}`);
         const result = await response.json();
         
         if (result.success) {
