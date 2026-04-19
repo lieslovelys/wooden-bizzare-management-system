@@ -22,7 +22,8 @@ const EditProjectForm = ({ projectId, onCancel, onSuccess }) => {
   useEffect(() => {
     const fetchProjectData = async () => {
       try {
-        const response = await fetch(`http://localhost:8080/api/projects/${projectId}`);
+        // FIX 1: Tinanggal ang localhost dito
+        const response = await fetch(`/api/projects/${projectId}`);
         const result = await response.json();
         
         if (result.success) {
@@ -105,7 +106,8 @@ const EditProjectForm = ({ projectId, onCancel, onSuccess }) => {
     const payload = { ...formData, projectDetails };
 
     try {
-      const response = await fetch(`http://localhost:8080/api/projects/${projectId}`, {
+      // FIX 2: Tinanggal din ang localhost dito sa PUT request
+      const response = await fetch(`/api/projects/${projectId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
