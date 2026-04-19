@@ -11,7 +11,8 @@ const VerificationNotification = () => {
   // FETCH: Kunin ang data sa database pagka-load ng page
   const fetchNotifications = async () => {
     try {
-      const response = await fetch('http://localhost:8080/api/notifications'); 
+      // FIX 1: Tinanggal ang localhost
+      const response = await fetch('/api/notifications'); 
       const data = await response.json();
       setNotifications(data);
     } catch (error) {
@@ -32,7 +33,8 @@ const VerificationNotification = () => {
   // DELETE ONE
   const handleDelete = async (id) => {
     try {
-      await fetch(`http://localhost:8080/api/notifications/${id}`, { method: 'DELETE' });
+      // FIX 2: Tinanggal ang localhost
+      await fetch(`/api/notifications/${id}`, { method: 'DELETE' });
       setNotifications(notifications.filter(notif => notif.id !== id));
     } catch (error) {
       console.error("Error deleting notification:", error);
@@ -45,7 +47,8 @@ const VerificationNotification = () => {
       try {
         // Option A: Kung gusto mong isa-isang i-delete ang verification lang
         for (let notif of verificationNotifs) {
-            await fetch(`http://localhost:8080/api/notifications/${notif.id}`, { method: 'DELETE' });
+            // FIX 3: Tinanggal ang localhost
+            await fetch(`/api/notifications/${notif.id}`, { method: 'DELETE' });
         }
         
         // Tanggalin sa UI
@@ -62,7 +65,8 @@ const VerificationNotification = () => {
     try {
       for (let notif of verificationNotifs) {
           if (!notif.is_read) {
-              await fetch(`http://localhost:8080/api/notifications/${notif.id}/read`, { method: 'PUT' });
+              // FIX 4: Tinanggal ang localhost
+              await fetch(`/api/notifications/${notif.id}/read`, { method: 'PUT' });
           }
       }
       
@@ -82,7 +86,8 @@ const VerificationNotification = () => {
           setNotifications(updated);
 
           try {
-              await fetch(`http://localhost:8080/api/notifications/${notif.id}/read`, { method: 'PUT' });
+              // FIX 5: Tinanggal ang localhost
+              await fetch(`/api/notifications/${notif.id}/read`, { method: 'PUT' });
           } catch (error) {
               console.error("Error marking notification as read:", error);
           }
