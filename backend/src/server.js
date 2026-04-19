@@ -16,19 +16,21 @@ const __dirname = path.dirname(__filename);
 
 // Middlewares
 app.use(cors({
-    // GINAWA NATING ARRAY PARA PAYAGAN PAREHO ANG 5173 AT 5174
-    origin: ['http://localhost:5173', 'http://localhost:5174'], 
+    // DINAGDAG NATIN YUNG RENDER LINK MO DITO PARA SAFE
+    origin: ['http://localhost:5173', 'http://localhost:5174', 'https://wooden-bizzare-management-system.onrender.com'], 
     credentials: true,               
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 app.use((req, res, next) => {
-  // FIX: Tinanggal ang localhost dito para pumayag siyang kumonekta sa live Render URL
-  res.setHeader("Content-Security-Policy", "default-src 'self'; connect-src 'self';");
+  // INAYOS ANG SECURITY POLICY PARA HINDI NIYA I-BLOCK ANG SARILI NIYA
+  res.setHeader(
+    "Content-Security-Policy", 
+    "default-src 'self'; connect-src 'self' http://localhost:8080 https://wooden-bizzare-management-system.onrender.com;"
+  );
   next();
 });
-
 // JSON Limit para sa profile picture
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
