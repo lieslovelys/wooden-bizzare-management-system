@@ -24,10 +24,9 @@ app.use(cors({
 }));
 
 app.use((req, res, next) => {
-  // INAYOS ANG SECURITY POLICY PARA HINDI NIYA I-BLOCK ANG SARILI NIYA
   res.setHeader(
     "Content-Security-Policy", 
-    "default-src 'self'; connect-src 'self' http://localhost:8080 https://wooden-bizzare-management-system.onrender.com;"
+    "default-src 'self'; connect-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; script-src 'self' 'unsafe-inline' 'unsafe-eval';"
   );
   next();
 });
