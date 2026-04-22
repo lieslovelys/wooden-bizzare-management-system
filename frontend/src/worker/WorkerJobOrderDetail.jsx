@@ -39,9 +39,13 @@ const WorkerJobOrderDetail = ({ projectId, assignmentId, workerStatus, onBack })
     }, [projectId]);
 
     const formatId = (id) => `WB-${String(id).padStart(2, '0')}`;
+    
+    // --- INAYOS NA FORMAT DATE ---
     const formatDate = (dateString) => {
-        if (!dateString) return '';
-        return new Date(dateString).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+        if (!dateString) return 'N/A'; // Kapag null o walang laman sa DB
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return 'N/A'; // Kapag invalid ang format
+        return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
     };
 
     // --- BINAGONG LOGIC: Papalabasin muna ang modal ---
@@ -204,8 +208,9 @@ const WorkerJobOrderDetail = ({ projectId, assignmentId, workerStatus, onBack })
                             <tr key={assign.assignment_id}>
                                 <td>{assign.stage_name}</td>
                                 <td>{assign.first_name} {assign.last_name}</td>
-                                <td>{new Date(assign.start_date).toLocaleDateString()}</td>
-                                <td>{new Date(assign.due_date).toLocaleDateString()}</td>
+                                {/* FIX: Ginamit ang formatDate function dito */}
+                                <td>{formatDate(assign.start_date)}</td>
+                                <td>{formatDate(assign.due_date)}</td>
                                 <td><span className={`wjo-status ${assign.status.toLowerCase().replace(' ', '-')}`}>{assign.status}</span></td>
                             </tr>
                         ))}
