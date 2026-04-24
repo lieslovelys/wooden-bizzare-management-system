@@ -336,20 +336,21 @@
     left: 0;
     width: 100vw;
     height: 100vh;
-    background-color: rgba(0, 0, 0, 0.4); /* Dark dimming background para lumutang yung modal */
+    background-color: rgba(0, 0, 0, 0.4); 
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 9999; /* Para sigurado na nasa pinaka-ibabaw siya */
+    z-index: 10000; /* FIX 1: Ginawang 10000 para siguradong aangat sa sidebar na 9999 */
 }
 
 /* 2. The Modal Card */
 .wb-logout-card {
-    margin-left: 300px;
+    /* FIX 2: TINANGGAL na natin yung margin-left: 300px; 
+       Dahil nasa labas na ito ng sidebar, perfect center na siya sa buong screen! */
     background-color: #ffffff;
     border-radius: 12px;
     width: 90%;
-    max-width: 420px; /* Tama lang ang lapad para hindi masyadong malaki */
+    max-width: 420px; 
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
     overflow: hidden;
     display: flex;
@@ -359,7 +360,7 @@
 /* 3. Header */
 .wb-logout-header {
     padding: 25px 30px 15px 30px;
-    border-bottom: 1px solid #f0ede5; /* Manipis na linya gaya sa picture */
+    border-bottom: 1px solid #f0ede5; 
     text-align: left; 
 }
 
@@ -367,7 +368,7 @@
     margin: 0;
     font-family: 'Playfair Display', serif;
     font-size: 1.8rem;
-    color: #5c4a11; /* Dark Gold / Brown */
+    color: #5c4a11; 
     font-weight: 700;
 }
 
@@ -384,7 +385,7 @@
 }
 
 .wb-logout-img {
-    width: 60px; /* In-adjust ko para sumakto sa text gaya sa image */
+    width: 60px; 
     height: auto;
     object-fit: contain;
 }
@@ -394,7 +395,7 @@
     font-family: 'Inter', sans-serif;
     font-size: 1.05rem;
     font-weight: 600;
-    color: #1A1612; /* Dark Espresso */
+    color: #1A1612; 
     line-height: 1.4;
 }
 
@@ -407,8 +408,8 @@
 }
 
 .wb-logout-buttons button {
-    flex: 1; /* ITO ANG FIX: Para maging pantay ang lapad nilang dalawa */
-    min-height: 50px; /* ITO ANG FIX: Para pantay ang height kahit mag-wrap ang text */
+    flex: 1; 
+    min-height: 50px; 
     display: flex;
     justify-content: center;
     align-items: center;
@@ -416,17 +417,16 @@
     padding: 10px;
     font-size: 0.9rem;
     font-weight: 700;
-    border-radius: 30px; /* Pill shape gaya sa image */
+    border-radius: 30px; 
     cursor: pointer;
     transition: all 0.2s ease;
     font-family: 'Inter', sans-serif;
     letter-spacing: 0.5px;
     line-height: 1.2;
     
-    /* Colors gaya sa picture mo (Outline Style) */
     background-color: transparent;
-    border: 1.5px solid #cca43b; /* Gold border */
-    color: #cca43b; /* Gold text */
+    border: 1.5px solid #cca43b; 
+    color: #cca43b; 
 }
 
 .wb-logout-buttons button:hover {
@@ -434,6 +434,56 @@
     transform: translateY(-2px);
     box-shadow: 0 4px 10px rgba(204, 164, 59, 0.1);
 }
+
+/* =========================================
+   RESPONSIVE DESIGN (MOBILE)
+========================================= */
+
+/* FIX 3: Tinanggal na natin yung Tablet (@media max-width: 1024px) 
+   kasi wala na tayong margin-left na aayusin pa. */
+
+@media (max-width: 768px) {
+    .wb-logout-card {
+        /* Tinanggal na rin ang margin-left: 0; dito */
+        width: 85%; 
+    }
+
+    .wb-logout-header {
+        padding: 20px 20px 15px 20px;
+        text-align: center; 
+    }
+
+    .wb-logout-header h2 {
+        font-size: 1.5rem;
+    }
+
+    .wb-logout-content {
+        padding: 20px 20px 25px 20px;
+    }
+
+    .wb-logout-row {
+        flex-direction: column; 
+        text-align: center;
+        gap: 15px;
+        margin-bottom: 25px;
+    }
+
+    .wb-logout-img {
+        width: 50px; 
+    }
+
+    .wb-logout-buttons {
+        flex-direction: column; 
+        gap: 10px;
+    }
+
+    .wb-logout-buttons button {
+        width: 100%; 
+        min-height: 45px;
+    }
+}
+
+
 /* =========================================
    GLOBAL RESETS
    (Ito yung nagtatanggal ng default spaces sa gilid)
@@ -451,7 +501,7 @@ html, body {
 }
 
 /* =========================================
-   MAIN LAYOUT WRAPPERS (CLEAN VERSION)
+   MAIN LAYOUT WRAPPERS (PREMIUM & RESPONSIVE)
 ========================================= */
 
 /* Pinaka-root container */
@@ -483,23 +533,49 @@ html, body {
     
     display: flex;
     flex-direction: column;
+    box-sizing: border-box; 
 }
 
-/* Para sa mga mobile screens, baka gusto mong mag-adjust later */
-@media (max-width: 768px) {
+/* =========================================
+   RESPONSIVE DESIGN (TABLET & MOBILE)
+========================================= */
+
+/* --- TABLET VIEW --- */
+@media (max-width: 1024px) {
     .page-content {
-        padding: 20px;
+        padding: 30px; /* Medyo bawasan ang padding kapag tablet para mas lumawak ang content */
+    }
+}
+
+/* --- MOBILE VIEW --- */
+@media (max-width: 768px) {
+    .role-layout {
+        flex-direction: column; /* Siguraduhing naka-stack ang layout */
+    }
+
+    .page-content {
+        /* THE GOLDEN FIX:
+           Ginawa nating 80px ang "Top Padding" para hindi matakpan 
+           ng lumulutang na Hamburger Menu button ang mga title at content mo! 
+        */
+        padding: 80px 15px 20px 15px; 
+        
+        /* Ibalik sa natural scrolling para mas smooth sa phone */
+        height: auto; 
+        min-height: 100vh;
+        overflow-y: visible;
     }
 }
 
 /* =========================================
    MODERN PREMIUM SIDEBAR (DARK & GOLD ELEGANCE)
 ========================================= */
+
+/* --- 1. BASE STYLES (DESKTOP VIEW) --- */
 .wooden-navbar {
     width: 300px; 
     height: 100vh; 
-    /* Deep warm charcoal/wood na background imbes na puti */
-    background-color: #1A1612; 
+    background-color: #1A1612; /* Deep warm charcoal/wood */
     border-right: 1px solid #2C261E; /* Manipis na dark border */
     display: flex;
     flex-direction: column;
@@ -508,147 +584,158 @@ html, body {
     top: 0;
     overflow-y: auto; 
     flex-shrink: 0; 
-    -ms-overflow-style: none;  /* Para itago sa Internet Explorer at lumang Edge */
-    scrollbar-width: none;
+    -ms-overflow-style: none;  /* Edge/IE hide scrollbar */
+    scrollbar-width: none; /* Firefox hide scrollbar */
 }
 
-/* --- MODERN SCROLLBAR (DARK MODE) --- */
-.wooden-navbar::-webkit-scrollbar {
-    width: 4px; 
-    display: none;
-}
-.wooden-navbar::-webkit-scrollbar-thumb {
-    background-color: #3A3228; /* Darker scrollbar */
-    border-radius: 10px;
-}
-.wooden-navbar::-webkit-scrollbar-track {
-    background: transparent;
-}
+/* Scrollbar (Dark Mode) */
+.wooden-navbar::-webkit-scrollbar { width: 4px; display: none; }
+.wooden-navbar::-webkit-scrollbar-thumb { background-color: #3A3228; border-radius: 10px; }
+.wooden-navbar::-webkit-scrollbar-track { background: transparent; }
 
-/* --- HEADER & LOGO --- */
+/* Header & Logo */
 .navbar-header {
     display: flex;
     align-items: center;
     padding: 35px 25px 25px 25px; 
     gap: 15px;
 }
-
 .navbar-header .logo {
-    width: 55px;
-    height: 55px;
-    border-radius: 12px; 
-    object-fit: cover;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4); /* Mas dark na shadow */
+    width: 55px; height: 55px; border-radius: 12px; object-fit: cover;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4); 
 }
-
 .title-group h3 {
-    margin: 0;
-    font-family: 'Playfair Display', serif;
-    font-size: 1.2rem;
-    font-weight: 700;
-    color: #FFFFFF; /* Puti na ang title */
-    letter-spacing: -0.5px;
+    margin: 0; font-family: 'Playfair Display', serif; font-size: 1.2rem;
+    font-weight: 700; color: #FFFFFF; letter-spacing: -0.5px;
 }
-
 .title-group p {
-    margin: 3px 0 0 0;
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: #A09A8E; /* Warm grayish-tan */
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    margin: 3px 0 0 0; font-size: 0.75rem; font-weight: 600;
+    color: #A09A8E; text-transform: uppercase; letter-spacing: 1px;
 }
 
-/* --- USER PROFILE SECTION --- */
+/* User Profile */
 .user-profile {
-    display: flex;
-    align-items: center;
-    padding: 0 25px 35px 25px;
-    gap: 15px;
+    display: flex; align-items: center; padding: 0 25px 35px 25px; gap: 15px;
 }
-
 .avatar-circle {
-    width: 50px;
-    height: 50px;
-    background: linear-gradient(135deg, #cca43b, #b89132); /* Premium Gold Gradient */
-    color: white;
-    border-radius: 50%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 1.4rem;
-    font-weight: 700;
-    box-shadow: 0 4px 12px rgba(204, 164, 59, 0.15); 
+    width: 50px; height: 50px; border-radius: 50%;
+    background: linear-gradient(135deg, #cca43b, #b89132); 
+    color: white; display: flex; justify-content: center; align-items: center;
+    font-size: 1.4rem; font-weight: 700; box-shadow: 0 4px 12px rgba(204, 164, 59, 0.15); 
 }
+.user-profile h2 { margin: 0; font-size: 1.15rem; font-weight: 700; color: #FFFFFF; }
 
-.user-profile h2 {
-    margin: 0;
-    font-size: 1.15rem;
-    font-weight: 700;
-    color: #FFFFFF; /* Puti na ang pangalan */
-}
-
-/* --- NAVIGATION LINKS --- */
+/* Navigation Links */
 .nav-links {
-    display: flex;
-    flex-direction: column;
-    padding: 0 15px 30px 15px; 
-    gap: 5px; 
+    display: flex; flex-direction: column; padding: 0 15px 30px 15px; gap: 5px; 
 }
-
 .nav-item {
-    display: flex;
-    align-items: center;
-    padding: 14px 20px;
-    border-radius: 12px; 
-    gap: 15px;
-    font-size: 1rem;
-    font-weight: 600;
-    color: #A09A8E; /* Neutral tan para sa dark background */
-    transition: all 0.3s ease;
-    cursor: pointer;
+    display: flex; align-items: center; padding: 14px 20px; border-radius: 12px; 
+    gap: 15px; font-size: 1rem; font-weight: 600; color: #A09A8E; 
+    transition: all 0.3s ease; cursor: pointer;
 }
+.nav-item i { width: 24px; text-align: center; font-size: 1.2rem; transition: transform 0.2s ease; }
+.nav-item:hover { background-color: rgba(204, 164, 59, 0.1); color: #D1AA3A; }
+.nav-item:hover i { transform: scale(1.1); }
 
-/* Icon alignment */
-.nav-item i {
-    width: 24px;
-    text-align: center;
-    font-size: 1.2rem;
-    transition: transform 0.2s ease;
-}
-
-/* Hover State (Transparent Gold Highlight) */
-.nav-item:hover {
-    background-color: rgba(204, 164, 59, 0.1); /* Light gold glow */
-    color: #D1AA3A; /* Gold text */
-}
-
-.nav-item:hover i {
-    transform: scale(1.1); 
-}
-
-/* Active State (Solid Gold Pill) */
 .nav-item.active {
-    background-color: #D1AA3A; /* Solid Gold Background */
-    color: #FFFFFF; /* Solid White Text */
-    font-weight: 700;
-    box-shadow: 0 4px 12px rgba(209, 170, 58, 0.2); /* Glowing effect */
+    background-color: #D1AA3A; color: #FFFFFF; font-weight: 700;
+    box-shadow: 0 4px 12px rgba(209, 170, 58, 0.2); 
 }
+.nav-item.active i { color: #FFFFFF; }
 
-.nav-item.active i {
-    color: #FFFFFF;
-}
-
-/* --- LOADING STATE --- */
+/* UI Elements (Nakatago sa Desktop) */
 .loading {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    font-family: 'Inter', sans-serif;
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: #D1AA3A;
+    display: flex; justify-content: center; align-items: center;
+    height: 100vh; font-family: 'Inter', sans-serif; font-size: 1.1rem;
+    font-weight: 600; color: #D1AA3A;
+}
+
+.close-mobile-btn {
+    display: none !important; /* Laging nakatago sa desktop/tablet */
+    background: transparent; border: none; color: #FFFFFF;
+    position: absolute; right: 15px; top: 15px; font-size: 2rem;
+    cursor: pointer; z-index: 10;
+}
+
+.mobile-menu-btn {
+    display: none; /* Nakatago sa desktop */
+    background: #1A1612; color: #D1AA3A; border: 1px solid #2C261E;
+    padding: 10px 15px; border-radius: 8px; font-size: 1.2rem;
+    cursor: pointer; position: fixed; top: 15px; left: 15px; z-index: 9998;
+}
+
+.mobile-overlay {
+    display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(2px); z-index: 9990;
+}
+
+
+/* =========================================
+   2. RESPONSIVE DESIGN (TABLET)
+========================================= */
+@media (max-width: 1024px) {
+    .wooden-navbar {
+        width: 90px;
+        align-items: center;
+    }
+
+    /* Itago ang text, icons na lang ang matitira */
+    .title-group, 
+    .user-profile h2, 
+    .user-info,
+    .nav-item span { display: none; }
+
+    .navbar-header { padding: 30px 0 20px 0; justify-content: center; }
+    .navbar-header .logo { width: 45px; height: 45px; }
+
+    .user-profile { padding: 0 0 30px 0; justify-content: center; }
+    .avatar-circle { width: 45px; height: 45px; font-size: 1.2rem; }
+
+    .nav-links { padding: 0 10px; width: 100%; align-items: center; }
+    .nav-item { justify-content: center; padding: 14px 0; width: 50px; border-radius: 50%; }
+    .nav-item i { margin: 0; }
+}
+
+
+/* =========================================
+   3. RESPONSIVE DESIGN (MOBILE)
+========================================= */
+@media (max-width: 768px) {
+    /* Ang Menu Drawer */
+    .wooden-navbar {
+        position: fixed !important; /* Fix para di tumulak pababa ang page */
+        left: 0; top: 0;
+        width: 280px; 
+        height: 100vh;
+        z-index: 9999;
+        align-items: stretch;
+        
+        transform: translateX(-100%);
+        transition: transform 0.3s ease-in-out;
+        box-shadow: none !important; /* Fix para walang anino pag nakasara */
+    }
+
+    .wooden-navbar.mobile-active {
+        transform: translateX(0);
+        box-shadow: 5px 0 25px rgba(0,0,0,0.8) !important; /* Ibalik ang anino pag bukas */
+    }
+
+    /* Ibalik ang mga text na itinago nung Tablet View */
+    .title-group, 
+    .user-profile h2, 
+    .user-info,
+    .nav-item span { display: block; }
+
+    .navbar-header { padding: 30px 25px 20px 25px; justify-content: flex-start; }
+    .user-profile { padding: 0 25px 30px 25px; justify-content: flex-start; }
+    .nav-links { padding: 0 15px 30px 15px; align-items: stretch; }
+    .nav-item { justify-content: flex-start; padding: 14px 20px; width: 100%; border-radius: 12px; }
+
+    /* Palabasin ang mga Mobile Buttons */
+    .close-mobile-btn { display: block !important; }
+    .mobile-menu-btn { display: block; }
+    .mobile-overlay.active { display: block; }
 }
 
 
