@@ -48,7 +48,7 @@ export const getWorkers = async () => {
 
 export const getProjectAssignments = async (projectId) => {
     const sql = `
-        SELECT j.assignment_id, j.stage_name, j.start_date, j.date_completed, j.status,
+        SELECT j.assignment_id, j.stage_name, j.start_date, j.due_date, j.date_completed, j.status,
                u.first_name, u.last_name
         FROM job_assignments j
         LEFT JOIN users u ON j.worker_id = u.user_id
