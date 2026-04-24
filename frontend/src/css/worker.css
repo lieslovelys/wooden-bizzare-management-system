@@ -218,15 +218,90 @@
     color: #cca43b;
 }
 
-/* Responsive adjustment */
+/* =========================================
+   RESPONSIVE DESIGN (TABLET & MOBILE)
+========================================= */
+
 @media (max-width: 768px) {
-    .wjo-item {
-        grid-template-columns: 1fr;
-        gap: 10px;
-        text-align: left;
+    /* --- Wrapper & Header Adjustments --- */
+    .wjo-wrapper,
+    .wjo-detail-wrapper {
+        padding: 15px 10px; /* Bawas padding para mas malawak sa screen */
+        margin: 20px auto;
     }
+
+    .wjo-title {
+        font-size: 1.6rem; /* Mas maliit na font para di kainin ang screen */
+    }
+
+    /* --- Controls & Buttons (Gagawing Full Width) --- */
+    .wjo-controls {
+        flex-direction: column;
+        align-items: stretch; /* I-stretch ang buttons para full width */
+        gap: 12px;
+    }
+
+    .wjo-btn-dark.dropdown {
+        width: 100%; /* Sakop ang buong screen width */
+    }
+
+    .wjo-filter-btn {
+        width: 100%; /* Mas madaling pindutin sa phone */
+        text-align: center;
+    }
+
+    /* --- List Items (Premium Card Look) --- */
+    .wjo-list {
+        gap: 15px; /* Mas malaking gap sa pagitan ng cards */
+    }
+
+    .wjo-item {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        position: relative;
+        padding: 20px;
+        gap: 8px;
+    }
+
+    .wjo-item-center {
+        text-align: left;
+        width: 100%;
+    }
+
+    /* ID at Name */
+    .wjo-item-id {
+        font-size: 0.85rem;
+        margin-bottom: -5px;
+    }
+
+    .wjo-item-name {
+        font-size: 1.1rem;
+        margin-bottom: 5px;
+        line-height: 1.3;
+    }
+
+    /* Ilipat ang Status Badge sa kanang itaas ng card (Absolute) */
     .wjo-badge-container {
-        justify-content: flex-start;
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        justify-content: flex-end;
+    }
+
+    /* Gawan ng pseudo-labels para alam ng user kung ano yung nasa card */
+    .wjo-item-center:nth-child(3)::before {
+        content: 'Date: ';
+        color: #8b816a;
+        font-weight: 400;
+        font-size: 0.85rem;
+    }
+
+    .wjo-priority::before {
+        content: 'Priority: ';
+        color: #8b816a;
+        font-weight: 400;
+        font-size: 0.85rem;
     }
 }
 
@@ -505,4 +580,134 @@
     background-color: #eaeaea; 
     color: #888888;
     cursor: not-allowed; 
+}
+
+/* =========================================
+   RESPONSIVE DESIGN (TABLET & MOBILE)
+========================================= */
+
+@media (max-width: 768px) {
+    /* --- Overviews --- */
+    .wjo-ov-container {
+        padding: 20px 15px;
+    }
+
+    .wjo-ov-name {
+        font-size: 1.6rem;
+        line-height: 1.2;
+    }
+
+    /* --- Info Blocks (Stack vertically) --- */
+    .wjo-ov-info-bar {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .wjo-ov-info-block {
+        width: 100%;
+    }
+
+    /* --- Progress Section --- */
+    .wjo-progress-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+        padding: 20px 15px;
+    }
+
+    .wjo-progress-bar-wrapper {
+        width: 100%;
+    }
+
+    .wjo-progress-bar {
+        width: 100%;
+    }
+
+    /* --- Modern Table to Mobile Cards Conversion --- */
+    /* Itago ang default table header */
+    .wjo-table thead {
+        display: none;
+    }
+
+    /* Gawing block-level ang table elements */
+    .wjo-table, .wjo-table tbody, .wjo-table tr, .wjo-table td {
+        display: block;
+        width: 100%;
+    }
+
+    /* Style ang bawat hilera (row) bilang hiwalay na Card */
+    .wjo-table tr {
+        margin-bottom: 15px;
+        border: 1px solid #eaeaea;
+        border-radius: 12px;
+        padding: 15px;
+        background-color: #ffffff;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+    }
+
+    /* I-disable ang gray hover sa mobile rows */
+    .wjo-table tr:hover td {
+        background-color: transparent; 
+    }
+
+    /* Layout ng bawat data row sa loob ng card */
+    .wjo-table td {
+        text-align: right;
+        padding: 10px 0;
+        border-bottom: 1px dashed #eaeaea;
+        position: relative;
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+    }
+
+    .wjo-table td:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+
+    /* Auto-Labels para sa Mobile Cards */
+    .wjo-table td::before {
+        position: absolute;
+        left: 0;
+        text-align: left;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #888888;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    /* Ginamitan ko ng nth-child para hindi mo na kailangang i-edit yung React JSX mo! */
+    .wjo-table td:nth-child(1)::before { content: "Stage"; }
+    .wjo-table td:nth-child(2)::before { content: "Worker"; }
+    .wjo-table td:nth-child(3)::before { content: "Start Date"; }
+    .wjo-table td:nth-child(4)::before { content: "Due Date"; }
+    .wjo-table td:nth-child(5)::before { content: "Status"; }
+
+    /* Action Button Fix */
+    .wjo-action-btn {
+        padding: 15px;
+        font-size: 1rem;
+    }
+
+    /* --- DROPDOWN FIX PARA HINDI LUMAGPAS --- */
+    .wjo-btn-dark.dropdown {
+        width: 100%;
+        max-width: 100%; /* Pinipigilan itong lumagpas sa container */
+        box-sizing: border-box; /* Sinasama ang padding sa lapad para walang labis */
+        text-overflow: ellipsis; /* Lalagyan ng '...' kung masyadong mahaba ang text */
+        white-space: nowrap;
+        overflow: hidden;
+    }
+
+    /* KUNG CUSTOM DROPDOWN ITO (Gumagamit ng absolute positioning) */
+    .dropdown-menu, 
+    .dropdown-options-container { /* Palitan mo ng tamang class name kung custom 'to */
+        width: 100%;
+        max-width: 100vw;
+        box-sizing: border-box;
+        left: 0;
+        right: 0;
+    }
 }
