@@ -10,7 +10,7 @@ CREATE TABLE users (
     last_name VARCHAR(255),
     suffix suffix,
     user_role user_role,
-    created_at DATE DEFAULT now();
+    created_at DATE DEFAULT now()
 );
 
 -- Inventory
