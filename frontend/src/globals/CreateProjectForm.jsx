@@ -62,7 +62,7 @@ const CreateProjectForm = () => {
 
     try {
       // FIX: Tinanggal ang http://localhost:8080 at ginawang relative path
-      const response = await fetch('/api/projects', {
+      const response = await fetch(import.meta.env.VITE_BACKEND_IP + '/api/projects', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)

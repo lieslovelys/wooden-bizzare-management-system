@@ -28,7 +28,7 @@ const WorkerList = () => {
   const fetchWorkers = async () => {
     try {
       // FIX 1: Tinanggal ang localhost dito
-      const response = await fetch('/workers');
+      const response = await fetch(import.meta.env.VITE_BACKEND_IP + '/workers');
       const result = await response.json();
       if (result.success) {
         setWorkers(result.data);
@@ -48,7 +48,7 @@ const WorkerList = () => {
   const handleSaveNewWorker = async (newWorkerData) => {
     try {
       // FIX 2: Tinanggal ang localhost dito sa POST request
-      const response = await fetch('/workers', {
+      const response = await fetch(import.meta.env.VITE_BACKEND_IP + '/workers', {
         method: 'POST', 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newWorkerData), 
@@ -71,7 +71,7 @@ const WorkerList = () => {
   const handleUpdateWorker = async (updatedData) => {
     try {
       // FIX 3: Tinanggal ang localhost dito sa PUT request
-      const response = await fetch(`/workers/${selectedWorker.user_id}`, {
+      const response = await fetch(import.meta.env.VITE_BACKEND_IP + `/workers/${selectedWorker.user_id}`, {
         method: 'PUT', 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedData), 

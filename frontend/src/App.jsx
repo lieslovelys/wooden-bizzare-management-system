@@ -29,7 +29,7 @@ const App = () => {
     const fetchSession = async () => {
       try {
         // FIX: Tinanggal ang http://localhost:8080 at ginawang relative path
-        const response = await fetch('/session-user', {
+        const response = await fetch(import.meta.env.VITE_BACKEND_IP + '/session-user', {
           method: 'GET',
           credentials: 'include'
         });
@@ -64,7 +64,7 @@ const App = () => {
         <div className="app-container">
           <Routes>
             <Route path='/' element={<RoleBasedRedirect role={userRole}/>}/>
-            <Route path='/signup' element={<TempSignup />} />
+            <Route path='/protoacc' element={<TempSignup />} />
             <Route path='/login' element={userRole ? <Navigate to={'/'}/> : <Login login={() => setIsLoggedIn(true)} />} />
             
             <Route element={<ProtectedRoute isAllowed={userRole === 'Admin'}/>}>

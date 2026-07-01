@@ -55,7 +55,7 @@ const Navbar = ({ tabs, accountType }) => {
                 <div className="navbar-header">
                     <img src="/wblogo.png" alt="logo" className="logo" />
                     <div className="title-group">
-                        <h3>The Wooden Bizzare</h3>
+                        <h3>The Wooden Bizarre</h3>
                         <p>Management System</p>
                     </div>
                 </div>

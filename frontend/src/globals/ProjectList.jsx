@@ -29,7 +29,7 @@ const ProjectList = () => {
     setLoading(true);
     try {
       // FIX: Tinanggal ang localhost at ginawang relative path
-      const response = await fetch('/api/projects');
+      const response = await fetch(import.meta.env.VITE_BACKEND_IP + '/api/projects');
       const result = await response.json();
       
       if (result.success) {

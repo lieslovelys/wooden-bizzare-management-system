@@ -5,7 +5,7 @@ const Logout = ({ onCancel }) => {
     
     const handleLogout = async () => {
         try {
-            const response = await fetch('/logout', {
+            const response = await fetch(import.meta.env.VITE_BACKEND_IP + '/logout', {
                 method: 'GET',
                 credentials: 'include'
             });

@@ -12,7 +12,7 @@ const WorkerProductivity = () => {
         const fetchProductivity = async () => {
             try {
                 // FIX: Tinanggal ang localhost dito
-                const response = await fetch('/api/productivity');
+                const response = await fetch(import.meta.env.VITE_BACKEND_IP + '/api/productivity');
                 if (response.ok) {
                     const result = await response.json();
                     setProductivityData(result);

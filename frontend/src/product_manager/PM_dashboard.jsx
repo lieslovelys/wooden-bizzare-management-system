@@ -15,7 +15,7 @@ const ManagerDashboard = () => {
     const fetchDashboardData = async () => {
       try {
         // FIX 1: Tinanggal ang localhost dito
-        const statsResponse = await fetch('/api/dashboard/stats');
+        const statsResponse = await fetch(import.meta.env.VITE_BACKEND_IP + '/api/dashboard/stats');
         let activeProjCount = 0;
         if (statsResponse.ok) {
           const statsData = await statsResponse.json();
@@ -23,7 +23,7 @@ const ManagerDashboard = () => {
         }
 
         // FIX 2: Tinanggal din ang localhost dito
-        const qaResponse = await fetch('/api/qa/tasks');
+        const qaResponse = await fetch(import.meta.env.VITE_BACKEND_IP + '/api/qa/tasks');
         let verifyCount = 0;
         if (qaResponse.ok) {
           const qaData = await qaResponse.json();

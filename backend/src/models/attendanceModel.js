@@ -37,36 +37,37 @@ export async function getAttendanceById(id) {
   return rows[0] || null; 
 }
 
-export async function createAttendance({ worker_id, date, time_in, time_out }) {
+export async function createAttendance({ worker_id, date, day_of_week, time_in, time_out }) {
   // DITO ANG MAGIC: Yung 'worker_id' parameter na tinanggap galing React ay actually 'user_id'.
   // Kaya magse-SELECT tayo ng detail_id bago mag-INSERT sa table.
   const { rows } = await query(
-    `INSERT INTO attendance (worker_id, date, time_in, time_out)
+    `INSERT INTO attendance (worker_id, date, day_of_week, time_in, time_out)
      VALUES (
         (SELECT detail_id FROM worker_details WHERE user_id = $1 LIMIT 1), 
-        $2, $3, $4
+        $2, $3, $4, $5
      )
      RETURNING
        id, worker_id, date, day_of_week, 
        time_in::TEXT AS time_in, time_out::TEXT AS time_out, 
        status, late_minutes, overtime_minutes, created_at`,
-    [worker_id, date, time_in || null, time_out || null]
+    [worker_id, date, day_of_week || null, time_in || null, time_out || null]
   );
   return rows[0];
 }
 
-export async function updateAttendance(id, { date, time_in, time_out }) {
+export async function updateAttendance(id, { date, day_of_week, time_in, time_out }) {
   const { rows } = await query(
     `UPDATE attendance
      SET date     = $1,
-         time_in  = $2,
-         time_out = $3
-     WHERE id = $4
+        day_of_week = $2,
+         time_in  = $3,
+         time_out = $4
+     WHERE id = $5
      RETURNING
        id, worker_id, date, day_of_week, 
        time_in::TEXT AS time_in, time_out::TEXT AS time_out, 
        status, late_minutes, overtime_minutes, created_at`,
-    [date, time_in || null, time_out || null, id]
+    [date, day_of_week || null, time_in || null, time_out || null, id]
   );
   return rows[0] || null;
 }

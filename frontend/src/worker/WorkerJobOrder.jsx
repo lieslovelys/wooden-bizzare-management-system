@@ -17,7 +17,7 @@ const WorkerJobOrder = () => {
         if (!userID) return;
         try {
             // FIX: Tinanggal ang localhost at ginawang relative path
-            const response = await fetch(`/api/workers/${userID}/tasks`);
+            const response = await fetch(import.meta.env.VITE_BACKEND_IP + `/api/workers/${userID}/tasks`);
             if (response.ok) {
                 const data = await response.json();
                 

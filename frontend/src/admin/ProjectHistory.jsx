@@ -16,7 +16,7 @@ const ProjectHistory = () => {
       setLoading(true);
       try {
         // FIX 1: Tinanggal ang localhost
-        const response = await fetch('/api/projects/history');
+        const response = await fetch(import.meta.env.VITE_BACKEND_IP + '/api/projects/history');
         const result = await response.json();
         
         const dataArray = result.success ? result.data : (Array.isArray(result) ? result : []);
@@ -44,8 +44,8 @@ const ProjectHistory = () => {
     try {
         // FIX 2 & 3: Tinanggal ang localhost sa parehong fetch requests
         const [detailsRes, tasksRes] = await Promise.all([
-            fetch(`/api/job-orders/${projectId}`),
-            fetch(`/api/job-orders/${projectId}/assignments`)
+            fetch(import.meta.env.VITE_BACKEND_IP + `/api/job-orders/${projectId}`),
+            fetch(import.meta.env.VITE_BACKEND_IP + `/api/job-orders/${projectId}/assignments`)
         ]);
 
         const detailsData = await detailsRes.json();

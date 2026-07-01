@@ -12,7 +12,7 @@ const QCDashboard = () => {
     const fetchQATasks = async () => {
       try {
         // FIX: Tinanggal ang localhost at ginawang relative path
-        const response = await fetch('/api/qa/tasks');
+        const response = await fetch(import.meta.env.VITE_BACKEND_IP + '/api/qa/tasks');
         if (response.ok) {
           const data = await response.json();
           // Bibilangin lang natin kung ilang tasks ang ibinalik ng database

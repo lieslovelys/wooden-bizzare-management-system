@@ -12,7 +12,7 @@ const VerificationNotification = () => {
   const fetchNotifications = async () => {
     try {
       // FIX 1: Tinanggal ang localhost
-      const response = await fetch('/api/notifications'); 
+      const response = await fetch(import.meta.env.VITE_BACKEND_IP + '/api/notifications'); 
       const data = await response.json();
       setNotifications(data);
     } catch (error) {

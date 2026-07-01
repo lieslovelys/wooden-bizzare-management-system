@@ -21,16 +21,16 @@ const JobOrderDetail = ({ jobId, onBack }) => {
         setLoading(true);
         try {
             // FIX: Tinanggal ang localhost dito
-            const detailsRes = await fetch(`/api/job-orders/${jobId}`);
+            const detailsRes = await fetch(import.meta.env.VITE_BACKEND_IP + `/api/job-orders/${jobId}`);
             if (detailsRes.ok) setProjectDetails(await detailsRes.json());
 
             // FIX: Tinanggal ang localhost dito
-            const assignRes = await fetch(`/api/job-orders/${jobId}/assignments`);
+            const assignRes = await fetch(import.meta.env.VITE_BACKEND_IP + `/api/job-orders/${jobId}/assignments`);
             if (assignRes.ok) setAssignments(await assignRes.json());
 
             if (workers.length === 0) {
                 // FIX: Tinanggal ang localhost dito
-                const workersRes = await fetch(`/api/workers`);
+                const workersRes = await fetch(import.meta.env.VITE_BACKEND_IP + `/api/workers`);
                 if (workersRes.ok) setWorkers(await workersRes.json());
             }
         } catch (error) {
@@ -79,7 +79,7 @@ const JobOrderDetail = ({ jobId, onBack }) => {
 
         try {
             // FIX: Tinanggal ang localhost dito sa POST request
-            const response = await fetch(`/api/job-orders/${jobId}/assign`, {
+            const response = await fetch(import.meta.env.VITE_BACKEND_IP + `/api/job-orders/${jobId}/assign`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)
@@ -102,7 +102,7 @@ const JobOrderDetail = ({ jobId, onBack }) => {
         setShowConfirmModal(false); // Itago ang modal
         try {
             // FIX: Tinanggal ang localhost dito sa PUT request
-            const response = await fetch(`/api/projects/${jobId}/complete`, { method: 'PUT' });
+            const response = await fetch(import.meta.env.VITE_BACKEND_IP + `/api/projects/${jobId}/complete`, { method: 'PUT' });
             if (response.ok) {
                 showToast("Project Marked as Completed!", "success");
                 setTimeout(() => onBack(), 2000); // Wait 2 secs para makita ang success message bago bumalik

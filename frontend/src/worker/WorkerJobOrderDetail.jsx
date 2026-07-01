@@ -21,11 +21,11 @@ const WorkerJobOrderDetail = ({ projectId, assignmentId, workerStatus, onBack })
             setLoading(true);
             try {
                 // FIX 1: Tinanggal ang localhost dito
-                const detailsRes = await fetch(`/api/job-orders/${projectId}`);
+                const detailsRes = await fetch(import.meta.env.VITE_BACKEND_IP + `/api/job-orders/${projectId}`);
                 if (detailsRes.ok) setProjectDetails(await detailsRes.json());
 
                 // FIX 2: Tinanggal ang localhost dito
-                const assignRes = await fetch(`/api/job-orders/${projectId}/assignments`);
+                const assignRes = await fetch(import.meta.env.VITE_BACKEND_IP + `/api/job-orders/${projectId}/assignments`);
                 if (assignRes.ok) setAssignments(await assignRes.json());
 
             } catch (error) {
@@ -59,7 +59,7 @@ const WorkerJobOrderDetail = ({ projectId, assignmentId, workerStatus, onBack })
         
         try {
             // FIX 3: Tinanggal ang localhost dito sa PUT request
-            const response = await fetch(`/api/assignments/${assignmentId}/status`, {
+            const response = await fetch(import.meta.env.VITE_BACKEND_IP + `/api/assignments/${assignmentId}/status`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status: 'For QA' })

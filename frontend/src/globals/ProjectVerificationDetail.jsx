@@ -19,13 +19,13 @@ const ProjectVerificationDetail = ({ projectId, onBack }) => {
             setLoading(true);
             try {
                 // FIX 1: Tinanggal ang localhost dito
-                const projRes = await fetch(`/api/job-orders/${idToFetch}`);
+                const projRes = await fetch(import.meta.env.VITE_BACKEND_IP + `/api/job-orders/${idToFetch}`);
                 if (projRes.ok) {
                     setProjectInfo(await projRes.json());
                 }
 
                 // FIX 2: Tinanggal ang localhost dito
-                const assignRes = await fetch(`/api/job-orders/${idToFetch}/assignments`);
+                const assignRes = await fetch(import.meta.env.VITE_BACKEND_IP + `/api/job-orders/${idToFetch}/assignments`);
                 if (assignRes.ok) {
                     const assignData = await assignRes.json();
                     
@@ -55,7 +55,7 @@ const ProjectVerificationDetail = ({ projectId, onBack }) => {
     const handleStatusUpdate = async (assignmentId, newStatus) => {
         try {
             // FIX 3: Tinanggal ang localhost dito sa PUT request
-            const response = await fetch(`/api/assignments/${assignmentId}/status`, {
+            const response = await fetch(import.meta.env.VITE_BACKEND_IP + `/api/assignments/${assignmentId}/status`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status: newStatus }) 

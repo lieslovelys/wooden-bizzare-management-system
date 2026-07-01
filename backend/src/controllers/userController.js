@@ -17,6 +17,7 @@ const createUser = async (username, password, first_name, middle_name, last_name
 const login = async (username, password) => {
     try{
         const result = await User.getUserByUsername(username);
+        console.log(result);
         const matched = await bcrypt.compare(password, result[0].user_password);
         if(matched){
             console.log('password matched');

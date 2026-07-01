@@ -30,12 +30,12 @@ const Attendance = () => {
   const fetchEmployees = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`${API}/workers`);
+      const res = await fetch(import.meta.env.VITE_BACKEND_IP + `${API}/workers`);
       if (res.ok) {
         const data = await res.json();
         setEmployees(data.data || data); 
       } else {
-        const altRes = await fetch(`${API}/job-orders/workers`);
+        const altRes = await fetch(import.meta.env.VITE_BACKEND_IP + `${API}/job-orders/workers`);
         if (altRes.ok) {
           const data = await altRes.json();
           setEmployees(data.data || data);
@@ -52,7 +52,7 @@ const Attendance = () => {
     if (!workerId || workerId === 'undefined') { return; }
     try {
       setLogLoading(true);
-      const res = await fetch(`${API}/attendance/worker/${workerId}`);
+      const res = await fetch(import.meta.env.VITE_BACKEND_IP + `${API}/attendance/worker/${workerId}`);
       const data = await res.json();
       setAttendanceLog(data);
     } catch (err) {
@@ -80,7 +80,7 @@ const Attendance = () => {
     if (!recordToDelete) return;
     setShowConfirmModal(false);
     try {
-      const res = await fetch(`${API}/attendance/${recordToDelete}`, { method: 'DELETE' });
+      const res = await fetch(import.meta.env.VITE_BACKEND_IP + `${API}/attendance/${recordToDelete}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Failed to delete.');
       setAttendanceLog(prev => prev.filter(r => r.id !== recordToDelete));
       showToast("Record deleted successfully!", "success");
@@ -295,7 +295,7 @@ const Attendance = () => {
       if (!formData.date) { showToast('Date is required.', 'error'); return; }
       setSaving(true);
       try {
-        const res = await fetch(`${API}/attendance`, {
+        const res = await fetch(import.meta.env.VITE_BACKEND_IP + `${API}/attendance`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -368,11 +368,12 @@ const Attendance = () => {
       if (!formData.date) { showToast('Date is required.', 'error'); return; }
       setSaving(true);
       try {
-        const res = await fetch(`${API}/attendance/${editingRecord.id}`, {
+        const res = await fetch(import.meta.env.VITE_BACKEND_IP + `${API}/attendance/${editingRecord.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             date: formData.date,
+            day_of_week: formData.day_of_week,
             time_in: formData.time_in || null,
             time_out: formData.time_out || null,
           }),

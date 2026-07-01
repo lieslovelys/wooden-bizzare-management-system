@@ -12,9 +12,11 @@ const pool = new Pool({
   password: process.env.SQL_PASS,
   port: process.env.SQL_PORT,
   
-  // --- ITO YUNG DINAGDAG NATIN PARA SA NEON.TECH ---
-  // Pinipilit nito na gumamit ng secure connection (SSL) ang server mo
-  ssl: { rejectUnauthorized: false }
+  // Kung local (localhost / 127.0.0.1), i-disable ang SSL. 
+  // Kung live/Neon, gagamitin nito ang { rejectUnauthorized: false }
+  ssl: process.env.SQL_HOST === 'localhost' || process.env.SQL_HOST === '127.0.0.1' 
+    ? false 
+    : { rejectUnauthorized: false }
 });
 
 

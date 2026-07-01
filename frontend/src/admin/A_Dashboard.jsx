@@ -19,7 +19,7 @@ const AdminDashboard = () => {
     const fetchStats = async () => {
       try {
         // FIX: Tinanggal ang localhost dito
-        const response = await fetch('/api/dashboard/stats');
+        const response = await fetch(import.meta.env.VITE_BACKEND_IP + '/api/dashboard/stats');
         if (response.ok) {
           const data = await response.json();
           setStats(prev => ({

@@ -12,7 +12,7 @@ const Login = ({ login }) => {
         const body = { username, password };
         
         // FIX: Tinanggal ang http://localhost:8080, ginawang relative path na lang
-        const response = await fetch('/login', {
+        const response = await fetch(import.meta.env.VITE_BACKEND_IP + '/login', {
             method: 'POST',
             headers: { 'Content-type': 'application/json' },
             body: JSON.stringify(body),
@@ -39,7 +39,7 @@ const Login = ({ login }) => {
                 <div className="brand-header">
                     <img src="/wblogo.png" alt="Gavel" className="brand-logo" />
                     <div className="brand-title">
-                        <h2>The Wooden Bizzare</h2>
+                        <h2>The Wooden Bizarre</h2>
                         <p>Management System</p>
                     </div>
                 </div>

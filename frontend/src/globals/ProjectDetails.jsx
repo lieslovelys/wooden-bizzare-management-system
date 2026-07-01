@@ -9,7 +9,7 @@ const ProjectDetails = ({ projectId, onBack }) => {
     const fetchProjectDetails = async () => {
       try {
         // FIX: Tinanggal ang localhost at ginawang relative path
-        const response = await fetch(`/api/projects/${projectId}`);
+        const response = await fetch(import.meta.env.VITE_BACKEND_IP + `/api/projects/${projectId}`);
         const result = await response.json();
         
         if (result.success) {

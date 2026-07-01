@@ -25,7 +25,7 @@ const TempSignup = () => {
 
         try {
             // FIX: Tinanggal ang http://localhost:8080 at ginawang relative path
-            const response = await fetch('/signup', {
+            const response = await fetch(import.meta.env.VITE_BACKEND_IP +'/signup', {
                 method: 'POST',
                 headers: {'Content-type' : 'application/json'},
                 body: JSON.stringify(body)

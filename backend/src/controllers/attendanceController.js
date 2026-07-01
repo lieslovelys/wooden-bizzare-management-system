@@ -46,12 +46,12 @@ export async function postAttendance(req, res) {
 }
 
 export async function putAttendance(req, res) {
-  const { date, time_in, time_out } = req.body;
+  const { date, day_of_week, time_in, time_out } = req.body;
 
   if (!date) return res.status(400).json({ error: "date is required." });
 
   try {
-    const record = await updateAttendance(req.params.id, { date, time_in, time_out });
+    const record = await updateAttendance(req.params.id, { date, day_of_week, time_in, time_out });
     if (!record) return res.status(404).json({ error: "Attendance record not found." });
     res.status(200).json(record);
   } catch (err) {

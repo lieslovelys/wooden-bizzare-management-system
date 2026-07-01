@@ -29,7 +29,7 @@ const JobOrderList = () => {
         const fetchJobs = async () => {
             try {
                 // FIX: Tinanggal ang localhost at ginawang relative path
-                const response = await fetch('/api/job-orders');
+                const response = await fetch(import.meta.env.VITE_BACKEND_IP + '/api/job-orders');
                 const data = await response.json();
                 const initialSorted = sortJobsByDate(data);
                 setJobOrders(initialSorted);

@@ -13,7 +13,7 @@ const AdminNotification = () => {
   const fetchNotifications = async () => {
     try {
       // FIX 1: Tinanggal ang localhost
-      const response = await fetch('/api/notifications'); 
+      const response = await fetch(import.meta.env.VITE_BACKEND_IP + '/api/notifications'); 
       const data = await response.json();
       setNotifications(data);
     } catch (error) {
@@ -31,7 +31,7 @@ const AdminNotification = () => {
   const handleDelete = async (id) => {
     try {
       // FIX 2: Tinanggal ang localhost
-      await fetch(`/api/notifications/${id}`, { method: 'DELETE' });
+      await fetch(import.meta.env.VITE_BACKEND_IP + `/api/notifications/${id}`, { method: 'DELETE' });
       setNotifications(notifications.filter(notif => notif.id !== id));
     } catch (error) {
       console.error("Error deleting notification:", error);
@@ -43,7 +43,7 @@ const AdminNotification = () => {
     if(window.confirm("Are you sure you want to clear all notifications?")) {
       try {
         // FIX 3: Tinanggal ang localhost
-        await fetch('/api/notifications/clear/all', { method: 'DELETE' });
+        await fetch(import.meta.env.VITE_BACKEND_IP + '/api/notifications/clear/all', { method: 'DELETE' });
         setNotifications([]);
       } catch (error) {
         console.error("Error clearing notifications:", error);
@@ -55,7 +55,7 @@ const AdminNotification = () => {
   const handleMarkAllAsRead = async () => {
     try {
       // FIX 4: Tinanggal ang localhost
-      await fetch('/api/notifications/mark-all-read', { method: 'PUT' });
+      await fetch(import.meta.env.VITE_BACKEND_IP + '/api/notifications/mark-all-read', { method: 'PUT' });
       const updatedNotifs = notifications.map(notif => ({ ...notif, is_read: true }));
       setNotifications(updatedNotifs);
     } catch (error) {
@@ -74,7 +74,7 @@ const AdminNotification = () => {
           // IDINAGDAG: Sabihan ang database na nabasa na ito!
           try {
               // FIX 5: Tinanggal ang localhost
-              await fetch(`/api/notifications/${notif.id}/read`, {
+              await fetch(import.meta.env.VITE_BACKEND_IP + `/api/notifications/${notif.id}/read`, {
                   method: 'PUT'
               });
           } catch (error) {

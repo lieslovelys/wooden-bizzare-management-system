@@ -12,7 +12,7 @@ const ProjectNotification = () => {
   const fetchNotifications = async () => {
     try {
       // FIX: Tinanggal ang localhost dito
-      const response = await fetch('/api/notifications'); 
+      const response = await fetch(import.meta.env.VITE_BACKEND_IP + '/api/notifications'); 
       const data = await response.json();
       setNotifications(data);
     } catch (error) {
@@ -34,7 +34,7 @@ const ProjectNotification = () => {
   const handleDelete = async (id) => {
     try {
       // FIX: Tinanggal ang localhost dito
-      await fetch(`/api/notifications/${id}`, { method: 'DELETE' });
+      await fetch(import.meta.env.VITE_BACKEND_IP + `/api/notifications/${id}`, { method: 'DELETE' });
       setNotifications(notifications.filter(notif => notif.id !== id));
     } catch (error) {
       console.error("Error deleting notification:", error);
@@ -47,7 +47,7 @@ const ProjectNotification = () => {
       try {
         for (let notif of projectNotifs) {
             // FIX: Tinanggal ang localhost dito
-            await fetch(`/api/notifications/${notif.id}`, { method: 'DELETE' });
+            await fetch(import.meta.env.VITE_BACKEND_IP + `/api/notifications/${notif.id}`, { method: 'DELETE' });
         }
         
         // Tanggalin sa UI yung mga nabura na
@@ -65,7 +65,7 @@ const ProjectNotification = () => {
       for (let notif of projectNotifs) {
           if (!notif.is_read) {
               // FIX: Tinanggal ang localhost dito
-              await fetch(`/api/notifications/${notif.id}/read`, { method: 'PUT' });
+              await fetch(import.meta.env.VITE_BACKEND_IP + `/api/notifications/${notif.id}/read`, { method: 'PUT' });
           }
       }
       
@@ -87,7 +87,7 @@ const ProjectNotification = () => {
 
           try {
               // FIX: Tinanggal ang localhost dito
-              await fetch(`/api/notifications/${notif.id}/read`, { method: 'PUT' });
+              await fetch(import.meta.env.VITE_BACKEND_IP + `/api/notifications/${notif.id}/read`, { method: 'PUT' });
           } catch (error) {
               console.error("Error marking notification as read:", error);
           }

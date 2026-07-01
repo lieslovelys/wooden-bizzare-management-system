@@ -23,7 +23,7 @@ const EditProjectForm = ({ projectId, onCancel, onSuccess }) => {
     const fetchProjectData = async () => {
       try {
         // FIX 1: Tinanggal ang localhost dito
-        const response = await fetch(`/api/projects/${projectId}`);
+        const response = await fetch(import.meta.env.VITE_BACKEND_IP + `/api/projects/${projectId}`);
         const result = await response.json();
         
         if (result.success) {
@@ -107,7 +107,7 @@ const EditProjectForm = ({ projectId, onCancel, onSuccess }) => {
 
     try {
       // FIX 2: Tinanggal din ang localhost dito sa PUT request
-      const response = await fetch(`/api/projects/${projectId}`, {
+      const response = await fetch(import.meta.env.VITE_BACKEND_IP + `/api/projects/${projectId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)

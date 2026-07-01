@@ -19,7 +19,7 @@ const AccountList = () => {
   const fetchAccounts = async () => {
     try {
       // FIX 1: Tinanggal ang localhost at ginawang relative path
-      const response = await fetch('/users');
+      const response = await fetch(import.meta.env.VITE_BACKEND_IP + '/users');
       const result = await response.json();
       if (result.success) {
         setAccounts(result.data);
@@ -50,7 +50,7 @@ const AccountList = () => {
     
     try {
       // FIX 2: Tinanggal ang localhost dito sa DELETE request
-      const response = await fetch(`/users/${accountToDelete.id}`, {
+      const response = await fetch(import.meta.env.VITE_BACKEND_IP + `/users/${accountToDelete.id}`, {
         method: 'DELETE',
       });
       const result = await response.json();

@@ -6,7 +6,7 @@ const API = "/api";
 
 async function fetchProjects() {
   try {
-    const response = await fetch(`${API}/projects`);
+    const response = await fetch(import.meta.env.VITE_BACKEND_IP + `${API}/projects`);
     if (!response.ok) throw new Error("Failed to load projects");
     const result = await response.json();
     if (result.success && result.data) return result.data;
@@ -19,7 +19,7 @@ async function fetchProjects() {
 }
 
 async function fetchProfit(projectId) {
-  const res = await fetch(`${API}/profit/${projectId}`);
+  const res = await fetch(import.meta.env.VITE_BACKEND_IP + `${API}/profit/${projectId}`);
   if (res.status === 404) {
     return {
       client_payment: "",
@@ -35,7 +35,7 @@ async function fetchProfit(projectId) {
 
 async function saveProfit(projectId, payload) {
   console.log("Saving profit for project:", projectId, "payload:", payload);
-  const res = await fetch(`${API}/profit/${projectId}`, {
+  const res = await fetch(import.meta.env.VITE_BACKEND_IP + `${API}/profit/${projectId}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
