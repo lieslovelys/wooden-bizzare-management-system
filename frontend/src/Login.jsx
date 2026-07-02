@@ -25,13 +25,14 @@ const Login = ({ login }) => {
 
             if (response.ok) {
                 const data = await response.json();
-                if (!data.err) {
+                if (data.err === true) {
+                    setIncorrectPassword(true);
+                    console.log(data);
+                    
+                } else {
                     console.log(data);
                     await login();
                     window.location.reload();
-                } else {
-                    console.log(data);
-                    setIncorrectPassword(true);
                 }
             } else {
                 setIncorrectPassword(true);
