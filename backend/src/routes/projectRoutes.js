@@ -5,7 +5,8 @@ import {
     getSingleProject, 
     updateExistingProject,
     completeProject,
-    getProjectHistory 
+    getProjectHistory,
+    removeProject
 } from '../controllers/projectController.js';
 
 const router = express.Router();
@@ -15,6 +16,7 @@ router.get('/', getProjects);
 router.put('/:id', updateExistingProject);
 router.get('/history', getProjectHistory);
 router.get('/:id', getSingleProject);
+router.delete('/:id', removeProject);
 
 
 router.put('/:id/complete', completeProject);

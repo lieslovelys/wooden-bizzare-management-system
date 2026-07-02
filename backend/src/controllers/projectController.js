@@ -4,14 +4,15 @@ import {
     getProjectById, 
     updateProject,
     markProjectAsCompleted,
-    getCompletedProjectsHistory 
+    getCompletedProjectsHistory,
+    deleteProjectById
 } from '../models/projectModel.js';
 
 // --- IDINAGDAG NATIN ANG IMPORT NA ITO PARA SA NOTIFICATION ---
 import { createNotification } from '../models/adminNotifModel.js'; 
 
 
-export const createProject = async (req, res) => {
+const createProject = async (req, res) => {
   try {
     console.log("Received project data:", req.body);
     const projectId = await createProjectWithVariables(req.body);
@@ -45,7 +46,7 @@ export const createProject = async (req, res) => {
 
 // PROJECT LIST
 
-export const getProjects = async (req, res) => {
+const getProjects = async (req, res) => {
   try {
     const projects = await getAllProjects();
     res.status(200).json({ 
@@ -63,7 +64,7 @@ export const getProjects = async (req, res) => {
 
 //EDIT PROJECT
 
-export const getSingleProject = async (req, res) => {
+const getSingleProject = async (req, res) => {
   try {
     const project = await getProjectById(req.params.id);
     if (!project) return res.status(404).json({ success: false, message: 'Project not found' });
@@ -73,7 +74,7 @@ export const getSingleProject = async (req, res) => {
   }
 };
 
-export const updateExistingProject = async (req, res) => {
+const updateExistingProject = async (req, res) => {
   try {
     await updateProject(req.params.id, req.body);
     res.status(200).json({ success: true, message: 'Project updated successfully' });
@@ -85,7 +86,7 @@ export const updateExistingProject = async (req, res) => {
 
 
 
-export const completeProject = async (req, res) => {
+const completeProject = async (req, res) => {
     try {
         const updatedProject = await markProjectAsCompleted(req.params.id);
         res.status(200).json({ 
@@ -102,7 +103,7 @@ export const completeProject = async (req, res) => {
     }
 };
 
-export const getProjectHistory = async (req, res) => {
+const getProjectHistory = async (req, res) => {
     try {
         const history = await getCompletedProjectsHistory();
         res.status(200).json({ success: true, data: history });
@@ -111,3 +112,29 @@ export const getProjectHistory = async (req, res) => {
         res.status(500).json({ success: false, message: 'Server error' });
     }
 };
+
+// REMOVE PROJECT
+const removeProject = async (req, res) => {
+  try {
+    const isDeleted = await deleteProjectById(req.params.id);
+    
+    if (!isDeleted) {
+      return res.status(404).json({ success: false, message: 'Project not found' });
+    }
+
+    res.status(200).json({ success: true, message: 'Project deleted successfully' });
+  } catch (error) {
+    console.error('Delete error:', error);
+    res.status(500).json({ success: false, message: 'Server error while deleting project' });
+  }
+};
+
+export {
+ createProject,
+ getProjects,
+ getSingleProject,
+ updateExistingProject,
+ completeProject,
+ getProjectHistory,
+ removeProject
+}

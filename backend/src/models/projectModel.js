@@ -1,6 +1,6 @@
 import { getClient } from '../config/db.js';
 
-export const createProjectWithVariables = async (projectData) => {
+const createProjectWithVariables = async (projectData) => {
   const {
     projectName, clientName, contactNumber, dateOrdered,
     clientPayment, priorityLevel, dueDate, projectDetails
@@ -51,7 +51,7 @@ export const createProjectWithVariables = async (projectData) => {
 // PROJECT LIST
 
 // PROJECT LIST
-export const getAllProjects = async () => {
+const getAllProjects = async () => {
   const client = await getClient();
   try {
     // Binago natin ang query para mag-check sa job_assignments table
@@ -85,7 +85,7 @@ export const getAllProjects = async () => {
 
 // EDIT PROJECT
 
-export const getProjectById = async (id) => {
+const getProjectById = async (id) => {
   const client = await getClient();
   try {
     const projectRes = await client.query('SELECT * FROM projects WHERE id = $1', [id]);
@@ -102,7 +102,7 @@ export const getProjectById = async (id) => {
   }
 };
 
-export const updateProject = async (id, projectData) => {
+const updateProject = async (id, projectData) => {
   const {
     projectName, clientName, contactNumber, dateOrdered,
     clientPayment, priorityLevel, dueDate, projectDetails
@@ -149,7 +149,7 @@ export const updateProject = async (id, projectData) => {
 };
 
 
-export const markProjectAsCompleted = async (projectId) => {
+const markProjectAsCompleted = async (projectId) => {
     const client = await getClient();
     try {
         const sql = `
@@ -167,7 +167,7 @@ export const markProjectAsCompleted = async (projectId) => {
     }
 };
 
-export const getCompletedProjectsHistory = async () => {
+const getCompletedProjectsHistory = async () => {
     const client = await getClient();
     try {
         const query = `
@@ -189,3 +189,37 @@ export const getCompletedProjectsHistory = async () => {
         client.release();
     }
 };
+
+const deleteProjectById = async (id) => {
+  const client = await getClient();
+  try {
+    await client.query('BEGIN');
+
+    // 1. Delete associated variables first due to foreign keys
+    await client.query('DELETE FROM project_variables WHERE project_id = $1', [id]);
+
+    // 2. Optional: If you want to delete associated job assignments as well, uncomment below:
+    // await client.query('DELETE FROM job_assignments WHERE project_id = $1', [id]);
+
+    // 3. Delete the actual project record
+    const res = await client.query('DELETE FROM projects WHERE id = $1 RETURNING *', [id]);
+
+    await client.query('COMMIT');
+    return res.rows.length > 0; // returns true if a row was deleted
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+};
+
+export {
+  createProjectWithVariables,
+  getAllProjects,
+  getProjectById,
+  updateProject,
+  markProjectAsCompleted,
+  getCompletedProjectsHistory,
+  deleteProjectById
+}

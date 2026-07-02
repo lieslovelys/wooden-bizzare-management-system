@@ -17,7 +17,6 @@ const ProjectList = () => {
 
   const location = useLocation(); 
 
-  // --- BAGONG USEEFFECT PARA SA NOTIFICATION ---
   useEffect(() => {
     if (location.state && location.state.targetProjectId) {
         setViewingProjectId(location.state.targetProjectId);
@@ -28,7 +27,6 @@ const ProjectList = () => {
   const fetchProjects = async () => {
     setLoading(true);
     try {
-      // FIX: Tinanggal ang localhost at ginawang relative path
       const response = await fetch(import.meta.env.VITE_BACKEND_IP + '/api/projects');
       const result = await response.json();
       
@@ -41,6 +39,30 @@ const ProjectList = () => {
       console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // --- NEW DELETE HANDLER FUNCTION ---
+  const handleDelete = async (id, name) => {
+    const confirmDelete = window.confirm(`Are you sure you want to delete project "WB${id} - ${name}"? This action cannot be undone.`);
+    
+    if (!confirmDelete) return;
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_IP}/api/projects/${id}`, {
+        method: 'DELETE',
+      });
+      const result = await response.json();
+
+      if (result.success) {
+        alert('Project successfully deleted.');
+        fetchProjects(); // Refresh the list without wiping page state
+      } else {
+        alert(result.message || 'Failed to delete project.');
+      }
+    } catch (error) {
+      console.error('Error deleting project:', error);
+      alert('An error occurred while connecting to the server.');
     }
   };
 
@@ -119,7 +141,6 @@ const ProjectList = () => {
         </select>
       </div>
 
-      {/* REPLACED TABLE WITH MODERN GRID/CARDS */}
       {loading ? (
         <p style={{textAlign: 'center', marginTop: '20px'}}>Loading projects...</p>
       ) : (
@@ -152,9 +173,9 @@ const ProjectList = () => {
                     </span>
                   </div>
 
-                  {/* Action Buttons (Details removed) */}
+                  {/* Action Buttons */}
                   <div className="pl-col action-col">
-                    <div className="action-buttons">
+                    <div className="action-buttons" style={{ display: 'flex', gap: '8px' }}>
                       <button 
                         className="btn-action edit" 
                         onClick={(e) => {
@@ -163,6 +184,18 @@ const ProjectList = () => {
                         }}
                       >
                         Edit
+                      </button>
+                      
+                      {/* --- ADDED DELETE BUTTON --- */}
+                      <button 
+                        className="btn-action delete" 
+                        style={{ backgroundColor: '#dc3545', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer' }}
+                        onClick={(e) => {
+                            e.stopPropagation(); // Stops the grid row from expanding/activating
+                            handleDelete(proj.id, proj.project_name);
+                        }}
+                      >
+                        Delete
                       </button>
                     </div>
                   </div>
