@@ -68,7 +68,7 @@ const ProjectVerificationDetail = ({ projectId, onBack }) => {
 
                 // --- GINAMIT ANG TOAST IMBES NA ALERT ---
                 if (newStatus === 'Repair') {
-                    showToast("Ibinalik na ang task na ito sa Worker para maayos!", "error");
+                    showToast("Task assigned back to worker for repair", "error");
                 } else if (newStatus === 'Approved') {
                     showToast("Task successfully approved!", "success");
                 }
@@ -77,7 +77,7 @@ const ProjectVerificationDetail = ({ projectId, onBack }) => {
             }
         } catch (error) {
             console.error("Error updating status:", error);
-            showToast("Hindi ma-update ang status. Paki-check ang connection.", "error");
+            showToast("Cannot update status. Please check your connection.", "error");
         }
     };
 

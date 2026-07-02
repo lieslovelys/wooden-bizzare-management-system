@@ -3347,14 +3347,15 @@ html, body {
 
 .wb-modal-box {
     background: white;
-    margin-left: 300px;
     padding: 30px;
     border-radius: 12px;
     text-align: center;
     font-family: Arial, sans-serif;
     box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+    width: 90%;
     max-width: 400px;
-    border-top: 6px solid #D4AF37; /* Gold accent */
+    border-top: 6px solid #D4AF37;
+    box-sizing: border-box;
 }
 
 .wb-modal-title {
@@ -3406,6 +3407,7 @@ html, body {
     from { opacity: 0; }
     to { opacity: 1; }
 }
+
 
 /* ==========================================================================
    QUALITY CHECKER - PROJECT VERIFICATION LIST (MODERN GRID/CARD)

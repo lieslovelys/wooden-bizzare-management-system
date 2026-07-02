@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import '../css/admin.css';
-import AddWorkerModal from './addWorkerModal'; 
-import EditWorkerModal from './editWorkerModal';
+import AddWorkerModal from './AddWorkerModal'; 
+import EditWorkerModal from './EditWorkerModal';
 
 const WorkerList = () => {
   const [workers, setWorkers] = useState([]);

@@ -6,30 +6,41 @@ const Login = ({ login }) => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
+
+    const [incorrectPassword, setIncorrectPassword] = useState(false);
     
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setIncorrectPassword(false);
         const body = { username, password };
         
-        // FIX: Tinanggal ang http://localhost:8080, ginawang relative path na lang
-        const response = await fetch(import.meta.env.VITE_BACKEND_IP + '/login', {
-            method: 'POST',
-            headers: { 'Content-type': 'application/json' },
-            body: JSON.stringify(body),
-            credentials: 'include'
-        });
+        try {
+            // FIX: Tinanggal ang http://localhost:8080, ginawang relative path na lang
+            const response = await fetch(import.meta.env.VITE_BACKEND_IP + '/login', {
+                method: 'POST',
+                headers: { 'Content-type': 'application/json' },
+                body: JSON.stringify(body),
+                credentials: 'include'
+            });
 
-        if (response.ok) {
-            const data = await response.json();
-            if (!data.err) {
-                console.log(data);
-                await login();
-                window.location.reload();
+            if (response.ok) {
+                const data = await response.json();
+                if (!data.err) {
+                    console.log(data);
+                    await login();
+                    window.location.reload();
+                } else {
+                    console.log(data);
+                    setIncorrectPassword(true);
+                }
             } else {
-                console.log(data);
+                setIncorrectPassword(true);
+
             }
-        } else {
-            return;
+        }
+        catch (err) {
+            console.error("Login request failed:", err);
+            setIncorrectPassword(true);
         }
     }
 
@@ -68,7 +79,7 @@ const Login = ({ login }) => {
                                 type="text"
                                 id="username"
                                 value={username}
-                                onChange={e => setUsername(e.target.value)}
+                                onChange={e => {setUsername(e.target.value); setIncorrectPassword(false);}}
                                 required
                             />
                         </div>
@@ -81,7 +92,7 @@ const Login = ({ login }) => {
                                     id="password"
                                     placeholder="Enter your password"
                                     value={password}
-                                    onChange={e => setPassword(e.target.value)}
+                                    onChange={e => {setPassword(e.target.value); setIncorrectPassword(false);}}
                                     required
                                 />
                                 <button 
@@ -97,6 +108,12 @@ const Login = ({ login }) => {
                                 </button>
                             </div>
                         </div>
+
+                        {incorrectPassword && (
+                            <div style={{ color: 'red', marginBottom: '15px', fontSize: '14px' }}>
+                                Username or password is incorrect
+                            </div>
+                        )}
 
                         <div className="submit-container">
                             <button type="submit" className="submit-btn">Sign In</button>
