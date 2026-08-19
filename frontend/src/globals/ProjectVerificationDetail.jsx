@@ -1,47 +1,49 @@
 import React, { useState, useEffect } from 'react';
-import '../css/admin.css'; // Make sure it's pointing to the correct CSS file for toasts
+import '../css/admin.css';
 import { api } from '../api/client';
+import { useToast } from '../context/ToastContext';
+import { formatDate, formatProjectId } from '../utils/format';
 
 const ProjectVerificationDetail = ({ projectId, onBack }) => {
     const [projectInfo, setProjectInfo] = useState(null);
     const [tasks, setTasks] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    // --- BAGONG STATE PARA SA POP-UP (TOAST) ---
-    const [toast, setToast] = useState({ visible: false, message: '', type: '' });
-
-    const showToast = (message, type = 'success') => {
-        setToast({ visible: true, message, type });
-        setTimeout(() => setToast({ visible: false, message: '', type: '' }), 3000);
-    };
+    const showToast = useToast();
 
     useEffect(() => {
+        let ignore = false;
+
         const fetchDetails = async (idToFetch) => {
             setLoading(true);
             try {
-                setProjectInfo(await api.get(`/api/job-orders/${idToFetch}`));
-
+                const info = await api.get(`/api/job-orders/${idToFetch}`);
                 const assignData = await api.get(`/api/job-orders/${idToFetch}/assignments`);
+                if (ignore) return;
+
+                setProjectInfo(info);
                 const formattedTasks = assignData.map(t => ({
                     id: t.assignment_id,
                     stage: t.stage_name,
                     worker: `${t.first_name} ${t.last_name}`,
-                    start: new Date(t.start_date).toLocaleDateString(),
-                    due: new Date(t.due_date).toLocaleDateString(),
+                    start: formatDate(t.start_date),
+                    due: formatDate(t.due_date),
                     status: t.status
                 }));
                 setTasks(formattedTasks);
             } catch (error) {
-                console.error("Error fetching detail data:", error.message);
+                if (!ignore) console.error("Error fetching detail data:", error.message);
             } finally {
-                setLoading(false);
+                if (!ignore) setLoading(false);
             }
         };
-        
+
         if (projectId) {
             const numericId = String(projectId).replace('WB-', '').replace(/^0+/, '');
             fetchDetails(numericId);
         }
+
+        return () => { ignore = true; };
     }, [projectId]);
 
     const handleStatusUpdate = async (assignmentId, newStatus) => {
@@ -64,12 +66,6 @@ const ProjectVerificationDetail = ({ projectId, onBack }) => {
         }
     };
 
-    const formatId = (id) => `WB-${String(id).padStart(2, '0')}`;
-    const formatDate = (dateStr) => {
-        if (!dateStr) return '';
-        return new Date(dateStr).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-    };
-
     if (loading) return <div className="qc-pvd-wrapper"><p style={{padding: '20px'}}>Loading details...</p></div>;
     if (!projectInfo) return <div className="qc-pvd-wrapper"><button className="qc-pvd-back-btn" onClick={onBack}>← Back</button><p>Project not found.</p></div>;
 
@@ -79,21 +75,11 @@ const ProjectVerificationDetail = ({ projectId, onBack }) => {
 
     return (
         <div className="qc-pvd-wrapper">
-
-            {/* RENDER TOAST KUNG VISIBLE */}
-            {toast.visible && (
-                <div className="wb-toast-container">
-                    <div className={`wb-toast ${toast.type}`}>
-                        {toast.type === 'success' ? '' : ''} {toast.message}
-                    </div>
-                </div>
-            )}
-
             <button className="qc-pvd-back-btn" onClick={onBack}>← Back to Project List</button>
 
             <div className="qc-pvd-container qc-pvd-ov-container">
                 <div className="qc-pvd-header">
-                    <h1 className="qc-pvd-id">{formatId(projectInfo.id)}</h1>
+                    <h1 className="qc-pvd-id">{formatProjectId(projectInfo.id)}</h1>
                     <p className="qc-pvd-name">{projectInfo.project_name}</p>
                 </div>
 

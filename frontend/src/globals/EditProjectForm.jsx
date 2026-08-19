@@ -1,36 +1,45 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import '../css/admin.css';
 import { api } from '../api/client';
+import { useToast } from '../context/ToastContext';
 
 const EditProjectForm = ({ projectId, onCancel, onSuccess }) => {
   const [loading, setLoading] = useState(true);
-  
+
   const [formData, setFormData] = useState({
     projectName: '', clientName: '', contactNumber: '',
     dateOrdered: '', clientPayment: '', priorityLevel: 'High', dueDate: '',
   });
-  
+
   const [projectDetails, setProjectDetails] = useState([{ name: '', detail: '' }]);
 
-  // --- BAGONG STATE PARA SA POP-UP (TOAST) ---
-  const [toast, setToast] = useState({ visible: false, message: '', type: '' });
+  const showToast = useToast();
 
-  const showToast = (message, type = 'success') => {
-    setToast({ visible: true, message, type });
-    setTimeout(() => setToast({ visible: false, message: '', type: '' }), 3000);
-  };
+  // Post-submit onSuccess() is delayed so the success toast is visible; cancelled on unmount so
+  // it can't fire after this form is already gone.
+  const successTimerRef = useRef(null);
+  useEffect(() => {
+    return () => {
+      if (successTimerRef.current) {
+        clearTimeout(successTimerRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
+    let ignore = false;
+
     const fetchProjectData = async () => {
       try {
         const result = await api.get(`/api/projects/${projectId}`);
+        if (ignore) return;
 
         if (result.success) {
           const p = result.data;
-          
+
           const formattedDateOrdered = p.date_ordered ? new Date(p.date_ordered).toISOString().split('T')[0] : '';
           const formattedDueDate = p.due_date ? new Date(p.due_date).toISOString().split('T')[0] : '';
-          
+
           setFormData({
             projectName: p.project_name || '',
             clientName: p.client_name || '',
@@ -48,13 +57,14 @@ const EditProjectForm = ({ projectId, onCancel, onSuccess }) => {
           }
         }
       } catch (error) {
-        console.error('Error fetching project:', error.message);
+        if (!ignore) console.error('Error fetching project:', error.message);
       } finally {
-        setLoading(false);
+        if (!ignore) setLoading(false);
       }
     };
 
     fetchProjectData();
+    return () => { ignore = true; };
   }, [projectId]);
 
   // --- ERROR HANDLER PARA SA TEXT INPUTS ---
@@ -108,7 +118,7 @@ const EditProjectForm = ({ projectId, onCancel, onSuccess }) => {
       await api.put(`/api/projects/${projectId}`, payload);
       showToast('Project successfully updated!', 'success');
       // Maghihintay ng 1.5 seconds bago bumalik para mabasa ang message
-      setTimeout(() => {
+      successTimerRef.current = setTimeout(() => {
           onSuccess();
       }, 1500);
     } catch (error) {
@@ -121,16 +131,6 @@ const EditProjectForm = ({ projectId, onCancel, onSuccess }) => {
 
   return (
     <div className="project-form-container">
-        
-      {/* RENDER TOAST KUNG VISIBLE */}
-      {toast.visible && (
-        <div className="wb-toast-container">
-            <div className={`wb-toast ${toast.type}`}>
-                {toast.type === 'success' ? '' : ''} {toast.message}
-            </div>
-        </div>
-      )}
-
       <div className="list-header-banner edit-banner">
         <h2>EDIT PROJECT</h2>
       </div>

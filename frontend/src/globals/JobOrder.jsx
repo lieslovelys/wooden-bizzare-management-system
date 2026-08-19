@@ -2,25 +2,35 @@ import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import JobOrderDetails from './JobOrderDetails';
 import { api } from '../api/client';
+import { formatDateShort, formatProjectId } from '../utils/format';
+
+// Pure — hoisted to module scope so it can be called from the fetch effect before the component
+// body declares it (previously a same-render "used before declared" lint error; see
+// ARCHITECTURE_REVIEW.md P2).
+const sortJobsByDate = (jobs) => {
+    return [...jobs].sort((a, b) => new Date(a.due_date) - new Date(b.due_date));
+};
 
 const JobOrderList = () => {
     const [jobOrders, setJobOrders] = useState([]);
     
-    // Binago natin 'to. Imbes na ID lang para ma-highlight, 
+    const location = useLocation();
+
+    // Binago natin 'to. Imbes na ID lang para ma-highlight,
     // ginawa nating state para malaman kung anong view ang ipapakita.
-    const [viewingJobId, setViewingJobId] = useState(null); 
-    
-    const [activePriorities, setActivePriorities] = useState(['High', 'Medium', 'Low']); 
-    
-    const location = useLocation(); 
+    //
+    // Derived from location.state at mount time (a notification link always mounts this
+    // component fresh via a route change — see Admin.jsx/ProductionManager.jsx — so a lazy
+    // initializer is sufficient) rather than an effect that calls setState directly, which
+    // eslint-plugin-react-hooks' set-state-in-effect rule flags as an avoidable extra render.
+    const [viewingJobId, setViewingJobId] = useState(() => location.state?.targetProjectId ?? null);
+
+    const [activePriorities, setActivePriorities] = useState(['High', 'Medium', 'Low']);
 
     // --- 3. BAGONG USEEFFECT PARA SA NOTIFICATION CLICK ---
+    // I-clear ang history state para kung i-refresh ni user ang page, hindi siya mag-loop.
     useEffect(() => {
         if (location.state && location.state.targetProjectId) {
-            // Kung may ipinadalang ID galing sa Notification, i-set agad para bumukas ang details
-            setViewingJobId(location.state.targetProjectId);
-            
-            // I-clear ang history state para kung i-refresh ni user ang page, hindi siya mag-loop
             window.history.replaceState({}, document.title);
         }
     }, [location]);
@@ -38,16 +48,6 @@ const JobOrderList = () => {
         };
         fetchJobs();
     }, []);
-
-    const formatUI_Date = (dateString) => {
-        if (!dateString) return '';
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    };
-
-    const sortJobsByDate = (jobs) => {
-        return [...jobs].sort((a, b) => new Date(a.due_date) - new Date(b.due_date));
-    };
 
     const handleSortClick = () => {
         const sorted = sortJobsByDate(jobOrders);
@@ -108,8 +108,8 @@ const JobOrderList = () => {
                             className="jol-item"
                             onClick={() => setViewingJobId(job.id)} // Dito tina-trigger yung pag-switch ng view
                         >
-                            <div className="jol-name">WB-{job.id} {job.project_name}</div>
-                            <div className="jol-date">{formatUI_Date(job.due_date)}</div>
+                            <div className="jol-name">{formatProjectId(job.id)} {job.project_name}</div>
+                            <div className="jol-date">{formatDateShort(job.due_date)}</div>
                             <div className={`jol-priority ${job.priority_level ? job.priority_level.toLowerCase() : ''}`}>
                                 {job.priority_level ? job.priority_level.toUpperCase() : 'N/A'}
                             </div>

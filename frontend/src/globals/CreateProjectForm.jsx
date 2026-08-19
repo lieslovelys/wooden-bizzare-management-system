@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import '../css/admin.css';
 import { api } from '../api/client';
+import { useToast } from '../context/ToastContext';
 
 const CreateProjectForm = () => {
   const [formData, setFormData] = useState({
@@ -9,15 +10,8 @@ const CreateProjectForm = () => {
   });
 
   const [projectDetails, setProjectDetails] = useState([{ name: '', detail: '' }]);
-  
-  // --- BAGONG STATE PARA SA POP-UP (TOAST) ---
-  const [toast, setToast] = useState({ visible: false, message: '', type: '' });
 
-  // Function para magpalabas ng popup na nawawala after 3 seconds
-  const showToast = (message, type = 'success') => {
-    setToast({ visible: true, message, type });
-    setTimeout(() => setToast({ visible: false, message: '', type: '' }), 3000);
-  };
+  const showToast = useToast();
 
   const now = new Date();
   const year = now.getFullYear();
@@ -77,15 +71,6 @@ const CreateProjectForm = () => {
 
   return (
     <div className="project-form-container">
-      {/* RENDER TOAST KUNG VISIBLE */}
-      {toast.visible && (
-        <div className="wb-toast-container">
-            <div className={`wb-toast ${toast.type}`}>
-                {toast.type === 'success' ? '' : ''} {toast.message}
-            </div>
-        </div>
-      )}
-
       <form onSubmit={handleSubmit} className="project-form">
         <h2 className="form-title">CREATE PROJECT</h2>
         

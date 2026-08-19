@@ -1,11 +1,21 @@
-import React, { useState, useEffect, useContext, useCallback } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import '../css/worker.css';
 import WorkerJobOrderDetail from './WorkerJobOrderDetail';
-import { UserContext } from '../App';
+import { UserContext } from '../context/UserContext';
 import { api } from '../api/client';
+import { formatDateShort, formatProjectId } from '../utils/format';
+
+const mapTasks = (data) => data.map(task => ({
+    id: formatProjectId(task.project_id),
+    name: task.project_name,
+    dueDate: task.due_date,
+    priority: task.priority || 'Normal',
+    status: task.status,
+    assignmentId: task.assignment_id
+}));
 
 const WorkerJobOrder = () => {
-    const { userID } = useContext(UserContext); 
+    const { userID } = useContext(UserContext);
 
     const [activeFilter, setActiveFilter] = useState('Assigned');
     const [priorityFilter, setPriorityFilter] = useState('All');
@@ -13,38 +23,32 @@ const WorkerJobOrder = () => {
     const [selectedTaskId, setSelectedTaskId] = useState(null);
     const [tasks, setTasks] = useState([]);
 
-    // --- BINAGONG LOGIC: Inilabas natin ang fetchMyTasks para pwedeng tawagin kahit saan ---
-    const fetchMyTasks = useCallback(async () => {
+    // Manual re-fetch (used after returning from the detail view) — kept as a plain function
+    // separate from the mount effect below, which needs its own ignore-guarded fetch rather than
+    // calling this one, per the pattern established in InventoryTable.jsx (P1-11).
+    const fetchMyTasks = async () => {
         if (!userID) return;
         try {
             const data = await api.get(`/api/workers/${userID}/tasks`);
-
-            const formattedTasks = data.map(task => ({
-                id: `WB-${String(task.project_id).padStart(2, '0')}`,
-                name: task.project_name,
-                dueDate: task.due_date,
-                priority: task.priority || 'Normal',
-                status: task.status,
-                assignmentId: task.assignment_id
-            }));
-
-            setTasks(formattedTasks);
+            setTasks(mapTasks(data));
         } catch (error) {
             console.error("Error fetching worker tasks:", error.message);
         }
-    }, [userID]);
-
-    // Tatawagin niya ito kapag nag-load ang page (dahil sa userID)
-    useEffect(() => {
-        fetchMyTasks();
-    }, [fetchMyTasks]);
-    // ----------------------------------
-
-    const formatUI_Date = (dateString) => {
-        if (!dateString) return '';
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     };
+
+    useEffect(() => {
+        let ignore = false;
+        (async () => {
+            if (!userID) return;
+            try {
+                const data = await api.get(`/api/workers/${userID}/tasks`);
+                if (!ignore) setTasks(mapTasks(data));
+            } catch (error) {
+                if (!ignore) console.error("Error fetching worker tasks:", error.message);
+            }
+        })();
+        return () => { ignore = true; };
+    }, [userID]);
 
     let displayedTasks = tasks.filter(task => task.status === activeFilter);
     if (priorityFilter !== 'All') displayedTasks = displayedTasks.filter(task => task.priority === priorityFilter);
@@ -97,7 +101,7 @@ const WorkerJobOrder = () => {
                         <div key={task.id} className="wjo-item" onClick={() => setSelectedTaskId(task.id)}>
                             <div className="wjo-item-id">{task.id}</div>
                             <div className="wjo-item-name">{task.name}</div>
-                            <div className="wjo-item-center">{formatUI_Date(task.dueDate)}</div>
+                            <div className="wjo-item-center">{formatDateShort(task.dueDate)}</div>
                             <div className={`wjo-item-center wjo-priority ${task.priority.toLowerCase()}`}>{task.priority}</div>
                             <div className="wjo-badge-container">
                                 <div className={`wjo-badge ${task.status.toLowerCase().replace(' ', '-')}`}>{task.status}</div>

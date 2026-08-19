@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import InfoCard from '../globals/InfoCard';
 import AdminNotification from './AdminNotification';
 import { api } from '../api/client';
+import { formatCurrency } from '../utils/format';
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState({
@@ -49,7 +50,7 @@ const AdminDashboard = () => {
         />
         <InfoCard 
             label="MONTHLY PROFIT" 
-            value={stats.monthlyProfit.toLocaleString()} 
+            value={formatCurrency(stats.monthlyProfit)}
             sub={currentMonthYear} // Ipinalit natin dito yung dynamic date
             variant="blue" 
         />

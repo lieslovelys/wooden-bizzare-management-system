@@ -33,7 +33,7 @@ so the shop owner, production manager, quality checker, and workers all see the 
 | **Production Manager** | Runs the shop floor | Assigning work, tracking job progress |
 | **Quality Checker** | QA | Approving or rejecting finished stages |
 | **Worker** | Craftsperson (carpenter, carver, painter, etc.) | Seeing and completing assigned tasks |
-| **Inventory Staff** | Materials/stock | Tracking raw materials and tools *(currently non-functional — see B.6)* |
+| **Inventory Staff** | Materials/stock | Tracking raw materials and tools |
 
 ## A.4 Glossary
 
@@ -92,7 +92,7 @@ boundary. See ARCHITECTURE_REVIEW.md P0 for the fix.
 | Enter/edit project profit | ✓ | | | | |
 | View worker productivity leaderboard | ✓ | | | | |
 | View project history | ✓ | ✓ | | | |
-| Manage inventory | ✓ | ✓ | | | ✓ *(all three: separate, unsynced local copies — see B.6)* |
+| Manage inventory | ✓ | ✓ | | | ✓ *(shared, server-persisted since P1-11 — see B.6)* |
 | Receive role-scoped notifications | ✓ (sees all) | ✓ (project-type) | ✓ (verification-type) | none | none |
 
 Notable gap: **Admin and Production Manager both have full QA approve/reject rights**
@@ -118,7 +118,8 @@ projects ─┬─(1:N, CASCADE)─→ job_assignments.project_id
           ├─(1:N, CASCADE)─→ project_variables.project_id
           └─(1:N, CASCADE)─→ project_profit.project_id ──(1:N, CASCADE)──→ project_expense_items.profit_id
 
-inventory_items ──(1:N, CASCADE)──→ item_variants.item_id     [schema exists; no backend code reads or writes it]
+inventory_items ──(1:N, CASCADE)──→ item_variants.item_id     [P1-11: real backend, /api/inventory]
+                                          └─(1:N, CASCADE)──→ stock_movements.variant_id  (audit trail)
 notifications                                                  [no foreign keys to anything]
 ```
 
@@ -167,9 +168,15 @@ project_profit, CASCADE), `category`, `description`, `amount`.
 **`project_variables`** — free-form spec pairs per project: `project_id` (FK, CASCADE),
 `variable_name`, `variable_detail`.
 
-**`inventory_items`** / **`item_variants`** — `name`/`category`/`total_stock`/`unit`/`status` and
-per-item `variant_name`/`current_stock`/`min_stock`. Schema exists; **no backend route, controller,
-or model reads or writes these tables** (see B.6).
+**`inventory_items`** / **`item_variants`** — `name`/`category`/`unit` and per-item
+`variant_name`/`current_stock`/`min_stock`. **P1-11 (resolved):** now served by
+`routes/inventoryRoutes.js` → `services/inventoryService.js` → `models/inventoryModel.js`, the
+same layer contract as the rest of the backend. `total_stock`/`status` are no longer stored
+columns — both are derived from `item_variants` on every read (sum of `current_stock`; `'Low'` if
+any variant is at or below its `min_stock`) to avoid a second source of truth. **`stock_movements`**
+(new) is the audit trail every adjustment writes to: `variant_id` (FK, CASCADE), `user_id` (FK →
+users, `SET NULL`), signed `delta`, `resulting_stock`, `reason`, `created_at`. See B.6 for what's
+still open (materials consumed per project).
 
 **`notifications`** — `type`, `title`, `message`, `is_read` (boolean, **one flag shared by every
 viewer**), `target_role` (varchar, free text — written as `'PM'`/`'QC'` while the actual role enum
@@ -186,6 +193,12 @@ any backend code.
 ~32 routes. Auth/account routes are mounted at `/` (not `/api`); everything else is under `/api`.
 **No route requires authentication.** Response shapes are inconsistent across four different
 envelopes: `{success, data}`, bare arrays, `{err, message}`, `{message, body}`.
+
+**This table predates the P0/P1-10 work and is now stale on both fronts it describes**: every
+route requires role-based auth today (`middleware/auth.js`), and every backend route — including
+auth/account routes — now lives under `/api` (see `CLAUDE.md`). The four-envelope inconsistency
+it flags is still accurate. Re-auditing this table route-by-route is its own documentation pass;
+not done here. The 8 routes P1-11 added are listed separately below since they're new, not stale.
 
 | Method | Path | Purpose |
 |---|---|---|
@@ -231,6 +244,20 @@ envelopes: `{success, data}`, bare arrays, `{err, message}`, `{message, body}`.
 
 No list endpoint supports pagination, filtering, or sorting parameters — every list request
 returns the full table and the frontend filters client-side.
+
+**Added by P1-11**, all under `/api/inventory`, `requireRole('Admin', 'Production Manager',
+'Inventory Staff')`, `{success, data}` envelope:
+
+| Method | Path | Purpose |
+|---|---|---|
+| GET | `/api/inventory` | List items with variants, derived `total_stock`/`status` |
+| POST | `/api/inventory` | Create item + variants |
+| GET | `/api/inventory/low-stock` | Variants at or below their `min_stock` |
+| GET | `/api/inventory/:id` | Single item + variants |
+| PUT | `/api/inventory/:id` | Update item + variants (surviving variants keep their stock) |
+| DELETE | `/api/inventory/:id` | Delete item (variants and their movement history cascade) |
+| POST | `/api/inventory/variants/:variantId/adjust` | Adjust stock; `{delta, reason}`, writes a `stock_movements` row |
+| GET | `/api/inventory/variants/:variantId/movements` | Audit trail for one variant |
 
 ## B.4 Screen inventory
 
@@ -305,22 +332,27 @@ disappears from the metric over time.
 
 Stated as product facts — what a user experiences — not as code defects.
 
-- **Inventory has a role, a login, and a screen, but no backend.** `inventory_items` and
-  `item_variants` exist in the schema but are read and written by nothing on the server. The
-  Inventory Table screen (mounted separately for Admin, Production Manager, and Inventory Staff)
-  persists to each browser's `localStorage`. The three roles' views of "inventory" are three
-  independent, silently divergent copies, none shared, none backed up, all lost on a cleared
-  browser profile. There is also no link between inventory and projects — nothing records
-  material consumed by a job.
+- **Inventory has a real backend now (P1-11), except for the project link.** Items, variants,
+  stock adjustment (with a who/when/how-much/why audit trail via `stock_movements`), and
+  low-stock reporting are all server-persisted through `/api/inventory`, shared correctly across
+  Admin, Production Manager, and Inventory Staff. **Still missing:** there is no link between
+  inventory and projects — nothing records material consumed by a job. That remains open under
+  FR-3.
 - **Attendance status is never computed.** Every record keeps the database default `'Absent'`
   with zero late/overtime minutes regardless of the times entered, which makes the
   `attendance_summary` view and any payroll derivation from this data meaningless as it stands.
 - **Notifications are global, not per-user.** One shared `is_read` flag means one person opening
-  a notification marks it read for every other person with access to that list; "mark all read"
-  updates the entire table unconditionally. `target_role` values (`'PM'`, `'QC'`) don't match the
-  role enum (`'Production Manager'`, `'Quality Checker'`) and the reader ignores the column
-  anyway — every logged-in user's notification list currently includes every role's notifications,
-  filtered only by `type` in the browser.
+  a notification marks it read for every other person with access to that list. `target_role`
+  values (`'PM'`, `'QC'`) don't match the role enum (`'Production Manager'`, `'Quality Checker'`)
+  and the reader ignores the column anyway — every logged-in user's notification list currently
+  includes every role's notifications, filtered only by `type` in the browser. **Partially
+  improved (ARCHITECTURE_REVIEW.md P2):** the three per-role screens (`AdminNotification`,
+  `PMNotification`, `QualityCheckerNotification`) are now one shared component
+  (`globals/NotificationList.jsx`), and "mark all read"/"clear all" take an optional `?type=` so
+  a Production Manager or Quality Checker no longer has to issue one request per notification to
+  fake a type-scoped bulk action — but this only changed how the *bulk actions* are scoped, not
+  the underlying per-user `is_read` sharing or the ignored `target_role` column, both of which
+  remain exactly as described above.
 - **Notifications never update live.** There is no polling or push of any kind; a new
   notification only appears after the user navigates to (or reloads) that screen.
 - **`Rework` is invisible in reporting.** The status enum includes both `Rework` and `Repair`, but
@@ -353,7 +385,7 @@ Stated as product facts — what a user experiences — not as code defects.
 |---|---|
 | FR-1 | Every state-changing API request is authorized server-side against the caller's actual role and, where applicable, ownership (e.g. a worker may only read/act on their own tasks and attendance). |
 | FR-2 | Account creation is an Admin-only, authenticated action with a whitelist of assignable roles. There is no unauthenticated path to creating any account. |
-| FR-3 | Inventory is a real, server-persisted module: items and variants via API, stock increment/decrement with an audit trail (who, when, how much, why), low-stock alerting against each variant's configurable `min_stock`, and a record of materials consumed per project. |
+| FR-3 | Inventory is a real, server-persisted module: items and variants via API, stock increment/decrement with an audit trail (who, when, how much, why), low-stock alerting against each variant's configurable `min_stock` **(✅ done, P1-11)**, and a record of materials consumed per project **(still open)**. |
 | FR-4 | Notifications carry per-user read state (not a single shared flag), are correctly filtered by the recipient's role, and update without a manual page reload (polling or push). |
 | FR-5 | Attendance status, late minutes, and overtime minutes are computed server-side from recorded time-in/time-out against the shop's defined working hours, not left at a default. |
 | FR-6 | Assignment status changes follow an enforced state machine (e.g. `Assigned → For QA → Approved`, `For QA → Repair → Assigned`) rather than accepting an arbitrary string; QA rejections require a reason. |

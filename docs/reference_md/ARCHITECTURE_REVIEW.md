@@ -154,10 +154,11 @@ Needed to actually hold up under 50–300 concurrent users.
 ✅ Resolved.** Landed as one pass, with migration tooling (`node-pg-migrate`, pulled forward
 from P1-10) added as a prerequisite since four of these items needed schema changes and
 `index.sql` has no migration story of its own. See `backend/src/migrations/` for the schema
-changes and the per-item notes below for what changed and where. **Still outstanding:** P1-3
-(pagination), P1-10 (the deployment rewrite proper — Docker Compose, `.env.example`, CI; the
-migration-tooling slice is done), and P1-11 (Inventory backend) are each their own separate
-pass and are not part of this update.
+changes and the per-item notes below for what changed and where. At the time this P1a pass
+landed, P1-3 (pagination), P1-10 (the deployment rewrite proper — Docker Compose,
+`.env.example`, CI; the migration-tooling slice was already done), and P1-11 (Inventory backend)
+were each their own separate pass, not part of this update — P1-10 and P1-11 have since landed
+too (see their own sections below); P1-3 remains the one still outstanding.
 
 ### P1-1. Session store cannot survive more than one process
 **Status: ✅ Resolved** — `server.js` now uses `connect-pg-simple` backed by the `session` table
@@ -369,6 +370,40 @@ genuinely needs more than one core, that's a plan-upgrade decision (Hostinger's 
 not something to work around in Compose config.
 
 ### P1-11. Inventory is not multi-user at all
+**Status: ✅ Resolved** (for items, variants, stock adjustment, and low-stock reporting —
+"materials consumed per project," the fourth clause of PRD FR-3, is deliberately deferred; see
+below). `globals/InventoryTable.jsx` now talks to `/api/inventory` instead of `localStorage`, so
+Admin, Production Manager, and Inventory Staff finally see one shared, server-persisted view
+instead of three silently divergent per-browser copies.
+
+`models/inventoryModel.js` / `services/inventoryService.js` / `routes/inventoryRoutes.js` were
+added following the same layer contract as the routes/services refactor above (routes own HTTP,
+services throw `AppError`, models own SQL). `inventory_items.total_stock`/`status` are no longer
+stored columns — both are derived in SQL from `item_variants` on every read (`SUM`/`bool_or`),
+avoiding the same two-sources-of-truth defect `projects.status` already has (see the P2 bullet on
+project status below). A new `stock_movements` table is the FR-3 audit trail: every stock
+adjustment records who (`user_id`, `ON DELETE SET NULL` so a later account deletion doesn't erase
+history), when, how much (signed `delta`), the resulting total (so history is replayable), and
+why (a `reason` the frontend now prompts for). The adjustment itself
+(`adjustVariantStock` in the model) expresses its non-negative guard directly in the `UPDATE`'s
+`WHERE` clause rather than a separate read-then-check, so two concurrent adjustments on the same
+variant serialize correctly instead of racing on a stale read — verified by firing two concurrent
+`-1` requests at the same variant and confirming two movement rows and a total reduced by exactly
+2, no lost update. `min_stock` is now configurable per variant from the add/edit modal (it was
+hardcoded to `5` client-side before). Low-stock reporting is a derived `status` field plus a
+dedicated `GET /api/inventory/low-stock` endpoint — deliberately **not** wired into the
+`notifications` table, which is still broken in the two ways PRD B.6 documents (one shared
+`is_read` flag; `target_role` values that don't match the role enum and are ignored by the
+reader) — inventory alerts would otherwise inherit both bugs.
+
+**Deliberately deferred:** "materials consumed per project" (the fourth FR-3 clause) — it needs
+new UI on the project/job-order screens and a link between a stock movement and a project that
+doesn't exist yet. Also out of scope: pagination on the inventory list (P1-3 covers every list
+endpoint at once) and real-database integration tests (the new backend tests mock the
+model/service layers — see the P2 "No tests" bullet).
+
+The rest of this section is kept as the historical record of what was wrong.
+
 As documented in the PRD (B.6): the Inventory module persists to `localStorage`, so it isn't
 "slow under load," it simply doesn't work for more than one person or one device. Building the
 backend for it (API, schema already exists, add stock-movement/audit rows) is both a functional
@@ -385,55 +420,105 @@ Not urgent, but each of these increases the cost of every future change until ad
   values and non-numeric `:id` path params currently surface as opaque 500s instead of 400s.
   Introduce `zod` or `express-validator` and validate at the route boundary.
 - **Inconsistent API contract.** Four different response envelope shapes (`{success, data}`, bare
-  arrays, `{err, message}`, `{message, body}`) still stand — not addressed by this pass, since
-  fixing it means changing every response shape's consumer, a materially bigger diff than the
-  route-namespace piece below. `GET /logout` still mutates state.
+  arrays, `{err, message}`, `{message, body}`) still stand as the actual bytes on the wire — not
+  addressed by this pass or the routes/services refactor below, since fixing it means changing
+  every response shape's consumer, a materially bigger diff than either. `GET /logout` still
+  mutates state.
   ~~auth/account routes mounted at `/` instead of `/api`~~ — **resolved as part of P1-10**:
   `userRoutes` now mounts at `/api` (`server.js`), with the ~7 frontend call sites updated to
   match. ~~three overlapping "workers" endpoints~~ — down to two intentionally distinct ones:
-  `GET /api/workers` (account management, `userController.getWorkers`, `{success,data}`) and
+  `GET /api/workers` (account management, `userService.getWorkers`, `{success,data}`) and
   `GET /api/assignable-workers` (job-order assignment dropdown,
-  `jobOrderController.getWorkersList`, bare array — renamed from `/workers` during the P1-10
+  `jobOrderService.getWorkersList`, bare array — renamed from `/workers` during the P1-10
   route move specifically because both routes ended up at the same path once `userRoutes` moved
   under `/api`, and `userRoutes` being mounted first would have silently shadowed the other,
   breaking `globals/JobOrderDetails.jsx`'s worker-assignment dropdown; caught by enumerating
   every registered route programmatically rather than by inspection alone). The dead duplicate
   registration was already removed in the P0 pass.
-- **`showToast` reimplemented in 11 components**, each with the identical 3-second timer and
-  near-identical markup; extract to one provider/hook.
-- **No cleanup in any `useEffect`.** No component cancels an in-flight fetch on unmount and no
-  component clears its own timers — 11 toast timers and several navigation-delay timers are all
-  currently uncancelled, which can call `setState` on an unmounted component and, in at least one
-  screen (`globals/Attendance.jsx`), causes a worse problem: five sub-components are defined
-  *inside* that component's render body, so they remount on every parent re-render, discarding
-  any half-typed form input in the attendance modal on every unrelated state change.
-- **Near-identical components maintained as separate copies**: `AdminNotification`,
-  `PMNotification`, and `QualityCheckerNotification` are ~90% line-for-line identical (the base-URL
-  bug fixed under the P0 prerequisite exists in exactly one of the three copies precisely because
-  they're forks, not one parameterized component). Same pattern for the five role-shell files
-  (tabs array + `Navbar` + `Routes`) and the Create/Edit project and worker forms. Consolidate once
-  the API-client migration is done and the components are already being touched.
-- **Client-side derived business logic duplicated with drift**: three different currency-formatting
-  implementations and four different project-ID display formats currently coexist, so the same
-  project can render as `WB7`, `WB-7`, or `WB-07` depending which screen you're on. Centralize as
-  shared formatters.
+  **The *structural* half is now resolved** by the routes/services refactor (see execution order
+  below): every response body used to be constructed inside a `(req, res)` controller handler,
+  scattered across 35 functions in 8 files with inconsistent `try/catch`-then-`res.status(500)`
+  boilerplate; it now lives in exactly one place per endpoint — the route — with business logic
+  moved to `services/` (renamed from `controllers/`), which take plain arguments, return plain
+  data, and signal failure by throwing a typed `AppError`
+  (`backend/src/errors/AppError.js`) instead of the old `{err: true}`-style return-value
+  convention or `catch(e){ return e; }`. Every 2xx/4xx body was verified byte-identical before and
+  after (a scripted `curl` sweep over all 39 routes, diffed). The one deliberate behavior change:
+  ~8 bespoke 500 bodies (e.g. `{success:false, message:'Server error while fetching projects'}`)
+  normalized to the error handler's single `{error:'Internal server error'}`, which also makes
+  `errorHandler.js` live code for the first time — previously zero controllers called `next(err)`,
+  so it only ever fired for `userRoutes.js`'s four inline handlers. Standardizing the *shapes*
+  themselves (the four envelopes above) is smaller now that they all live in `routes/`, but is
+  still deliberately unaddressed here.
+- ~~**`showToast` reimplemented in 11 components**~~ — **resolved (P2 frontend-consolidation
+  pass)**: `context/ToastContext.js` + `globals/ToastProvider.jsx`, mounted once at the app root
+  in `App.jsx`. `useToast()` returns a stable `showToast(message, type)`; the previous 12 copies
+  (11 originally counted, plus `InventoryTable.jsx` added in P1-11) each had their own uncancelled
+  `setTimeout` and could truncate a second toast fired while the first was still showing — the
+  shared provider clears the previous timer before starting a new one, fixing that too.
+- ~~**No cleanup in any `useEffect`.**~~ — **resolved for the effects this pass touched**: the 12
+  toast timers are handled by the ToastProvider above; four navigation-delay timers
+  (`AddWorkerModal`, `EditProjectForm`, `JobOrderDetails`, `WorkerJobOrderDetail`) are now stored
+  in a `useRef` and cleared on unmount; several fetch effects gained the `ignore`-flag cleanup
+  pattern `InventoryTable.jsx` established in P1-11. The worse problem — `globals/Attendance.jsx`
+  defining five sub-components *inside* its own render body, remounting them (and discarding any
+  half-typed form input) on every unrelated parent re-render — is fixed by hoisting all five
+  (`WorkerAvatar`, `EmployeeListView`, `AttendanceLogView`, `AddAttendanceModal`,
+  `EditAttendanceModal`) to module scope with explicit props. Fetch effects in files this pass
+  didn't otherwise touch are still uncancelled — not swept wholesale.
+- **Near-identical components maintained as separate copies**: ~~`AdminNotification`,
+  `PMNotification`, and `QualityCheckerNotification` are ~90% line-for-line identical~~ —
+  **resolved**: all three are now thin wrappers around one `globals/NotificationList.jsx`
+  (`type`/`emptyMessage`/`resolveTarget` props), keeping their original default-export names so
+  the role-shell imports didn't need to change. This was more than dedup: the PM/QC forks issued
+  one HTTP request *per notification* to fake a type-scoped bulk action (`DELETE`/`PUT` per row)
+  where Admin's issued exactly one unscoped request; `routes/adminNotifRoutes.js`'s
+  `mark-all-read`/`clear/all` now take an optional `?type=` so all three screens issue exactly one
+  bulk request. **Deliberately deferred**: the five role-shell files (tabs array + `Navbar` +
+  `Routes`) and the Create/Edit project and worker forms — this pass scoped itself to the
+  notification dedup only (see P2's execution-order entry below); the `notifications` table's
+  shared-`is_read` and ignored-`target_role` defects (PRD B.6) are untouched.
+- ~~**Client-side derived business logic duplicated with drift**~~ — **resolved**: `utils/format.js`
+  now centralizes `formatCurrency`, `formatProjectId`, `formatWorkerId`, `formatDate`,
+  `formatDateShort`, and `formatTime12h`. The same project now renders `WB-07` everywhere
+  (previously `WB7`/`WB-7`/`WB-07` depending on screen) and money renders `₱1,200.00` everywhere
+  (previously also `₱ 1200.00` and bare `1,200` with no symbol, on `admin/A_Dashboard.jsx`'s
+  monthly-profit tile).
 - **No tests, anywhere**, for either project — no test runner is even installed.
+  **Partially resolved (P1-11, extended by the P2 frontend-consolidation pass):** Vitest is
+  installed and gated in CI for both halves (`backend/src`: vitest + supertest, mocking
+  `models/`/`services/` — no database needed; `frontend`: vitest + `@testing-library/react`/jsdom,
+  mocking `api/client.js`), but coverage is still limited to the code each pass actually added or
+  rewrote: the P1-11 Inventory files, plus (P2) `utils/format.test.js`,
+  `globals/ToastProvider.test.jsx`, `globals/NotificationList.test.jsx`, and
+  `backend/src/tests/adminNotifRoutes.test.js` (covering only the new `?type=` parameter). The
+  routes/services refactor, the bulk of `Attendance.jsx`'s hoisted sub-components, and everything
+  else pre-P1-11 — verified only by manual `curl`/click-through — still has zero automated
+  coverage. Backfilling that (starting with `userService.login` and
+  `jobOrderService.updateQAStatus`'s five `AppError` branches) is its own pass.
   ~~No CI~~ — **resolved**: `.github/workflows/ci.yml` (added in P1-10) runs backend install,
-  frontend lint+build, and builds both Docker images; extend it once real tests exist.
+  frontend lint+test+build, and builds both Docker images; all three (`npm test` × 2, `npm run
+  lint`) are now real gates — see the lint-errors bullet below for when the lint gate flipped.
   ~~No `engines`/`.nvmrc`~~ — **resolved**: both `package.json`s pin `"node": ">=24"`, matching
   the Dockerfiles; root `.nvmrc` added. ~~`nodemon` in `dependencies`~~ — **resolved** (P1a).
   `frontend/README.md` is still the unmodified Vite template.
 - **Two unused database views** (`attendance_summary`, `project_profit_summary`) — either wire them
   into the dashboard/reporting screens they were clearly built for, or drop them.
-- **~10 pre-existing frontend lint errors**, found when wiring up CI in the P1-10 pass (not fixed
-  there — none of them are in files that pass touched, and several are real logic smells worth
-  looking at individually rather than mechanically silencing): an accessed-before-declared
-  function in `globals/JobOrder.jsx`, `Date.now()` called during render in
-  `globals/InventoryTable.jsx`, synchronous `setState` inside `useEffect` in
-  `admin/EditWorkerModal.jsx` and `worker/WorkerJobOrder.jsx`, an unused `onBack` prop in
-  `globals/ProjectDetails.jsx`, plus a handful of unused-variable errors. `ci.yml`'s lint step is
-  `continue-on-error: true` until this is paid down — currently visible in the CI log, not
-  gating the build.
+- ~~**~9 pre-existing frontend lint errors**~~ — **resolved (P2 frontend-consolidation pass)**:
+  all fixed with the real underlying change rather than a suppression — the `UserContext` export
+  moved out of `App.jsx` into `context/UserContext.js` (fast-refresh violation); the missing back
+  button in `globals/ProjectDetails.jsx` was actually implemented (its `onBack` prop had never
+  been wired to anything); `globals/JobOrder.jsx`'s `sortJobsByDate` was hoisted above the
+  component and its notification-click effect changed from a `setState`-in-effect into a lazy
+  `useState` initializer; the same `setState`-in-effect pattern in `admin/EditWorkerModal.jsx` and
+  `worker/WorkerJobOrder.jsx` was fixed by deriving initial state from props (with the parent
+  keying the modal to force a remount on each open) and by inlining an `ignore`-guarded fetch,
+  respectively; and the remaining unused-variable errors (`Admin.jsx`, `Login.jsx`,
+  `admin/AddWorkerModal.jsx`, `admin/Profit.jsx`) were genuinely dead code, removed. `ci.yml`'s
+  lint step is a real gate now (`continue-on-error` removed) — the 3 remaining
+  `exhaustive-deps` **warnings** in `globals/JobOrderDetails.jsx` are deliberately left as
+  warnings (genuine stale-closure smells needing per-effect judgement) and don't fail the step,
+  since `eslint .` only exits non-zero on errors.
 
 ---
 
@@ -449,5 +534,27 @@ Not urgent, but each of these increases the cost of every future change until ad
    folded into the migration chain, `/api` route namespace cleanup, backups, CI. Deliberately
    still open within it: TLS/a real domain, and actually provisioning the VPS itself (see that
    section for the full list).
-5. **Still outstanding:** P1-3 (pagination), P1-11 (Inventory backend), and P2 items
-   opportunistically, folded into whichever change already touches the same files.
+5. **Routes/services refactor (P2, pulled forward)** — ✅ done: `controllers/` renamed to
+   `services/`; every response body construction moved out of the middle layer and into
+   `routes/`; failures signalled via a new `AppError` class instead of ad hoc return-value
+   conventions. Purely structural — see the "Inconsistent API contract" bullet above for what it
+   did and didn't change.
+6. **P1-11 (Inventory backend)** — ✅ done: items/variants/stock-adjustment/low-stock now served
+   from `/api/inventory` with a `stock_movements` audit trail, replacing the `localStorage`-only
+   screen; "materials consumed per project" (part of FR-3) deliberately deferred. Also landed:
+   Vitest in both halves, gated in CI, covering the new Inventory code (see the P2 "No tests"
+   bullet for what's still uncovered).
+7. **P2 frontend-consolidation pass** — ✅ done: shared `ToastProvider`/`useToast()` replacing 12
+   copy-pasted toast implementations; shared `utils/format.js` display formatters closing the
+   `WB7`/`WB-7`/`WB-07` and `₱ 1200.00`/`₱1,200`/`1,200` drift; `globals/Attendance.jsx`'s five
+   render-body-nested sub-components hoisted to module scope (the actual fix for its
+   discarded-form-input bug); the three notification components merged into one
+   `globals/NotificationList.jsx` with a type-scoped `?type=` bulk-action query param on the
+   backend; all ~9 pre-existing frontend lint errors fixed for real (not suppressed), flipping
+   `ci.yml`'s lint step into a real gate. Deliberately deferred within P2: the Create/Edit
+   form pairs and the five role-shell files (not consolidated), the four response-envelope
+   shapes (unchanged), `zod`/`express-validator` route validation, and `GET /logout` → `POST`.
+8. **Still outstanding:** P1-3 (pagination), the remaining P2 backend-contract items (response
+   envelope standardization, input validation library, `GET /logout`), the deferred P2 component
+   dedup (Create/Edit forms, role shells), the two unused database views, and backfilling test
+   coverage for the pre-P1-11 backend and the pre-P2 frontend.

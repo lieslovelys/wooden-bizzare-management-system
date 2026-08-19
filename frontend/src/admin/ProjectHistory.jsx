@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import '../css/admin.css';
 import { api } from '../api/client';
+import { formatDate, formatProjectId } from '../utils/format';
 
 const ProjectHistory = () => {
   const [historyData, setHistoryData] = useState([]);
@@ -73,11 +74,6 @@ const ProjectHistory = () => {
     return 'On-time';
   };
 
-  const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString('en-US', { month: 'long', day: '2-digit', year: 'numeric' });
-  };
-
   const displayedHistory = remarksFilter === 'All' 
     ? historyData 
     : historyData.filter(proj => proj.remark === remarksFilter);
@@ -106,7 +102,7 @@ const ProjectHistory = () => {
                       
                       {/* TOP CARD: Project Info */}
                       <div className="ph-card-top">
-                          <div className="ph-card-id">WB-{projectDetails.id}</div>
+                          <div className="ph-card-id">{formatProjectId(projectDetails.id)}</div>
                           <h1 className="ph-card-name">{projectDetails.project_name}</h1>
                           
                           <div className="ph-gold-stats">
@@ -249,7 +245,7 @@ const ProjectHistory = () => {
                             onClick={() => handleRowClick(proj.id)}
                             title="Click to view details"
                         >
-                            <div className="ph-col" style={{color: '#888888', fontWeight: 600}}>WB-{proj.id}</div>
+                            <div className="ph-col" style={{color: '#888888', fontWeight: 600}}>{formatProjectId(proj.id)}</div>
                             <div className="ph-col ph-project-name">{proj.project_name}</div>
                             <div className="ph-col">{formatDate(proj.date_started)}</div>
                             <div className="ph-col">{formatDate(proj.date_completed)}</div>

@@ -1,6 +1,6 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useContext } from "react";
-import { UserContext } from "./App";
+import { UserContext } from "./context/UserContext";
 import Navbar from "./globals/Navbar"; 
 import InventoryTable from "./globals/InventoryTable";
 import JobOrder from "./globals/JobOrder";

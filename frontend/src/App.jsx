@@ -1,16 +1,16 @@
-import { useState, useEffect, createContext } from "react";
+import { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import RoleBasedRedirect from "./auth-components/RoleBasedRedirect";
 import ProtectedRoute from "./auth-components/ProtectedRoute";
 import Login from "./Login";
+import { UserContext } from "./context/UserContext";
+import ToastProvider from "./globals/ToastProvider";
 
 import Admin from "./Admin";
 import ProductionManager from "./ProductionManager";
 import Inventory from "./Inventory";
 import QualityChecker from "./QualityChecker";
 import Worker from "./Worker";
-
-export const UserContext = createContext();
 
 const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -59,41 +59,43 @@ const App = () => {
     return <div className="loading">Fetching data...</div>;
   }
 
-  return ( 
-    <UserContext.Provider value={{ userID, username, firstName, middleName, lastName, suffix, userRole }}>
-      <Router>
-        <div className="app-container">
-          <Routes>
-            <Route path='/' element={<RoleBasedRedirect role={userRole}/>}/>
-            {/* /protoacc removed — TempSignup is now only reachable via the authenticated
-                Admin "Account Creation" screen (admin/CreateAccount.jsx). */}
-            <Route path='/login' element={userRole ? <Navigate to={'/'}/> : <Login login={() => setIsLoggedIn(true)} />} />
-            
-            <Route element={<ProtectedRoute isAllowed={userRole === 'Admin'}/>}>
-              <Route path="/admin/*" element={<Admin />} />
-            </Route>
+  return (
+    <ToastProvider>
+      <UserContext.Provider value={{ userID, username, firstName, middleName, lastName, suffix, userRole }}>
+        <Router>
+          <div className="app-container">
+            <Routes>
+              <Route path='/' element={<RoleBasedRedirect role={userRole}/>}/>
+              {/* /protoacc removed — TempSignup is now only reachable via the authenticated
+                  Admin "Account Creation" screen (admin/CreateAccount.jsx). */}
+              <Route path='/login' element={userRole ? <Navigate to={'/'}/> : <Login login={() => setIsLoggedIn(true)} />} />
 
-            <Route element={<ProtectedRoute isAllowed={userRole === 'Production Manager'}/>}>
-              <Route path="/production-manager/*" element={<ProductionManager />} />
-            </Route>
+              <Route element={<ProtectedRoute isAllowed={userRole === 'Admin'}/>}>
+                <Route path="/admin/*" element={<Admin />} />
+              </Route>
 
-            <Route element={<ProtectedRoute isAllowed={userRole === 'Inventory Staff'}/>}>
-              <Route path="/inventory/*" element={<Inventory />} />
-            </Route>
+              <Route element={<ProtectedRoute isAllowed={userRole === 'Production Manager'}/>}>
+                <Route path="/production-manager/*" element={<ProductionManager />} />
+              </Route>
 
-            <Route element={<ProtectedRoute isAllowed={userRole === 'Quality Checker'}/>}>
-              <Route path="/quality-check/*" element={<QualityChecker />} />
-            </Route>
+              <Route element={<ProtectedRoute isAllowed={userRole === 'Inventory Staff'}/>}>
+                <Route path="/inventory/*" element={<Inventory />} />
+              </Route>
 
-            <Route element={<ProtectedRoute isAllowed={userRole === 'Worker'}/>}>
-              <Route path="/worker/*" element={<Worker />} />
-            </Route>
+              <Route element={<ProtectedRoute isAllowed={userRole === 'Quality Checker'}/>}>
+                <Route path="/quality-check/*" element={<QualityChecker />} />
+              </Route>
 
-            <Route path='*' element={<Navigate to='/' replace/>}/>
-          </Routes>
-        </div>
-      </Router>
-    </UserContext.Provider>
+              <Route element={<ProtectedRoute isAllowed={userRole === 'Worker'}/>}>
+                <Route path="/worker/*" element={<Worker />} />
+              </Route>
+
+              <Route path='*' element={<Navigate to='/' replace/>}/>
+            </Routes>
+          </div>
+        </Router>
+      </UserContext.Provider>
+    </ToastProvider>
    );
 }
  

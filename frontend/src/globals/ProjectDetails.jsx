@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import '../css/admin.css';
 import { api } from '../api/client';
+import { formatDate, formatProjectId } from '../utils/format';
 
 const ProjectDetails = ({ projectId, onBack }) => {
   const [project, setProject] = useState(null);
@@ -29,18 +30,12 @@ const ProjectDetails = ({ projectId, onBack }) => {
   if (loading) return <p style={{ textAlign: 'center' }}>Loading details...</p>;
   if (!project) return <p style={{ textAlign: 'center' }}>Project not found.</p>;
 
-  const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
-    const options = { year: 'numeric', month: 'long', day: 'numeric' };
-    return new Date(dateString).toLocaleDateString('en-US', options);
-  };
-
   return (
     <div className="details-main-wrapper">
       <div className="details-card-container">
         {/* Header Section */}
         <div className="details-header-section">
-          <h1 className="details-title">PROJECT {project.id}</h1>
+          <h1 className="details-title">{formatProjectId(project.id)}</h1>
           <h2 className="details-subtitle">{project.project_name || 'UNTITLED PROJECT'}</h2>
         </div>
 
@@ -85,7 +80,14 @@ const ProjectDetails = ({ projectId, onBack }) => {
 
       {/* Back Button */}
       <div style={{ marginTop: '20px', textAlign: 'center' }}>
-
+        <button
+          type="button"
+          onClick={onBack}
+          className="btn-action edit"
+          style={{ padding: '8px 24px' }}
+        >
+          ← Back
+        </button>
       </div>
     </div>
   );

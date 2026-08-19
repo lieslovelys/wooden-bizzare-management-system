@@ -3,11 +3,13 @@ import '../css/admin.css';
 import AddWorkerModal from './AddWorkerModal';
 import EditWorkerModal from './EditWorkerModal';
 import { api } from '../api/client';
+import { useToast } from '../context/ToastContext';
+import { formatCurrency } from '../utils/format';
 
 const WorkerList = () => {
   const [workers, setWorkers] = useState([]);
   const [loading, setLoading] = useState(true);
-  
+
   // Modals States
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -18,13 +20,7 @@ const WorkerList = () => {
   const [selectedRole, setSelectedRole] = useState('Role');
   const [selectedType, setSelectedType] = useState('Type');
 
-  // --- BAGONG STATE PARA SA POP-UP (TOAST) ---
-  const [toast, setToast] = useState({ visible: false, message: '', type: '' });
-
-  const showToast = (message, type = 'success') => {
-    setToast({ visible: true, message, type });
-    setTimeout(() => setToast({ visible: false, message: '', type: '' }), 3000);
-  };
+  const showToast = useToast();
 
   const fetchWorkers = async () => {
     try {
@@ -91,15 +87,6 @@ const WorkerList = () => {
 
   return (
     <div className="worker-list-container" style={{ fontFamily: 'Arial, sans-serif' }}>
-      
-      {/* --- RENDER TOAST NOTIFICATION --- */}
-      {toast.visible && (
-        <div className="wb-toast-container">
-            <div className={`wb-toast ${toast.type}`}>
-                {toast.type === 'success' ? '' : ''} {toast.message}
-            </div>
-        </div>
-      )}
 
       {/* Search Header Area */}
       <div className="worker-search-header">
@@ -173,7 +160,7 @@ const WorkerList = () => {
                   <td className="fw-bold" style={{ fontWeight: 'normal' }}>{worker.job_role || 'N/A'}</td>
                   <td className="fw-bold" style={{ fontWeight: 'normal' }}>{worker.contact || 'N/A'}</td>
                   <td className="fw-bold" style={{ fontWeight: 'normal' }}>
-                    {worker.rate ? `₱ ${parseFloat(worker.rate).toFixed(2)}` : ''}
+                    {worker.rate ? formatCurrency(worker.rate) : ''}
                   </td>
                   <td>
                     <button 
@@ -209,7 +196,13 @@ const WorkerList = () => {
       </div>
 
       <AddWorkerModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} onSave={handleSaveNewWorker} />
-      <EditWorkerModal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} workerData={selectedWorker} onUpdate={handleUpdateWorker} />
+      <EditWorkerModal
+        key={`${selectedWorker?.user_id ?? 'none'}-${isEditModalOpen}`}
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        workerData={selectedWorker}
+        onUpdate={handleUpdateWorker}
+      />
     </div>
   );
 };

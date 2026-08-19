@@ -1,21 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import '../css/admin.css';
 import { api } from '../api/client';
+import { useToast } from '../context/ToastContext';
 
 const AccountList = () => {
   const [accounts, setAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeRowId, setActiveRowId] = useState(null); 
+  const [activeRowId, setActiveRowId] = useState(null);
 
   // --- BAGONG STATES PARA SA POP-UPS ---
-  const [toast, setToast] = useState({ visible: false, message: '', type: '' });
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [accountToDelete, setAccountToDelete] = useState(null);
 
-  const showToast = (message, type = 'success') => {
-    setToast({ visible: true, message, type });
-    setTimeout(() => setToast({ visible: false, message: '', type: '' }), 3000);
-  };
+  const showToast = useToast();
 
   const fetchAccounts = async () => {
     try {
@@ -66,15 +63,6 @@ const AccountList = () => {
 
   return (
     <div className="account-list">
-      
-      {/* RENDER TOAST KUNG VISIBLE */}
-      {toast.visible && (
-        <div className="wb-toast-container">
-            <div className={`wb-toast ${toast.type}`}>
-                {toast.type === 'success' ? '' : ''} {toast.message}
-            </div>
-        </div>
-      )}
 
       {/* RENDER CUSTOM CONFIRMATION MODAL */}
       {showConfirmModal && (

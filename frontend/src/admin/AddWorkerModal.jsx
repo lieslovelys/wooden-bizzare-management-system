@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import '../css/admin.css';
+import { useToast } from '../context/ToastContext';
 
 const AddWorkerModal = ({ isOpen, onClose, onSave }) => {
   const [formData, setFormData] = useState({
@@ -10,20 +11,24 @@ const AddWorkerModal = ({ isOpen, onClose, onSave }) => {
     username: '',
     password: '',
     workerType: 'Regular',
-    role: 'Carpenter', 
+    role: 'Carpenter',
     contactNumber: '',
     dailyRate: ''
   });
-  const [profilePicture, setProfilePicture] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
 
-  // --- BAGONG STATE PARA SA POP-UP (TOAST) ---
-  const [toast, setToast] = useState({ visible: false, message: '', type: '' });
+  const showToast = useToast();
 
-  const showToast = (message, type = 'success') => {
-    setToast({ visible: true, message, type });
-    setTimeout(() => setToast({ visible: false, message: '', type: '' }), 3000);
-  };
+  // Post-submit close is delayed so the success toast is visible; the delay is cancelled on
+  // unmount so it can't call onClose() after this modal is already gone.
+  const closeTimerRef = useRef(null);
+  useEffect(() => {
+    return () => {
+      if (closeTimerRef.current) {
+        clearTimeout(closeTimerRef.current);
+      }
+    };
+  }, []);
 
   if (!isOpen) return null;
 
@@ -52,7 +57,6 @@ const AddWorkerModal = ({ isOpen, onClose, onSave }) => {
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setProfilePicture(file);
       const reader = new FileReader();
       reader.onloadend = () => {
         setPreviewUrl(reader.result);
@@ -82,11 +86,10 @@ const AddWorkerModal = ({ isOpen, onClose, onSave }) => {
             firstName: '', middleName: '', lastName: '', suffix: 'None', username: '', password: '',
             workerType: 'Regular', role: 'Carpenter', contactNumber: '', dailyRate: ''
         });
-        setProfilePicture(null);
         setPreviewUrl(null);
 
         // Bibigyan natin ng 1.5 seconds delay bago isara ang modal para mabasa nila yung success message
-        setTimeout(() => {
+        closeTimerRef.current = setTimeout(() => {
             onClose();
         }, 1500);
 
@@ -98,16 +101,6 @@ const AddWorkerModal = ({ isOpen, onClose, onSave }) => {
 
   return (
     <div className="modal-overlay" style={{ fontFamily: 'Arial, sans-serif' }}>
-      
-      {/* RENDER TOAST KUNG VISIBLE */}
-      {toast.visible && (
-        <div className="wb-toast-container">
-            <div className={`wb-toast ${toast.type}`}>
-                {toast.type === 'success' ? '✅' : '⚠️'} {toast.message}
-            </div>
-        </div>
-      )}
-
       <div className="add-worker-modal" style={{ maxWidth: '700px' }}>
         <div className="modal-header">
           <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 'bold' }}>Add Worker Account & Details</h3>

@@ -4,6 +4,7 @@ import EditProjectForm from './EditProjectForm';
 import '../css/admin.css';
 import ProjectDetails from './ProjectDetails';
 import { api } from '../api/client';
+import { formatProjectId } from '../utils/format';
 
 const ProjectList = () => {
   const [projects, setProjects] = useState([]);
@@ -44,7 +45,7 @@ const ProjectList = () => {
 
   // --- NEW DELETE HANDLER FUNCTION ---
   const handleDelete = async (id, name) => {
-    const confirmDelete = window.confirm(`Are you sure you want to delete project "WB${id} - ${name}"? This action cannot be undone.`);
+    const confirmDelete = window.confirm(`Are you sure you want to delete project "${formatProjectId(id)} - ${name}"? This action cannot be undone.`);
 
     if (!confirmDelete) return;
 
@@ -160,7 +161,7 @@ const ProjectList = () => {
                   className={`pl-item ${activeRowId === proj.id ? 'active' : ''}`}
                   onClick={() => setActiveRowId(proj.id)}
                 >
-                  <div className="pl-col id-col">WB{proj.id}</div>
+                  <div className="pl-col id-col">{formatProjectId(proj.id)}</div>
                   <div className="pl-col name-col">{proj.project_name}</div>
                   
                   {/* Status Badge */}

@@ -40,14 +40,18 @@ backend/
     package-lock.json
     node_modules/
     .env                  (untracked, required — see below; distinct from the root .env.example)
-    server.js
+    app.js                # Express app: every middleware/route registration. Exports `app`
+                           # (and `pool`) unstarted, so tests can import it without binding a port.
+    server.js              # process entrypoint: app.listen() + SIGTERM/SIGINT drain — nothing else
     Dockerfile, docker-entrypoint.sh, .dockerignore
     config/db.js
     migrations/           # node-pg-migrate; ALL schema changes land here, including the initial
                            # schema (a fresh DB is just `npm run migrate`, nothing else first)
     scripts/               createAdmin.js, migrate.js
     middleware/            auth.js, errorHandler.js
-    routes/ controllers/ models/
+    errors/                 AppError.js
+    routes/ services/ models/
+    tests/                 # vitest; services mocked via vi.mock, routes via supertest
 frontend/
   package.json, vite.config.js, index.html
   Dockerfile, nginx.conf, .dockerignore
@@ -57,7 +61,11 @@ frontend/
     Admin.jsx, ProductionManager.jsx, QualityChecker.jsx, Worker.jsx, Inventory.jsx   # role shells
     admin/ product_manager/ quality_checker/ worker/ globals/ auth-components/         # screens
     api/client.js                                                    # shared fetch wrapper
+    context/    UserContext.js, ToastContext.js         # createContext() only — see below
+    utils/      format.js                               # shared display formatters — see below
     css/
+    tests/                 # vitest setup (jsdom + @testing-library/react); test files sit next
+                           # to the component they cover, e.g. globals/InventoryTable.test.jsx
 docs/
   reference_md/   PRD.md, ARCHITECTURE_REVIEW.md
   design/         (empty)
@@ -96,8 +104,12 @@ npm run migrate:create   # scaffolds a new migration file
 services): `cp .env.example .env`, fill in real values, then `docker compose up -d --build`
 from the repo root. See `deploy/README.md`.
 
-`npm test` in `backend/src` is the unmodified `create-*` stub (`exit 1`) — there are no tests
-in either project.
+**Tests** (Vitest in both halves — `npm test` from `backend/src` or `frontend`): backend tests
+mock the model/service layers (`vi.mock`) and, for routes, use `supertest` against `app.js`'s
+exported `app` with a stubbed `req.session` — no database or listening port needed. Frontend
+tests mock `api/client.js` and render with `@testing-library/react` (jsdom). Coverage is not yet
+comprehensive — see `ARCHITECTURE_REVIEW.md`'s P2 "No tests, anywhere" item for what's still
+missing.
 
 **Trap if you're migrating a pre-existing local database created before the initial-schema
 migration existed** (i.e. one originally bootstrapped by hand from the now-deleted
@@ -140,18 +152,44 @@ for the Docker Compose path; not read by `npm start`/`npm run dev` at all.
 
 ## Architecture conventions
 
-Backend is a plain three-layer Express app: `routes/` → `controllers/` → `models/`, one file per
+Backend is a plain three-layer Express app: `routes/` → `services/` → `models/`, one file per
 domain area (users, projects, job orders, attendance, profit, productivity, notifications,
-dashboard). Models own all SQL and return `result.rows`. Every module `default`-exports an object
-of named functions — follow that shape for new files rather than mixing named and default exports.
+dashboard). The layers have a strict, one-directional contract:
+
+- **`routes/`** owns everything HTTP: status codes, response bodies, session/cookie mutation,
+  and request-*shape* validation (is a required field present, is it the right type). Every route
+  is an inline `async (req, res) => { ... }` handler with no `try/catch` — Express 5 forwards a
+  rejected promise to `errorHandler` automatically, which is what turns a thrown error into a
+  response.
+- **`services/`** owns business logic: plain arguments in, plain data out. A service function
+  must never reference `req`, `res`, or `next` — if it needs the caller's identity (e.g. a
+  self-delete guard, a role check), the route reads it off `req.session.user` and passes it in as
+  an argument. A service signals an expected failure (not found, forbidden, invalid state, a
+  business-rule violation) by `throw new AppError(status, message[, body])`
+  (`backend/src/errors/AppError.js`) — never by returning an error-shaped object, and never
+  `catch(e){ return e; }` (see the rule below). `errorHandler.js` unwraps an `AppError` into
+  exactly the response it specifies; anything else it treats as unexpected and logs server-side.
+- **`models/`** owns all SQL and returns `result.rows`.
+
+Every module `default`-exports an object of named functions — follow that shape for new files
+rather than mixing named and default exports.
 
 Frontend is plain React + Vite, no TypeScript, no state-management library (`useState`/`useEffect`
-+ one `UserContext` for the logged-in user), CSS in plain global stylesheets under
-`frontend/src/css/`. All API calls go through the shared client in `frontend/src/api/client.js`
-(`api.get/post/put/delete`) — it always sends `credentials: 'include'` and prefixes
-`VITE_BACKEND_IP`. New fetch logic should use it rather than calling `fetch` directly; the one
-intentional exception is `App.jsx`'s `/session-user` check, where a 401 is an expected "not
-logged in yet" state rather than an error.
++ one `UserContext` for the logged-in user, `context/UserContext.js`), CSS in plain global
+stylesheets under `frontend/src/css/`. All API calls go through the shared client in
+`frontend/src/api/client.js` (`api.get/post/put/delete`) — it always sends `credentials:
+'include'` and prefixes `VITE_BACKEND_IP`. New fetch logic should use it rather than calling
+`fetch` directly; the one intentional exception is `App.jsx`'s `/session-user` check, where a 401
+is an expected "not logged in yet" state rather than an error.
+
+Toast notifications go through `useToast()` (`frontend/src/context/ToastContext.js` +
+`frontend/src/globals/ToastProvider.jsx`, mounted once at the app root in `App.jsx`) — call
+`showToast(message, type)`, don't reintroduce a local `useState`/`setTimeout` toast per component
+(P2; that pattern used to be copy-pasted into 12 components, none of which cleared its timer).
+Display formatting (currency, project/worker IDs, dates, times) goes through the shared functions
+in `frontend/src/utils/format.js` rather than a local inline formatter, so the same value renders
+identically everywhere (P2; before this, the same project id rendered as `WB7`, `WB-7`, or
+`WB-07` depending on the screen).
 
 ## Non-negotiable rules for new code
 
@@ -162,10 +200,13 @@ logged in yet" state rather than an error.
   `ROLLBACK` with `finally { client.release() }`. Reference implementation:
   `createProjectWithVariables` in `backend/src/models/projectModel.js`.
 - **Never `catch(e){ return e; }`.** Returning an `Error` object as if it were data is an existing
-  bug pattern (e.g. `userModel.js`, `userController.js`) that turns real failures into false
-  successes on the client. Throw, and let the caller handle or propagate it.
-- **Never log request bodies, full user rows, or financial payloads.** An existing bug
-  (`userController.js`, login handler) logs the bcrypt hash on every login attempt — don't repeat
+  bug pattern (e.g. `userModel.js`) that turns real failures into false successes on the client.
+  Throw, and let the caller handle or propagate it.
+- **Services never touch `req`, `res`, or `next`, and signal failure by throwing `AppError`.**
+  See "Architecture conventions" above. This is what keeps `services/` testable without an
+  Express request and keeps every response body constructed in exactly one place (the route).
+- **Never log request bodies, full user rows, or financial payloads.** `userRoutes.js`'s login
+  route used to log the bcrypt hash on every attempt (P0-7) — already fixed, but don't repeat
   that shape. `console.log`/`console.error` should carry an event description and an ID, not a
   raw object.
 - **Money is `numeric(12,2)`.** `net_profit` and `total_expenses` on `project_profit` are
@@ -198,13 +239,18 @@ logged in yet" state rather than an error.
   and reviewed on a machine without Docker installed — `.github/workflows/ci.yml`'s
   `docker-build` job is the first place they're actually built. Watch that Actions run before
   trusting a fresh image.
-- Pagination (P1-3) and the Inventory backend (P1-11, currently `localStorage`-only on the
-  frontend) are both still outstanding — not part of the P0/P0-prerequisite/P1a/P1-10 work
-  completed so far.
+- Pagination (P1-3) is still outstanding — not part of the P0/P0-prerequisite/P1a/P1-10/P1-11/P2
+  work completed so far.
 
 P0 (authorization, session-secret fail-fast, rate limiting), P1a (session store, connection pool
 limits, indexes, transactions, uniqueness constraints, `timestamptz`, baseline production
-middleware), and P1-10 (Docker Compose deployment, `/api` route namespace, backups, CI) are
-complete — see `ARCHITECTURE_REVIEW.md` for exactly what each covered.
+middleware), P1-10 (Docker Compose deployment, `/api` route namespace, backups, CI), the P2
+routes/services refactor (`controllers/` → `services/`, `AppError`), P1-11 (Inventory:
+real `/api/inventory` backend with a stock-movement audit trail, replacing the old
+`localStorage`-only screen), and a P2 frontend-consolidation pass (shared `ToastProvider`/
+`useToast()`, shared `utils/format.js` display formatters, hoisting `Attendance.jsx`'s five
+nested components to module scope, merging the three near-identical notification components into
+one `NotificationList`, and fixing every frontend lint error so `npm run lint` is now a real CI
+gate) are complete — see `ARCHITECTURE_REVIEW.md` for exactly what each covered.
 
 Full findings, severity, and fix order live in `docs/reference_md/ARCHITECTURE_REVIEW.md`.

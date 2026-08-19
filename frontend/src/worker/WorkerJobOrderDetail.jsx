@@ -1,47 +1,52 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { api } from '../api/client';
+import { useToast } from '../context/ToastContext';
+import { formatDate, formatProjectId } from '../utils/format';
 
 const WorkerJobOrderDetail = ({ projectId, assignmentId, workerStatus, onBack }) => {
     const [currentStatus, setCurrentStatus] = useState(workerStatus || 'Assigned');
-    
+
     const [projectDetails, setProjectDetails] = useState(null);
     const [assignments, setAssignments] = useState([]);
     const [loading, setLoading] = useState(true);
 
     // --- BAGONG STATES PARA SA POP-UPS ---
-    const [toast, setToast] = useState({ visible: false, message: '', type: '' });
     const [showConfirmModal, setShowConfirmModal] = useState(false);
 
-    const showToast = (message, type = 'success') => {
-        setToast({ visible: true, message, type });
-        setTimeout(() => setToast({ visible: false, message: '', type: '' }), 3000);
-    };
+    const showToast = useToast();
+
+    // The post-submit success toast is followed by a delayed onBack() — cancel that delay on
+    // unmount so it can't navigate after this component is already gone.
+    const backTimerRef = useRef(null);
+    useEffect(() => {
+        return () => {
+            if (backTimerRef.current) {
+                clearTimeout(backTimerRef.current);
+            }
+        };
+    }, []);
 
     useEffect(() => {
+        let ignore = false;
+
         const fetchProjectData = async () => {
             setLoading(true);
             try {
-                setProjectDetails(await api.get(`/api/job-orders/${projectId}`));
-                setAssignments(await api.get(`/api/job-orders/${projectId}/assignments`));
+                const details = await api.get(`/api/job-orders/${projectId}`);
+                const assigns = await api.get(`/api/job-orders/${projectId}/assignments`);
+                if (ignore) return;
+                setProjectDetails(details);
+                setAssignments(assigns);
             } catch (error) {
-                console.error("Error fetching data:", error.message);
+                if (!ignore) console.error("Error fetching data:", error.message);
             } finally {
-                setLoading(false);
+                if (!ignore) setLoading(false);
             }
         };
 
         if (projectId) fetchProjectData();
+        return () => { ignore = true; };
     }, [projectId]);
-
-    const formatId = (id) => `WB-${String(id).padStart(2, '0')}`;
-    
-    // --- INAYOS NA FORMAT DATE ---
-    const formatDate = (dateString) => {
-        if (!dateString) return 'N/A'; // Kapag null o walang laman sa DB
-        const date = new Date(dateString);
-        if (isNaN(date.getTime())) return 'N/A'; // Kapag invalid ang format
-        return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-    };
 
     // --- BINAGONG LOGIC: Papalabasin muna ang modal ---
     const handleActionClick = () => {
@@ -69,7 +74,7 @@ const WorkerJobOrderDetail = ({ projectId, assignmentId, workerStatus, onBack })
             showToast("Work submitted to Quality Checker!", "success");
 
             // Automatic babalik sa Job Order List after 1.5 seconds!
-            setTimeout(() => {
+            backTimerRef.current = setTimeout(() => {
                 onBack();
             }, 1500);
         } catch (error) {
@@ -106,16 +111,6 @@ const WorkerJobOrderDetail = ({ projectId, assignmentId, workerStatus, onBack })
 
     return (
         <div className="wjo-detail-wrapper">
-            
-            {/* RENDER TOAST NOTIFICATION */}
-            {toast.visible && (
-                <div className="wb-toast-container">
-                    <div className={`wb-toast ${toast.type}`}>
-                        {toast.type === 'success' ? '' : ''} {toast.message}
-                    </div>
-                </div>
-            )}
-
             {/* RENDER CUSTOM CONFIRMATION MODAL */}
             {showConfirmModal && (
                 <div className="wb-modal-overlay">
@@ -134,7 +129,7 @@ const WorkerJobOrderDetail = ({ projectId, assignmentId, workerStatus, onBack })
 
             <div className="wjo-container wjo-ov-container">
                 <div className="wjo-ov-header">
-                    <h1 className="wjo-ov-id">{formatId(projectDetails.id)}</h1>
+                    <h1 className="wjo-ov-id">{formatProjectId(projectDetails.id)}</h1>
                     <p className="wjo-ov-name">{projectDetails.project_name}</p>
                 </div>
 

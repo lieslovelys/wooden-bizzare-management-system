@@ -856,47 +856,12 @@
 }
 
 /* =========================================
-   CUSTOM TOAST & MODAL POP-UPS
+   CUSTOM MODAL POP-UPS
    ========================================= */
 
-/* Toast Notification (Success/Error Messages) */
-.wb-toast-container {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 9999;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.wb-toast {
-    padding: 15px 25px;
-    border-radius: 8px;
-    color: white;
-    font-weight: bold;
-    font-family: Arial, sans-serif;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    animation: slideInRight 0.4s ease-out forwards;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.wb-toast.success { 
-    background-color: #2E7D32; /* Green */
-    border-left: 6px solid #1B5E20; 
-}
-
-.wb-toast.error { 
-    background-color: #C62828; /* Red */
-    border-left: 6px solid #B71C1C; 
-}
-
-@keyframes slideInRight {
-    from { transform: translateX(100%); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
-}
+/* Toast rules (.wb-toast / .wb-toast-container / @keyframes slideInRight) lived here too, as a
+   byte-identical duplicate of css/globals.css — removed as part of the P2 ToastProvider
+   consolidation (see ARCHITECTURE_REVIEW.md), since globals.css is loaded app-wide already. */
 
 /* Custom Confirmation Modal */
 .wb-modal-overlay {

@@ -18,9 +18,9 @@ jobs:
           cache: npm
           cache-dependency-path: backend/src/package-lock.json
       - run: npm ci
-        # No lint/test script exists yet (backend/src/package.json's "test" is still the
-        # unmodified create-* stub) — a clean `npm ci` against the committed lockfile is the
-        # check for now. Extend this once real tests land.
+      # P1-11: vitest + supertest, mocking the model/service layers — no Postgres service
+      # container needed here. Real-DB integration tests are a separate, later pass.
+      - run: npm test
 
   frontend:
     runs-on: ubuntu-latest
@@ -35,13 +35,13 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci
-      # Not a hard gate yet: the repo currently has ~10 pre-existing lint errors unrelated to
-      # deployment (unused vars in untouched files, eslint-plugin-react-hooks v7's newer
-      # purity/set-state-in-effect rules flagging existing components) — see
-      # ARCHITECTURE_REVIEW.md P2. Runs and stays visible in the log rather than being hidden;
-      # flip continue-on-error off once that debt is actually paid down.
+      # P2 (frontend consolidation pass): the ~9 pre-existing lint errors are fixed — see
+      # ARCHITECTURE_REVIEW.md P2. Now a real gate. The 3 remaining exhaustive-deps warnings in
+      # globals/JobOrderDetails.jsx are deliberately left as warnings (genuine stale-closure
+      # smells needing per-effect judgement) and don't fail this step, since `eslint .` only
+      # exits non-zero on errors.
       - run: npm run lint
-        continue-on-error: true
+      - run: npm test
       - run: npm run build
 
   docker-build:

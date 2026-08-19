@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import "../css/admin.css";
 import { api, ApiError } from "../api/client";
+import { formatCurrency } from "../utils/format";
 
 async function fetchProjects() {
   const result = await api.get("/api/projects");
@@ -64,8 +65,6 @@ export default function Profit() {
   const [otherExpenses, setOtherExpenses] = useState("");
   const [breakdown, setBreakdown] = useState([]);
 
-  const [saved, setSaved] = useState(null);
-
   const [loading, setLoading] = useState(true);
   const [loadingProjects, setLoadingProjects] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -97,7 +96,6 @@ export default function Profit() {
     try {
       const data = await fetchProfit(projectId);
       applyData(data);
-      setSaved(data);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -142,7 +140,6 @@ export default function Profit() {
       };
       const updated = await saveProfit(selectedProjectId, payload);
       applyData(updated);
-      setSaved(updated);
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
@@ -196,7 +193,7 @@ export default function Profit() {
 
   const totalExpenses = calcWages + calcMaterials + calcOther;
   const netProfit = calcPayment - totalExpenses;
-  const fmt = (n) => "₱" + Number(n).toLocaleString("en-PH");
+  const fmt = formatCurrency;
 
   if (loadingProjects) {
     return (

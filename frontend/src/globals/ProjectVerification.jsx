@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom'; // <-- 1. IDINAGDAG ITO
 import ProjectVerificationDetail from './ProjectVerificationDetail';
 import { api } from '../api/client';
+import { formatProjectId } from '../utils/format';
 
 const ProjectVerification = () => {
     const [stageFilter, setStageFilter] = useState('All');
@@ -18,7 +19,7 @@ const ProjectVerification = () => {
                 const data = await api.get('/api/qa/tasks');
 
                 const formattedTasks = data.map(task => ({
-                    id: `WB-${String(task.project_id).padStart(2, '0')}`,
+                    id: formatProjectId(task.project_id),
                     rawProjectId: task.project_id,
                     projectName: task.project_name,
                     workerName: `${task.first_name} ${task.last_name}`,

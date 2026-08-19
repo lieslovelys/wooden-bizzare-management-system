@@ -1,7 +1,6 @@
-import { useState } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useContext } from "react";
-import { UserContext } from "./App";
+import { UserContext } from "./context/UserContext";
 import Navbar from "./globals/Navbar"; 
 import CreateAccount from "./admin/CreateAccount";
 import AdminDashboard from "./admin/A_Dashboard";

@@ -1,35 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import '../css/admin.css';
+import { useToast } from '../context/ToastContext';
 
+// `formData`/`previewUrl` initialize directly from `workerData` props instead of syncing via a
+// setState-in-effect (the P2 lint fix — see ARCHITECTURE_REVIEW.md). Re-deriving on every open
+// (including reopening the same worker after an edit-then-cancel) relies on the parent
+// (WorkerList.jsx) keying this component so it remounts each time it opens — see the `key` prop
+// at the call site.
 const EditWorkerModal = ({ isOpen, onClose, workerData, onUpdate }) => {
   const [formData, setFormData] = useState({
-    workerType: 'Regular',
-    role: 'Carpenter', 
-    contactNumber: '',
-    dailyRate: ''
+    workerType: workerData?.job_type || 'Regular',
+    role: workerData?.job_role || 'Carpenter',
+    contactNumber: workerData?.contact || '',
+    dailyRate: workerData?.rate || ''
   });
-  
-  const [previewUrl, setPreviewUrl] = useState(null);
-  
-  // --- BAGONG STATE PARA SA POP-UP (TOAST) ---
-  const [toast, setToast] = useState({ visible: false, message: '', type: '' });
 
-  const showToast = (message, type = 'success') => {
-    setToast({ visible: true, message, type });
-    setTimeout(() => setToast({ visible: false, message: '', type: '' }), 3000);
-  };
+  const [previewUrl, setPreviewUrl] = useState(workerData?.photo || null);
 
-  useEffect(() => {
-    if (workerData && isOpen) {
-      setFormData({
-        workerType: workerData.job_type || 'Regular',
-        role: workerData.job_role || 'Carpenter', 
-        contactNumber: workerData.contact || '',
-        dailyRate: workerData.rate || ''
-      });
-      setPreviewUrl(workerData.photo || null);
-    }
-  }, [workerData, isOpen]);
+  const showToast = useToast();
 
   if (!isOpen) return null;
 
@@ -78,16 +66,6 @@ const EditWorkerModal = ({ isOpen, onClose, workerData, onUpdate }) => {
 
   return (
     <div className="modal-overlay" style={{ fontFamily: 'Arial, sans-serif' }}>
-        
-      {/* RENDER TOAST KUNG VISIBLE */}
-      {toast.visible && (
-        <div className="wb-toast-container">
-            <div className={`wb-toast ${toast.type}`}>
-                {toast.type === 'success' ? '✅' : '⚠️'} {toast.message}
-            </div>
-        </div>
-      )}
-
       <div className="add-worker-modal" style={{ maxWidth: '500px' }}>
         <div className="modal-header">
           <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 'bold' }}>

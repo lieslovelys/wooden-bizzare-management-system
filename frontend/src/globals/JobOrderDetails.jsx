@@ -1,20 +1,29 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { api } from '../api/client';
+import { useToast } from '../context/ToastContext';
+import { formatDate, formatProjectId } from '../utils/format';
 
 const JobOrderDetail = ({ jobId, onBack }) => {
     const [projectDetails, setProjectDetails] = useState(null);
-    const [workers, setWorkers] = useState([]); 
+    const [workers, setWorkers] = useState([]);
     const [assignments, setAssignments] = useState([]);
     const [loading, setLoading] = useState(true);
 
     // --- POP-UP STATES ---
-    const [toast, setToast] = useState({ visible: false, message: '', type: '' });
     const [showConfirmModal, setShowConfirmModal] = useState(false);
 
-    const showToast = (message, type = 'success') => {
-        setToast({ visible: true, message, type });
-        setTimeout(() => setToast({ visible: false, message: '', type: '' }), 3000);
-    };
+    const showToast = useToast();
+
+    // The "complete project" success toast is followed by a delayed onBack() — cancel that
+    // delay on unmount so it can't navigate after this component is already gone.
+    const backTimerRef = useRef(null);
+    useEffect(() => {
+        return () => {
+            if (backTimerRef.current) {
+                clearTimeout(backTimerRef.current);
+            }
+        };
+    }, []);
 
     const [formData, setFormData] = useState({ stage: 'Carpenter', workerId: '', startDate: '', dueDate: '' });
 
@@ -88,18 +97,13 @@ const JobOrderDetail = ({ jobId, onBack }) => {
         try {
             await api.put(`/api/projects/${jobId}/complete`);
             showToast("Project Marked as Completed!", "success");
-            setTimeout(() => onBack(), 2000); // Wait 2 secs para makita ang success message bago bumalik
+            backTimerRef.current = setTimeout(() => onBack(), 2000); // Wait 2 secs para makita ang success message bago bumalik
         } catch (error) {
             console.error("Complete error:", error.message);
             showToast(error.message || "Server error. Paki-check ang connection.", "error");
         }
     };
 
-    const formatDateToWords = (dateString) => {
-        if (!dateString) return '';
-        return new Date(dateString).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-    };
-    const formatId = (id) => `WB-${String(id).padStart(2, '0')}`;
     const getStatusClass = (status) => status ? status.toLowerCase().replace(' ', '-') : '';
 
     if (loading) return <div className="jod-wrapper"><p style={{ textAlign: 'center' }}>Loading project data...</p></div>;
@@ -115,15 +119,6 @@ const JobOrderDetail = ({ jobId, onBack }) => {
 
     return (
         <div className="jod-wrapper">
-            {/* RENDER TOAST */}
-            {toast.visible && (
-                <div className="wb-toast-container">
-                    <div className={`wb-toast ${toast.type}`}>
-                        {toast.type === 'success' ? '' : ''} {toast.message}
-                    </div>
-                </div>
-            )}
-
             {/* RENDER CUSTOM CONFIRM MODAL */}
             {showConfirmModal && (
                 <div className="wb-modal-overlay">
@@ -142,18 +137,18 @@ const JobOrderDetail = ({ jobId, onBack }) => {
 
             <div className="jod-container jod-overview-container">
                 <div className="jod-ov-header">
-                    <h1 className="jod-ov-id">{formatId(projectDetails.id)}</h1>
+                    <h1 className="jod-ov-id">{formatProjectId(projectDetails.id)}</h1>
                     <p className="jod-ov-name">{projectDetails.project_name}</p>
                 </div>
 
                 <div className="jod-ov-info-bar">
                     <div className="jod-ov-info-block">
                         <span className="jod-ov-label">Date Ordered</span>
-                        <span className="jod-ov-value">{formatDateToWords(projectDetails.date_ordered)}</span>
+                        <span className="jod-ov-value">{formatDate(projectDetails.date_ordered)}</span>
                     </div>
                     <div className="jod-ov-info-block jod-ov-due">
                         <span className="jod-ov-label">Due Date</span>
-                        <span className="jod-ov-value due-date">{formatDateToWords(projectDetails.due_date)}</span>
+                        <span className="jod-ov-value due-date">{formatDate(projectDetails.due_date)}</span>
                     </div>
                     <div className="jod-ov-info-block jod-ov-priority">
                         <span className="jod-ov-label">Priority</span>
@@ -208,8 +203,8 @@ const JobOrderDetail = ({ jobId, onBack }) => {
                             <tr key={assignment.assignment_id}>
                                 <td>{assignment.stage_name}</td>
                                 <td>{assignment.first_name} {assignment.last_name}</td>
-                                <td>{new Date(assignment.start_date).toLocaleDateString()}</td>
-                                <td>{assignment.date_completed ? new Date(assignment.date_completed).toLocaleDateString() : '-'}</td>
+                                <td>{formatDate(assignment.start_date)}</td>
+                                <td>{assignment.date_completed ? formatDate(assignment.date_completed) : '-'}</td>
                                 <td><span className={`jod-status ${getStatusClass(assignment.status)}`}>{assignment.status}</span></td>
                             </tr>
                         ))}

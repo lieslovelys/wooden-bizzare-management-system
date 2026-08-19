@@ -1,6 +1,6 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useContext } from "react";
-import { UserContext } from "./App";
+import { UserContext } from "./context/UserContext";
 import Navbar from "./globals/Navbar";  
 import QCDashboard from "./quality_checker/QCDashboard";
 import ProjectVerification from "./globals/ProjectVerification";

@@ -7,8 +7,14 @@ export const getAllNotifications = async () => {
 };
 
 
-export const markAllAsRead = async () => {
-    const { rows } = await query('UPDATE notifications SET is_read = TRUE RETURNING *');
+// `type` is optional (null/undefined = all types) — see routes/adminNotifRoutes.js. Used so a
+// single role-scoped screen (PM/QC) can bulk-act on just its own notification type instead of
+// issuing one request per row, matching what Admin's unscoped call already did.
+export const markAllAsRead = async (type = null) => {
+    const { rows } = await query(
+        'UPDATE notifications SET is_read = TRUE WHERE ($1::text IS NULL OR type = $1) RETURNING *',
+        [type]
+    );
     return rows;
 };
 
@@ -18,8 +24,8 @@ export const deleteNotification = async (id) => {
 };
 
 
-export const clearAllNotifications = async () => {
-    await query('DELETE FROM notifications');
+export const clearAllNotifications = async (type = null) => {
+    await query('DELETE FROM notifications WHERE ($1::text IS NULL OR type = $1)', [type]);
 };
 
 
