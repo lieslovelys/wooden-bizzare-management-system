@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import '../css/admin.css'; 
+import '../css/admin.css';
+import { api } from '../api/client';
 
 const WorkerProductivity = () => {
     const [productivityData, setProductivityData] = useState([]);
@@ -11,14 +12,10 @@ const WorkerProductivity = () => {
     useEffect(() => {
         const fetchProductivity = async () => {
             try {
-                // FIX: Tinanggal ang localhost dito
-                const response = await fetch(import.meta.env.VITE_BACKEND_IP + '/api/productivity');
-                if (response.ok) {
-                    const result = await response.json();
-                    setProductivityData(result);
-                }
+                const result = await api.get('/api/productivity');
+                setProductivityData(result);
             } catch (error) {
-                console.error("Error fetching productivity data:", error);
+                console.error("Error fetching productivity data:", error.message);
             } finally {
                 setLoading(false);
             }

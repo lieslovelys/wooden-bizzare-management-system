@@ -1,4 +1,4 @@
-import { query } from '../config/db.js'; 
+import { query, getClient } from '../config/db.js';
 
 export const getAllJobOrders = async () => {
     const sqlString = `
@@ -60,28 +60,40 @@ export const getProjectAssignments = async (projectId) => {
 };
 
 
+// P1-5: the assignment insert and the project-status flip used to be two independent
+// queries — a failure on the second left an assignment hanging off a project still marked
+// `Pending`. Wrapped in one transaction so they succeed or fail together.
+//
+// Behavior change from the pre-P1a version, called out deliberately: the status update used
+// to be unconditional, so assigning work to an already-`Completed` project silently reopened
+// it. `AND status IS DISTINCT FROM 'Completed'` guards against that.
 export const createJobAssignment = async (projectId, workerId, stageName, startDate, dueDate) => {
+    const client = await getClient();
     try {
+        await client.query('BEGIN');
 
         const insertSql = `
             INSERT INTO job_assignments (project_id, worker_id, stage_name, start_date, due_date, status)
             VALUES ($1, $2, $3, $4, $5, 'Assigned')
             RETURNING *;
         `;
-        const { rows } = await query(insertSql, [projectId, workerId, stageName, startDate, dueDate]);
-
+        const { rows } = await client.query(insertSql, [projectId, workerId, stageName, startDate, dueDate]);
 
         const updateProjSql = `
-            UPDATE projects 
-            SET status = 'In Progress' 
-            WHERE id = $1;
+            UPDATE projects
+            SET status = 'In Progress'
+            WHERE id = $1 AND status IS DISTINCT FROM 'Completed';
         `;
-        await query(updateProjSql, [projectId]);
+        await client.query(updateProjSql, [projectId]);
 
+        await client.query('COMMIT');
         return rows[0];
     } catch (error) {
+        await client.query('ROLLBACK');
         console.error("DATABASE ERROR in createJobAssignment:", error.message);
         throw error;
+    } finally {
+        client.release();
     }
 };
 
@@ -126,7 +138,7 @@ export const getTasksForQA = async () => {
             FROM job_assignments ja
             LEFT JOIN projects p ON ja.project_id = p.id
             LEFT JOIN users u ON ja.worker_id = u.user_id 
-            WHERE ja.status::text ILIKE 'For QA'
+            WHERE ja.status = 'For QA'
             ORDER BY ja.due_date ASC
         `;
         const { rows } = await query(sql);
@@ -137,35 +149,57 @@ export const getTasksForQA = async () => {
     }
 };
 
-export const updateAssignmentStatus = async (assignmentId, newStatus) => {
+// Fetch a single assignment by its own ID — used to authorize a status change before it's
+// made (ownership/role checks in jobOrderController.updateQAStatus).
+export const getAssignmentById = async (assignmentId) => {
+    const sql = `
+        SELECT assignment_id, worker_id, project_id, status
+        FROM job_assignments
+        WHERE assignment_id = $1
+    `;
+    const { rows } = await query(sql, [assignmentId]);
+    return rows[0] || null;
+};
+
+// `allowedFromStatuses` makes the authorization check atomic with the write: the row only
+// updates if it's still in a state the caller is permitted to transition from, closing a
+// race window between an earlier read (getAssignmentById) and this update. If nothing matched
+// — wrong current state, or the assignment no longer exists — rows[0] is undefined and the
+// caller (jobOrderController.updateQAStatus) treats that as a 409, not a silent success.
+export const updateAssignmentStatus = async (assignmentId, newStatus, allowedFromStatuses) => {
     try {
         let sql;
 
         if (newStatus === 'Approved') {
+            // date_completed is timestamptz (P1-9) — NOW() rather than CURRENT_DATE, which
+            // would silently pin it to Manila midnight.
             sql = `
-                UPDATE job_assignments 
-                SET status = $1, date_completed = CURRENT_DATE 
-                WHERE assignment_id = $2 RETURNING *
+                UPDATE job_assignments
+                SET status = $1, date_completed = NOW()
+                WHERE assignment_id = $2 AND status = ANY($3::task_status[]) RETURNING *
             `;
-        } 
+        }
         // --- BAGONG LOGIC PARA KAY WORKER (date_submitted) ---
         else if (newStatus === 'For QA') {
+            // date_submitted stays a plain `date` (P1-9) — explicit Manila business day
+            // rather than the session's implicit default, since productivity.js's early/
+            // on-time/late ranking is derived directly from this column.
             sql = `
-                UPDATE job_assignments 
-                SET status = $1, date_submitted = CURRENT_DATE 
-                WHERE assignment_id = $2 RETURNING *
+                UPDATE job_assignments
+                SET status = $1, date_submitted = (NOW() AT TIME ZONE 'Asia/Manila')::date
+                WHERE assignment_id = $2 AND status = ANY($3::task_status[]) RETURNING *
             `;
         }
         // -----------------------------------------------------
         else {
             sql = `
-                UPDATE job_assignments 
-                SET status = $1 
-                WHERE assignment_id = $2 RETURNING *
+                UPDATE job_assignments
+                SET status = $1
+                WHERE assignment_id = $2 AND status = ANY($3::task_status[]) RETURNING *
             `;
         }
 
-        const { rows } = await query(sql, [newStatus, assignmentId]);
+        const { rows } = await query(sql, [newStatus, assignmentId, allowedFromStatuses]);
         return rows[0];
 
     } catch (error) {

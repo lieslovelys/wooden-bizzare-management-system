@@ -6,37 +6,32 @@ const createProjectWithVariables = async (projectData) => {
     clientPayment, priorityLevel, dueDate, projectDetails
   } = projectData;
 
-  console.log("Creating project with data:", projectData);
-
   const client = await getClient();
 
   try {
-    await client.query('BEGIN'); 
+    await client.query('BEGIN');
     const projectInsertQuery = `
       INSERT INTO projects (project_name, client_name, contact_number, date_ordered, client_payment, priority_level, due_date)
       VALUES ($1, $2, $3, $4, $5, $6, $7)
       RETURNING id;
     `;
     const projectValues = [projectName, clientName, contactNumber, dateOrdered, clientPayment, priorityLevel, dueDate];
-    console.log("Project values:", projectValues);
     const projectRes = await client.query(projectInsertQuery, projectValues);
     const projectId = projectRes.rows[0].id;
-    console.log("Project ID:", projectId);
 
-    if (projectDetails && projectDetails.length > 0) {
-      const variableInsertQuery = `
-        INSERT INTO project_variables (project_id, variable_name, variable_detail)
-        VALUES ($1, $2, $3);
-      `;
-      for (const variable of projectDetails) {
-        // Only insert if the variable actually has a name typed in
-        if (variable.name && variable.name.trim() !== '') {
-           await client.query(variableInsertQuery, [projectId, variable.name, variable.detail]);
-        }
-      }
+    // P1-6: was an N-iteration insert loop (one round trip per variable). One multi-row
+    // insert via unnest() replaces it regardless of how many variables are supplied.
+    const namedVariables = (projectDetails || []).filter((v) => v.name && v.name.trim() !== '');
+    if (namedVariables.length > 0) {
+      await client.query(
+        `INSERT INTO project_variables (project_id, variable_name, variable_detail)
+         SELECT $1, n, d
+         FROM unnest($2::text[], $3::text[]) AS t(n, d)`,
+        [projectId, namedVariables.map((v) => v.name), namedVariables.map((v) => v.detail)]
+      );
     }
 
-    await client.query('COMMIT'); 
+    await client.query('COMMIT');
     return projectId;
   } catch (error) {
     await client.query('ROLLBACK'); 
@@ -126,16 +121,15 @@ const updateProject = async (id, projectData) => {
 
     await client.query('DELETE FROM project_variables WHERE project_id = $1', [id]);
 
-    if (projectDetails && projectDetails.length > 0) {
-      const variableInsertQuery = `
-        INSERT INTO project_variables (project_id, variable_name, variable_detail)
-        VALUES ($1, $2, $3);
-      `;
-      for (const variable of projectDetails) {
-        if (variable.name.trim() !== '') {
-           await client.query(variableInsertQuery, [id, variable.name, variable.detail]);
-        }
-      }
+    // P1-6: was an N-iteration insert loop; one multi-row insert via unnest() replaces it.
+    const namedVariables = (projectDetails || []).filter((v) => v.name.trim() !== '');
+    if (namedVariables.length > 0) {
+      await client.query(
+        `INSERT INTO project_variables (project_id, variable_name, variable_detail)
+         SELECT $1, n, d
+         FROM unnest($2::text[], $3::text[]) AS t(n, d)`,
+        [id, namedVariables.map((v) => v.name), namedVariables.map((v) => v.detail)]
+      );
     }
 
     await client.query('COMMIT');
@@ -154,7 +148,7 @@ const markProjectAsCompleted = async (projectId) => {
     try {
         const sql = `
             UPDATE projects 
-            SET status = 'Completed', date_completed = CURRENT_DATE -- <--- IDINAGDAG ITO
+            SET status = 'Completed', date_completed = (NOW() AT TIME ZONE 'Asia/Manila')::date -- P1-9: explicit Manila business day, not the session's implicit default
             WHERE id = $1 
             RETURNING *;
         `;

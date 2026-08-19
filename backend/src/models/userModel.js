@@ -1,15 +1,15 @@
-import { query } from "../config/db.js";
+import { query, getClient } from "../config/db.js";
 
 const createUser = async (username, password, first_name, middle_name, last_name, suffix, user_role) => {
     try{
         const result = await query(`INSERT INTO users (username, user_password, first_name, middle_name, last_name, suffix, user_role)
             VALUES ($1, $2, $3, $4, $5, $6, $7)
             RETURNING *`, [username, password, first_name, middle_name, last_name, suffix, user_role]);
-        
+
         return result.rows;
     }
     catch(e){
-        return e;
+        throw e;
     }
 }
 
@@ -19,7 +19,7 @@ const getUserByUsername = async (username) => {
         return result.rows;
     }
     catch(e){
-        return e;
+        throw e;
     }
 }
 
@@ -97,30 +97,60 @@ const createWorkerDetails = async (user_id, job_type, job_role, contact, rate, p
     }
 }
 
+// P1-5: creates the `users` row and its `worker_details` row in one transaction. The two used
+// to be separate queries (userController.addWorker calling createUser then createWorkerDetails)
+// — a failure on the second left an orphaned login with no worker profile. Used by addWorker;
+// createUser/createWorkerDetails stay exported individually since other callers (bootstrap
+// admin script) only need the users-row half.
+const createWorkerWithDetails = async (username, password, first_name, middle_name, last_name, suffix, job_type, job_role, contact, rate, photo = null) => {
+    const client = await getClient();
+    try {
+        await client.query('BEGIN');
+
+        const userResult = await client.query(
+            `INSERT INTO users (username, user_password, first_name, middle_name, last_name, suffix, user_role)
+             VALUES ($1, $2, $3, $4, $5, $6, 'Worker')
+             RETURNING *`,
+            [username, password, first_name, middle_name, last_name, suffix]
+        );
+        const newUser = userResult.rows[0];
+
+        const detailsResult = await client.query(
+            `INSERT INTO worker_details (user_id, job_type, job_role, contact, rate, photo)
+             VALUES ($1, $2, $3, $4, $5, $6)
+             RETURNING *`,
+            [newUser.user_id, job_type, job_role, contact, rate, photo]
+        );
+
+        await client.query('COMMIT');
+        return { user: newUser, details: detailsResult.rows[0] };
+    } catch (e) {
+        await client.query('ROLLBACK');
+        throw e;
+    } finally {
+        client.release();
+    }
+}
+
 // IDINAGDAG ANG 'photo' SA PARAMETERS
+// P1-7/P1-6: was a SELECT-then-INSERT-or-UPDATE across two round trips (a race, since two
+// concurrent requests could both see "no row" and both try to INSERT). Now a single upsert,
+// made possible by the UNIQUE(user_id) constraint added on worker_details in the P1-7 migration.
 const updateWorkerDetails = async (user_id, job_type, job_role, contact, rate, photo = null) => {
     try {
-        const checkQuery = `SELECT * FROM worker_details WHERE user_id = $1`;
-        const checkResult = await query(checkQuery, [user_id]);
-
-        if (checkResult.rows.length > 0) {
-            // IDINAGDAG ANG 'photo = $5' SA UPDATE QUERY
-            const updateQuery = `
-                UPDATE worker_details 
-                SET job_type = $1, job_role = $2, contact = $3, rate = $4, photo = $5
-                WHERE user_id = $6 RETURNING *;
-            `;
-            const result = await query(updateQuery, [job_type, job_role, contact, rate, photo, user_id]);
-            return result.rows[0];
-        } else {
-            // IDINAGDAG ANG 'photo' SA INSERT QUERY (in case wala pang details)
-            const insertQuery = `
-                INSERT INTO worker_details (user_id, job_type, job_role, contact, rate, photo)
-                VALUES ($1, $2, $3, $4, $5, $6) RETURNING *;
-            `;
-            const result = await query(insertQuery, [user_id, job_type, job_role, contact, rate, photo]);
-            return result.rows[0];
-        }
+        const upsertQuery = `
+            INSERT INTO worker_details (user_id, job_type, job_role, contact, rate, photo)
+            VALUES ($1, $2, $3, $4, $5, $6)
+            ON CONFLICT (user_id) DO UPDATE
+                SET job_type = EXCLUDED.job_type,
+                    job_role = EXCLUDED.job_role,
+                    contact = EXCLUDED.contact,
+                    rate = EXCLUDED.rate,
+                    photo = EXCLUDED.photo
+            RETURNING *;
+        `;
+        const result = await query(upsertQuery, [user_id, job_type, job_role, contact, rate, photo]);
+        return result.rows[0];
     } catch (e) {
         throw e;
     }
@@ -133,5 +163,6 @@ export default {
     deleteUserById,
     getAllWorkers,
     createWorkerDetails,
+    createWorkerWithDetails,
     updateWorkerDetails
 }

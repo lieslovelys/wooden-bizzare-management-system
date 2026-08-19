@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom'; // <-- 1. IDINAGDAG ITO
 import ProjectVerificationDetail from './ProjectVerificationDetail';
+import { api } from '../api/client';
 
 const ProjectVerification = () => {
     const [stageFilter, setStageFilter] = useState('All');
@@ -14,24 +15,20 @@ const ProjectVerification = () => {
     useEffect(() => {
         const fetchQATasks = async () => {
             try {
-                // FIX: Tinanggal ang localhost at ginawang relative path
-                const response = await fetch(import.meta.env.VITE_BACKEND_IP + '/api/qa/tasks');
-                if (response.ok) {
-                    const data = await response.json();
-                    
-                    const formattedTasks = data.map(task => ({
-                        id: `WB-${String(task.project_id).padStart(2, '0')}`, 
-                        rawProjectId: task.project_id, 
-                        projectName: task.project_name,
-                        workerName: `${task.first_name} ${task.last_name}`,
-                        stage: task.stage_name,
-                        assignmentId: task.assignment_id 
-                    }));
-                    
-                    setTasks(formattedTasks);
-                }
+                const data = await api.get('/api/qa/tasks');
+
+                const formattedTasks = data.map(task => ({
+                    id: `WB-${String(task.project_id).padStart(2, '0')}`,
+                    rawProjectId: task.project_id,
+                    projectName: task.project_name,
+                    workerName: `${task.first_name} ${task.last_name}`,
+                    stage: task.stage_name,
+                    assignmentId: task.assignment_id
+                }));
+
+                setTasks(formattedTasks);
             } catch (error) {
-                console.error("Error fetching QA tasks:", error);
+                console.error("Error fetching QA tasks:", error.message);
             } finally {
                 setLoading(false);
             }

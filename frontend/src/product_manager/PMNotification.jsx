@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom'; 
+import { useNavigate } from 'react-router-dom';
 import '../css/admin.css';
+import { api } from '../api/client';
 
 const ProjectNotification = () => {
   const [notifications, setNotifications] = useState([]);
@@ -11,12 +12,10 @@ const ProjectNotification = () => {
   // FETCH: Kunin ang data sa database pagka-load ng page
   const fetchNotifications = async () => {
     try {
-      // FIX: Tinanggal ang localhost dito
-      const response = await fetch(import.meta.env.VITE_BACKEND_IP + '/api/notifications'); 
-      const data = await response.json();
+      const data = await api.get('/api/notifications');
       setNotifications(data);
     } catch (error) {
-      console.error("Error fetching notifications:", error);
+      console.error("Error fetching notifications:", error.message);
     } finally {
       setLoading(false);
     }
@@ -33,11 +32,10 @@ const ProjectNotification = () => {
   // DELETE ONE
   const handleDelete = async (id) => {
     try {
-      // FIX: Tinanggal ang localhost dito
-      await fetch(import.meta.env.VITE_BACKEND_IP + `/api/notifications/${id}`, { method: 'DELETE' });
+      await api.delete(`/api/notifications/${id}`);
       setNotifications(notifications.filter(notif => notif.id !== id));
     } catch (error) {
-      console.error("Error deleting notification:", error);
+      console.error("Error deleting notification:", error.message);
     }
   };
 
@@ -46,15 +44,14 @@ const ProjectNotification = () => {
     if(window.confirm("Are you sure you want to clear all project notifications?")) {
       try {
         for (let notif of projectNotifs) {
-            // FIX: Tinanggal ang localhost dito
-            await fetch(import.meta.env.VITE_BACKEND_IP + `/api/notifications/${notif.id}`, { method: 'DELETE' });
+            await api.delete(`/api/notifications/${notif.id}`);
         }
-        
+
         // Tanggalin sa UI yung mga nabura na
         const remainingNotifs = notifications.filter(n => n.type !== 'project');
         setNotifications(remainingNotifs);
       } catch (error) {
-        console.error("Error clearing notifications:", error);
+        console.error("Error clearing notifications:", error.message);
       }
     }
   };
@@ -64,17 +61,16 @@ const ProjectNotification = () => {
     try {
       for (let notif of projectNotifs) {
           if (!notif.is_read) {
-              // FIX: Tinanggal ang localhost dito
-              await fetch(import.meta.env.VITE_BACKEND_IP + `/api/notifications/${notif.id}/read`, { method: 'PUT' });
+              await api.put(`/api/notifications/${notif.id}/read`);
           }
       }
-      
-      const updatedNotifs = notifications.map(notif => 
+
+      const updatedNotifs = notifications.map(notif =>
           notif.type === 'project' ? { ...notif, is_read: true } : notif
       );
       setNotifications(updatedNotifs);
     } catch (error) {
-      console.error("Error marking all as read:", error);
+      console.error("Error marking all as read:", error.message);
     }
   };
 
@@ -86,10 +82,9 @@ const ProjectNotification = () => {
           setNotifications(updated);
 
           try {
-              // FIX: Tinanggal ang localhost dito
-              await fetch(import.meta.env.VITE_BACKEND_IP + `/api/notifications/${notif.id}/read`, { method: 'PUT' });
+              await api.put(`/api/notifications/${notif.id}/read`);
           } catch (error) {
-              console.error("Error marking notification as read:", error);
+              console.error("Error marking notification as read:", error.message);
           }
       }
 

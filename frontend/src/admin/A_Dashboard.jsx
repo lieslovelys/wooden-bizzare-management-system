@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import InfoCard from '../globals/InfoCard';
 import AdminNotification from './AdminNotification';
+import { api } from '../api/client';
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState({
@@ -18,19 +19,15 @@ const AdminDashboard = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        // FIX: Tinanggal ang localhost dito
-        const response = await fetch(import.meta.env.VITE_BACKEND_IP + '/api/dashboard/stats');
-        if (response.ok) {
-          const data = await response.json();
-          setStats(prev => ({
-            ...prev,
-            activeProjects: data.activeProjects || 0,
-            totalWorkers: data.totalWorkers || 0,
-            monthlyProfit: data.monthlyProfit || 0 // Sinalo natin yung monthlyProfit galing backend
-          }));
-        }
+        const data = await api.get('/api/dashboard/stats');
+        setStats(prev => ({
+          ...prev,
+          activeProjects: data.activeProjects || 0,
+          totalWorkers: data.totalWorkers || 0,
+          monthlyProfit: data.monthlyProfit || 0 // Sinalo natin yung monthlyProfit galing backend
+        }));
       } catch (error) {
-        console.error("Error fetching dashboard stats:", error);
+        console.error("Error fetching dashboard stats:", error.message);
       }
     };
 

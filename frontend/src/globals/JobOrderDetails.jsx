@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { api } from '../api/client';
 
 const JobOrderDetail = ({ jobId, onBack }) => {
     const [projectDetails, setProjectDetails] = useState(null);
@@ -20,21 +21,14 @@ const JobOrderDetail = ({ jobId, onBack }) => {
     const fetchAllData = async () => {
         setLoading(true);
         try {
-            // FIX: Tinanggal ang localhost dito
-            const detailsRes = await fetch(import.meta.env.VITE_BACKEND_IP + `/api/job-orders/${jobId}`);
-            if (detailsRes.ok) setProjectDetails(await detailsRes.json());
-
-            // FIX: Tinanggal ang localhost dito
-            const assignRes = await fetch(import.meta.env.VITE_BACKEND_IP + `/api/job-orders/${jobId}/assignments`);
-            if (assignRes.ok) setAssignments(await assignRes.json());
+            setProjectDetails(await api.get(`/api/job-orders/${jobId}`));
+            setAssignments(await api.get(`/api/job-orders/${jobId}/assignments`));
 
             if (workers.length === 0) {
-                // FIX: Tinanggal ang localhost dito
-                const workersRes = await fetch(import.meta.env.VITE_BACKEND_IP + `/api/workers`);
-                if (workersRes.ok) setWorkers(await workersRes.json());
+                setWorkers(await api.get(`/api/assignable-workers`));
             }
         } catch (error) {
-            console.error("Error fetching data:", error);
+            console.error("Error fetching data:", error.message);
         } finally {
             setLoading(false);
         }
@@ -78,22 +72,13 @@ const JobOrderDetail = ({ jobId, onBack }) => {
         }
 
         try {
-            // FIX: Tinanggal ang localhost dito sa POST request
-            const response = await fetch(import.meta.env.VITE_BACKEND_IP + `/api/job-orders/${jobId}/assign`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
-            });
-
-            if (response.ok) {
-                showToast("Worker assigned successfully!", "success");
-                fetchAllData(); 
-                setFormData(prev => ({ ...prev, startDate: '', dueDate: '' })); 
-            } else {
-                showToast("Failed to assign worker.", "error");
-            }
+            await api.post(`/api/job-orders/${jobId}/assign`, formData);
+            showToast("Worker assigned successfully!", "success");
+            fetchAllData();
+            setFormData(prev => ({ ...prev, startDate: '', dueDate: '' }));
         } catch (error) {
-            console.error("Submit error:", error);
+            console.error("Submit error:", error.message);
+            showToast(error.message || "Failed to assign worker.", "error");
         }
     };
 
@@ -101,17 +86,12 @@ const JobOrderDetail = ({ jobId, onBack }) => {
     const executeCompleteProject = async () => {
         setShowConfirmModal(false); // Itago ang modal
         try {
-            // FIX: Tinanggal ang localhost dito sa PUT request
-            const response = await fetch(import.meta.env.VITE_BACKEND_IP + `/api/projects/${jobId}/complete`, { method: 'PUT' });
-            if (response.ok) {
-                showToast("Project Marked as Completed!", "success");
-                setTimeout(() => onBack(), 2000); // Wait 2 secs para makita ang success message bago bumalik
-            } else {
-                showToast("Failed to complete project.", "error");
-            }
+            await api.put(`/api/projects/${jobId}/complete`);
+            showToast("Project Marked as Completed!", "success");
+            setTimeout(() => onBack(), 2000); // Wait 2 secs para makita ang success message bago bumalik
         } catch (error) {
-            console.error("Complete error:", error);
-            showToast("Server error. Paki-check ang connection.", "error");
+            console.error("Complete error:", error.message);
+            showToast(error.message || "Server error. Paki-check ang connection.", "error");
         }
     };
 

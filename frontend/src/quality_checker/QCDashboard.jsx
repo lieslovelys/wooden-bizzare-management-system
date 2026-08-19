@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import InfoCard from '../globals/InfoCard';
 import QualityCheckerNotification from './QualityCheckerNotification';
+import { api } from '../api/client';
 
 import '../css/admin.css';
 
@@ -11,15 +12,11 @@ const QCDashboard = () => {
     // Gagamitin natin yung existing API mo para sa QA tasks
     const fetchQATasks = async () => {
       try {
-        // FIX: Tinanggal ang localhost at ginawang relative path
-        const response = await fetch(import.meta.env.VITE_BACKEND_IP + '/api/qa/tasks');
-        if (response.ok) {
-          const data = await response.json();
-          // Bibilangin lang natin kung ilang tasks ang ibinalik ng database
-          setToVerifyCount(data.length);
-        }
+        const data = await api.get('/api/qa/tasks');
+        // Bibilangin lang natin kung ilang tasks ang ibinalik ng database
+        setToVerifyCount(data.length);
       } catch (error) {
-        console.error("Error fetching tasks to verify:", error);
+        console.error("Error fetching tasks to verify:", error.message);
       }
     };
 

@@ -1,19 +1,15 @@
 import React from 'react';
 import ReactDOM from 'react-dom'; // FIX 1: Kailangan nating i-import ito para sa Portal
+import { api } from '../api/client';
 
 const Logout = ({ onCancel }) => {
-    
+
     const handleLogout = async () => {
         try {
-            const response = await fetch(import.meta.env.VITE_BACKEND_IP + '/logout', {
-                method: 'GET',
-                credentials: 'include'
-            });
-            if (response.ok) {
-                window.location.reload(); 
-            }
+            await api.get('/api/logout');
+            window.location.reload();
         } catch (e) {
-            console.error("Logout failed", e);
+            console.error("Logout failed", e.message);
         }
     }
 

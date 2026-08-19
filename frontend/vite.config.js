@@ -9,4 +9,5 @@ export default defineConfig({
     babel({ presets: [reactCompilerPreset()] })
   ],
   base: '/', // <--- IDINAGDAG ITO: Sinisiguro nito na tama ang pathing ng assets mo sa Render
+  
 })

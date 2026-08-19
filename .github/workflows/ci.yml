@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend/src
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: backend/src/package-lock.json
+      - run: npm ci
+        # No lint/test script exists yet (backend/src/package.json's "test" is still the
+        # unmodified create-* stub) — a clean `npm ci` against the committed lockfile is the
+        # check for now. Extend this once real tests land.
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      # Not a hard gate yet: the repo currently has ~10 pre-existing lint errors unrelated to
+      # deployment (unused vars in untouched files, eslint-plugin-react-hooks v7's newer
+      # purity/set-state-in-effect rules flagging existing components) — see
+      # ARCHITECTURE_REVIEW.md P2. Runs and stays visible in the log rather than being hidden;
+      # flip continue-on-error off once that debt is actually paid down.
+      - run: npm run lint
+        continue-on-error: true
+      - run: npm run build
+
+  docker-build:
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      # This job is the real verification for both Dockerfiles in this repo — neither can be
+      # built or run in the local dev sandbox they were written in (no Docker installed there).
+      - name: Build backend image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend/src
+          push: false
+      - name: Build frontend image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          push: false
+          build-args: |
+            VITE_BACKEND_IP=

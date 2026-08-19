@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom'; 
+import { useNavigate } from 'react-router-dom';
 import '../css/admin.css';
+import { api } from '../api/client';
 
 const VerificationNotification = () => {
   const [notifications, setNotifications] = useState([]);
@@ -11,12 +12,10 @@ const VerificationNotification = () => {
   // FETCH: Kunin ang data sa database pagka-load ng page
   const fetchNotifications = async () => {
     try {
-      // FIX 1: Tinanggal ang localhost
-      const response = await fetch(import.meta.env.VITE_BACKEND_IP + '/api/notifications'); 
-      const data = await response.json();
+      const data = await api.get('/api/notifications');
       setNotifications(data);
     } catch (error) {
-      console.error("Error fetching notifications:", error);
+      console.error("Error fetching notifications:", error.message);
     } finally {
       setLoading(false);
     }
@@ -33,11 +32,10 @@ const VerificationNotification = () => {
   // DELETE ONE
   const handleDelete = async (id) => {
     try {
-      // FIX 2: Tinanggal ang localhost
-      await fetch(`/api/notifications/${id}`, { method: 'DELETE' });
+      await api.delete(`/api/notifications/${id}`);
       setNotifications(notifications.filter(notif => notif.id !== id));
     } catch (error) {
-      console.error("Error deleting notification:", error);
+      console.error("Error deleting notification:", error.message);
     }
   };
 
@@ -47,15 +45,14 @@ const VerificationNotification = () => {
       try {
         // Option A: Kung gusto mong isa-isang i-delete ang verification lang
         for (let notif of verificationNotifs) {
-            // FIX 3: Tinanggal ang localhost
-            await fetch(`/api/notifications/${notif.id}`, { method: 'DELETE' });
+            await api.delete(`/api/notifications/${notif.id}`);
         }
-        
+
         // Tanggalin sa UI
         const remainingNotifs = notifications.filter(n => n.type !== 'verification');
         setNotifications(remainingNotifs);
       } catch (error) {
-        console.error("Error clearing notifications:", error);
+        console.error("Error clearing notifications:", error.message);
       }
     }
   };
@@ -65,17 +62,16 @@ const VerificationNotification = () => {
     try {
       for (let notif of verificationNotifs) {
           if (!notif.is_read) {
-              // FIX 4: Tinanggal ang localhost
-              await fetch(`/api/notifications/${notif.id}/read`, { method: 'PUT' });
+              await api.put(`/api/notifications/${notif.id}/read`);
           }
       }
-      
-      const updatedNotifs = notifications.map(notif => 
+
+      const updatedNotifs = notifications.map(notif =>
           notif.type === 'verification' ? { ...notif, is_read: true } : notif
       );
       setNotifications(updatedNotifs);
     } catch (error) {
-      console.error("Error marking all as read:", error);
+      console.error("Error marking all as read:", error.message);
     }
   };
 
@@ -86,10 +82,9 @@ const VerificationNotification = () => {
           setNotifications(updated);
 
           try {
-              // FIX 5: Tinanggal ang localhost
-              await fetch(`/api/notifications/${notif.id}/read`, { method: 'PUT' });
+              await api.put(`/api/notifications/${notif.id}/read`);
           } catch (error) {
-              console.error("Error marking notification as read:", error);
+              console.error("Error marking notification as read:", error.message);
           }
       }
 

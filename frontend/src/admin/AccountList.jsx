@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import '../css/admin.css'; 
+import '../css/admin.css';
+import { api } from '../api/client';
 
 const AccountList = () => {
   const [accounts, setAccounts] = useState([]);
@@ -18,14 +19,12 @@ const AccountList = () => {
 
   const fetchAccounts = async () => {
     try {
-      // FIX 1: Tinanggal ang localhost at ginawang relative path
-      const response = await fetch(import.meta.env.VITE_BACKEND_IP + '/users');
-      const result = await response.json();
+      const result = await api.get('/api/users');
       if (result.success) {
         setAccounts(result.data);
       }
     } catch (error) {
-      console.error('Error fetching accounts:', error);
+      console.error('Error fetching accounts:', error.message);
     } finally {
       setLoading(false);
     }
@@ -49,11 +48,7 @@ const AccountList = () => {
     setShowConfirmModal(false); // Itago yung modal
     
     try {
-      // FIX 2: Tinanggal ang localhost dito sa DELETE request
-      const response = await fetch(import.meta.env.VITE_BACKEND_IP + `/users/${accountToDelete.id}`, {
-        method: 'DELETE',
-      });
-      const result = await response.json();
+      const result = await api.delete(`/api/users/${accountToDelete.id}`);
 
       if (result.success) {
         showToast('Account deleted successfully!', 'success');
@@ -62,8 +57,8 @@ const AccountList = () => {
         showToast('Failed to delete user.', 'error');
       }
     } catch (error) {
-      console.error('Delete error:', error);
-      showToast('An error occurred while deleting.', 'error');
+      console.error('Delete error:', error.message);
+      showToast(error.message || 'An error occurred while deleting.', 'error');
     } finally {
       setAccountToDelete(null); // I-clear state
     }

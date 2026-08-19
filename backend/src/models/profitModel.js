@@ -5,8 +5,10 @@ import { query, getClient } from "../config/db.js";
 // ============================================================
 
 export async function getProfitByProjectId(projectId) {
+  // P1-7: project_profit.project_id is now UNIQUE, so at most one row can ever match — the
+  // `LIMIT 1` this used to need to force determinism is redundant.
   const { rows } = await query(
-    `SELECT * FROM project_profit WHERE project_id = $1 LIMIT 1`, [projectId]
+    `SELECT * FROM project_profit WHERE project_id = $1`, [projectId]
   );
 
   if (rows.length === 0) {
@@ -68,24 +70,25 @@ export async function upsertProfit(projectId, { client_payment, worker_wages, ma
     // Delete existing expense items
     await client.query(`DELETE FROM project_expense_items WHERE profit_id = $1`, [profit.id]);
 
-    // Insert new expense items
-    for (const item of expense_items) {
-      await client.query(
-        `INSERT INTO project_expense_items (profit_id, category, description, amount)
-         VALUES ($1, $2, $3, $4)`,
-        [profit.id, item.category ?? "Other Expenses", item.description, item.amount]
-      );
-    }
+    // P1-6: was an N-iteration insert loop followed by a re-SELECT of the rows just written,
+    // *after* COMMIT (N+2 round trips). One multi-row insert via unnest(), returning what it
+    // just wrote, replaces both — 2 round trips regardless of item count. Kept as
+    // delete-then-reinsert rather than diffing (the review's suggested alternative):
+    // frontend/src/admin/Profit.jsx builds new rows client-side with no id, so the server has
+    // no stable identity to diff new vs. existing items against.
+    const categories = expense_items.map((item) => item.category ?? "Other Expenses");
+    const descriptions = expense_items.map((item) => item.description);
+    const amounts = expense_items.map((item) => item.amount);
+
+    const { rows: items } = await client.query(
+      `INSERT INTO project_expense_items (profit_id, category, description, amount)
+       SELECT $1, c, d, a
+       FROM unnest($2::text[], $3::text[], $4::numeric[]) AS t(c, d, a)
+       RETURNING id, description, category, amount`,
+      [profit.id, categories, descriptions, amounts]
+    );
 
     await client.query("COMMIT");
-
-    const { rows: items } = await query(
-      `SELECT id, description, category, amount
-       FROM project_expense_items
-       WHERE profit_id = $1
-       ORDER BY id ASC`,
-      [profit.id]
-    );
 
     return { ...profit, expense_items: items };
   } catch (err) {
@@ -109,11 +112,12 @@ export async function deleteProfitByProjectId(projectId) {
 
 export async function getMonthlyProfit() {
   try {
+    // P1-9: updated_at is timestamptz — compare against the Manila calendar month explicitly.
     const { rows } = await query(`
       SELECT COALESCE(SUM(net_profit), 0) AS total_monthly_profit
       FROM project_profit
-      WHERE EXTRACT(MONTH FROM updated_at) = EXTRACT(MONTH FROM CURRENT_DATE)
-        AND EXTRACT(YEAR FROM updated_at) = EXTRACT(YEAR FROM CURRENT_DATE);
+      WHERE EXTRACT(MONTH FROM updated_at AT TIME ZONE 'Asia/Manila') = EXTRACT(MONTH FROM NOW() AT TIME ZONE 'Asia/Manila')
+        AND EXTRACT(YEAR FROM updated_at AT TIME ZONE 'Asia/Manila') = EXTRACT(YEAR FROM NOW() AT TIME ZONE 'Asia/Manila');
     `);
     
     // Ibabalik nito ang computed profit (e.g., 34000)

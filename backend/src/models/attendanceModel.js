@@ -40,10 +40,12 @@ export async function getAttendanceById(id) {
 export async function createAttendance({ worker_id, date, day_of_week, time_in, time_out }) {
   // DITO ANG MAGIC: Yung 'worker_id' parameter na tinanggap galing React ay actually 'user_id'.
   // Kaya magse-SELECT tayo ng detail_id bago mag-INSERT sa table.
+  // P1-7: worker_details.user_id is now UNIQUE, so the `LIMIT 1` this used to need to force
+  // determinism is redundant.
   const { rows } = await query(
     `INSERT INTO attendance (worker_id, date, day_of_week, time_in, time_out)
      VALUES (
-        (SELECT detail_id FROM worker_details WHERE user_id = $1 LIMIT 1), 
+        (SELECT detail_id FROM worker_details WHERE user_id = $1),
         $2, $3, $4, $5
      )
      RETURNING

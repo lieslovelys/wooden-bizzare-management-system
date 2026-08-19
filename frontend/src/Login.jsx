@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { api } from "./api/client";
 
 const Login = ({ login }) => {
     const navigate = useNavigate();
@@ -12,35 +13,16 @@ const Login = ({ login }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIncorrectPassword(false);
-        const body = { username, password };
-        
+
         try {
-            // FIX: Tinanggal ang http://localhost:8080, ginawang relative path na lang
-            const response = await fetch(import.meta.env.VITE_BACKEND_IP + '/login', {
-                method: 'POST',
-                headers: { 'Content-type': 'application/json' },
-                body: JSON.stringify(body),
-                credentials: 'include'
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                if (data.err === true) {
-                    setIncorrectPassword(true);
-                    console.log(data);
-                    
-                } else {
-                    console.log(data);
-                    await login();
-                    window.location.reload();
-                }
-            } else {
-                setIncorrectPassword(true);
-
-            }
-        }
-        catch (err) {
-            console.error("Login request failed:", err);
+            // The backend now returns the same 401 for "unknown username" and "wrong password"
+            // (no distinguishing message, no crash path) — so there's nothing left to branch on
+            // here beyond success vs. failure.
+            await api.post('/api/login', { username, password });
+            await login();
+            window.location.reload();
+        } catch (err) {
+            console.error("Login failed:", err.message);
             setIncorrectPassword(true);
         }
     }

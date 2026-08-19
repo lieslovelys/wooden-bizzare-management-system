@@ -1,15 +1,19 @@
 import express from 'express';
 import * as notifController from '../controllers/adminNotifController.js'; // Wag kalimutan yung .js
+import { requireRole } from '../middleware/auth.js';
 
 const router = express.Router();
 
-router.get('/', notifController.getNotifications);
+// Worker and Inventory Staff have no notification screens.
+const NOTIF_ROLES = requireRole('Admin', 'Production Manager', 'Quality Checker');
 
-router.put('/mark-all-read', notifController.markAllAsRead);
+router.get('/', NOTIF_ROLES, notifController.getNotifications);
 
-router.delete('/clear/all', notifController.clearAllNotifications);
+router.put('/mark-all-read', NOTIF_ROLES, notifController.markAllAsRead);
 
-router.delete('/:id', notifController.deleteNotification);
-router.put('/:id/read', notifController.markOneAsRead);
+router.delete('/clear/all', NOTIF_ROLES, notifController.clearAllNotifications);
 
-export default router; 
+router.delete('/:id', NOTIF_ROLES, notifController.deleteNotification);
+router.put('/:id/read', NOTIF_ROLES, notifController.markOneAsRead);
+
+export default router;

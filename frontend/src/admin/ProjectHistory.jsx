@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import '../css/admin.css'; 
+import '../css/admin.css';
+import { api } from '../api/client';
 
 const ProjectHistory = () => {
   const [historyData, setHistoryData] = useState([]);
@@ -15,10 +16,8 @@ const ProjectHistory = () => {
     const fetchHistory = async () => {
       setLoading(true);
       try {
-        // FIX 1: Tinanggal ang localhost
-        const response = await fetch(import.meta.env.VITE_BACKEND_IP + '/api/projects/history');
-        const result = await response.json();
-        
+        const result = await api.get('/api/projects/history');
+
         const dataArray = result.success ? result.data : (Array.isArray(result) ? result : []);
 
         const formattedData = dataArray.map(proj => {
@@ -26,9 +25,9 @@ const ProjectHistory = () => {
           return { ...proj, remark: remark };
         });
         setHistoryData(formattedData);
-        
+
       } catch (error) {
-        console.error("Error fetching project history:", error);
+        console.error("Error fetching project history:", error.message);
       } finally {
         setLoading(false);
       }
@@ -42,19 +41,15 @@ const ProjectHistory = () => {
     setDetailsLoading(true);
     
     try {
-        // FIX 2 & 3: Tinanggal ang localhost sa parehong fetch requests
-        const [detailsRes, tasksRes] = await Promise.all([
-            fetch(import.meta.env.VITE_BACKEND_IP + `/api/job-orders/${projectId}`),
-            fetch(import.meta.env.VITE_BACKEND_IP + `/api/job-orders/${projectId}/assignments`)
+        const [detailsData, tasksData] = await Promise.all([
+            api.get(`/api/job-orders/${projectId}`),
+            api.get(`/api/job-orders/${projectId}/assignments`)
         ]);
-
-        const detailsData = await detailsRes.json();
-        const tasksData = await tasksRes.json();
 
         setProjectDetails(detailsData);
         setProjectTasks(tasksData);
     } catch (error) {
-        console.error("Error fetching detailed project info:", error);
+        console.error("Error fetching detailed project info:", error.message);
     } finally {
         setDetailsLoading(false);
     }

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom'; 
+import { useLocation } from 'react-router-dom';
 import JobOrderDetails from './JobOrderDetails';
+import { api } from '../api/client';
 
 const JobOrderList = () => {
     const [jobOrders, setJobOrders] = useState([]);
@@ -28,13 +29,11 @@ const JobOrderList = () => {
     useEffect(() => {
         const fetchJobs = async () => {
             try {
-                // FIX: Tinanggal ang localhost at ginawang relative path
-                const response = await fetch(import.meta.env.VITE_BACKEND_IP + '/api/job-orders');
-                const data = await response.json();
+                const data = await api.get('/api/job-orders');
                 const initialSorted = sortJobsByDate(data);
                 setJobOrders(initialSorted);
             } catch (error) {
-                console.error("Failed to fetch job orders:", error);
+                console.error("Failed to fetch job orders:", error.message);
             }
         };
         fetchJobs();

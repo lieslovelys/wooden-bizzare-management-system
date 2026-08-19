@@ -1,5 +1,6 @@
 import { useState } from "react";
-import './css/TempSignup.css'; 
+import './css/TempSignup.css';
+import { api } from './api/client';
 
 const TempSignup = () => {
     const [username, setUsername] = useState('');
@@ -24,31 +25,19 @@ const TempSignup = () => {
         const body = { username, password, firstName, middleName, lastName, suffix, userRole };
 
         try {
-            // FIX: Tinanggal ang http://localhost:8080 at ginawang relative path
-            const response = await fetch(import.meta.env.VITE_BACKEND_IP +'/signup', {
-                method: 'POST',
-                headers: {'Content-type' : 'application/json'},
-                body: JSON.stringify(body)
-            });
+            await api.post('/api/signup', body);
+            showToast("Account successfully created!", "success");
 
-            if(response.ok){
-                // Pinalitan na natin ang alert ng magandang Toast!
-                showToast("Account successfully created!", "success"); 
-                
-                setUsername('');
-                setPassword('');
-                setFirstName('');
-                setMiddleName('');
-                setLastName('');
-                setSuffix('None');
-                setUserRole('Admin');
-            }
-            else{
-                showToast("Failed to create account. Please try again.", "error");
-            }
+            setUsername('');
+            setPassword('');
+            setFirstName('');
+            setMiddleName('');
+            setLastName('');
+            setSuffix('None');
+            setUserRole('Admin');
         } catch (error) {
-            console.error("Error creating account:", error);
-            showToast("Server connection error.", "error");
+            console.error("Error creating account:", error.message);
+            showToast(error.message || "Failed to create account. Please try again.", "error");
         }
     }
 

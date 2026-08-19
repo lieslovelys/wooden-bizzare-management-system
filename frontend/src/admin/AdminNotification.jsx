@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom'; // IDINAGDAG: Para makalipat ng page
 import '../css/admin.css';
+import { api } from '../api/client';
 
 const AdminNotification = () => {
   const [notifications, setNotifications] = useState([]);
@@ -12,12 +13,10 @@ const AdminNotification = () => {
   // FETCH: Kunin ang data sa database pagka-load ng page
   const fetchNotifications = async () => {
     try {
-      // FIX 1: Tinanggal ang localhost
-      const response = await fetch(import.meta.env.VITE_BACKEND_IP + '/api/notifications'); 
-      const data = await response.json();
+      const data = await api.get('/api/notifications');
       setNotifications(data);
     } catch (error) {
-      console.error("Error fetching notifications:", error);
+      console.error("Error fetching notifications:", error.message);
     } finally {
       setLoading(false);
     }
@@ -30,11 +29,10 @@ const AdminNotification = () => {
   // DELETE ONE
   const handleDelete = async (id) => {
     try {
-      // FIX 2: Tinanggal ang localhost
-      await fetch(import.meta.env.VITE_BACKEND_IP + `/api/notifications/${id}`, { method: 'DELETE' });
+      await api.delete(`/api/notifications/${id}`);
       setNotifications(notifications.filter(notif => notif.id !== id));
     } catch (error) {
-      console.error("Error deleting notification:", error);
+      console.error("Error deleting notification:", error.message);
     }
   };
 
@@ -42,11 +40,10 @@ const AdminNotification = () => {
   const handleClearAll = async () => {
     if(window.confirm("Are you sure you want to clear all notifications?")) {
       try {
-        // FIX 3: Tinanggal ang localhost
-        await fetch(import.meta.env.VITE_BACKEND_IP + '/api/notifications/clear/all', { method: 'DELETE' });
+        await api.delete('/api/notifications/clear/all');
         setNotifications([]);
       } catch (error) {
-        console.error("Error clearing notifications:", error);
+        console.error("Error clearing notifications:", error.message);
       }
     }
   };
@@ -54,12 +51,11 @@ const AdminNotification = () => {
   // MARK ALL AS READ
   const handleMarkAllAsRead = async () => {
     try {
-      // FIX 4: Tinanggal ang localhost
-      await fetch(import.meta.env.VITE_BACKEND_IP + '/api/notifications/mark-all-read', { method: 'PUT' });
+      await api.put('/api/notifications/mark-all-read');
       const updatedNotifs = notifications.map(notif => ({ ...notif, is_read: true }));
       setNotifications(updatedNotifs);
     } catch (error) {
-      console.error("Error marking all as read:", error);
+      console.error("Error marking all as read:", error.message);
     }
   };
 
@@ -73,12 +69,9 @@ const AdminNotification = () => {
 
           // IDINAGDAG: Sabihan ang database na nabasa na ito!
           try {
-              // FIX 5: Tinanggal ang localhost
-              await fetch(import.meta.env.VITE_BACKEND_IP + `/api/notifications/${notif.id}/read`, {
-                  method: 'PUT'
-              });
+              await api.put(`/api/notifications/${notif.id}/read`);
           } catch (error) {
-              console.error("Error marking notification as read:", error);
+              console.error("Error marking notification as read:", error.message);
           }
       }
 

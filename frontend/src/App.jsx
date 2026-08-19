@@ -2,7 +2,6 @@ import { useState, useEffect, createContext } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import RoleBasedRedirect from "./auth-components/RoleBasedRedirect";
 import ProtectedRoute from "./auth-components/ProtectedRoute";
-import TempSignup from "./TempSignup";
 import Login from "./Login";
 
 import Admin from "./Admin";
@@ -28,8 +27,10 @@ const App = () => {
   useEffect(() => {
     const fetchSession = async () => {
       try {
-        // FIX: Tinanggal ang http://localhost:8080 at ginawang relative path
-        const response = await fetch(import.meta.env.VITE_BACKEND_IP + '/session-user', {
+        // Deliberately a direct fetch, not the shared api client (frontend/src/api/client.js):
+        // a 401 here means "not logged in yet", which is a normal, expected outcome on every
+        // fresh page load — not a stale-session error to redirect away from.
+        const response = await fetch(import.meta.env.VITE_BACKEND_IP + '/api/session-user', {
           method: 'GET',
           credentials: 'include'
         });
@@ -64,7 +65,8 @@ const App = () => {
         <div className="app-container">
           <Routes>
             <Route path='/' element={<RoleBasedRedirect role={userRole}/>}/>
-            <Route path='/protoacc' element={<TempSignup />} />
+            {/* /protoacc removed — TempSignup is now only reachable via the authenticated
+                Admin "Account Creation" screen (admin/CreateAccount.jsx). */}
             <Route path='/login' element={userRole ? <Navigate to={'/'}/> : <Login login={() => setIsLoggedIn(true)} />} />
             
             <Route element={<ProtectedRoute isAllowed={userRole === 'Admin'}/>}>

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import '../css/admin.css';
+import { api } from '../api/client';
 
 const CreateProjectForm = () => {
   const [formData, setFormData] = useState({
@@ -61,26 +62,16 @@ const CreateProjectForm = () => {
     const payload = { ...formData, projectDetails };
 
     try {
-      // FIX: Tinanggal ang http://localhost:8080 at ginawang relative path
-      const response = await fetch(import.meta.env.VITE_BACKEND_IP + '/api/projects', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+      await api.post('/api/projects', payload);
+      showToast('Project successfully created!', 'success');
+      setFormData({
+          projectName: '', clientName: '', contactNumber: '',
+          dateOrdered: '', clientPayment: '', priorityLevel: 'High', dueDate: ''
       });
-
-      if (response.ok) {
-        showToast('Project successfully created!', 'success');
-        setFormData({
-            projectName: '', clientName: '', contactNumber: '',
-            dateOrdered: '', clientPayment: '', priorityLevel: 'High', dueDate: ''
-        });
-        setProjectDetails([{ name: '', detail: '' }]);
-      } else {
-        showToast('Failed to create project.', 'error');
-      }
+      setProjectDetails([{ name: '', detail: '' }]);
     } catch (error) {
-      console.error('Submission error:', error);
-      showToast('Server error.', 'error');
+      console.error('Submission error:', error.message);
+      showToast(error.message || 'Server error.', 'error');
     }
   };
 

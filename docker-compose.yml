@@ -1,0 +1,82 @@
+# Deployment target: a single Hostinger KVM 1 VPS (1 vCPU, 4 GB RAM, 50 GB NVMe) — see
+# CLAUDE.md and docs/reference_md/ARCHITECTURE_REVIEW.md P1-10. One vCPU is the binding
+# constraint, not RAM/disk: this stack is deliberately three single-replica services, not a
+# scaled-out fleet — a second replica of anything here adds scheduling overhead, not
+# throughput, on one core.
+#
+# Reads variables from a root .env — copy .env.example to .env and fill in real values first.
+# HTTP-only for now (no TLS): no domain is pointed at this VPS yet, and Let's Encrypt can't
+# issue a certificate for a bare IP. Adding TLS later means adding a certbot service and a few
+# Nginx directives to frontend/nginx.conf — not a restructure of this file.
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      # Single source of truth for these three: also what backend/src/config/db.js connects
+      # with (see the backend service below).
+      POSTGRES_USER: ${SQL_USER}
+      POSTGRES_PASSWORD: ${SQL_PASS}
+      POSTGRES_DB: ${SQL_DB}
+    # P1-2: Postgres's default max_connections (100) reserves more RAM than this plan can
+    # spare alongside Node and Nginx on the same 4 GB box.
+    command: ["postgres", "-c", "max_connections=30", "-c", "shared_buffers=128MB"]
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      # Host-only (not 0.0.0.0) — convenience for manual psql / the backup scripts in deploy/,
+      # never exposed externally.
+      - "127.0.0.1:${SQL_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${SQL_USER} -d ${SQL_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend/src
+    restart: unless-stopped
+    environment:
+      SQL_USER: ${SQL_USER}
+      # Hardcoded, not read from .env: inside the compose network the database is reached by
+      # service name, not whatever a human filled in for local (non-Docker) dev.
+      SQL_HOST: db
+      SQL_PORT: "5432"
+      SQL_DB: ${SQL_DB}
+      SQL_PASS: ${SQL_PASS}
+      SECRET_KEY: ${SECRET_KEY}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
+      # Default false: see server.js and CLAUDE.md — a `secure` cookie is never sent by the
+      # browser over plain HTTP, so this must stay false until TLS is added in front of Nginx.
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      PORT: "8080"
+      NODE_ENV: production
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/healthz"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    # No ports published to the host — only `proxy` needs to reach this, over the internal
+    # compose network as http://backend:8080.
+
+  proxy:
+    build:
+      context: ./frontend
+      args:
+        # Same-origin deployment: frontend and API are both served through this container, so
+        # the shared API client's base URL is empty (relative paths), not a cross-origin host.
+        VITE_BACKEND_IP: ""
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  pgdata:

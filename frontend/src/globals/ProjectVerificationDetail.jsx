@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import '../css/admin.css'; // Make sure it's pointing to the correct CSS file for toasts
+import { api } from '../api/client';
 
 const ProjectVerificationDetail = ({ projectId, onBack }) => {
     const [projectInfo, setProjectInfo] = useState(null);
@@ -18,29 +19,20 @@ const ProjectVerificationDetail = ({ projectId, onBack }) => {
         const fetchDetails = async (idToFetch) => {
             setLoading(true);
             try {
-                // FIX 1: Tinanggal ang localhost dito
-                const projRes = await fetch(import.meta.env.VITE_BACKEND_IP + `/api/job-orders/${idToFetch}`);
-                if (projRes.ok) {
-                    setProjectInfo(await projRes.json());
-                }
+                setProjectInfo(await api.get(`/api/job-orders/${idToFetch}`));
 
-                // FIX 2: Tinanggal ang localhost dito
-                const assignRes = await fetch(import.meta.env.VITE_BACKEND_IP + `/api/job-orders/${idToFetch}/assignments`);
-                if (assignRes.ok) {
-                    const assignData = await assignRes.json();
-                    
-                    const formattedTasks = assignData.map(t => ({
-                        id: t.assignment_id, 
-                        stage: t.stage_name,
-                        worker: `${t.first_name} ${t.last_name}`,
-                        start: new Date(t.start_date).toLocaleDateString(),
-                        due: new Date(t.due_date).toLocaleDateString(),
-                        status: t.status
-                    }));
-                    setTasks(formattedTasks);
-                }
+                const assignData = await api.get(`/api/job-orders/${idToFetch}/assignments`);
+                const formattedTasks = assignData.map(t => ({
+                    id: t.assignment_id,
+                    stage: t.stage_name,
+                    worker: `${t.first_name} ${t.last_name}`,
+                    start: new Date(t.start_date).toLocaleDateString(),
+                    due: new Date(t.due_date).toLocaleDateString(),
+                    status: t.status
+                }));
+                setTasks(formattedTasks);
             } catch (error) {
-                console.error("Error fetching detail data:", error);
+                console.error("Error fetching detail data:", error.message);
             } finally {
                 setLoading(false);
             }
@@ -54,30 +46,21 @@ const ProjectVerificationDetail = ({ projectId, onBack }) => {
 
     const handleStatusUpdate = async (assignmentId, newStatus) => {
         try {
-            // FIX 3: Tinanggal ang localhost dito sa PUT request
-            const response = await fetch(import.meta.env.VITE_BACKEND_IP + `/api/assignments/${assignmentId}/status`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status: newStatus }) 
-            });
+            await api.put(`/api/assignments/${assignmentId}/status`, { status: newStatus });
 
-            if (response.ok) {
-                setTasks(tasks.map(task => 
-                    task.id === assignmentId ? { ...task, status: newStatus } : task
-                ));
+            setTasks(tasks.map(task =>
+                task.id === assignmentId ? { ...task, status: newStatus } : task
+            ));
 
-                // --- GINAMIT ANG TOAST IMBES NA ALERT ---
-                if (newStatus === 'Repair') {
-                    showToast("Task assigned back to worker for repair", "error");
-                } else if (newStatus === 'Approved') {
-                    showToast("Task successfully approved!", "success");
-                }
-            } else {
-                showToast("Failed to update status in backend.", "error");
+            // --- GINAMIT ANG TOAST IMBES NA ALERT ---
+            if (newStatus === 'Repair') {
+                showToast("Task assigned back to worker for repair", "error");
+            } else if (newStatus === 'Approved') {
+                showToast("Task successfully approved!", "success");
             }
         } catch (error) {
-            console.error("Error updating status:", error);
-            showToast("Cannot update status. Please check your connection.", "error");
+            console.error("Error updating status:", error.message);
+            showToast(error.message || "Cannot update status. Please check your connection.", "error");
         }
     };
 

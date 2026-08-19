@@ -1,50 +1,33 @@
 import { useState, useEffect, useCallback } from "react";
 import "../css/admin.css";
-
-// FIX: Pinalitan ang localhost at ginawang relative path
-const API = "/api";
+import { api, ApiError } from "../api/client";
 
 async function fetchProjects() {
+  const result = await api.get("/api/projects");
+  if (result.success && result.data) return result.data;
+  if (Array.isArray(result)) return result;
+  return [];
+}
+
+async function fetchProfit(projectId) {
   try {
-    const response = await fetch(import.meta.env.VITE_BACKEND_IP + `${API}/projects`);
-    if (!response.ok) throw new Error("Failed to load projects");
-    const result = await response.json();
-    if (result.success && result.data) return result.data;
-    if (Array.isArray(result)) return result;
-    return [];
+    return await api.get(`/api/profit/${projectId}`);
   } catch (err) {
-    console.error("Error fetching projects:", err);
+    if (err instanceof ApiError && err.status === 404) {
+      return {
+        client_payment: "",
+        worker_wages: "",
+        materials_cost: "",
+        other_expenses: "",
+        expense_items: []
+      };
+    }
     throw err;
   }
 }
 
-async function fetchProfit(projectId) {
-  const res = await fetch(import.meta.env.VITE_BACKEND_IP + `${API}/profit/${projectId}`);
-  if (res.status === 404) {
-    return {
-      client_payment: "",
-      worker_wages: "",
-      materials_cost: "",
-      other_expenses: "",
-      expense_items: []
-    };
-  }
-  if (!res.ok) throw new Error("Failed to load profit data");
-  return res.json();
-}
-
 async function saveProfit(projectId, payload) {
-  console.log("Saving profit for project:", projectId, "payload:", payload);
-  const res = await fetch(import.meta.env.VITE_BACKEND_IP + `${API}/profit/${projectId}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-  console.log("Save response status:", res.status);
-  const data = await res.json();
-  console.log("Save response data:", data);
-  if (!res.ok) throw new Error(data.error || "Failed to save profit data");
-  return data;
+  return api.post(`/api/profit/${projectId}`, payload);
 }
 
 function SpinnerInput({ value, onChange }) {

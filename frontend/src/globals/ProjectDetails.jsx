@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import '../css/admin.css';
+import { api } from '../api/client';
 
 const ProjectDetails = ({ projectId, onBack }) => {
   const [project, setProject] = useState(null);
@@ -8,15 +9,13 @@ const ProjectDetails = ({ projectId, onBack }) => {
   useEffect(() => {
     const fetchProjectDetails = async () => {
       try {
-        // FIX: Tinanggal ang localhost at ginawang relative path
-        const response = await fetch(import.meta.env.VITE_BACKEND_IP + `/api/projects/${projectId}`);
-        const result = await response.json();
-        
+        const result = await api.get(`/api/projects/${projectId}`);
+
         if (result.success) {
           setProject(result.data);
         }
       } catch (error) {
-        console.error('Error fetching project details:', error);
+        console.error('Error fetching project details:', error.message);
       } finally {
         setLoading(false);
       }

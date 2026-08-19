@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { api } from '../api/client';
 
-// FIX: Pinalitan ang localhost at ginawang relative path
 const API = '/api';
 
 const Attendance = () => {
@@ -30,19 +30,10 @@ const Attendance = () => {
   const fetchEmployees = async () => {
     try {
       setLoading(true);
-      const res = await fetch(import.meta.env.VITE_BACKEND_IP + `${API}/workers`);
-      if (res.ok) {
-        const data = await res.json();
-        setEmployees(data.data || data); 
-      } else {
-        const altRes = await fetch(import.meta.env.VITE_BACKEND_IP + `${API}/job-orders/workers`);
-        if (altRes.ok) {
-          const data = await altRes.json();
-          setEmployees(data.data || data);
-        }
-      }
+      const data = await api.get(`${API}/workers`);
+      setEmployees(data.data || data);
     } catch (err) {
-      console.error('Error fetching employees:', err);
+      console.error('Error fetching employees:', err.message);
     } finally {
       setLoading(false);
     }
@@ -52,11 +43,10 @@ const Attendance = () => {
     if (!workerId || workerId === 'undefined') { return; }
     try {
       setLogLoading(true);
-      const res = await fetch(import.meta.env.VITE_BACKEND_IP + `${API}/attendance/worker/${workerId}`);
-      const data = await res.json();
+      const data = await api.get(`${API}/attendance/worker/${workerId}`);
       setAttendanceLog(data);
     } catch (err) {
-      console.error('Error fetching attendance:', err);
+      console.error('Error fetching attendance:', err.message);
     } finally {
       setLogLoading(false);
     }
@@ -80,12 +70,11 @@ const Attendance = () => {
     if (!recordToDelete) return;
     setShowConfirmModal(false);
     try {
-      const res = await fetch(import.meta.env.VITE_BACKEND_IP + `${API}/attendance/${recordToDelete}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Failed to delete.');
+      await api.delete(`${API}/attendance/${recordToDelete}`);
       setAttendanceLog(prev => prev.filter(r => r.id !== recordToDelete));
       showToast("Record deleted successfully!", "success");
-    } catch (err) { 
-      showToast("Failed to delete record.", "error"); 
+    } catch (err) {
+      showToast(err.message || "Failed to delete record.", "error");
     } finally {
       setRecordToDelete(null);
     }
@@ -295,23 +284,18 @@ const Attendance = () => {
       if (!formData.date) { showToast('Date is required.', 'error'); return; }
       setSaving(true);
       try {
-        const res = await fetch(import.meta.env.VITE_BACKEND_IP + `${API}/attendance`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            worker_id: selectedWorker.user_id, 
-            date: formData.date,
-            day_of_week: formData.day_of_week,
-            time_in: formData.time_in || null,
-            time_out: formData.time_out || null,
-          }),
+        await api.post(`${API}/attendance`, {
+          worker_id: selectedWorker.user_id,
+          date: formData.date,
+          day_of_week: formData.day_of_week,
+          time_in: formData.time_in || null,
+          time_out: formData.time_out || null,
         });
-        if (!res.ok) throw new Error('Failed to add attendance.');
         await fetchAttendanceLog(selectedWorker.user_id);
-        
+
         showToast('Attendance added successfully!', 'success'); // Toast Success
         setView('log');
-      } catch (err) { showToast(err.message, 'error'); } // Toast Error
+      } catch (err) { showToast(err.message || 'Failed to add attendance.', 'error'); } // Toast Error
       finally { setSaving(false); }
     };
 
@@ -368,23 +352,18 @@ const Attendance = () => {
       if (!formData.date) { showToast('Date is required.', 'error'); return; }
       setSaving(true);
       try {
-        const res = await fetch(import.meta.env.VITE_BACKEND_IP + `${API}/attendance/${editingRecord.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            date: formData.date,
-            day_of_week: formData.day_of_week,
-            time_in: formData.time_in || null,
-            time_out: formData.time_out || null,
-          }),
+        await api.put(`${API}/attendance/${editingRecord.id}`, {
+          date: formData.date,
+          day_of_week: formData.day_of_week,
+          time_in: formData.time_in || null,
+          time_out: formData.time_out || null,
         });
-        if (!res.ok) throw new Error('Failed to update attendance.');
         await fetchAttendanceLog(selectedWorker.user_id);
-        
+
         showToast('Attendance updated successfully!', 'success'); // Toast Success
         setView('log');
         setEditingRecord(null);
-      } catch (err) { showToast(err.message, 'error'); } // Toast Error
+      } catch (err) { showToast(err.message || 'Failed to update attendance.', 'error'); } // Toast Error
       finally { setSaving(false); }
     };
 

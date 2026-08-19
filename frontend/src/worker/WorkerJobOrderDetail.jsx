@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { api } from '../api/client';
 
 const WorkerJobOrderDetail = ({ projectId, assignmentId, workerStatus, onBack }) => {
     const [currentStatus, setCurrentStatus] = useState(workerStatus || 'Assigned');
@@ -20,16 +21,10 @@ const WorkerJobOrderDetail = ({ projectId, assignmentId, workerStatus, onBack })
         const fetchProjectData = async () => {
             setLoading(true);
             try {
-                // FIX 1: Tinanggal ang localhost dito
-                const detailsRes = await fetch(import.meta.env.VITE_BACKEND_IP + `/api/job-orders/${projectId}`);
-                if (detailsRes.ok) setProjectDetails(await detailsRes.json());
-
-                // FIX 2: Tinanggal ang localhost dito
-                const assignRes = await fetch(import.meta.env.VITE_BACKEND_IP + `/api/job-orders/${projectId}/assignments`);
-                if (assignRes.ok) setAssignments(await assignRes.json());
-
+                setProjectDetails(await api.get(`/api/job-orders/${projectId}`));
+                setAssignments(await api.get(`/api/job-orders/${projectId}/assignments`));
             } catch (error) {
-                console.error("Error fetching data:", error);
+                console.error("Error fetching data:", error.message);
             } finally {
                 setLoading(false);
             }
@@ -58,38 +53,28 @@ const WorkerJobOrderDetail = ({ projectId, assignmentId, workerStatus, onBack })
         setShowConfirmModal(false); // Itago agad yung confirmation modal
         
         try {
-            // FIX 3: Tinanggal ang localhost dito sa PUT request
-            const response = await fetch(import.meta.env.VITE_BACKEND_IP + `/api/assignments/${assignmentId}/status`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status: 'For QA' })
-            });
+            await api.put(`/api/assignments/${assignmentId}/status`, { status: 'For QA' });
 
-            if (response.ok) {
-                setCurrentStatus('For QA');
-                
-                setAssignments(prevAssignments => 
-                    prevAssignments.map(assign => 
-                        assign.assignment_id === assignmentId 
-                            ? { ...assign, status: 'For QA' } 
-                            : assign
-                    )
-                );
-                
-                // Ipakita ang Success Toast imbes na alert()
-                showToast("Work submitted to Quality Checker!", "success");
-                
-                // Automatic babalik sa Job Order List after 1.5 seconds!
-                setTimeout(() => {
-                    onBack();
-                }, 1500);
+            setCurrentStatus('For QA');
 
-            } else {
-                showToast("Failed to update status.", "error");
-            }
+            setAssignments(prevAssignments =>
+                prevAssignments.map(assign =>
+                    assign.assignment_id === assignmentId
+                        ? { ...assign, status: 'For QA' }
+                        : assign
+                )
+            );
+
+            // Ipakita ang Success Toast imbes na alert()
+            showToast("Work submitted to Quality Checker!", "success");
+
+            // Automatic babalik sa Job Order List after 1.5 seconds!
+            setTimeout(() => {
+                onBack();
+            }, 1500);
         } catch (error) {
-            console.error("Error submitting work:", error);
-            showToast("May problema sa connection sa server.", "error");
+            console.error("Error submitting work:", error.message);
+            showToast(error.message || "May problema sa connection sa server.", "error");
         }
     };
 

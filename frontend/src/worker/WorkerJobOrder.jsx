@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useContext, useCallback } from 'react'; 
+import React, { useState, useEffect, useContext, useCallback } from 'react';
 import '../css/worker.css';
 import WorkerJobOrderDetail from './WorkerJobOrderDetail';
-import { UserContext } from '../App'; 
+import { UserContext } from '../App';
+import { api } from '../api/client';
 
 const WorkerJobOrder = () => {
     const { userID } = useContext(UserContext); 
@@ -16,26 +17,22 @@ const WorkerJobOrder = () => {
     const fetchMyTasks = useCallback(async () => {
         if (!userID) return;
         try {
-            // FIX: Tinanggal ang localhost at ginawang relative path
-            const response = await fetch(import.meta.env.VITE_BACKEND_IP + `/api/workers/${userID}/tasks`);
-            if (response.ok) {
-                const data = await response.json();
-                
-                const formattedTasks = data.map(task => ({
-                    id: `WB-${String(task.project_id).padStart(2, '0')}`,
-                    name: task.project_name,
-                    dueDate: task.due_date,
-                    priority: task.priority || 'Normal',
-                    status: task.status,
-                    assignmentId: task.assignment_id
-                }));
-                
-                setTasks(formattedTasks);
-            }
+            const data = await api.get(`/api/workers/${userID}/tasks`);
+
+            const formattedTasks = data.map(task => ({
+                id: `WB-${String(task.project_id).padStart(2, '0')}`,
+                name: task.project_name,
+                dueDate: task.due_date,
+                priority: task.priority || 'Normal',
+                status: task.status,
+                assignmentId: task.assignment_id
+            }));
+
+            setTasks(formattedTasks);
         } catch (error) {
-            console.error("Error fetching worker tasks:", error);
+            console.error("Error fetching worker tasks:", error.message);
         }
-    }, [userID]); 
+    }, [userID]);
 
     // Tatawagin niya ito kapag nag-load ang page (dahil sa userID)
     useEffect(() => {

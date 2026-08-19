@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom'; 
-import EditProjectForm from './EditProjectForm'; 
+import { useLocation } from 'react-router-dom';
+import EditProjectForm from './EditProjectForm';
 import '../css/admin.css';
 import ProjectDetails from './ProjectDetails';
+import { api } from '../api/client';
 
 const ProjectList = () => {
   const [projects, setProjects] = useState([]);
@@ -27,16 +28,15 @@ const ProjectList = () => {
   const fetchProjects = async () => {
     setLoading(true);
     try {
-      const response = await fetch(import.meta.env.VITE_BACKEND_IP + '/api/projects');
-      const result = await response.json();
-      
+      const result = await api.get('/api/projects');
+
       if (result.success) {
         setProjects(result.data);
       } else if (Array.isArray(result)) {
         setProjects(result);
       }
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error('Error fetching data:', error.message);
     } finally {
       setLoading(false);
     }
@@ -45,14 +45,11 @@ const ProjectList = () => {
   // --- NEW DELETE HANDLER FUNCTION ---
   const handleDelete = async (id, name) => {
     const confirmDelete = window.confirm(`Are you sure you want to delete project "WB${id} - ${name}"? This action cannot be undone.`);
-    
+
     if (!confirmDelete) return;
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_IP}/api/projects/${id}`, {
-        method: 'DELETE',
-      });
-      const result = await response.json();
+      const result = await api.delete(`/api/projects/${id}`);
 
       if (result.success) {
         alert('Project successfully deleted.');
@@ -61,8 +58,8 @@ const ProjectList = () => {
         alert(result.message || 'Failed to delete project.');
       }
     } catch (error) {
-      console.error('Error deleting project:', error);
-      alert('An error occurred while connecting to the server.');
+      console.error('Error deleting project:', error.message);
+      alert(error.message || 'An error occurred while connecting to the server.');
     }
   };
 

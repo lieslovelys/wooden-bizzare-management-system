@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import '../css/admin.css';
-import AddWorkerModal from './AddWorkerModal'; 
+import AddWorkerModal from './AddWorkerModal';
 import EditWorkerModal from './EditWorkerModal';
+import { api } from '../api/client';
 
 const WorkerList = () => {
   const [workers, setWorkers] = useState([]);
@@ -27,14 +28,12 @@ const WorkerList = () => {
 
   const fetchWorkers = async () => {
     try {
-      // FIX 1: Tinanggal ang localhost dito
-      const response = await fetch(import.meta.env.VITE_BACKEND_IP + '/workers');
-      const result = await response.json();
+      const result = await api.get('/api/workers');
       if (result.success) {
         setWorkers(result.data);
       }
     } catch (error) {
-      console.error('Error fetching workers:', error);
+      console.error('Error fetching workers:', error.message);
     } finally {
       setLoading(false);
     }
@@ -47,47 +46,35 @@ const WorkerList = () => {
   // --- Handlers para sa Modals ---
   const handleSaveNewWorker = async (newWorkerData) => {
     try {
-      // FIX 2: Tinanggal ang localhost dito sa POST request
-      const response = await fetch(import.meta.env.VITE_BACKEND_IP + '/workers', {
-        method: 'POST', 
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newWorkerData), 
-      });
-      const result = await response.json();
-      
+      const result = await api.post('/api/workers', newWorkerData);
+
       if (result.success) {
-        showToast("Worker successfully added to database! ", "success"); 
-        setIsAddModalOpen(false); 
-        fetchWorkers(); 
+        showToast("Worker successfully added to database! ", "success");
+        setIsAddModalOpen(false);
+        fetchWorkers();
       } else {
-        showToast("Failed to add worker: " + result.message, "error"); 
+        showToast("Failed to add worker: " + result.message, "error");
       }
     } catch (error) {
-      console.error('Error saving worker:', error);
-      showToast("An error occurred while saving.", "error"); 
+      console.error('Error saving worker:', error.message);
+      showToast(error.message || "An error occurred while saving.", "error");
     }
   };
 
   const handleUpdateWorker = async (updatedData) => {
     try {
-      // FIX 3: Tinanggal ang localhost dito sa PUT request
-      const response = await fetch(import.meta.env.VITE_BACKEND_IP + `/workers/${selectedWorker.user_id}`, {
-        method: 'PUT', 
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedData), 
-      });
-      const result = await response.json();
-      
+      const result = await api.put(`/api/workers/${selectedWorker.user_id}`, updatedData);
+
       if (result.success) {
-        showToast("Worker details updated successfully! ", "success"); 
+        showToast("Worker details updated successfully! ", "success");
         setIsEditModalOpen(false);
         fetchWorkers();
       } else {
-        showToast("Failed to update worker: " + result.message, "error"); 
+        showToast("Failed to update worker: " + result.message, "error");
       }
     } catch (error) {
-      console.error('Error updating worker:', error);
-      showToast("An error occurred while updating.", "error"); 
+      console.error('Error updating worker:', error.message);
+      showToast(error.message || "An error occurred while updating.", "error");
     }
   };
 

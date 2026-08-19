@@ -2,42 +2,37 @@ import bcrypt from 'bcrypt';
 import User from '../models/userModel.js';
 
 const createUser = async (username, password, first_name, middle_name, last_name, suffix, user_role) => {
-    try{
-        const passwordHash = await bcrypt.hash(password, 10);
-        const result = await User.createUser(username, passwordHash, first_name, middle_name, last_name, suffix, user_role);
-        console.log(result);
-        return result;
-    }
-    catch(e){
-        console.log(e);
-        return e;
-    }
+    const passwordHash = await bcrypt.hash(password, 10);
+    // Let any failure (duplicate username, invalid enum value, DB error) propagate — the caller
+    // (a route with no try/catch, or the centralized error handler) is responsible for turning
+    // it into a sanitized response. Never swallow it and return it as if it were data.
+    return await User.createUser(username, passwordHash, first_name, middle_name, last_name, suffix, user_role);
 };
 
+// Returns {err:true, message} for both "unknown user" and "wrong password" — deliberately the
+// same shape for both, so the response can never be used to enumerate valid usernames. Any
+// unexpected failure (DB down, etc.) is left to throw and propagate to the centralized error
+// handler rather than being caught and misrepresented as an auth failure.
 const login = async (username, password) => {
-    try{
-        const result = await User.getUserByUsername(username);
-        console.log(result);
-        const matched = await bcrypt.compare(password, result[0].user_password);
-        if(matched){
-            console.log('password matched');
-            return {err: false, user: result};
-        }
-        else{
-            console.log('wrong');
-            return {err: true, message:'Wrong Password'};
-        }
+    const result = await User.getUserByUsername(username);
+    if (result.length === 0) {
+        return { err: true, message: 'Invalid username or password' };
     }
-    catch(e){
-        return e;
+    const matched = await bcrypt.compare(password, result[0].user_password);
+    if (!matched) {
+        return { err: true, message: 'Invalid username or password' };
     }
+    return { err: false, user: result };
 };
 
 const deleteUser = async (req, res) => {
     try {
         const { id } = req.params;
+        if (String(req.session.user.user_id) === String(id)) {
+            return res.status(400).json({ success: false, message: 'You cannot delete your own account' });
+        }
         const result = await User.deleteUserById(id);
-        
+
         if (result.length > 0) {
             res.status(200).json({ success: true, message: 'User deleted successfully' });
         } else {
@@ -78,22 +73,16 @@ const addWorker = async (req, res) => {
         const { username, password, firstName, middleName, lastName, suffix, workerType, role, contactNumber, dailyRate, photo } = req.body;
 
         const passwordHash = await bcrypt.hash(password, 10);
-        
+
         // Kapag blangko yung suffix sa form, gagawin nating 'None' bilang default sa database
         const finalSuffix = suffix || 'None';
 
-        // Pinalitan natin yung blangkong string dati ng mismong middleName variable
-        const newUser = await User.createUser(username, passwordHash, firstName, middleName, lastName, finalSuffix, 'Worker');
+        // P1-5: the users row and worker_details row are created in one transaction (see
+        // userModel.createWorkerWithDetails) — a failure creating worker_details used to leave
+        // an orphaned login with no worker profile.
+        await User.createWorkerWithDetails(username, passwordHash, firstName, middleName, lastName, finalSuffix, workerType, role, contactNumber, dailyRate, photo);
 
-        if (newUser && newUser.length > 0) {
-            const userId = newUser[0].user_id; 
-            
-            await User.createWorkerDetails(userId, workerType, role, contactNumber, dailyRate, photo);
-
-            res.status(200).json({ success: true, message: 'Worker added successfully' });
-        } else {
-            res.status(400).json({ success: false, message: 'Failed to create user account' });
-        }
+        res.status(200).json({ success: true, message: 'Worker added successfully' });
     } catch (error) {
         console.error('Error adding worker:', error);
         res.status(500).json({ success: false, message: 'Server error while adding worker' });

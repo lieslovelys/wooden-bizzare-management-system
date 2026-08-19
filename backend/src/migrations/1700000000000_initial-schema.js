@@ -1,3 +1,17 @@
+// P1-10: folds the historical bootstrap (formerly backend/index.sql, now deleted) into the
+// migration chain, so `npm run migrate` alone builds a fresh database — no more separate
+// `psql -f backend/index.sql` step first. Timestamped earlier than every other migration so it
+// always runs first.
+//
+// This is a faithful transcription of the old index.sql, not a rewrite — schema, 3 enum types,
+// 9 tables with their FKs, the attendance indexes, and the 2 views, run as raw SQL rather than
+// translated into pgm.createTable/etc calls. node-pg-migrate's own tracking table
+// (`pgmigrations`) is what makes this safe to "re-run" going forward: once applied, `npm run
+// migrate` skips it automatically, unlike the old bare `psql -f index.sql`, which errored on a
+// second run because `CREATE TYPE` has no `IF NOT EXISTS` form in Postgres.
+export const shorthands = undefined;
+
+const UP_SQL = `
 CREATE SCHEMA IF NOT EXISTS "public";
 
 CREATE TYPE "suffix" AS ENUM('None', 'Sr.', 'Jr.', 'II', 'III', 'IV', 'V');
@@ -29,8 +43,8 @@ CREATE TABLE "worker_details" (
 
 CREATE TABLE "attendance" (
 	"id" bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "attendance_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 9223372036854775807 START WITH 1 CACHE 1),
-	"worker_id" bigint NOT NULL, -- Fixed: Removed individual UNIQUE
-	"date" date NOT NULL,         -- Fixed: Removed individual UNIQUE
+	"worker_id" bigint NOT NULL,
+	"date" date NOT NULL,
 	"day_of_week" varchar(15),
 	"time_in" time,
 	"time_out" time,
@@ -138,46 +152,68 @@ CREATE TABLE "project_variables" (
 	CONSTRAINT "project_variables_project_id_fkey" FOREIGN KEY ("project_id") REFERENCES "projects"("id") ON DELETE CASCADE
 );
 
--- Performance Indexes (Removed the redundant unique pkey indexes)
 CREATE INDEX "idx_attendance_date" ON "attendance" ("date");
 CREATE INDEX "idx_attendance_day_of_week" ON "attendance" ("day_of_week");
 CREATE INDEX "idx_attendance_status" ON "attendance" ("status");
 CREATE INDEX "idx_attendance_worker" ON "attendance" ("worker_id");
 
--- Views (Fixed: Removed TABLESPACE public)
 CREATE VIEW "attendance_summary" AS (
-	SELECT 
-		wd.detail_id AS worker_id, 
-		u.first_name, 
-		u.last_name, 
-		count(a.id) AS total_logs, 
-		count(CASE WHEN a.status::text = 'Present'::text THEN 1 END) AS days_present, 
-		count(CASE WHEN a.status::text = 'Late'::text THEN 1 END) AS days_late, 
-		count(CASE WHEN a.status::text = 'Absent'::text THEN 1 END) AS days_absent, 
-		count(CASE WHEN a.status::text = 'Half-day'::text THEN 1 END) AS days_halfday, 
-		count(CASE WHEN a.time_out IS NOT NULL THEN 1 END) AS days_complete, 
-		COALESCE(sum(a.late_minutes), 0::bigint) AS total_late_minutes, 
-		COALESCE(sum(a.overtime_minutes), 0::bigint) AS total_overtime_minutes, 
-		min(a.date) AS first_log, 
-		max(a.date) AS last_log 
-	FROM worker_details wd 
-	JOIN users u ON u.user_id = wd.user_id 
-	LEFT JOIN attendance a ON a.worker_id = wd.detail_id 
+	SELECT
+		wd.detail_id AS worker_id,
+		u.first_name,
+		u.last_name,
+		count(a.id) AS total_logs,
+		count(CASE WHEN a.status::text = 'Present'::text THEN 1 END) AS days_present,
+		count(CASE WHEN a.status::text = 'Late'::text THEN 1 END) AS days_late,
+		count(CASE WHEN a.status::text = 'Absent'::text THEN 1 END) AS days_absent,
+		count(CASE WHEN a.status::text = 'Half-day'::text THEN 1 END) AS days_halfday,
+		count(CASE WHEN a.time_out IS NOT NULL THEN 1 END) AS days_complete,
+		COALESCE(sum(a.late_minutes), 0::bigint) AS total_late_minutes,
+		COALESCE(sum(a.overtime_minutes), 0::bigint) AS total_overtime_minutes,
+		min(a.date) AS first_log,
+		max(a.date) AS last_log
+	FROM worker_details wd
+	JOIN users u ON u.user_id = wd.user_id
+	LEFT JOIN attendance a ON a.worker_id = wd.detail_id
 	GROUP BY wd.detail_id, u.first_name, u.last_name
 );
 
 CREATE VIEW "project_profit_summary" AS (
-	SELECT 
-		p.id AS project_id, 
-		p.project_name, 
-		p.client_name, 
-		pp.client_payment, 
-		pp.worker_wages, 
-		pp.materials_cost, 
-		pp.other_expenses, 
-		pp.total_expenses, 
-		pp.net_profit, 
-		pp.updated_at 
-	FROM projects p 
+	SELECT
+		p.id AS project_id,
+		p.project_name,
+		p.client_name,
+		pp.client_payment,
+		pp.worker_wages,
+		pp.materials_cost,
+		pp.other_expenses,
+		pp.total_expenses,
+		pp.net_profit,
+		pp.updated_at
+	FROM projects p
 	JOIN project_profit pp ON pp.project_id = p.id
 );
+`;
+
+export const up = (pgm) => {
+  pgm.sql(UP_SQL);
+};
+
+// Reverting migration zero means "back to an empty database." Originally written as
+// `DROP SCHEMA public CASCADE; CREATE SCHEMA public;` — simpler, but wrong: it also destroys
+// node-pg-migrate's own `pgmigrations` bookkeeping table, which the tool then immediately
+// fails trying to write to right after running this `down` (confirmed by actually running it
+// against a scratch database). Explicit drops instead, leaving the schema itself — and
+// `pgmigrations`, a sibling object in it — untouched.
+export const down = (pgm) => {
+  pgm.sql(`
+DROP VIEW IF EXISTS "project_profit_summary";
+DROP VIEW IF EXISTS "attendance_summary";
+DROP TABLE IF EXISTS "project_variables", "project_expense_items", "project_profit",
+  "notifications", "job_assignments", "item_variants", "inventory_items", "projects",
+  "attendance", "worker_details", "users" CASCADE;
+DROP TYPE IF EXISTS "user_role";
+DROP TYPE IF EXISTS "task_status";
+DROP TYPE IF EXISTS "suffix";
+`);
+};

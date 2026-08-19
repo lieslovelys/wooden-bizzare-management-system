@@ -14,10 +14,9 @@ import { createNotification } from '../models/adminNotifModel.js';
 
 const createProject = async (req, res) => {
   try {
-    console.log("Received project data:", req.body);
     const projectId = await createProjectWithVariables(req.body);
-    console.log("Project created with ID:", projectId);
-    
+    console.log("Project created:", projectId);
+
     try {
       await createNotification(
           'project', 

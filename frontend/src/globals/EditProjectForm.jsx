@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import '../css/admin.css';
+import { api } from '../api/client';
 
 const EditProjectForm = ({ projectId, onCancel, onSuccess }) => {
   const [loading, setLoading] = useState(true);
@@ -22,10 +23,8 @@ const EditProjectForm = ({ projectId, onCancel, onSuccess }) => {
   useEffect(() => {
     const fetchProjectData = async () => {
       try {
-        // FIX 1: Tinanggal ang localhost dito
-        const response = await fetch(import.meta.env.VITE_BACKEND_IP + `/api/projects/${projectId}`);
-        const result = await response.json();
-        
+        const result = await api.get(`/api/projects/${projectId}`);
+
         if (result.success) {
           const p = result.data;
           
@@ -49,7 +48,7 @@ const EditProjectForm = ({ projectId, onCancel, onSuccess }) => {
           }
         }
       } catch (error) {
-        console.error('Error fetching project:', error);
+        console.error('Error fetching project:', error.message);
       } finally {
         setLoading(false);
       }
@@ -106,25 +105,15 @@ const EditProjectForm = ({ projectId, onCancel, onSuccess }) => {
     const payload = { ...formData, projectDetails };
 
     try {
-      // FIX 2: Tinanggal din ang localhost dito sa PUT request
-      const response = await fetch(import.meta.env.VITE_BACKEND_IP + `/api/projects/${projectId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-
-      if (response.ok) {
-        showToast('Project successfully updated!', 'success');
-        // Maghihintay ng 1.5 seconds bago bumalik para mabasa ang message
-        setTimeout(() => {
-            onSuccess(); 
-        }, 1500);
-      } else {
-        showToast('Failed to update project.', 'error');
-      }
+      await api.put(`/api/projects/${projectId}`, payload);
+      showToast('Project successfully updated!', 'success');
+      // Maghihintay ng 1.5 seconds bago bumalik para mabasa ang message
+      setTimeout(() => {
+          onSuccess();
+      }, 1500);
     } catch (error) {
-      console.error('Update error:', error);
-      showToast('Server error. Please try again.', 'error');
+      console.error('Update error:', error.message);
+      showToast(error.message || 'Server error. Please try again.', 'error');
     }
   };
 
