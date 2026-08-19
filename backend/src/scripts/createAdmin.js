@@ -9,7 +9,7 @@
 // db connection and user-creation logic.
 
 import 'dotenv/config';
-import User from '../controllers/userController.js';
+import User from '../services/userService.js';
 
 async function main() {
     const [, , username, password, firstName = 'Admin', lastName = 'User'] = process.argv;

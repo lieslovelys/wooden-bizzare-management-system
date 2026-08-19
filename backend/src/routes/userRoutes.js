@@ -1,4 +1,4 @@
-import User from '../controllers/userController.js';
+import User from '../services/userService.js';
 import express from "express";
 import rateLimit from 'express-rate-limit';
 import { requireRole } from '../middleware/auth.js';
@@ -33,31 +33,27 @@ router.post('/signup', requireRole('Admin'), async (req, res) => {
 
 router.post('/login', loginLimiter, async (req, res) => {
     console.log('login attempt:', req.body.username);
-    const result = await User.login(req.body.username, req.body.password);
-    if (result.err !== true) {
-        const user = result.user[0];
-        req.session.user = {
-            user_id: user.user_id,
-            username: user.username,
-            user_role: user.user_role,
-            first_name: user.first_name,
-            middle_name: user.middle_name,
-            last_name: user.last_name,
-            suffix: user.suffix
-        };
+    // No try/catch: an invalid username/password throws an AppError(401, ...) from userService,
+    // which propagates to the centralized error handler and renders identically to the old
+    // inline 401 below — see userService.login for why both failure modes share one message.
+    const user = await User.login(req.body.username, req.body.password);
+    req.session.user = {
+        user_id: user.user_id,
+        username: user.username,
+        user_role: user.user_role,
+        first_name: user.first_name,
+        middle_name: user.middle_name,
+        last_name: user.last_name,
+        suffix: user.suffix
+    };
 
-        req.session.save(err => {
-            if (err) {
-                console.error('Session save failed:', err.message);
-                return res.status(500).json({ error: 'Failed to establish session' });
-            }
-            res.status(200).send({ err: false, message: 'Login Successful' });
-        });
-    } else {
-        // Same status and message whether the username doesn't exist or the password was
-        // wrong — see userController.login for why.
-        res.status(401).json({ error: 'Invalid username or password' });
-    }
+    req.session.save(err => {
+        if (err) {
+            console.error('Session save failed:', err.message);
+            return res.status(500).json({ error: 'Failed to establish session' });
+        }
+        res.status(200).send({ err: false, message: 'Login Successful' });
+    });
 });
 
 router.get('/session-user', (req, res) => {
@@ -91,10 +87,33 @@ router.get('/logout', (req, res) => {
 
 // --- BAGONG ROUTE PARA SA ACCOUNT LIST ---
 const ADMIN_ONLY = requireRole('Admin');
-router.get('/users', ADMIN_ONLY, User.getUsers);
-router.delete('/users/:id', ADMIN_ONLY, User.deleteUser);
-router.get('/workers', ADMIN_ONLY, User.getWorkers);
-router.post('/workers', ADMIN_ONLY, User.addWorker);
-router.put('/workers/:id', ADMIN_ONLY, User.updateWorker);
+
+router.get('/users', ADMIN_ONLY, async (req, res) => {
+    const users = await User.getUsers();
+    res.status(200).json({ success: true, data: users });
+});
+
+router.delete('/users/:id', ADMIN_ONLY, async (req, res) => {
+    await User.deleteUser(req.params.id, req.session.user.user_id);
+    res.status(200).json({ success: true, message: 'User deleted successfully' });
+});
+
+router.get('/workers', ADMIN_ONLY, async (req, res) => {
+    const workers = await User.getWorkers();
+    res.status(200).json({ success: true, data: workers });
+});
+
+router.post('/workers', ADMIN_ONLY, async (req, res) => {
+    // Dinagdag natin ang middleName at suffix dito
+    const { username, password, firstName, middleName, lastName, suffix, workerType, role, contactNumber, dailyRate, photo } = req.body;
+    await User.addWorker(username, password, firstName, middleName, lastName, suffix, workerType, role, contactNumber, dailyRate, photo);
+    res.status(200).json({ success: true, message: 'Worker added successfully' });
+});
+
+router.put('/workers/:id', ADMIN_ONLY, async (req, res) => {
+    const { workerType, role, contactNumber, dailyRate, photo } = req.body;
+    await User.updateWorker(req.params.id, workerType, role, contactNumber, dailyRate, photo);
+    res.status(200).json({ success: true, message: 'Worker details updated successfully' });
+});
 
 export default router;
