@@ -2,14 +2,12 @@ import User from '../services/userService.js';
 import express from "express";
 import rateLimit from 'express-rate-limit';
 import { requireRole } from '../middleware/auth.js';
+import { parsePagination, buildMeta, MAX_LIMIT } from '../utils/pagination.js';
+import { validate } from '../middleware/validate.js';
+import { idParams } from '../schemas/common.js';
+import { signupBody, workerBody, workerUpdateBody } from '../schemas/userSchemas.js';
 
 const router = express.Router();
-
-// Must match the `user_role` Postgres enum exactly (backend/index.sql). 'Admin' is included —
-// this is also the real admin account-creation screen (admin/CreateAccount.jsx), not just a
-// dev endpoint, so the fix here is a server-side whitelist + admin-only auth, not blocking
-// any particular role.
-const ALLOWED_ROLES = ['Admin', 'Production Manager', 'Inventory Staff', 'Quality Checker', 'Worker'];
 
 const loginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
@@ -19,11 +17,8 @@ const loginLimiter = rateLimit({
     message: { error: 'Too many login attempts, please try again later.' }
 });
 
-router.post('/signup', requireRole('Admin'), async (req, res) => {
+router.post('/signup', requireRole('Admin'), validate({ body: signupBody }), async (req, res) => {
     const b = req.body;
-    if (!ALLOWED_ROLES.includes(b.userRole)) {
-        return res.status(400).json({ error: 'Invalid role' });
-    }
     // No try/catch: a failure here (duplicate username, invalid suffix, DB error) propagates to
     // the centralized error handler, which logs it server-side and returns a sanitized message —
     // it no longer echoes raw pg error fields back to the client.
@@ -88,29 +83,35 @@ router.get('/logout', (req, res) => {
 // --- BAGONG ROUTE PARA SA ACCOUNT LIST ---
 const ADMIN_ONLY = requireRole('Admin');
 
+// P1-3: capped-only (account list is headcount-bounded, no paging UI) — defaults to MAX_LIMIT
+// rather than the smaller DEFAULT_LIMIT so a client that sends no ?limit= keeps seeing
+// everything up to the hard cap, not a silently truncated 25-row page. See
+// ARCHITECTURE_REVIEW.md P1-3.
 router.get('/users', ADMIN_ONLY, async (req, res) => {
-    const users = await User.getUsers();
-    res.status(200).json({ success: true, data: users });
+    const pagination = parsePagination(req.query, { defaultLimit: MAX_LIMIT });
+    const { rows, total } = await User.getUsers(pagination);
+    res.status(200).json({ success: true, data: rows, meta: buildMeta({ ...pagination, total }) });
 });
 
-router.delete('/users/:id', ADMIN_ONLY, async (req, res) => {
+router.delete('/users/:id', ADMIN_ONLY, validate({ params: idParams() }), async (req, res) => {
     await User.deleteUser(req.params.id, req.session.user.user_id);
     res.status(200).json({ success: true, message: 'User deleted successfully' });
 });
 
 router.get('/workers', ADMIN_ONLY, async (req, res) => {
-    const workers = await User.getWorkers();
-    res.status(200).json({ success: true, data: workers });
+    const pagination = parsePagination(req.query, { defaultLimit: MAX_LIMIT });
+    const { rows, total } = await User.getWorkers(pagination);
+    res.status(200).json({ success: true, data: rows, meta: buildMeta({ ...pagination, total }) });
 });
 
-router.post('/workers', ADMIN_ONLY, async (req, res) => {
+router.post('/workers', ADMIN_ONLY, validate({ body: workerBody }), async (req, res) => {
     // Dinagdag natin ang middleName at suffix dito
     const { username, password, firstName, middleName, lastName, suffix, workerType, role, contactNumber, dailyRate, photo } = req.body;
     await User.addWorker(username, password, firstName, middleName, lastName, suffix, workerType, role, contactNumber, dailyRate, photo);
     res.status(200).json({ success: true, message: 'Worker added successfully' });
 });
 
-router.put('/workers/:id', ADMIN_ONLY, async (req, res) => {
+router.put('/workers/:id', ADMIN_ONLY, validate({ params: idParams(), body: workerUpdateBody }), async (req, res) => {
     const { workerType, role, contactNumber, dailyRate, photo } = req.body;
     await User.updateWorker(req.params.id, workerType, role, contactNumber, dailyRate, photo);
     res.status(200).json({ success: true, message: 'Worker details updated successfully' });
