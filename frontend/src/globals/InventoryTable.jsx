@@ -1,15 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import '../css/inventory.css'; 
+import '../css/inventory.css';
+import { api } from '../api/client';
+import { useToast } from '../context/ToastContext';
+
+const ADJUST_REASONS = ['Received', 'Used', 'Damaged', 'Correction'];
 
 const InventoryTable = () => {
-    // FIX 1: Pinalitan ang initialData ng empty array [] para hindi mag-error kapag walang laman
-    const [items, setItems] = useState(() => {
-        const savedData = localStorage.getItem('my_inventory_data');
-        return savedData ? JSON.parse(savedData) : [];
-    });
+    // P1-11: inventory now persists server-side via /api/inventory instead of localStorage —
+    // see ARCHITECTURE_REVIEW.md P1-11. All three roles that mount this screen (Admin,
+    // Production Manager, Inventory Staff) now see the same data.
+    const [items, setItems] = useState([]);
+    const [loading, setLoading] = useState(true);
 
     const [expandedRow, setExpandedRow] = useState(null);
     const [activeFilter, setActiveFilter] = useState('All');
+
+    // Which adjustment reason is currently selected per variant (+1/-1 both use it) — keyed by
+    // variant id so each row's dropdown is independent.
+    const [reasonByVariant, setReasonByVariant] = useState({});
 
     // States for Modal
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -19,51 +27,74 @@ const InventoryTable = () => {
         name: '',
         category: 'Raw Material',
         unit: '',
-        variants: [{ id: Date.now(), name: '' }]
+        variants: []
     });
 
+    const showToast = useToast();
+
+    const fetchItems = async () => {
+        const result = await api.get('/api/inventory');
+        if (result.success) setItems(result.data);
+    };
+
     useEffect(() => {
-        localStorage.setItem('my_inventory_data', JSON.stringify(items));
-    }, [items]);
+        let ignore = false;
+        (async () => {
+            try {
+                const result = await api.get('/api/inventory');
+                if (!ignore && result.success) setItems(result.data);
+            } catch (error) {
+                if (!ignore) showToast(error.message || 'Failed to load inventory.', 'error');
+            } finally {
+                if (!ignore) setLoading(false);
+            }
+        })();
+        return () => { ignore = true; };
+        // showToast (from useToast()) is a stable reference — see ToastProvider.jsx's
+        // useCallback — so including it here doesn't cause a re-fetch loop.
+    }, [showToast]);
 
     const toggleRow = (id) => {
         setExpandedRow(expandedRow === id ? null : id);
     };
 
-    const handleDelete = (e, id) => {
+    const getReason = (variantId) => reasonByVariant[variantId] || ADJUST_REASONS[0];
+    const handleReasonChange = (variantId, reason) => {
+        setReasonByVariant(prev => ({ ...prev, [variantId]: reason }));
+    };
+
+    const handleDelete = async (e, id) => {
         e.stopPropagation();
-        if (window.confirm("Are you sure you want to delete this item?")) {
-            setItems(items.filter(item => item.id !== id));
+        if (!window.confirm("Are you sure you want to delete this item?")) return;
+        try {
+            await api.delete(`/api/inventory/${id}`);
+            showToast('Item deleted.', 'success');
+            fetchItems();
+        } catch (error) {
+            showToast(error.message || 'Failed to delete item.', 'error');
         }
     };
 
-    const handleAdjustStock = (e, itemId, variantId, amount) => {
-        e.stopPropagation(); 
-
-        setItems(prevItems => prevItems.map(item => {
-            if (item.id === itemId) {
-                const updatedVariants = item.variants.map(v => {
-                    if (v.id === variantId) {
-                        const newStock = Math.max(0, (v.current || 0) + amount);
-                        return { ...v, current: newStock };
-                    }
-                    return v;
-                });
-
-                const newTotalStock = updatedVariants.reduce((sum, v) => sum + (v.current || 0), 0);
-                const isLow = updatedVariants.some(v => v.current <= v.min);
-                const newStatus = isLow ? "Low" : "Good";
-
-                return { ...item, variants: updatedVariants, total_stock: newTotalStock, status: newStatus };
-            }
-            return item;
-        }));
+    const handleAdjustStock = async (e, itemId, variantId, amount) => {
+        e.stopPropagation();
+        try {
+            await api.post(`/api/inventory/variants/${variantId}/adjust`, {
+                delta: amount,
+                reason: getReason(variantId),
+            });
+            fetchItems();
+        } catch (error) {
+            showToast(error.message || 'Failed to adjust stock.', 'error');
+        }
     };
 
     // --- MODAL FUNCTIONS ---
     const openAddModal = () => {
         setModalMode('add');
-        setFormData({ name: '', category: 'Raw Material', unit: '', variants: [{ id: Date.now(), name: '' }] });
+        setFormData({
+            name: '', category: 'Raw Material', unit: '',
+            variants: [{ id: `new-${Date.now()}`, name: '', minStock: 5 }]
+        });
         setIsModalOpen(true);
     };
 
@@ -75,7 +106,7 @@ const InventoryTable = () => {
             name: item.name,
             category: item.category,
             unit: item.unit,
-            variants: item.variants ? item.variants.map(v => ({ id: v.id, name: v.name })) : []
+            variants: item.variants ? item.variants.map(v => ({ id: v.id, name: v.name, minStock: v.min })) : []
         });
         setIsModalOpen(true);
     };
@@ -92,10 +123,17 @@ const InventoryTable = () => {
         }));
     };
 
+    const handleVariantMinStockChange = (id, newMin) => {
+        setFormData(prev => ({
+            ...prev,
+            variants: prev.variants.map(v => v.id === id ? { ...v, minStock: Number(newMin) } : v)
+        }));
+    };
+
     const addVariantField = () => {
         setFormData(prev => ({
             ...prev,
-            variants: [...prev.variants, { id: Date.now(), name: '' }]
+            variants: [...prev.variants, { id: `new-${Date.now()}`, name: '', minStock: 5 }]
         }));
     };
 
@@ -106,51 +144,40 @@ const InventoryTable = () => {
         }));
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        
-        if (modalMode === 'add') {
-            const newItem = {
-                id: Date.now(),
-                ...formData,
-                total_stock: 0,
-                status: "Low",
-                variants: formData.variants.map(v => ({ ...v, current: 0, min: 5 })) 
-            };
-            setItems([...items, newItem]);
-        } else {
-            setItems(items.map(item => {
-                if (item.id === editingItem.id) {
-                    const updatedVariants = formData.variants.map(v => {
-                        const originalVariant = item.variants.find(orig => orig.id === v.id);
-                        return {
-                            ...v,
-                            current: originalVariant && originalVariant.current !== undefined ? originalVariant.current : 0,
-                            min: originalVariant && originalVariant.min !== undefined ? originalVariant.min : 5 
-                        };
-                    });
 
-                    const newTotalStock = updatedVariants.reduce((sum, v) => sum + (v.current || 0), 0);
-                    const isLow = updatedVariants.some(v => v.current <= v.min);
-                    const newStatus = isLow ? "Low" : "Good";
+        const payload = {
+            name: formData.name,
+            category: formData.category,
+            unit: formData.unit,
+            variants: formData.variants
+                .filter(v => v.name.trim() !== '')
+                .map(v => ({
+                    // A server-assigned id is a number; anything added client-side in this modal
+                    // (add mode, or a new row added while editing) carries a string "new-…" id —
+                    // omit it so the backend treats it as a new variant rather than an update.
+                    id: typeof v.id === 'number' ? v.id : undefined,
+                    name: v.name,
+                    minStock: v.minStock,
+                })),
+        };
 
-                    return { 
-                        ...item, 
-                        name: formData.name, 
-                        category: formData.category, 
-                        unit: formData.unit, 
-                        variants: updatedVariants,
-                        total_stock: newTotalStock,
-                        status: newStatus
-                    };
-                }
-                return item;
-            }));
+        try {
+            if (modalMode === 'add') {
+                await api.post('/api/inventory', payload);
+                showToast('Item added.', 'success');
+            } else {
+                await api.put(`/api/inventory/${editingItem.id}`, payload);
+                showToast('Item updated.', 'success');
+            }
+            closeModal();
+            fetchItems();
+        } catch (error) {
+            showToast(error.message || 'Failed to save item.', 'error');
         }
-        closeModal();
     };
 
-    // FIX 2: Nilagyan ng (items || []) para kahit ma-corrupt ang data, hindi magka-crash
     const filteredItems = (items || []).filter(item => {
         if (activeFilter === 'All') return true;
         if (activeFilter === 'Raw materials') return item.category === 'Raw Material';
@@ -164,7 +191,7 @@ const InventoryTable = () => {
             <div className="inventory-header">
                 <div className="filters">
                     {['All', 'Raw materials', 'Tools', 'Consumables'].map(filterName => (
-                        <button 
+                        <button
                             key={filterName}
                             className={`filter-btn ${activeFilter === filterName ? 'active' : ''}`}
                             onClick={() => setActiveFilter(filterName)}
@@ -176,6 +203,9 @@ const InventoryTable = () => {
                 <button className="add-btn" onClick={openAddModal}>+ Add Item</button>
             </div>
 
+            {loading ? (
+                <p style={{ textAlign: 'center', padding: '20px' }}>Loading inventory...</p>
+            ) : (
             <div className="table-wrapper">
                 <table className="inventory-table">
                     <thead>
@@ -210,7 +240,7 @@ const InventoryTable = () => {
                                             </td>
                                             <td className="stock-cell"><strong>{item.total_stock}</strong> {item.unit}</td>
                                             <td><span className={`status-pill ${item.status?.toLowerCase()}`}>{item.status}</span></td>
-                                            
+
                                             <td className="actions-cell">
                                                 <button className="action-btn edit-btn" onClick={(e) => openEditModal(e, item)} title="Edit">
                                                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#bfa15f" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -241,22 +271,32 @@ const InventoryTable = () => {
                                                             return (
                                                                 <div className="variant-line" key={variant.id}>
                                                                     <span className="var-name">{variant.name}</span>
-                                                                    
+
                                                                     <div className="progress-bar-container">
-                                                                        <div 
-                                                                            className={`progress-bar ${isLow ? 'low' : 'good'}`} 
+                                                                        <div
+                                                                            className={`progress-bar ${isLow ? 'low' : 'good'}`}
                                                                             style={{ width: `${barWidth}%` }}
                                                                         ></div>
                                                                     </div>
-                                                                    
+
                                                                     <span className="var-stock">
                                                                         <strong style={{ color: isLow ? '#ff0000' : '#4a3b00' }}>
                                                                             {variant.current || 0}
-                                                                        </strong> 
+                                                                        </strong>
                                                                         <span className="min-text"> / min {variant.min}</span>
                                                                     </span>
-                                                                    
+
                                                                     <div className="var-adjusters">
+                                                                        <select
+                                                                            className="reason-select"
+                                                                            value={getReason(variant.id)}
+                                                                            onChange={(e) => handleReasonChange(variant.id, e.target.value)}
+                                                                            title="Reason for adjustment"
+                                                                        >
+                                                                            {ADJUST_REASONS.map(r => (
+                                                                                <option key={r} value={r}>{r}</option>
+                                                                            ))}
+                                                                        </select>
                                                                         <button className="adjust-btn" onClick={(e) => handleAdjustStock(e, item.id, variant.id, 1)}>+1</button>
                                                                         <button className="adjust-btn" onClick={(e) => handleAdjustStock(e, item.id, variant.id, -1)}>-1</button>
                                                                     </div>
@@ -274,13 +314,14 @@ const InventoryTable = () => {
                     </tbody>
                 </table>
             </div>
+            )}
 
             {/* MODAL */}
             {isModalOpen && (
                 <div className="modal-overlay">
                     <div className="modal-content">
                         <h2 className="modal-title">{modalMode === 'add' ? 'Add new item' : 'Edit item'}</h2>
-                        
+
                         <form onSubmit={handleSubmit} className="modal-form">
                             <div className="form-group">
                                 <label>Item name</label>
@@ -298,15 +339,15 @@ const InventoryTable = () => {
 
                             <div className="form-group">
                                 <label>Unit of measurement</label>
-                                <input 
-                                    type="text" 
-                                    placeholder="e.g. pcs, liters, kg" 
-                                    value={formData.unit} 
+                                <input
+                                    type="text"
+                                    placeholder="e.g. pcs, liters, kg"
+                                    value={formData.unit}
                                     onChange={(e) => {
                                         const noNumbers = e.target.value.replace(/[0-9]/g, '');
                                         setFormData({...formData, unit: noNumbers});
-                                    }} 
-                                    required 
+                                    }}
+                                    required
                                 />
                             </div>
 
@@ -315,6 +356,14 @@ const InventoryTable = () => {
                                 {formData.variants.map((variant) => (
                                     <div className="variant-input-row" key={variant.id}>
                                         <input type="text" placeholder="Label (e.g. 2x4)" value={variant.name} onChange={(e) => handleVariantChange(variant.id, e.target.value)} required />
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            placeholder="Min stock"
+                                            className="variant-min-input"
+                                            value={variant.minStock}
+                                            onChange={(e) => handleVariantMinStockChange(variant.id, e.target.value)}
+                                        />
                                         <button type="button" className="remove-variant-btn" onClick={() => removeVariantField(variant.id)}>X</button>
                                     </div>
                                 ))}
