@@ -371,18 +371,21 @@ Stated as product facts — what a user experiences — not as code defects.
   `project_profit.recorded_by` is the same story for financial entries.
 - **Project status has two sources of truth**: a stored `status` column, and a value recomputed on
   read via a `CASE ... EXISTS` query. The two can disagree.
-- **The monthly-profit figure has no year predicate** — it matches "this calendar month" in any
-  year, so the dashboard's "Monthly Profit" figure is not actually scoped to the current month of
-  the current year.
+- ~~**The monthly-profit figure has no year predicate**~~ — **Resolved**: both
+  `adminDashboardModel.js` and `profitModel.js`'s monthly-profit queries now carry a year predicate
+  alongside the month one, and compare against `AT TIME ZONE 'Asia/Manila'` rather than the
+  server's local time.
 - **Segregation of duties**: both Admin and Production Manager can approve/reject QA on their own
   team's work, despite a dedicated Quality Checker role existing.
 - **Dates entered in the shop's local timezone are corrupted on edit.** The project-edit form
   round-trips a date through JavaScript's UTC conversion before display; in UTC+8, an edited
   project's dates can silently shift by a day when re-saved.
-- **A specific, currently-broken data path**: the Quality Checker's notification screen sends
-  delete/clear-all/mark-read requests to the wrong host (missing the backend base URL). These
-  requests appear to succeed in the UI but the underlying data is never changed — a Quality
-  Checker who "clears" their notifications will see them reappear.
+- ~~**A specific, currently-broken data path**: the Quality Checker's notification screen sends
+  delete/clear-all/mark-read requests to the wrong host~~ — **Resolved (ARCHITECTURE_REVIEW.md
+  P2)**: the three per-role notification screens (`AdminNotification`, `PMNotification`,
+  `QualityCheckerNotification`) are now one shared `globals/NotificationList.jsx`, which goes
+  through the shared `api/client.js` request wrapper like every other screen — there's no bare
+  `fetch` left to have the wrong host baked into.
 
 ---
 
@@ -397,7 +400,7 @@ Stated as product facts — what a user experiences — not as code defects.
 | FR-3 | Inventory is a real, server-persisted module: items and variants via API, stock increment/decrement with an audit trail (who, when, how much, why), low-stock alerting against each variant's configurable `min_stock` **(✅ done, P1-11)**, and a record of materials consumed per project **(still open)**. |
 | FR-4 | Notifications carry per-user read state (not a single shared flag), are correctly filtered by the recipient's role, and update without a manual page reload (polling or push). |
 | FR-5 | Attendance status, late minutes, and overtime minutes are computed server-side from recorded time-in/time-out against the shop's defined working hours, not left at a default. |
-| FR-6 | Assignment status changes follow an enforced state machine (e.g. `Assigned → For QA → Approved`, `For QA → Repair → Assigned`) rather than accepting an arbitrary string; QA rejections require a reason. |
+| FR-6 | Assignment status changes follow an enforced state machine (e.g. `Assigned → For QA → Approved`, `For QA → Repair → Assigned`) rather than accepting an arbitrary string **(✅ done — `jobOrderService.updateQAStatus`'s `WORKER_SUBMITTABLE_FROM` allow-list and role-scoped target statuses reject an invalid transition with a 409)**; QA rejections require a reason **(still open — this is really FR-7's audit trail, since there's nowhere to record the reason without `qa_notes` being written)**. |
 | FR-7 | Every QA decision and every financial entry records who made it and when (audit trail on `job_assignments` and `project_profit`, actually populated). |
 | FR-8 | Project status is a single source of truth (the stored column, updated transactionally alongside the events that change it — not recomputed differently on read). |
 | FR-9 | Workers can see the full lifecycle of their own tasks, including those currently `For QA` or already `Approved`, and receive notification of QA outcomes including rejection reasons. |

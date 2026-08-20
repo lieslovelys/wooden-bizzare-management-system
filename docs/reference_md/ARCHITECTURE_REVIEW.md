@@ -266,13 +266,15 @@ markup since the app has no shared table component to hang paging state off of (
 screens split between real `<table>`s and per-screen CSS-grid div "tables", each with its own
 class-prefix convention).
 
-**Deliberately out of scope:** cursor-based pagination (plain `LIMIT`/`OFFSET` is correct and
-sufficient at this data scale); a typeahead for the two dropdown feeds
+**Deliberately out of scope for this pass:** cursor-based pagination (plain `LIMIT`/`OFFSET` is
+correct and sufficient at this data scale); a typeahead for the two dropdown feeds
 (`admin/Profit.jsx`'s project selector, `globals/JobOrderDetails.jsx`'s worker selector) that now
 explicitly request the 200-row cap rather than inheriting the smaller paged default — past that
-count they'd need one, which isn't this pass; the non-list response envelopes (`{message, body}`
-on signup, `{err, message}` on login) and `GET /logout` → `POST` (backend-contract slice); the
-`notifications` table's shared-`is_read` and ignored-`target_role` defects (PRD B.6, untouched).
+count they'd need one, which isn't this pass; the `notifications` table's shared-`is_read` and
+ignored-`target_role` defects (PRD B.6, still untouched). The non-list response envelopes
+(`{message, body}` on signup, `{err, message}` on login) and `GET /logout` → `POST` were also out
+of scope here, but have since been resolved by later commits — see the P2 "Inconsistent API
+contract" bullet below.
 
 ### P1-4. Missing indexes on nearly every foreign key and filter column
 **Status: ✅ Resolved** — indexes added via `migrations/…_add-indexes.js`; the `ILIKE` cast
@@ -486,16 +488,18 @@ server involvement today.
 
 Not urgent, but each of these increases the cost of every future change until addressed.
 
-- **No input validation library.** Request bodies are trusted almost everywhere; invalid enum
-  values and non-numeric `:id` path params currently surface as opaque 500s instead of 400s.
-  Introduce `zod` or `express-validator` and validate at the route boundary.
-- **Inconsistent API contract.** Four different response envelope shapes (`{success, data}`, bare
-  arrays, `{err, message}`, `{message, body}`) still stand as the actual bytes on the wire for
-  *non-list* endpoints — not addressed by this pass or the routes/services refactor below, since
-  fixing it means changing every response shape's consumer, a materially bigger diff than either.
-  ~~bare-array list endpoints~~ — **the list half is resolved by P1-3**: all 15 list endpoints
-  (previously a mix of `{success,data}` and 9 bare arrays) now answer one shape,
-  `{success, data, meta}` — see that section. `GET /logout` still mutates state.
+- ~~**No input validation library.**~~ **Resolved**: `zod` request-body/query schemas
+  (`backend/src/schemas/`, 8 modules) plus `backend/src/middleware/validate.js` validate at the
+  route boundary — a bad enum or a non-numeric `:id` param now 400s with a real message instead of
+  surfacing as an opaque 500.
+- ~~**Inconsistent API contract.**~~ **Resolved.** All four response envelope shapes
+  (`{success, data}`, bare arrays, `{err, message}`, `{message, body}`) are now one shape,
+  `{success, data[, meta]}`, built by the shared `ok()` helper (`backend/src/utils/respond.js`)
+  every route calls — including `login`/`signup`, which used to be the two `{err, message}`/
+  `{message, body}` holdouts. ~~bare-array list endpoints~~ — **the list half is resolved by
+  P1-3**: all 15 list endpoints (previously a mix of `{success,data}` and 9 bare arrays) now answer
+  `{success, data, meta}` — see that section. `GET /logout` is now `POST /logout`, so the one
+  state-mutating request that was still a `GET` no longer is.
   ~~auth/account routes mounted at `/` instead of `/api`~~ — **resolved as part of P1-10**:
   `userRoutes` now mounts at `/api` (`server.js`), with the ~7 frontend call sites updated to
   match. ~~three overlapping "workers" endpoints~~ — down to two intentionally distinct ones:
@@ -629,9 +633,10 @@ Not urgent, but each of these increases the cost of every future change until ad
    discarded-form-input bug); the three notification components merged into one
    `globals/NotificationList.jsx` with a type-scoped `?type=` bulk-action query param on the
    backend; all ~9 pre-existing frontend lint errors fixed for real (not suppressed), flipping
-   `ci.yml`'s lint step into a real gate. Deliberately deferred within P2: the Create/Edit
-   form pairs and the five role-shell files (not consolidated), the four response-envelope
-   shapes (unchanged), `zod`/`express-validator` route validation, and `GET /logout` → `POST`.
+   `ci.yml`'s lint step into a real gate. Deliberately deferred within P2 at the time: the
+   Create/Edit form pairs and the five role-shell files (not consolidated, still open — see item
+   11), and the four response-envelope shapes / input validation / `GET /logout` (closed since,
+   by item 9 below).
 8. **P1-3 (pagination)** — ✅ done: all 15 list endpoints take `?page`/`?limit` and answer
    `{success, data, meta}`; 8 whose row count grows without bound gained server-side search/
    filter/sort (replacing what those screens did client-side) and real paging UI
@@ -642,7 +647,18 @@ Not urgent, but each of these increases the cost of every future change until ad
    notification-click resolution) via a new `GET /api/assignments/:assignmentId`, and gave
    `admin/ProjectHistory.jsx`'s `remark` a single server-side definition instead of a duplicated
    client-side one.
-9. **Still outstanding:** the remaining P2 backend-contract items (the four non-list response
-   envelope shapes, input validation library, `GET /logout` → `POST`), the deferred P2 component
-   dedup (Create/Edit forms, role shells), the two unused database views, and backfilling test
-   coverage for the pre-P1-11 backend and the pre-P2 frontend.
+9. **P2 backend-contract cleanup** — ✅ done: `zod` schemas (`backend/src/schemas/`) plus
+   `middleware/validate.js` validate every route boundary; the remaining non-list response shapes
+   (`{err, message}` on login, `{message, body}` on signup) were folded into the same `{success,
+   data}` envelope every other route already used via a shared `ok()` helper
+   (`backend/src/utils/respond.js`); `GET /logout` is now `POST /logout`. This closes the *rest*
+   of the P2 "Inconsistent API contract" item that P1-3 (item 8) left standing.
+10. **DESIGN.md Worker-path mobile responsiveness** — ✅ done: the six Worker-path findings
+    DESIGN.md §7 opened with (viewport-height units, tap-target sizing, the mobile control stack,
+    the floating hamburger, hover-only tap affordances) are fixed — see that document's §7 for the
+    detail. `docs/design/DESIGN.md` is tracked in git for the first time as part of this.
+11. **Still outstanding:** the deferred P2 component dedup (Create/Edit form pairs, the five
+    role-shell files), the two unused database views, backfilling test coverage for the
+    pre-P1-11 backend and pre-P2 frontend, and DESIGN.md §7 items 7–11 (the cross-cutting
+    responsiveness backlog: the CSS custom-property/token migration, `.app-container`'s
+    `overflow-x: hidden`, the 1024px icon-only rail, 7 unconverted `<table>`s, px/rem drift).
