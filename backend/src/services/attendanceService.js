@@ -7,11 +7,12 @@ import {
 } from "../models/attendanceModel.js";
 import { AppError } from "../errors/AppError.js";
 
-// A duplicate (worker_id, date) can't actually happen today — the schema has no uniqueness
-// constraint covering the attendance table (checked: the P1a
-// 1787110540000_add-uniqueness-constraints.js migration doesn't touch it). This mapping is kept
-// exactly as it behaved before this refactor (it used to live twice, verbatim, in the old
-// controller's postAttendance/putAttendance) so nothing changes if that constraint is ever added.
+// A duplicate (worker_id, date) is rejected by the database: `unique_worker_date
+// UNIQUE(worker_id, date)` is defined on the attendance table in the initial-schema migration
+// (not the later P1a uniqueness-constraints one — an earlier version of this comment looked only
+// there and concluded, wrongly, that no such constraint existed). This mapping is reachable, and
+// is kept exactly as it behaved before this refactor (it used to live twice, verbatim, in the old
+// controller's postAttendance/putAttendance).
 function rethrowAsConflictIfDuplicate(err) {
   if (err.code === '23505') {
     throw new AppError(409, "Attendance record already exists for this worker on this date.");

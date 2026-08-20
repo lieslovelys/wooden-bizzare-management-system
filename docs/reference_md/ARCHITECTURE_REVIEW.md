@@ -573,11 +573,21 @@ Not urgent, but each of these increases the cost of every future change until ad
   pagination-routes.test.js` (end-to-end coverage of one `{success,data}`-turned-paged route and
   one bare-array-turned-paged route: `meta`, limit clamping, a bad filter 400ing, filters reaching
   the service), and `frontend/src/hooks/usePaginatedList.test.js` +
-  `frontend/src/globals/Pagination.test.jsx`. The routes/services refactor, the bulk of
-  `Attendance.jsx`'s hoisted sub-components, and everything else pre-P1-11 — verified only by
-  manual `curl`/click-through — still has zero automated coverage. Backfilling that (starting with
-  `userService.login` and `jobOrderService.updateQAStatus`'s five `AppError` branches) is its own
-  pass.
+  `frontend/src/globals/Pagination.test.jsx`.
+  **Backfilled since (engineering-debt pass, backend):** `backend/src/tests/auth.test.js`
+  (`middleware/auth.js` — the entire P0-2 authorization fix — `requireAuth`/`requireRole`/
+  `requireSelfOrRole`, including the unauthenticated-before-role-check ordering and the
+  string/numeric id-coercion behavior `requireSelfOrRole` depends on, plus a `supertest` case
+  proving its one real call site is actually mounted); `backend/src/tests/
+  jobOrderService.test.js` (`updateQAStatus`'s five `AppError` branches, including the P0-3
+  self-approval case verbatim, and both allow-lists reaching the model call); `backend/src/tests/
+  userService.test.js` (`login`'s enumeration-oracle guarantee — asserted as the unknown-username
+  and wrong-password failures being *equal to each other*, not just "a 401" — plus `deleteUser`'s
+  self-delete guard and that `createUser`/`addWorker` pass the model a bcrypt hash, never the
+  plaintext password). The routes/services refactor's remaining untested surface (`projectService`,
+  `attendanceService`, `profitService`), the bulk of `Attendance.jsx`'s hoisted sub-components, and
+  everything else pre-P1-11 on the frontend — still zero automated coverage, and deliberately left
+  for a later pass.
   ~~No CI~~ — **resolved**: `.github/workflows/ci.yml` (added in P1-10) runs backend install,
   frontend lint+test+build, and builds both Docker images; all three (`npm test` × 2, `npm run
   lint`) are now real gates — see the lint-errors bullet below for when the lint gate flipped.
