@@ -27,13 +27,17 @@ const Navbar = ({ tabs, accountType }) => {
 
     return (
         <>
-            {/* MOBILE HAMBURGER BUTTON (Lilitaw lang kapag maliit ang screen) */}
-            <button 
-                className="mobile-menu-btn" 
-                onClick={() => setIsMobileOpen(true)}
-            >
-                <i className="fa-solid fa-bars"></i>
-            </button>
+            {/* MOBILE TOPBAR (Lilitaw lang kapag maliit ang screen) — DESIGN.md §7#5: the
+                hamburger used to float with nothing behind it, so scrolled content ran underneath
+                it. It now lives inside a bar the page can pad below instead of guessing at. */}
+            <header className="mobile-topbar">
+                <button
+                    className="mobile-menu-btn"
+                    onClick={() => setIsMobileOpen(true)}
+                >
+                    <i className="fa-solid fa-bars"></i>
+                </button>
+            </header>
 
             {/* NAVBAR CONTAINER */}
             <div className={`wooden-navbar ${isMobileOpen ? 'mobile-active' : ''}`} style={{ position: 'relative' }}>

@@ -247,10 +247,7 @@
 
 .modal-overlay {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
+    inset: 0; /* DESIGN.md §3.5 — 100vw/100vh included the scrollbar width */
     background: rgba(0, 0, 0, 0.4);
     display: flex;
     justify-content: center;

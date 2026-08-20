@@ -239,7 +239,8 @@
   flex: 1;
   padding: 40px;
   background-color: transparent; /* Hinahayaan nating lumutang ang card */
-  min-height: 100vh;
+  min-height: 100vh; /* fallback */
+  min-height: 100dvh; /* DESIGN.md §3.6 */
   box-sizing: border-box;
   display: flex;
   align-items: flex-start;
@@ -866,8 +867,7 @@
 /* Custom Confirmation Modal */
 .wb-modal-overlay {
     position: fixed;
-    top: 0; left: 0;
-    width: 100vw; height: 100vh;
+    inset: 0; /* DESIGN.md §3.5 — 100vw/100vh included the scrollbar width */
     background: rgba(0, 0, 0, 0.5);
     z-index: 10000;
     display: flex;

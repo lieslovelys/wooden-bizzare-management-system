@@ -6,7 +6,8 @@
     align-items: flex-start; /* Imbes na center, pinapunta natin sa itaas */
     padding-top: 50px; /* Ito yung magsisilbing space sa taas. Pwede mong gawing 50px kung gusto mo pa mas itaas, o 100px kung ibababa ng konti */
     box-sizing: border-box;
-    min-height: 100vh;
+    min-height: 100vh; /* fallback */
+    min-height: 100dvh; /* DESIGN.md §3.6 */
     font-family: Arial, sans-serif;
 }
 

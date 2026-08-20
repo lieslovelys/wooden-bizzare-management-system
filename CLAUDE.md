@@ -12,6 +12,8 @@ and productivity. Single tenant, five roles (`Admin`, `Production Manager`, `Inv
 
 Full product behavior: [`docs/reference_md/PRD.md`](docs/reference_md/PRD.md).
 Known issues and the improvement roadmap: [`docs/reference_md/ARCHITECTURE_REVIEW.md`](docs/reference_md/ARCHITECTURE_REVIEW.md).
+UI rules and the mobile-responsiveness backlog (binding for new/changed UI work, Worker role is
+the current priority): [`docs/design/DESIGN.md`](docs/design/DESIGN.md).
 
 **Hosting target:** a single **Hostinger VPS, KVM 1 plan — 1 vCPU, 4 GB RAM, 50 GB NVMe**
 (self-managed, root access, no managed database or load balancer). `docker-compose.yml` (repo

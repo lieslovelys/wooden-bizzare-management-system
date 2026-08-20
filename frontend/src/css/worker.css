@@ -51,6 +51,10 @@
 /* --- STANDALONE DARK BUTTON (Para sa "Due" sort button) --- */
 .wjo-btn-dark {
     padding: 10px 24px;
+    min-height: 44px; /* DESIGN.md §3.3 — was ~38px tall */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     border: none;
     border-radius: 25px; /* Pill Shape para pumantay sa iba */
     font-family: 'Inter', sans-serif;
@@ -71,6 +75,13 @@
     box-shadow: 0 4px 10px rgba(204, 164, 59, 0.2);
 }
 
+.wjo-btn-dark:active {
+    background-color: #cca43b;
+    color: #ffffff;
+    transform: translateY(0) scale(0.98);
+    box-shadow: 0 2px 5px rgba(204, 164, 59, 0.2);
+}
+
 .wjo-filter-label {
     font-size: 0.9rem;
     color: #8b816a;
@@ -80,6 +91,7 @@
 /* Dropdown */
 .wjo-btn-dark.dropdown {
     padding: 10px 40px 10px 20px;
+    min-height: 44px; /* DESIGN.md §3.3 — was ~38px tall */
     border: 1.5px solid #eaeaea;
     font-size: 0.95rem;
     font-family: 'Inter', sans-serif;
@@ -113,6 +125,10 @@
 .wjo-filter-btn {
     font-family: 'Inter', sans-serif;
     padding: 10px 24px;
+    min-height: 44px; /* DESIGN.md §3.3 — was ~38px tall */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     border: none;
     font-size: 0.9rem;
     font-weight: 600;
@@ -123,6 +139,7 @@
 }
 
 .wjo-filter-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+.wjo-filter-btn:active { transform: translateY(0) scale(0.98); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
 .wjo-filter-btn.assigned { background-color: #cca43b; } /* Gold */
 .wjo-filter-btn.repair { background-color: #1A1612; } /* Dark Espresso */
 .wjo-filter-btn:not(.active) { opacity: 0.5; background-color: #b3b3b3; color: #ffffff; }
@@ -153,11 +170,23 @@
 }
 
 /* Hover and Active State */
-.wjo-item:hover {
-    background-color: #fcfaf5;
+/* DESIGN.md §3.4/§7#6 — :hover was the only signal a row is tappable, and on touch a tap can
+   leave the hover style stuck. Real pointers only, gated behind (hover: hover). */
+@media (hover: hover) {
+    .wjo-item:hover {
+        background-color: #fcfaf5;
+        border-color: #cca43b;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(204, 164, 59, 0.1);
+    }
+}
+
+/* Pressed state works on both touch and pointer input. */
+.wjo-item:active {
+    background-color: #fbf5e8;
     border-color: #cca43b;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 15px rgba(204, 164, 59, 0.1);
+    transform: translateY(0) scale(0.99);
+    box-shadow: 0 2px 6px rgba(204, 164, 59, 0.12);
 }
 
 .wjo-item.active {
@@ -210,12 +239,19 @@
     background-color: rgba(26, 22, 18, 0.1); /* Soft Espresso Background */
 }
 
-/* Invert colors when row is active or hovered */
+/* Invert colors when row is active or pressed */
 .wjo-item.active .wjo-item-id,
 .wjo-item.active .wjo-item-name,
-.wjo-item:hover .wjo-item-id,
-.wjo-item:hover .wjo-item-name {
+.wjo-item:active .wjo-item-id,
+.wjo-item:active .wjo-item-name {
     color: #cca43b;
+}
+
+@media (hover: hover) {
+    .wjo-item:hover .wjo-item-id,
+    .wjo-item:hover .wjo-item-name {
+        color: #cca43b;
+    }
 }
 
 /* =========================================
@@ -234,15 +270,23 @@
         font-size: 1.6rem; /* Mas maliit na font para di kainin ang screen */
     }
 
-    /* --- Controls & Buttons (Gagawing Full Width) --- */
+    /* --- Controls & Buttons (Reflow, don't stack) --- */
+    /* DESIGN.md §7#4 — five children stacked full-width used to push ~220px down before the
+       first task was visible on a 640px screen. A two-column grid gets that to ~138px. */
     .wjo-controls {
-        flex-direction: column;
-        align-items: stretch; /* I-stretch ang buttons para full width */
-        gap: 12px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        justify-content: stretch;
+    }
+
+    .wjo-filter-label {
+        grid-column: 1 / -1;
     }
 
     .wjo-btn-dark.dropdown {
         width: 100%; /* Sakop ang buong screen width */
+        min-width: 0; /* override the desktop 140px min-width so it can't overflow a narrow grid cell */
     }
 
     .wjo-filter-btn {
@@ -318,7 +362,8 @@
     font-weight: 600;
     cursor: pointer;
     margin-bottom: 20px;
-    padding: 0;
+    padding: 10px 0; /* DESIGN.md §3.3 — was padding:0, well under the 44px tap minimum */
+    min-height: 44px;
     display: inline-flex;
     align-items: center;
     gap: 8px;

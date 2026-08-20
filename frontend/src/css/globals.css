@@ -28,7 +28,8 @@
 /* --- Global Layout --- */
 .login-layout {
   display: flex;
-  min-height: 100vh;
+  min-height: 100vh; /* fallback */
+  min-height: 100dvh; /* DESIGN.md §3.6 — Android's dynamic URL bar makes 100vh taller than the real viewport */
   background-color: #1A1612; /* Dark Espresso Base */
   font-family: 'Inter', sans-serif;
   overflow: hidden;
@@ -332,11 +333,8 @@
 /* 1. Perfect Centering (Full Screen Overlay) */
 .wb-logout-page {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background-color: rgba(0, 0, 0, 0.4); 
+    inset: 0; /* DESIGN.md §3.5 — 100vw includes the scrollbar width, making this its own overflow source */
+    background-color: rgba(0, 0, 0, 0.4);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -507,7 +505,8 @@ html, body {
 /* Pinaka-root container */
 .app-container {
     width: 100%;
-    min-height: 100vh;
+    min-height: 100vh; /* fallback */
+    min-height: 100dvh; /* DESIGN.md §3.6 */
     margin: 0;
     padding: 0;
     overflow-x: hidden; /* Iwas horizontal scroll sa buong app */
@@ -517,7 +516,8 @@ html, body {
 .role-layout {
     display: flex;
     width: 100%;
-    min-height: 100vh;
+    min-height: 100vh; /* fallback */
+    min-height: 100dvh; /* DESIGN.md §3.6 */
     background-color: #FFFFFF;
 }
 
@@ -526,10 +526,11 @@ html, body {
     flex: 1; /* Sasakop sa natitirang space sa tabi ng sidebar */
     padding: 40px; /* Mas maluwag na padding para mas premium tignan */
     background-color: #FFFFFF;
-    
+
     /* Crucial ito para sa scrolling behavior: */
-    height: 100vh; 
-    overflow-y: auto; 
+    height: 100vh; /* fallback */
+    height: 100dvh; /* DESIGN.md §3.6 */
+    overflow-y: auto;
     
     display: flex;
     flex-direction: column;
@@ -558,11 +559,12 @@ html, body {
            Ginawa nating 80px ang "Top Padding" para hindi matakpan 
            ng lumulutang na Hamburger Menu button ang mga title at content mo! 
         */
-        padding: 80px 15px 20px 15px; 
-        
+        padding: 72px 15px 20px 15px;
+
         /* Ibalik sa natural scrolling para mas smooth sa phone */
-        height: auto; 
-        min-height: 100vh;
+        height: auto;
+        min-height: 100vh; /* fallback */
+        min-height: 100dvh; /* DESIGN.md §3.6 */
         overflow-y: visible;
     }
 }
@@ -573,8 +575,9 @@ html, body {
 
 /* --- 1. BASE STYLES (DESKTOP VIEW) --- */
 .wooden-navbar {
-    width: 300px; 
-    height: 100vh; 
+    width: 300px;
+    height: 100vh; /* fallback */
+    height: 100dvh; /* DESIGN.md §3.6 */
     background-color: #1A1612; /* Deep warm charcoal/wood */
     border-right: 1px solid #2C261E; /* Manipis na dark border */
     display: flex;
@@ -647,7 +650,9 @@ html, body {
 /* UI Elements (Nakatago sa Desktop) */
 .loading {
     display: flex; justify-content: center; align-items: center;
-    height: 100vh; font-family: 'Inter', sans-serif; font-size: 1.1rem;
+    height: 100vh; /* fallback */
+    height: 100dvh; /* DESIGN.md §3.6 */
+    font-family: 'Inter', sans-serif; font-size: 1.1rem;
     font-weight: 600; color: #D1AA3A;
 }
 
@@ -658,15 +663,23 @@ html, body {
     cursor: pointer; z-index: 10;
 }
 
+/* DESIGN.md §7#5 — the button used to be position:fixed with nothing behind it, so once the
+   page scrolled, content ran underneath it; .page-content's mobile top padding only cleared it
+   at scroll-top. It now lives inside a full-width bar it can't be scrolled behind. */
+.mobile-topbar {
+    display: none; /* Nakatago sa desktop/tablet */
+}
+
 .mobile-menu-btn {
     display: none; /* Nakatago sa desktop */
     background: #1A1612; color: #D1AA3A; border: 1px solid #2C261E;
     padding: 10px 15px; border-radius: 8px; font-size: 1.2rem;
-    cursor: pointer; position: fixed; top: 15px; left: 15px; z-index: 9998;
+    min-width: 44px; min-height: 44px;
+    cursor: pointer;
 }
 
 .mobile-overlay {
-    display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    display: none; position: fixed; inset: 0; /* DESIGN.md §3.5 — 100vw/100vh included the scrollbar width */
     background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(2px); z-index: 9990;
 }
 
@@ -706,8 +719,9 @@ html, body {
     .wooden-navbar {
         position: fixed !important; /* Fix para di tumulak pababa ang page */
         left: 0; top: 0;
-        width: 280px; 
-        height: 100vh;
+        width: 280px;
+        height: 100vh; /* fallback */
+        height: 100dvh; /* DESIGN.md §3.6 */
         z-index: 9999;
         align-items: stretch;
         
@@ -734,8 +748,22 @@ html, body {
 
     /* Palabasin ang mga Mobile Buttons */
     .close-mobile-btn { display: block !important; }
-    .mobile-menu-btn { display: block; }
     .mobile-overlay.active { display: block; }
+
+    /* Bar the hamburger lives in, instead of floating loose over scrollable content. */
+    .mobile-topbar {
+        display: flex;
+        align-items: center;
+        position: fixed;
+        inset: 0 0 auto 0;
+        height: 56px;
+        padding: 0 15px;
+        background-color: #FFFFFF;
+        border-bottom: 1px solid #eaeaea;
+        z-index: 9997; /* below the drawer (9999) and its overlay (9990 active), above page content */
+    }
+
+    .mobile-menu-btn { display: block; }
 }
 
 
@@ -744,7 +772,8 @@ html, body {
 ========================================= */
 .job-order-container {
   flex: 1;
-  min-height: 100vh;
+  min-height: 100vh; /* fallback */
+  min-height: 100dvh; /* DESIGN.md §3.6 */
   background: #fff;
   display: flex;
   justify-content: center;
@@ -1079,7 +1108,8 @@ html, body {
   flex: 1;
   padding: 32px 40px;
   background-color: #ffffff;
-  min-height: 100vh;
+  min-height: 100vh; /* fallback */
+  min-height: 100dvh; /* DESIGN.md §3.6 */
   box-sizing: border-box;
   font-family: 'Georgia', serif;
 }
@@ -1386,7 +1416,8 @@ html, body {
 .admin-dashboard {
   padding: 40px;
   flex: 1;
-  min-height: 100vh;
+  min-height: 100vh; /* fallback */
+  min-height: 100dvh; /* DESIGN.md §3.6 */
   background: #fff;
   font-family: 'Georgia', serif;
 }
@@ -1612,7 +1643,8 @@ html, body {
 .notification-section {
   padding: 40px;
   flex: 1;
-  min-height: 100vh;
+  min-height: 100vh; /* fallback */
+  min-height: 100dvh; /* DESIGN.md §3.6 */
   background: #fff;
   font-family: 'Georgia', serif;
 }
@@ -3335,8 +3367,7 @@ html, body {
 /* Custom Confirmation Modal */
 .wb-modal-overlay {
     position: fixed;
-    top: 0; left: 0;
-    width: 100vw; height: 100vh;
+    inset: 0; /* DESIGN.md §3.5 — 100vw/100vh included the scrollbar width */
     background: rgba(0, 0, 0, 0.5);
     z-index: 10000;
     display: flex;
@@ -3870,6 +3901,10 @@ html, body {
 
 .wb-pagination-btn {
     padding: 8px 18px;
+    min-height: 44px; /* DESIGN.md §3.3 — was ~36px tall */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     border: 1.5px solid #dcd7c9;
     color: #5b5035;
     background: #ffffff;
@@ -3891,4 +3926,25 @@ html, body {
     opacity: 0.4;
     cursor: not-allowed;
 }
+
+/* DESIGN.md §3.3/§7#2 — no mobile rules existed at all; the range readout gets its own line and
+   the two buttons share the remaining row so the whole control fits comfortably at 360px. */
+@media (max-width: 768px) {
+    .wb-pagination {
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .wb-pagination-range {
+        order: -1;
+        width: 100%;
+        text-align: center;
+    }
+
+    .wb-pagination-btn {
+        flex: 1;
+        max-width: 160px;
+    }
+}
+
 
