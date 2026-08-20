@@ -29,12 +29,14 @@ const ProjectHistory = () => {
     
     try {
         const [detailsData, tasksData] = await Promise.all([
+            // P2: /job-orders/:id now answers {success, data} instead of the bare project
+            // object — see ARCHITECTURE_REVIEW.md P2.
             api.get(`/api/job-orders/${projectId}`),
             // P1-3: this endpoint now answers {success, data, meta} instead of a bare array.
             api.get(`/api/job-orders/${projectId}/assignments`)
         ]);
 
-        setProjectDetails(detailsData);
+        setProjectDetails(detailsData.data);
         setProjectTasks(tasksData.data || []);
     } catch (error) {
         console.error("Error fetching detailed project info:", error.message);

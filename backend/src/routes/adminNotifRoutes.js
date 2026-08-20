@@ -2,6 +2,7 @@ import express from 'express';
 import Notif from '../services/adminNotifService.js';
 import { requireRole } from '../middleware/auth.js';
 import { parsePagination, buildMeta } from '../utils/pagination.js';
+import { ok } from '../utils/respond.js';
 import { validate } from '../middleware/validate.js';
 import { idParams } from '../schemas/common.js';
 import { typeQuery } from '../schemas/adminNotifSchemas.js';
@@ -18,27 +19,27 @@ router.get('/', NOTIF_ROLES, validate({ query: typeQuery }), async (req, res) =>
     const pagination = parsePagination(req.query);
     const { type } = req.valid.query;
     const { rows, total } = await Notif.getNotifications({ ...pagination, type: type ?? null });
-    res.json({ success: true, data: rows, meta: buildMeta({ ...pagination, total }) });
+    res.json(ok(rows, buildMeta({ ...pagination, total })));
 });
 
 router.put('/mark-all-read', NOTIF_ROLES, validate({ query: typeQuery }), async (req, res) => {
     await Notif.markAllAsRead(req.valid.query.type ?? null);
-    res.json({ message: "All notifications marked as read" });
+    res.json(ok(null));
 });
 
 router.delete('/clear/all', NOTIF_ROLES, validate({ query: typeQuery }), async (req, res) => {
     await Notif.clearAllNotifications(req.valid.query.type ?? null);
-    res.json({ message: "All notifications cleared" });
+    res.json(ok(null));
 });
 
 router.delete('/:id', NOTIF_ROLES, validate({ params: idParams() }), async (req, res) => {
     await Notif.deleteNotification(req.params.id);
-    res.json({ message: "Notification deleted successfully" });
+    res.json(ok(null));
 });
 
 router.put('/:id/read', NOTIF_ROLES, validate({ params: idParams() }), async (req, res) => {
     await Notif.markOneAsRead(req.params.id);
-    res.json({ message: "Notification marked as read" });
+    res.json(ok(null));
 });
 
 export default router;

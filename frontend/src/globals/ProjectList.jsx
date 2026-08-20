@@ -55,7 +55,10 @@ const ProjectList = () => {
         alert('Project successfully deleted.');
         refetch(); // Refresh the list without wiping page state
       } else {
-        alert(result.message || 'Failed to delete project.');
+        // P2 (envelope unification): every route now either succeeds with {success:true} or
+        // throws (caught below) — effectively unreachable, so this is a static string rather
+        // than a `result.message` field that was never actually populated.
+        alert('Failed to delete project.');
       }
     } catch (error) {
       console.error('Error deleting project:', error.message);

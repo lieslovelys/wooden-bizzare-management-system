@@ -49,7 +49,11 @@ const WorkerList = () => {
         setIsAddModalOpen(false);
         fetchWorkers();
       } else {
-        showToast("Failed to add worker: " + result.message, "error");
+        // P2 (envelope unification): every route now either succeeds with {success:true} or
+        // throws (caught below) — this branch is effectively unreachable, but `result.message`
+        // was never a real field even before this pass, so it's a static string rather than a
+        // guaranteed "undefined" if it's ever hit.
+        showToast("Failed to add worker.", "error");
       }
     } catch (error) {
       console.error('Error saving worker:', error.message);
@@ -66,7 +70,8 @@ const WorkerList = () => {
         setIsEditModalOpen(false);
         fetchWorkers();
       } else {
-        showToast("Failed to update worker: " + result.message, "error");
+        // See handleSaveNewWorker above — effectively unreachable under the unified contract.
+        showToast("Failed to update worker.", "error");
       }
     } catch (error) {
       console.error('Error updating worker:', error.message);

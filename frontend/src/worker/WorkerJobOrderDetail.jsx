@@ -32,11 +32,13 @@ const WorkerJobOrderDetail = ({ projectId, assignmentId, workerStatus, onBack })
         const fetchProjectData = async () => {
             setLoading(true);
             try {
+                // P2: /job-orders/:id now answers {success, data} instead of the bare project
+                // object — see ARCHITECTURE_REVIEW.md P2.
                 const details = await api.get(`/api/job-orders/${projectId}`);
                 // P1-3: this endpoint now answers {success, data, meta} instead of a bare array.
                 const assigns = await api.get(`/api/job-orders/${projectId}/assignments`);
                 if (ignore) return;
-                setProjectDetails(details);
+                setProjectDetails(details.data);
                 setAssignments(assigns.data || []);
             } catch (error) {
                 if (!ignore) console.error("Error fetching data:", error.message);

@@ -57,22 +57,45 @@ describe('auth', () => {
 });
 
 describe('GET /api/inventory', () => {
-  it('returns the {success, data} envelope', async () => {
-    Inventory.getItems.mockResolvedValue([{ id: 1, name: 'Plywood' }]);
+  it('returns the {success, data, meta} envelope', async () => {
+    Inventory.getItems.mockResolvedValue({ rows: [{ id: 1, name: 'Plywood' }], total: 1 });
     const app = buildApp(ADMIN);
     const res = await request(app).get('/api/inventory');
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({ success: true, data: [{ id: 1, name: 'Plywood' }] });
+    expect(res.body).toEqual({
+      success: true,
+      data: [{ id: 1, name: 'Plywood' }],
+      meta: { page: 1, limit: 200, total: 1, totalPages: 1 },
+    });
+  });
+
+  it('400s a non-integer page', async () => {
+    const app = buildApp(ADMIN);
+    const res = await request(app).get('/api/inventory?page=abc');
+    expect(res.status).toBe(400);
+    expect(Inventory.getItems).not.toHaveBeenCalled();
+  });
+
+  it('clamps a limit above MAX_LIMIT rather than erroring', async () => {
+    Inventory.getItems.mockResolvedValue({ rows: [], total: 0 });
+    const app = buildApp(ADMIN);
+    const res = await request(app).get('/api/inventory?limit=99999');
+    expect(res.status).toBe(200);
+    expect(res.body.meta.limit).toBe(200);
   });
 });
 
 describe('GET /api/inventory/low-stock', () => {
   it('resolves to the low-stock endpoint, not GET /:id', async () => {
-    Inventory.getLowStockItems.mockResolvedValue([{ variant_id: 5 }]);
+    Inventory.getLowStockItems.mockResolvedValue({ rows: [{ variant_id: 5 }], total: 1 });
     const app = buildApp(ADMIN);
     const res = await request(app).get('/api/inventory/low-stock');
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({ success: true, data: [{ variant_id: 5 }] });
+    expect(res.body).toEqual({
+      success: true,
+      data: [{ variant_id: 5 }],
+      meta: { page: 1, limit: 200, total: 1, totalPages: 1 },
+    });
     expect(Inventory.getLowStockItems).toHaveBeenCalledOnce();
     expect(Inventory.getItem).not.toHaveBeenCalled();
   });
@@ -92,7 +115,7 @@ describe('GET /api/inventory/:id', () => {
     const app = buildApp(ADMIN);
     const res = await request(app).get('/api/inventory/999');
     expect(res.status).toBe(404);
-    expect(res.body).toEqual({ error: 'Inventory item not found' });
+    expect(res.body).toEqual({ success: false, error: 'Inventory item not found' });
   });
 });
 
@@ -128,7 +151,7 @@ describe('POST /api/inventory', () => {
     const app = buildApp(ADMIN);
     const res = await request(app).post('/api/inventory').send(validBody);
     expect(res.status).toBe(201);
-    expect(res.body).toMatchObject({ success: true, itemId: 7 });
+    expect(res.body).toEqual({ success: true, data: { itemId: 7 } });
     expect(Inventory.createItem).toHaveBeenCalledWith(validBody);
   });
 });
@@ -162,7 +185,7 @@ describe('DELETE /api/inventory/:id', () => {
     const app = buildApp(ADMIN);
     const res = await request(app).delete('/api/inventory/1');
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({ success: true, message: 'Item deleted successfully' });
+    expect(res.body).toEqual({ success: true, data: null });
   });
 });
 
@@ -212,16 +235,20 @@ describe('POST /api/inventory/variants/:variantId/adjust', () => {
       .post('/api/inventory/variants/5/adjust')
       .send({ delta: -100, reason: 'Used' });
     expect(res.status).toBe(409);
-    expect(res.body).toEqual({ error: 'Insufficient stock' });
+    expect(res.body).toEqual({ success: false, error: 'Insufficient stock' });
   });
 });
 
 describe('GET /api/inventory/variants/:variantId/movements', () => {
   it('returns the movement history', async () => {
-    Inventory.getMovements.mockResolvedValue([{ id: 1, delta: -1 }]);
+    Inventory.getMovements.mockResolvedValue({ rows: [{ id: 1, delta: -1 }], total: 1 });
     const app = buildApp(ADMIN);
     const res = await request(app).get('/api/inventory/variants/5/movements');
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({ success: true, data: [{ id: 1, delta: -1 }] });
+    expect(res.body).toEqual({
+      success: true,
+      data: [{ id: 1, delta: -1 }],
+      meta: { page: 1, limit: 25, total: 1, totalPages: 1 },
+    });
   });
 });

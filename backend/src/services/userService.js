@@ -28,12 +28,11 @@ const login = async (username, password) => {
 
 const deleteUser = async (targetId, callerId) => {
     if (String(callerId) === String(targetId)) {
-        throw new AppError(400, 'You cannot delete your own account',
-            { success: false, message: 'You cannot delete your own account' });
+        throw new AppError(400, 'You cannot delete your own account');
     }
     const result = await User.deleteUserById(targetId);
     if (result.length === 0) {
-        throw new AppError(404, 'User not found', { success: false, message: 'User not found' });
+        throw new AppError(404, 'User not found');
     }
 };
 

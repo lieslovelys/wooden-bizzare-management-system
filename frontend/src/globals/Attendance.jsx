@@ -337,8 +337,10 @@ const Attendance = () => {
     (async () => {
       try {
         setLoading(true);
+        // P2 (envelope unification): every route now reliably answers {success, data}, so the
+        // old `data.data || data` bare-body fallback no longer has a case to catch.
         const data = await api.get(`${API}/workers`);
-        if (!ignore) setEmployees(data.data || data);
+        if (!ignore) setEmployees(data.data || []);
       } catch (err) {
         if (!ignore) console.error('Error fetching employees:', err.message);
       } finally {

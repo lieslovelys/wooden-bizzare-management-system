@@ -20,7 +20,9 @@ const AdminDashboard = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const data = await api.get('/api/dashboard/stats');
+        // P2 (envelope unification): /api/dashboard/stats now answers {success, data} instead
+        // of the bare stats object — see ARCHITECTURE_REVIEW.md P2.
+        const { data } = await api.get('/api/dashboard/stats');
         setStats(prev => ({
           ...prev,
           activeProjects: data.activeProjects || 0,

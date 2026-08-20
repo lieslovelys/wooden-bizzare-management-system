@@ -21,10 +21,13 @@ const ManagerDashboard = () => {
         ]);
 
         // P1-3: /api/qa/tasks is now paged — qaResult.data.length would only be the current
-        // page size (25), not the real total. meta.total is the actual count. See
+        // page size (25), not the real total. meta.total is the actual count (meta stays a
+        // top-level sibling of data, unaffected by the P2 envelope unification below). See
         // ARCHITECTURE_REVIEW.md P1-3.
+        // P2 (envelope unification): /api/dashboard/stats now answers {success, data} instead
+        // of the bare stats object — see ARCHITECTURE_REVIEW.md P2.
         setStats({
-          activeProjects: statsData.activeProjects,
+          activeProjects: statsData.data.activeProjects,
           toVerifyCount: qaResult.meta?.total ?? 0,
         });
 

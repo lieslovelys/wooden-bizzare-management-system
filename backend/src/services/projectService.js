@@ -40,7 +40,7 @@ const getProjects = (pagination) => getAllProjects(pagination);
 const getSingleProject = async (id) => {
     const project = await getProjectById(id);
     if (!project) {
-        throw new AppError(404, 'Project not found', { success: false, message: 'Project not found' });
+        throw new AppError(404, 'Project not found');
     }
     return project;
 };
@@ -55,7 +55,7 @@ const getProjectHistory = (pagination) => getCompletedProjectsHistory(pagination
 const removeProject = async (id) => {
     const isDeleted = await deleteProjectById(id);
     if (!isDeleted) {
-        throw new AppError(404, 'Project not found', { success: false, message: 'Project not found' });
+        throw new AppError(404, 'Project not found');
     }
 };
 

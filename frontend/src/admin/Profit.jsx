@@ -7,16 +7,20 @@ import { formatCurrency } from "../utils/format";
 // (including Completed ones, unlike globals/ProjectList.jsx, since profit can be entered for a
 // finished project too), so it asks for the backend's hard cap explicitly rather than inheriting
 // the smaller default. See ARCHITECTURE_REVIEW.md P1-3.
+// P2 (envelope unification): every route now reliably answers {success, data}, so the old
+// three-way defensive fallback (checking for a bare array too) no longer has a case to catch.
 async function fetchProjects() {
   const result = await api.get("/api/projects?limit=200");
-  if (result.success && result.data) return result.data;
-  if (Array.isArray(result)) return result;
-  return [];
+  return result.data || [];
 }
 
+// P2 (envelope unification): /api/profit/:projectId now answers {success, data} instead of the
+// bare profit object — unwrapped here, at the source, so applyData() below and its callers don't
+// need to know about the envelope at all. See ARCHITECTURE_REVIEW.md P2.
 async function fetchProfit(projectId) {
   try {
-    return await api.get(`/api/profit/${projectId}`);
+    const result = await api.get(`/api/profit/${projectId}`);
+    return result.data;
   } catch (err) {
     if (err instanceof ApiError && err.status === 404) {
       return {
@@ -32,7 +36,8 @@ async function fetchProfit(projectId) {
 }
 
 async function saveProfit(projectId, payload) {
-  return api.post(`/api/profit/${projectId}`, payload);
+  const result = await api.post(`/api/profit/${projectId}`, payload);
+  return result.data;
 }
 
 function SpinnerInput({ value, onChange }) {

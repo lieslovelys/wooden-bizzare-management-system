@@ -2,6 +2,7 @@ import express from 'express';
 import JobOrder from '../services/jobOrderService.js';
 import { requireRole, requireSelfOrRole, requireAuth } from '../middleware/auth.js';
 import { parsePagination, buildMeta, MAX_LIMIT } from '../utils/pagination.js';
+import { ok } from '../utils/respond.js';
 import { validate } from '../middleware/validate.js';
 import { idParams } from '../schemas/common.js';
 import { jobOrdersQuery, workerTasksQuery, qaTasksQuery, assignBody } from '../schemas/jobOrderSchemas.js';
@@ -16,12 +17,12 @@ router.get('/job-orders', ADMIN_PM, validate({ query: jobOrdersQuery }), async (
     const pagination = parsePagination(req.query);
     const { priority, sort } = req.valid.query;
     const { rows, total } = await JobOrder.getJobOrders({ ...pagination, priority, sort });
-    res.status(200).json({ success: true, data: rows, meta: buildMeta({ ...pagination, total }) });
+    res.status(200).json(ok(rows, buildMeta({ ...pagination, total })));
 });
 
 router.get('/job-orders/:id', ANY_ASSIGNED_ROLE, validate({ params: idParams() }), async (req, res) => {
     const details = await JobOrder.getJobOrderDetails(req.params.id);
-    res.status(200).json(details);
+    res.status(200).json(ok(details));
 });
 
 // P1-10: renamed from '/workers' — moving userRoutes to mount under '/api' (see server.js)
@@ -35,20 +36,20 @@ router.get('/job-orders/:id', ANY_ASSIGNED_ROLE, validate({ params: idParams() }
 router.get('/assignable-workers', ADMIN_PM, async (req, res) => {
     const pagination = parsePagination(req.query, { defaultLimit: MAX_LIMIT });
     const { rows, total } = await JobOrder.getWorkersList(pagination);
-    res.status(200).json({ success: true, data: rows, meta: buildMeta({ ...pagination, total }) });
+    res.status(200).json(ok(rows, buildMeta({ ...pagination, total })));
 });
 
 // P1-3: capped-only (assignment stages per project, naturally bounded).
 router.get('/job-orders/:id/assignments', ANY_ASSIGNED_ROLE, validate({ params: idParams() }), async (req, res) => {
     const pagination = parsePagination(req.query, { defaultLimit: MAX_LIMIT });
     const { rows, total } = await JobOrder.getAssignments(req.params.id, pagination);
-    res.status(200).json({ success: true, data: rows, meta: buildMeta({ ...pagination, total }) });
+    res.status(200).json(ok(rows, buildMeta({ ...pagination, total })));
 });
 
 router.post('/job-orders/:id/assign', ADMIN_PM, validate({ params: idParams(), body: assignBody }), async (req, res) => {
     const { stage, workerId, startDate, dueDate } = req.body;
     const newAssignment = await JobOrder.assignTask(req.params.id, workerId, stage, startDate, dueDate);
-    res.status(201).json(newAssignment);
+    res.status(201).json(ok(newAssignment));
 });
 
 // P1-3: paged. `status`/`priority` replace worker/WorkerJobOrder.jsx's client-side `.filter()`
@@ -57,7 +58,7 @@ router.get('/workers/:workerId/tasks', requireSelfOrRole('workerId', 'Admin'), v
     const pagination = parsePagination(req.query);
     const { status, priority, sort } = req.valid.query;
     const { rows, total } = await JobOrder.getWorkerTasks(req.params.workerId, { ...pagination, status, priority, sort });
-    res.status(200).json({ success: true, data: rows, meta: buildMeta({ ...pagination, total }) });
+    res.status(200).json(ok(rows, buildMeta({ ...pagination, total })));
 });
 
 // P1-3: paged. `stage` replaces globals/ProjectVerification.jsx's client-side `.filter()`.
@@ -65,7 +66,7 @@ router.get('/qa/tasks', requireRole('Admin', 'Production Manager', 'Quality Chec
     const pagination = parsePagination(req.query);
     const { stage } = req.valid.query;
     const { rows, total } = await JobOrder.getQATasks({ ...pagination, stage });
-    res.status(200).json({ success: true, data: rows, meta: buildMeta({ ...pagination, total }) });
+    res.status(200).json(ok(rows, buildMeta({ ...pagination, total })));
 });
 
 // P1-3: resolves a notification deep-link to a single assignment directly, so
@@ -74,14 +75,14 @@ router.get('/qa/tasks', requireRole('Admin', 'Production Manager', 'Quality Chec
 // used from the verification-notification flow.
 router.get('/assignments/:assignmentId', requireRole('Admin', 'Production Manager', 'Quality Checker'), validate({ params: idParams('assignmentId') }), async (req, res) => {
     const assignment = await JobOrder.getAssignmentDetails(req.params.assignmentId);
-    res.status(200).json({ success: true, data: assignment });
+    res.status(200).json(ok(assignment));
 });
 
 // Role/ownership branching for this one happens inside the service (worker submitting their
 // own task vs. a reviewer approving/rejecting someone else's) — requireAuth only here.
 router.put('/assignments/:assignmentId/status', requireAuth, validate({ params: idParams('assignmentId') }), async (req, res) => {
     const updatedTask = await JobOrder.updateQAStatus(req.params.assignmentId, req.body.status, req.session.user);
-    res.status(200).json({ message: "Task status updated successfully", task: updatedTask });
+    res.status(200).json(ok(updatedTask));
 });
 
 export default router;

@@ -29,10 +29,13 @@ const JobOrderDetail = ({ jobId, onBack }) => {
 
     // P1-3: both /job-orders/:id/assignments and /assignable-workers now answer
     // {success, data, meta} instead of a bare array — see ARCHITECTURE_REVIEW.md P1-3.
+    // P2: /job-orders/:id now answers {success, data} instead of the bare project object — see
+    // ARCHITECTURE_REVIEW.md P2.
     const fetchAllData = async () => {
         setLoading(true);
         try {
-            setProjectDetails(await api.get(`/api/job-orders/${jobId}`));
+            const detailsResult = await api.get(`/api/job-orders/${jobId}`);
+            setProjectDetails(detailsResult.data);
             const assignmentsResult = await api.get(`/api/job-orders/${jobId}/assignments`);
             setAssignments(assignmentsResult.data || []);
 

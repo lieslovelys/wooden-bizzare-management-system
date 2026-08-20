@@ -4,14 +4,17 @@
 // touching req/res itself. See CLAUDE.md's rule against `catch(e){ return e; }`, which this
 // replaces.
 export class AppError extends Error {
-  // `body` is the exact JSON body the client receives. Defaults to { error: message } — the
-  // shape most of this API already uses. A handful of existing endpoints instead answer with
-  // { success: false, message }; those pass that shape explicitly so their callers (some of
-  // which branch on result.success) see byte-identical responses after this refactor.
+  // `body` is the exact JSON body the client receives. Defaults to the one error shape the
+  // whole API now answers with — { success: false, error: message } — see
+  // ARCHITECTURE_REVIEW.md P2 "Inconsistent API contract". `error` stays top-level (never
+  // nested) because frontend/src/api/client.js builds its thrown ApiError's message from
+  // `data.error || data.message`; nesting it would silently degrade every user-facing toast to
+  // a generic "Request failed (NNN)". An explicit `body` is still accepted for the rare case
+  // that genuinely needs a different shape, but nothing in this codebase currently does.
   constructor(status, message, body) {
     super(message);
     this.name = 'AppError';
     this.status = status;
-    this.body = body ?? { error: message };
+    this.body = body ?? { success: false, error: message };
   }
 }

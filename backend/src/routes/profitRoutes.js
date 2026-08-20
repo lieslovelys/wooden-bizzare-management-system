@@ -1,6 +1,7 @@
 import express from "express";
 import Profit from "../services/profitService.js";
 import { requireRole } from "../middleware/auth.js";
+import { ok } from "../utils/respond.js";
 import { validate } from "../middleware/validate.js";
 import { idParams } from "../schemas/common.js";
 import { profitBody } from "../schemas/profitSchemas.js";
@@ -11,7 +12,7 @@ const ADMIN_ONLY = requireRole('Admin');
 
 router.get("/:projectId", ADMIN_ONLY, validate({ params: idParams('projectId') }), async (req, res) => {
   const profit = await Profit.getProfit(req.params.projectId);
-  res.json(profit);
+  res.json(ok(profit));
 });
 
 router.post("/:projectId", ADMIN_ONLY, validate({ params: idParams('projectId'), body: profitBody }), async (req, res) => {
@@ -24,12 +25,12 @@ router.post("/:projectId", ADMIN_ONLY, validate({ params: idParams('projectId'),
     other_expenses,
     expense_items
   });
-  res.json(result);
+  res.json(ok(result));
 });
 
 router.delete("/:projectId", ADMIN_ONLY, validate({ params: idParams('projectId') }), async (req, res) => {
   await Profit.deleteProfit(req.params.projectId);
-  res.json({ message: "Profit record deleted." });
+  res.json(ok(null));
 });
 
 export default router;

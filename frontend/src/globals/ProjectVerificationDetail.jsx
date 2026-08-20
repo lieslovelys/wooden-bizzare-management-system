@@ -17,12 +17,14 @@ const ProjectVerificationDetail = ({ projectId, onBack }) => {
         const fetchDetails = async (idToFetch) => {
             setLoading(true);
             try {
+                // P2: /job-orders/:id now answers {success, data} instead of the bare project
+                // object — see ARCHITECTURE_REVIEW.md P2.
                 const info = await api.get(`/api/job-orders/${idToFetch}`);
                 // P1-3: this endpoint now answers {success, data, meta} instead of a bare array.
                 const assignData = await api.get(`/api/job-orders/${idToFetch}/assignments`);
                 if (ignore) return;
 
-                setProjectInfo(info);
+                setProjectInfo(info.data);
                 const formattedTasks = (assignData.data || []).map(t => ({
                     id: t.assignment_id,
                     stage: t.stage_name,

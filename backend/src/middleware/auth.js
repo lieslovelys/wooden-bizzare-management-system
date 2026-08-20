@@ -4,7 +4,7 @@
 
 export function requireAuth(req, res, next) {
   if (!req.session?.user) {
-    return res.status(401).json({ error: 'Authentication required' });
+    return res.status(401).json({ success: false, error: 'Authentication required' });
   }
   next();
 }
@@ -12,10 +12,10 @@ export function requireAuth(req, res, next) {
 export function requireRole(...roles) {
   return (req, res, next) => {
     if (!req.session?.user) {
-      return res.status(401).json({ error: 'Authentication required' });
+      return res.status(401).json({ success: false, error: 'Authentication required' });
     }
     if (!roles.includes(req.session.user.user_role)) {
-      return res.status(403).json({ error: 'Forbidden' });
+      return res.status(403).json({ success: false, error: 'Forbidden' });
     }
     next();
   };
@@ -26,12 +26,12 @@ export function requireRole(...roles) {
 export function requireSelfOrRole(paramName, ...roles) {
   return (req, res, next) => {
     if (!req.session?.user) {
-      return res.status(401).json({ error: 'Authentication required' });
+      return res.status(401).json({ success: false, error: 'Authentication required' });
     }
     const isSelf = String(req.session.user.user_id) === String(req.params[paramName]);
     const hasRole = roles.includes(req.session.user.user_role);
     if (!isSelf && !hasRole) {
-      return res.status(403).json({ error: 'Forbidden' });
+      return res.status(403).json({ success: false, error: 'Forbidden' });
     }
     next();
   };

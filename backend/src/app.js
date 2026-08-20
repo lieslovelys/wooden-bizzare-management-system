@@ -144,7 +144,15 @@ app.use('/api/inventory', inventoryRoutes);
 // fixed: the Docker Compose deployment's Nginx container now owns both jobs (frontend/
 // nginx.conf's `location /` does the SPA fallback), and local dev never needed this either —
 // `npm run dev` in frontend/ serves the app via Vite's own dev server. This process is API-only
-// now; an unmatched GET correctly falls through to Express's default 404.
+// now.
+
+// P2 (envelope unification): an unmatched route used to fall through to Express's default HTML
+// 404 — the one response shape that was never even JSON. Answering the same {success,error}
+// shape as every other error here means a typo'd path also gets a real, parseable error instead
+// of an HTML page landing in api/client.js's JSON.parse try/catch as a silent `data: null`.
+app.use((req, res) => {
+    res.status(404).json({ success: false, error: 'Not found' });
+});
 
 // Must be the LAST middleware mounted — catches anything thrown/rejected in any route above
 // (including async rejections, which Express 5 forwards here automatically) and returns a

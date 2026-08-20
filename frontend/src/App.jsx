@@ -36,7 +36,12 @@ const App = () => {
         });
 
         if(response.ok) {
-          const data = await response.json();
+          // P2 (envelope unification): /api/session-user now answers {success, data} like every
+          // other route instead of the bare session-user object — see
+          // ARCHITECTURE_REVIEW.md P2. This is the highest-blast-radius site in the app: getting
+          // the `.data` unwrap wrong here means `userRole` is `undefined` and every
+          // ProtectedRoute below fails, locking every role out.
+          const { data } = await response.json();
           setUserID(data.user_id);
           setUsername(data.username);
           setFirstName(data.first_name);
