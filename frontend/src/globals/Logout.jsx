@@ -6,7 +6,8 @@ const Logout = ({ onCancel }) => {
 
     const handleLogout = async () => {
         try {
-            await api.get('/api/logout');
+            // P2: GET /logout was a state-mutating GET — see ARCHITECTURE_REVIEW.md P2.
+            await api.post('/api/logout');
             window.location.reload();
         } catch (e) {
             console.error("Logout failed", e.message);

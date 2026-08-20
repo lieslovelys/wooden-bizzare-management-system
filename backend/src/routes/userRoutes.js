@@ -62,7 +62,12 @@ router.get('/session-user', (req, res) => {
   res.json(ok(req.session.user));
 });
 
-router.get('/logout', (req, res) => {
+// P2: was GET /logout — a state-mutating request has no business being a GET (PRD/
+// ARCHITECTURE_REVIEW.md P2). No auth middleware added: the route must keep answering 200 on an
+// already-destroyed/missing session (session.destroy's callback fires regardless), since
+// /api/logout is deliberately not in api/client.js's AUTH_EXEMPT_PATHS — a 401 here would
+// trigger the client's redirect-to-/login instead of Logout.jsx's intended page reload.
+router.post('/logout', (req, res) => {
 
   req.session.destroy((err) => {
     if (err) {
