@@ -33,7 +33,7 @@ const createProject = async (body) => {
 
 // PROJECT LIST
 
-const getProjects = () => getAllProjects();
+const getProjects = (pagination) => getAllProjects(pagination);
 
 // EDIT PROJECT
 
@@ -49,7 +49,7 @@ const updateExistingProject = (id, body) => updateProject(id, body);
 
 const completeProject = (id) => markProjectAsCompleted(id);
 
-const getProjectHistory = () => getCompletedProjectsHistory();
+const getProjectHistory = (pagination) => getCompletedProjectsHistory(pagination);
 
 // REMOVE PROJECT
 const removeProject = async (id) => {

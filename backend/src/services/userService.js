@@ -38,9 +38,9 @@ const deleteUser = async (targetId, callerId) => {
 };
 
 // --- BAGONG FUNCTION PARA SA ACCOUNT LIST ---
-const getUsers = () => User.getAllUsers();
+const getUsers = (pagination) => User.getAllUsers(pagination);
 
-const getWorkers = () => User.getAllWorkers();
+const getWorkers = (pagination) => User.getAllWorkers(pagination);
 
 const addWorker = async (username, password, firstName, middleName, lastName, suffix, workerType, role, contactNumber, dailyRate, photo) => {
     const passwordHash = await bcrypt.hash(password, 10);
