@@ -152,7 +152,8 @@ default 0), `notes`, `photo`, `created_at`/`updated_at`. `UNIQUE(worker_id, date
 **`projects`** — `id` (PK), `project_name` (NOT NULL), `client_name` (NOT NULL, no `clients`
 table — re-typed per project), `contact_number`, `date_ordered`, `client_payment`
 (`numeric(12,2)`), `priority_level` (free text, no constraint), `due_date`, `created_at`, `status`
-(varchar, default `'Pending'`, no `CHECK`), `date_completed` (`date`).
+(varchar, `NOT NULL`, default `'Pending'`, `CHECK`-constrained to
+Pending/In Progress/Completed — **FR-8**, previously unconstrained), `date_completed` (`date`).
 
 **`job_assignments`** — `assignment_id` (PK), `project_id` (FK → projects, CASCADE),
 `worker_id` (FK → **users**, CASCADE), `stage_name` (NOT NULL), `start_date`/`due_date`,
@@ -379,8 +380,23 @@ Stated as product facts — what a user experiences — not as code defects.
 - **No QA audit trail.** `qa_checker_id` and `qa_notes` exist on `job_assignments` but are never
   written by any code path, so there's no record of who approved or rejected a stage, or why.
   `project_profit.recorded_by` is the same story for financial entries.
-- **Project status has two sources of truth**: a stored `status` column, and a value recomputed on
-  read via a `CASE ... EXISTS` query. The two can disagree.
+- ~~**Project status has two sources of truth**: a stored `status` column, and a value recomputed
+  on read via a `CASE ... EXISTS` query. The two can disagree.~~ — **Resolved (FR-8)**: the
+  `CASE ... EXISTS` in `models/projectModel.js`'s `getAllProjects` is gone; every read now selects
+  the stored `projects.status` column directly. A migration
+  (`migrations/*_project-status-single-source-of-truth.js`) backfilled existing rows to match what
+  the old `CASE` would have derived, then added `NOT NULL`, a default of `'Pending'`, and a
+  `CHECK (status IN ('Pending','In Progress','Completed'))` — the column was free text with no
+  constraint before this. `markProjectAsCompleted` now enforces "every *assigned* stage must be
+  Approved" (PRD B.5 workflow 6) transactionally in the database (`FOR UPDATE` locks the project
+  row across the read-then-write) instead of only in the frontend's disabled-button check, and
+  distinguishes an unknown project (404) from one that isn't ready yet (409) — previously it
+  answered `200` for both an unknown project id and a project completed with outstanding work.
+  **Not changed:** the "not all five stages" loophole this same bullet used to describe is still
+  live — a project that was only ever assigned one of the five possible stages completes on that
+  stage's approval. Closing it requires deciding every project needs all five stages, which isn't
+  true (a project with no painting shouldn't need a Painter stage to complete); left as a product
+  decision, not fixed here.
 - ~~**The monthly-profit figure has no year predicate**~~ — **Resolved**: both
   `adminDashboardModel.js` and `profitModel.js`'s monthly-profit queries now carry a year predicate
   alongside the month one, and compare against `AT TIME ZONE 'Asia/Manila'` rather than the
@@ -412,7 +428,7 @@ Stated as product facts — what a user experiences — not as code defects.
 | FR-5 | Attendance status, late minutes, and overtime minutes are computed server-side from recorded time-in/time-out against the shop's defined working hours, not left at a default. |
 | FR-6 | Assignment status changes follow an enforced state machine (e.g. `Assigned → For QA → Approved`, `For QA → Repair → Assigned`) rather than accepting an arbitrary string **(✅ done — `jobOrderService.updateQAStatus`'s `WORKER_SUBMITTABLE_FROM` allow-list and role-scoped target statuses reject an invalid transition with a 409)**; QA rejections require a reason **(still open — this is really FR-7's audit trail, since there's nowhere to record the reason without `qa_notes` being written)**. |
 | FR-7 | Every QA decision and every financial entry records who made it and when (audit trail on `job_assignments` and `project_profit`, actually populated). |
-| FR-8 | Project status is a single source of truth (the stored column, updated transactionally alongside the events that change it — not recomputed differently on read). |
+| FR-8 | Project status is a single source of truth (the stored column, updated transactionally alongside the events that change it — not recomputed differently on read). **(✅ done — see B.6.)** |
 | FR-9 | Workers can see the full lifecycle of their own tasks, including those currently `For QA` or already `Approved`, and receive notification of QA outcomes including rejection reasons. |
 
 ## C.2 Non-functional requirements

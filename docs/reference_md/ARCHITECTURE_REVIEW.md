@@ -598,10 +598,13 @@ Not urgent, but each of these increases the cost of every future change until ad
   userService.test.js` (`login`'s enumeration-oracle guarantee — asserted as the unknown-username
   and wrong-password failures being *equal to each other*, not just "a 401" — plus `deleteUser`'s
   self-delete guard and that `createUser`/`addWorker` pass the model a bcrypt hash, never the
-  plaintext password). The routes/services refactor's remaining untested surface (`projectService`,
-  `attendanceService`, `profitService`), the bulk of `Attendance.jsx`'s hoisted sub-components, and
-  everything else pre-P1-11 on the frontend — still zero automated coverage, and deliberately left
-  for a later pass.
+  plaintext password). **Backfilled since (track A, FR-8):** `backend/src/tests/
+  projectService.test.js` (`completeProject`'s 404/409/success branches) and `backend/src/tests/
+  projectModel.test.js` (a regression guard asserting `getAllProjects` selects the stored `status`
+  column directly rather than reintroducing the `EXISTS` recomputation FR-8 removed). The routes/
+  services refactor's remaining untested surface (`attendanceService`, `profitService`), the bulk
+  of `Attendance.jsx`'s hoisted sub-components, and everything else pre-P1-11 on the frontend —
+  still zero automated coverage, and deliberately left for a later pass.
   ~~No CI~~ — **resolved**: `.github/workflows/ci.yml` (added in P1-10) runs backend install,
   frontend lint+test+build, and builds both Docker images; all three (`npm test` × 2, `npm run
   lint`) are now real gates — see the lint-errors bullet below for when the lint gate flipped.
@@ -694,9 +697,15 @@ Not urgent, but each of these increases the cost of every future change until ad
     `project_profit_summary` view and documented why `attendance_summary` stays unwired pending
     FR-5 — see the relevant bullets above for detail on each.
 12. **Still outstanding:** the deferred five-role-shell consolidation (declined by decision, not
-    revisited without new information), test coverage for `projectService`/`attendanceService`/
-    `profitService` and everything pre-P1-11 on the frontend, and DESIGN.md §7 items 7–11 (the
-    cross-cutting responsiveness backlog: the CSS custom-property/token migration,
-    `.app-container`'s `overflow-x: hidden`, the 1024px icon-only rail, 7 unconverted `<table>`s,
-    px/rem drift). Beyond this document: every PRD Part C functional requirement (FR-3 through
-    FR-9) is still open — see PRD.md B.6/C.1.
+    revisited without new information), test coverage for `attendanceService`/`profitService` and
+    everything pre-P1-11 on the frontend, and DESIGN.md §7 items 7–11 (the cross-cutting
+    responsiveness backlog: the CSS custom-property/token migration, `.app-container`'s
+    `overflow-x: hidden`, the 1024px icon-only rail, 7 unconverted `<table>`s, px/rem drift).
+13. **Track A, phase 1 — QA accountability (in progress).** FR-8 is ✅ done: `projects.status` is
+    now the single source of truth, with `markProjectAsCompleted` enforcing the completion rule
+    and 404/409 distinctly in the database rather than only in the frontend — see PRD.md B.6.
+    Still to land in this phase: FR-7 (QA/financial audit trail — `qa_checker_id`, `qa_notes`,
+    `project_profit.recorded_by`), FR-6's rejection-reason requirement, and the
+    `EditProjectForm.jsx` date round-trip bug (PRD B.6). Remaining after this phase: FR-4
+    (notifications), FR-9 (worker task lifecycle), FR-5 (attendance computation), and FR-3's
+    materials-per-project half — see PRD.md C.1 for all seven.

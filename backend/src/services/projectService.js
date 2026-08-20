@@ -47,7 +47,19 @@ const getSingleProject = async (id) => {
 
 const updateExistingProject = (id, body) => updateProject(id, body);
 
-const completeProject = (id) => markProjectAsCompleted(id);
+// FR-8: markProjectAsCompleted now distinguishes "no such project" from "not ready to
+// complete" (see its own comment in models/projectModel.js) instead of silently succeeding on an
+// unknown id (finding 3, track-A plan) or completing regardless of outstanding stages.
+const completeProject = async (id) => {
+    const result = await markProjectAsCompleted(id);
+    if (result === null) {
+        throw new AppError(404, 'Project not found');
+    }
+    if (result.incomplete) {
+        throw new AppError(409, 'Not all assigned stages are Approved yet.');
+    }
+    return result;
+};
 
 const getProjectHistory = (pagination) => getCompletedProjectsHistory(pagination);
 

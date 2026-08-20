@@ -46,14 +46,17 @@ const createProjectWithVariables = async (projectData) => {
 
 // PROJECT LIST
 
-// P1-3: paged, with `search` (project name or id) and `status` (exact match against the derived
-// status below — an array, so ProjectList.jsx can request e.g. ['Pending','In Progress'] to
-// reproduce its old client-side "always hide Completed" behavior explicitly rather than that
-// exclusion being silently baked into every caller — admin/Profit.jsx's project dropdown still
-// wants Completed projects included, and omitting `status` entirely preserves that).
-// `status` is a CASE containing a correlated EXISTS, so it isn't filterable in a plain WHERE —
-// wrapped in a CTE and filtered on the derived column outside it instead, leaving the CASE
-// itself unchanged.
+// P1-3: paged, with `search` (project name or id) and `status` (exact match — an array, so
+// ProjectList.jsx can request e.g. ['Pending','In Progress'] to reproduce its old client-side
+// "always hide Completed" behavior explicitly rather than that exclusion being silently baked
+// into every caller — admin/Profit.jsx's project dropdown still wants Completed projects
+// included, and omitting `status` entirely preserves that).
+// FR-8: `status` used to be a CASE containing a correlated EXISTS, recomputing it independently
+// of the stored column on every read — a second source of truth (PRD.md B.6). The stored column
+// is now the single source (see migrations/*_project-status-single-source-of-truth.js, which
+// backfilled it to match what this CASE used to derive, and constrained it going forward); this
+// just selects it directly. The CTE wrapper stays even though it's no longer load-bearing for a
+// derived column, since it's still what lets `status` be filtered in a plain WHERE below.
 const getAllProjects = async ({ limit, offset, search, status } = {}) => {
   const client = await getClient();
   try {
@@ -75,7 +78,6 @@ const getAllProjects = async ({ limit, offset, search, status } = {}) => {
     params.push(offset);
     const offsetIdx = params.length;
 
-    // Binago natin ang query para mag-check sa job_assignments table
     const query = `
       WITH s AS (
         SELECT
@@ -87,11 +89,7 @@ const getAllProjects = async ({ limit, offset, search, status } = {}) => {
           p.due_date,
           p.priority_level,
           p.created_at,
-          CASE
-              WHEN p.status = 'Completed' THEN 'Completed'
-              WHEN EXISTS (SELECT 1 FROM job_assignments ja WHERE ja.project_id = p.id) THEN 'In Progress'
-              ELSE COALESCE(p.status, 'Pending')
-          END as status
+          p.status
         FROM projects p
       )
       SELECT s.*, COUNT(*) OVER() AS total_count
@@ -102,7 +100,6 @@ const getAllProjects = async ({ limit, offset, search, status } = {}) => {
     `;
     const res = await client.query(query, params);
 
-    // Wala na yung .map() dito dahil database na ang bahala sa pag-compute ng tamang status!
     return splitCountedRows(res.rows);
   } catch (error) {
     throw error;
@@ -176,18 +173,58 @@ const updateProject = async (id, projectData) => {
 };
 
 
+// FR-8: used to be an unconditional UPDATE — the "every assigned stage must be Approved" rule
+// (PRD B.5 workflow 6) lived only in the frontend's disabled-button check
+// (globals/JobOrderDetails.jsx's `isCompleteDisabled`), so a direct API call could complete a
+// project with outstanding work. This enforces the same rule server-side, atomically with the
+// write (`FOR UPDATE` locks the row across the read-then-write so a concurrent assignment can't
+// slip in between the count and the update).
+//
+// Returns one of three shapes, which the service maps to 404/409/200:
+//   null                                 — no such project
+//   { incomplete: true, ... }            — project exists but isn't ready to complete
+//   the updated project row              — success
 const markProjectAsCompleted = async (projectId) => {
     const client = await getClient();
     try {
-        const sql = `
-            UPDATE projects 
-            SET status = 'Completed', date_completed = (NOW() AT TIME ZONE 'Asia/Manila')::date -- P1-9: explicit Manila business day, not the session's implicit default
-            WHERE id = $1 
-            RETURNING *;
-        `;
-        const res = await client.query(sql, [projectId]);
-        return res.rows[0];
+        await client.query('BEGIN');
+
+        const projectRes = await client.query(
+            `SELECT id FROM projects WHERE id = $1 FOR UPDATE`,
+            [projectId]
+        );
+        if (projectRes.rows.length === 0) {
+            await client.query('ROLLBACK');
+            return null;
+        }
+
+        // Mirrors JobOrderDetails.jsx's isCompleteDisabled exactly: only *assigned* stages must
+        // be Approved (a project with no Painter stage, say, doesn't need one to be "done"), and
+        // a project with zero assignments at all isn't ready either.
+        const countRes = await client.query(
+            `SELECT COUNT(*) AS total, COUNT(*) FILTER (WHERE status = 'Approved') AS approved
+             FROM job_assignments WHERE project_id = $1`,
+            [projectId]
+        );
+        const total = Number(countRes.rows[0].total);
+        const approved = Number(countRes.rows[0].approved);
+        if (total === 0 || approved < total) {
+            await client.query('ROLLBACK');
+            return { incomplete: true, totalAssigned: total, approvedCount: approved };
+        }
+
+        const updateRes = await client.query(
+            `UPDATE projects
+             SET status = 'Completed', date_completed = (NOW() AT TIME ZONE 'Asia/Manila')::date -- P1-9: explicit Manila business day, not the session's implicit default
+             WHERE id = $1
+             RETURNING *;`,
+            [projectId]
+        );
+
+        await client.query('COMMIT');
+        return updateRes.rows[0];
     } catch (error) {
+        await client.query('ROLLBACK');
         throw error;
     } finally {
         client.release();
