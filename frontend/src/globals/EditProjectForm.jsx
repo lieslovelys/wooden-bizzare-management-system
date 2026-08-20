@@ -2,16 +2,17 @@ import React, { useEffect, useRef, useState } from 'react';
 import '../css/admin.css';
 import { api } from '../api/client';
 import { useToast } from '../context/ToastContext';
+import { useProjectForm } from '../hooks/useProjectForm';
+import ProjectFormFields from './ProjectFormFields';
 
 const EditProjectForm = ({ projectId, onCancel, onSuccess }) => {
   const [loading, setLoading] = useState(true);
 
-  const [formData, setFormData] = useState({
-    projectName: '', clientName: '', contactNumber: '',
-    dateOrdered: '', clientPayment: '', priorityLevel: 'High', dueDate: '',
-  });
-
-  const [projectDetails, setProjectDetails] = useState([{ name: '', detail: '' }]);
+  const {
+    formData, setFormData,
+    projectDetails, setProjectDetails,
+    handleInputChange, handleVariableChange, addVariable, removeVariable, validateDates,
+  } = useProjectForm();
 
   const showToast = useToast();
 
@@ -65,51 +66,17 @@ const EditProjectForm = ({ projectId, onCancel, onSuccess }) => {
 
     fetchProjectData();
     return () => { ignore = true; };
-  }, [projectId]);
-
-  // --- ERROR HANDLER PARA SA TEXT INPUTS ---
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-
-    // ERROR HANDLER: Client Name (Bawal ang numbers)
-    if (name === 'clientName') {
-      const noNumbers = value.replace(/[0-9]/g, ''); 
-      setFormData(prev => ({ ...prev, [name]: noNumbers }));
-      return;
-    }
-
-    // ERROR HANDLER: Contact Number (Puro numbers lang at max 11 digits)
-    if (name === 'contactNumber') {
-      const onlyNumbers = value.replace(/[^0-9]/g, ''); 
-      if (onlyNumbers.length <= 11) {
-        setFormData(prev => ({ ...prev, [name]: onlyNumbers }));
-      }
-      return;
-    }
-
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleVariableChange = (index, field, value) => {
-    const newDetails = [...projectDetails];
-    newDetails[index][field] = value;
-    setProjectDetails(newDetails);
-  };
-
-  const addVariable = () => setProjectDetails([...projectDetails, { name: '', detail: '' }]);
-  
-  const removeVariable = (index) => {
-    setProjectDetails(projectDetails.filter((_, i) => i !== index));
-  };
+  }, [projectId, setFormData, setProjectDetails]);
 
   // I-save ang pagbabago
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     // DOUBLE CHECK: Bawal mauna ang Due Date sa Date Ordered
-    if (formData.dueDate && formData.dateOrdered && formData.dueDate < formData.dateOrdered) {
-        showToast('Due date cannot be earlier than Date Ordered.', 'error');
-        return;
+    const dateError = validateDates();
+    if (dateError) {
+      showToast(dateError, 'error');
+      return;
     }
 
     const payload = { ...formData, projectDetails };
@@ -136,71 +103,14 @@ const EditProjectForm = ({ projectId, onCancel, onSuccess }) => {
       </div>
 
       <form onSubmit={handleSubmit} className="project-form">
-        <div className="form-group full-width">
-          <label>Project Name</label>
-          <input type="text" name="projectName" value={formData.projectName} onChange={handleInputChange} required />
-        </div>
-
-        <div className="form-row">
-          <div className="form-group">
-            <label>Client Name</label>
-            <input type="text" name="clientName" value={formData.clientName} onChange={handleInputChange} />
-          </div>
-          <div className="form-group">
-            <label>Contact Number</label>
-            <input 
-                type="text" 
-                name="contactNumber" 
-                value={formData.contactNumber} 
-                onChange={handleInputChange} 
-                maxLength="11" 
-            />
-          </div>
-        </div>
-
-        <div className="form-row">
-          <div className="form-group">
-            <label>Date Ordered</label>
-            <input type="date" name="dateOrdered" value={formData.dateOrdered} onChange={handleInputChange} />
-          </div>
-          <div className="form-group">
-            <label>Client Payment (₱)</label>
-            <input type="number" step="0.01" name="clientPayment" value={formData.clientPayment} onChange={handleInputChange} />
-          </div>
-        </div>
-
-        <div className="form-row">
-          <div className="form-group">
-            <label>Priority Level</label>
-            <select name="priorityLevel" value={formData.priorityLevel} onChange={handleInputChange} className="priority-select">
-              <option value="High">High</option>
-              <option value="Medium">Medium</option>
-              <option value="Low">Low</option>
-            </select>
-          </div>
-          <div className="form-group">
-            <label>Due Date</label>
-            <input 
-                type="date" 
-                name="dueDate" 
-                value={formData.dueDate} 
-                onChange={handleInputChange} 
-                min={formData.dateOrdered} /* HTML restriction base sa Date Ordered */
-            />
-          </div>
-        </div>
-
-        <div className="dynamic-section">
-          <label>Project Details</label>
-          {projectDetails.map((variable, index) => (
-            <div key={index} className="dynamic-row">
-              <input type="text" placeholder={`Variable ${index + 1}`} value={variable.name} onChange={(e) => handleVariableChange(index, 'name', e.target.value)} />
-              <input type="text" placeholder="Variable Details" value={variable.detail} onChange={(e) => handleVariableChange(index, 'detail', e.target.value)} />
-              <button type="button" className="btn-remove" onClick={() => removeVariable(index)} disabled={projectDetails.length === 1}>X</button>
-            </div>
-          ))}
-          <button type="button" className="btn-add-variable" onClick={addVariable}>+Add Variable</button>
-        </div>
+        <ProjectFormFields
+          formData={formData}
+          onInputChange={handleInputChange}
+          projectDetails={projectDetails}
+          onVariableChange={handleVariableChange}
+          onAddVariable={addVariable}
+          onRemoveVariable={removeVariable}
+        />
 
         <div className="form-actions">
           <button type="button" className="btn-cancel" onClick={onCancel}>Cancel</button>

@@ -51,6 +51,10 @@ const Admin = () => {
                     <Route path="notification" element={<AdminNotification />} />
                     <Route path="create-project" element={<CreateProject />} />
                     <Route path="inventory" element={<InventoryTable />} />
+
+                    {/* Catch-all — every other role shell (Worker.jsx, etc.) already redirects
+                        an unknown sub-path instead of rendering an empty page-content. */}
+                    <Route path="*" element={<Navigate to="dashboard" replace />} />
                 </Routes>
             </div>
         </div>

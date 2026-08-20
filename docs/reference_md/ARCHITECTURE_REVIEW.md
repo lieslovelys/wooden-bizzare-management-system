@@ -551,10 +551,24 @@ Not urgent, but each of these increases the cost of every future change until ad
   where Admin's issued exactly one unscoped request; `routes/adminNotifRoutes.js`'s
   `mark-all-read`/`clear/all` now take an optional `?type=` so all three screens issue exactly one
   bulk request (P1-3 later extended `?type=` to the `GET` itself, once the list was paginated —
-  see that section). **Deliberately deferred**: the five role-shell files (tabs array + `Navbar` +
-  `Routes`) and the Create/Edit project and worker forms — this pass scoped itself to the
-  notification dedup only (see P2's execution-order entry below); the `notifications` table's
-  shared-`is_read` and ignored-`target_role` defects (PRD B.6) are untouched.
+  see that section). ~~The Create/Edit project and worker forms~~ — **resolved (engineering-debt
+  pass)**: `AddWorkerModal`/`EditWorkerModal` and `CreateProjectForm`/`EditProjectForm` stay four
+  separate components (Add and Edit differ in how they load, submit, and gate their submit
+  button — collapsing them behind a `mode` flag would trade duplication for branching), but every
+  piece that was verbatim identical between each pair is now extracted once:
+  `utils/formValidators.js` (digit-strip and contact-number rules, which had already drifted —
+  both worker modals validated contact-number completeness on submit, neither project form did),
+  `globals/PhotoUpload.jsx` (the profile-picture preview + `FileReader` handler),
+  `admin/WorkerJobFields.jsx` (Role/Worker Type/Contact/Daily Rate, including the two option lists
+  that existed twice and could silently diverge), and `hooks/useProjectForm.js` +
+  `globals/ProjectFormFields.jsx` (the seven-field block, the dynamic Project Details rows, and
+  the due-date-before-date-ordered check). Found and fixed along the way: `Admin.jsx` was the only
+  role shell missing a catch-all `*` route, so a bad Admin sub-path rendered an empty
+  `page-content` instead of redirecting. **The five role-shell files are deliberately left
+  separate, by decision, not oversight**: each is ~10 lines of a tabs array plus a route list that
+  is genuinely per-role, and a shared `<RoleShell>` abstraction would cost more readability than
+  four small files save. The `notifications` table's shared-`is_read` and ignored-`target_role`
+  defects (PRD B.6) remain untouched — out of scope for this bullet.
 - ~~**Client-side derived business logic duplicated with drift**~~ — **resolved**: `utils/format.js`
   now centralizes `formatCurrency`, `formatProjectId`, `formatWorkerId`, `formatDate`,
   `formatDateShort`, and `formatTime12h`. The same project now renders `WB-07` everywhere
