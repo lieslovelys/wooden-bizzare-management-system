@@ -90,6 +90,14 @@ const updateQAStatus = async (assignmentId, status, caller, notes) => {
         if (!REVIEWER_SETTABLE_STATUSES.includes(status)) {
             throw new AppError(400, "Status must be 'Approved' or 'Repair'");
         }
+        // FR-6: a rejection must carry a reason (PRD B.5 workflow 5 used to let a repair action
+        // carry none at all) — enforced here, not in the zod schema, since "a Repair needs a
+        // reason but an Approve doesn't" is a business rule, not a shape check. Approve stays
+        // reason-optional on purpose: requiring a comment on every approval would just get
+        // rubber-stamped with a filler string.
+        if (status === 'Repair' && !notes?.trim()) {
+            throw new AppError(400, 'A reason is required when sending a task back for repair.');
+        }
         allowedFromStatuses = REVIEWABLE_FROM;
         qaCheckerId = caller.user_id;
         qaNotes = notes ?? null;

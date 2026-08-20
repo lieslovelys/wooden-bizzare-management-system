@@ -3,11 +3,18 @@ import '../css/admin.css';
 import { api } from '../api/client';
 import { useToast } from '../context/ToastContext';
 import { formatDate, formatProjectId } from '../utils/format';
+import ConfirmModal from './ConfirmModal';
 
 const ProjectVerificationDetail = ({ projectId, onBack }) => {
     const [projectInfo, setProjectInfo] = useState(null);
     const [tasks, setTasks] = useState([]);
     const [loading, setLoading] = useState(true);
+
+    // FR-6: a Repair decision now requires a reason (backend/src/services/jobOrderService.js
+    // 400s a reason-less Repair) — `repairTarget` holds the id of the task the reason modal is
+    // currently open for, `null` when closed.
+    const [repairTarget, setRepairTarget] = useState(null);
+    const [repairReason, setRepairReason] = useState('');
 
     const showToast = useToast();
 
@@ -49,9 +56,9 @@ const ProjectVerificationDetail = ({ projectId, onBack }) => {
         return () => { ignore = true; };
     }, [projectId]);
 
-    const handleStatusUpdate = async (assignmentId, newStatus) => {
+    const handleStatusUpdate = async (assignmentId, newStatus, notes) => {
         try {
-            await api.put(`/api/assignments/${assignmentId}/status`, { status: newStatus });
+            await api.put(`/api/assignments/${assignmentId}/status`, { status: newStatus, notes });
 
             setTasks(tasks.map(task =>
                 task.id === assignmentId ? { ...task, status: newStatus } : task
@@ -67,6 +74,21 @@ const ProjectVerificationDetail = ({ projectId, onBack }) => {
             console.error("Error updating status:", error.message);
             showToast(error.message || "Cannot update status. Please check your connection.", "error");
         }
+    };
+
+    // FR-6: opens the reason modal instead of updating the status directly — the actual PUT
+    // (with the reason attached as `notes`) happens in executeRepair, once confirmed.
+    const openRepairModal = (assignmentId) => {
+        setRepairReason('');
+        setRepairTarget(assignmentId);
+    };
+
+    const executeRepair = async () => {
+        const trimmed = repairReason.trim();
+        if (!trimmed) return; // guarded by the disabled Send button too; belt and suspenders.
+        await handleStatusUpdate(repairTarget, 'Repair', trimmed);
+        setRepairTarget(null);
+        setRepairReason('');
     };
 
     if (loading) return <div className="qc-pvd-wrapper"><p style={{padding: '20px'}}>Loading details...</p></div>;
@@ -157,9 +179,9 @@ const ProjectVerificationDetail = ({ projectId, onBack }) => {
                                             >
                                                 ✓ Approve
                                             </button>
-                                            <button 
-                                                className="qc-pvd-btn repair" 
-                                                onClick={() => handleStatusUpdate(task.id, 'Repair')}
+                                            <button
+                                                className="qc-pvd-btn repair"
+                                                onClick={() => openRepairModal(task.id)}
                                             >
                                                 ✕ Repair
                                             </button>
@@ -175,6 +197,25 @@ const ProjectVerificationDetail = ({ projectId, onBack }) => {
                     </tbody>
                 </table>
             </div>
+
+            {repairTarget !== null && (
+                <ConfirmModal
+                    title="Send Back for Repair?"
+                    text="Explain what needs to be fixed. The worker will see this on their task."
+                    confirmLabel="Send"
+                    confirmDisabled={!repairReason.trim()}
+                    onCancel={() => setRepairTarget(null)}
+                    onConfirm={executeRepair}
+                >
+                    <textarea
+                        className="wb-modal-textarea"
+                        value={repairReason}
+                        onChange={(e) => setRepairReason(e.target.value)}
+                        placeholder="e.g. Joints are loose, redo the frame."
+                        autoFocus
+                    />
+                </ConfirmModal>
+            )}
         </div>
     );
 };

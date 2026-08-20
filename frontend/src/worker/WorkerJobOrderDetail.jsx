@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { api } from '../api/client';
 import { useToast } from '../context/ToastContext';
 import { formatDate, formatProjectId } from '../utils/format';
+import ConfirmModal from '../globals/ConfirmModal';
 
 const WorkerJobOrderDetail = ({ projectId, assignmentId, workerStatus, onBack }) => {
     const [currentStatus, setCurrentStatus] = useState(workerStatus || 'Assigned');
@@ -86,6 +87,26 @@ const WorkerJobOrderDetail = ({ projectId, assignmentId, workerStatus, onBack })
         }
     };
 
+    // FR-6/FR-9 (taken as a deliberate early slice — see track-A plan commit 3): a worker whose
+    // own stage was sent back for repair can now see why. `assignments` holds every stage on the
+    // project (not just this worker's), so find this worker's own row by `assignmentId` — the id
+    // WorkerJobOrder.jsx already passed in to identify which task is being viewed.
+    const myAssignment = assignments.find(a => a.assignment_id === assignmentId);
+    const reviewerName = myAssignment && (myAssignment.qa_checker_first_name || myAssignment.qa_checker_last_name)
+        ? `${myAssignment.qa_checker_first_name || ''} ${myAssignment.qa_checker_last_name || ''}`.trim()
+        : null;
+
+    const renderRepairReason = () => {
+        if (currentStatus !== 'Repair' && currentStatus !== 'Rework') return null;
+        if (!myAssignment?.qa_notes) return null;
+        return (
+            <div className="wjo-repair-reason">
+                <strong>Reason for repair{reviewerName ? ` (from ${reviewerName})` : ''}:</strong>
+                <p>{myAssignment.qa_notes}</p>
+            </div>
+        );
+    };
+
     const renderActionButton = () => {
         if (currentStatus === 'Assigned' || currentStatus === 'In Progress') {
             return (
@@ -114,18 +135,14 @@ const WorkerJobOrderDetail = ({ projectId, assignmentId, workerStatus, onBack })
 
     return (
         <div className="wjo-detail-wrapper">
-            {/* RENDER CUSTOM CONFIRMATION MODAL */}
             {showConfirmModal && (
-                <div className="wb-modal-overlay">
-                    <div className="wb-modal-box">
-                        <h3 className="wb-modal-title">Submit Work?</h3>
-                        <p className="wb-modal-text">Are you sure to submit your work to Quality Checker?</p>
-                        <div className="wb-modal-actions">
-                            <button className="wb-btn-no" onClick={() => setShowConfirmModal(false)}>Cancel</button>
-                            <button className="wb-btn-yes" onClick={executeSubmitWork}>Yes, Submit</button>
-                        </div>
-                    </div>
-                </div>
+                <ConfirmModal
+                    title="Submit Work?"
+                    text="Are you sure to submit your work to Quality Checker?"
+                    confirmLabel="Yes, Submit"
+                    onCancel={() => setShowConfirmModal(false)}
+                    onConfirm={executeSubmitWork}
+                />
             )}
 
             <button className="wjo-back-btn" onClick={onBack}>← Back to Job Order List</button>
@@ -200,6 +217,8 @@ const WorkerJobOrderDetail = ({ projectId, assignmentId, workerStatus, onBack })
                     </tbody>
                 </table>
             </div>
+
+            {renderRepairReason()}
 
             <div className="wjo-action-container">
                 {renderActionButton()}

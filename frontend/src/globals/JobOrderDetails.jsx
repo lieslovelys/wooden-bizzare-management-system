@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { api } from '../api/client';
 import { useToast } from '../context/ToastContext';
 import { formatDate, formatProjectId } from '../utils/format';
+import ConfirmModal from './ConfirmModal';
 
 const JobOrderDetail = ({ jobId, onBack }) => {
     const [projectDetails, setProjectDetails] = useState(null);
@@ -126,18 +127,14 @@ const JobOrderDetail = ({ jobId, onBack }) => {
 
     return (
         <div className="jod-wrapper">
-            {/* RENDER CUSTOM CONFIRM MODAL */}
             {showConfirmModal && (
-                <div className="wb-modal-overlay">
-                    <div className="wb-modal-box">
-                        <h3 className="wb-modal-title">Complete Project?</h3>
-                        <p className="wb-modal-text">Sigurado ka bang tapos na ang project na ito? Malilipat ito sa Project History.</p>
-                        <div className="wb-modal-actions">
-                            <button className="wb-btn-no" onClick={() => setShowConfirmModal(false)}>Cancel</button>
-                            <button className="wb-btn-yes" onClick={executeCompleteProject}>Yes, Complete It</button>
-                        </div>
-                    </div>
-                </div>
+                <ConfirmModal
+                    title="Complete Project?"
+                    text="Sigurado ka bang tapos na ang project na ito? Malilipat ito sa Project History."
+                    confirmLabel="Yes, Complete It"
+                    onCancel={() => setShowConfirmModal(false)}
+                    onConfirm={executeCompleteProject}
+                />
             )}
 
             <button className="jod-back-btn" onClick={onBack}>← Back to Job Order List</button>

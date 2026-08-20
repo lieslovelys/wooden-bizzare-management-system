@@ -586,6 +586,29 @@
 .wjo-status.assigned { background-color: rgba(204, 164, 59, 0.1); color: #cca43b; }
 .wjo-status.for-qa { background-color: #fbf5e8; color: #1A1612; }
 
+/* FR-6/FR-9: the rejection reason shown above the action button when this worker's own stage
+   came back for repair (worker/WorkerJobOrderDetail.jsx). */
+.wjo-repair-reason {
+    background-color: rgba(211, 47, 47, 0.08);
+    border: 1px solid rgba(211, 47, 47, 0.25);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin: 0 0 16px;
+    color: #7a1f1f;
+}
+
+.wjo-repair-reason strong {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 0.9rem;
+}
+
+.wjo-repair-reason p {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.4;
+}
+
 /* =========================================
    ACTION BUTTON (MARK AS DONE)
 ========================================= */

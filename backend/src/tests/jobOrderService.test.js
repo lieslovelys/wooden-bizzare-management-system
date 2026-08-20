@@ -132,13 +132,32 @@ describe('jobOrderService.updateQAStatus', () => {
     expect(adminNotifModel.createNotification).not.toHaveBeenCalled();
   });
 
-  it('a reviewer setting Repair with no notes writes qa_notes as null', async () => {
+  // FR-6: PRD B.5 workflow 5 used to let a repair action carry no reason at all — a worker
+  // learned only that their status changed. These two are the actual regression tests for that.
+  it('400s a reviewer setting Repair with no notes at all', async () => {
     jobOrderModel.getAssignmentById.mockResolvedValue({ assignment_id: 1, worker_id: WORKER.user_id, status: 'For QA' });
-    jobOrderModel.updateAssignmentStatus.mockResolvedValue({ assignment_id: 1, status: 'Repair' });
+    await expect(JobOrderService.updateQAStatus(1, 'Repair', ADMIN)).rejects.toMatchObject({
+      status: 400,
+    });
+    expect(jobOrderModel.updateAssignmentStatus).not.toHaveBeenCalled();
+  });
 
-    await JobOrderService.updateQAStatus(1, 'Repair', ADMIN);
+  it('400s a reviewer setting Repair with a whitespace-only reason', async () => {
+    jobOrderModel.getAssignmentById.mockResolvedValue({ assignment_id: 1, worker_id: WORKER.user_id, status: 'For QA' });
+    await expect(JobOrderService.updateQAStatus(1, 'Repair', ADMIN, '   ')).rejects.toMatchObject({
+      status: 400,
+    });
+    expect(jobOrderModel.updateAssignmentStatus).not.toHaveBeenCalled();
+  });
 
-    expect(jobOrderModel.updateAssignmentStatus).toHaveBeenCalledWith(1, 'Repair', ['For QA'], ADMIN.user_id, null);
+  it('does not require a reason to Approve', async () => {
+    jobOrderModel.getAssignmentById.mockResolvedValue({ assignment_id: 1, worker_id: WORKER.user_id, status: 'For QA' });
+    jobOrderModel.updateAssignmentStatus.mockResolvedValue({ assignment_id: 1, status: 'Approved' });
+
+    await expect(JobOrderService.updateQAStatus(1, 'Approved', ADMIN)).resolves.toEqual({
+      assignment_id: 1,
+      status: 'Approved',
+    });
   });
 });
 

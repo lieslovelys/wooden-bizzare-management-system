@@ -40,6 +40,21 @@ export const formatDateShort = (dateString) => {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 };
 
+// 2026-08-20 — an HTML date-input value (`YYYY-MM-DD`), built from local calendar parts. PRD B.6:
+// EditProjectForm.jsx used to do `new Date(dateString).toISOString().split('T')[0]`, which parses
+// to local midnight and then renders it in UTC — in UTC+8 that shifts the date back a day, so an
+// edited project's dates could silently move on save. Never reach for `toISOString` on a plain
+// calendar date for this reason; build the string from local getters instead.
+export const toDateInputValue = (dateString) => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  if (Number.isNaN(date.getTime())) return '';
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 // 8:30 AM — expects a "HH:MM[:SS]" string (as returned by Postgres `time` columns).
 export const formatTime12h = (t) => {
   if (!t) return '—';

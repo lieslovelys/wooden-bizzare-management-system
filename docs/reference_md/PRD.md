@@ -323,10 +323,16 @@ or `Repair` — **there is no way for a worker to view stages currently `For QA`
 `For QA`, stamps `date_submitted`, and fires a notification to the Quality Checker.
 
 **5. QA review.** The Quality Checker (or Admin/Production Manager — see B.1) reviews stages with
-status `For QA` and either Approves (stamps `date_completed`) or sends to `Repair`. **A repair
+status `For QA` and either Approves (stamps `date_completed`) or sends to `Repair`. ~~**A repair
 action carries no reason, comment, or evidence** — the worker learns only that the status
 changed, with no notification channel of their own to see why (Workers receive no notifications
-at all).
+at all).~~ — **Partially resolved (FR-6)**: `jobOrderService.updateQAStatus` now 400s a `Repair`
+sent with no non-empty reason, and `globals/ProjectVerificationDetail.jsx` prompts for one before
+submitting (Approve stays reason-optional). `worker/WorkerJobOrderDetail.jsx` shows the reason
+(and who sent it) on the worker's own task — a deliberate early slice of FR-9, since collecting a
+reason no worker can read would defeat the point. **Still open:** a dedicated notification
+telling the worker their task *changed*, independent of them happening to open it — that's the
+rest of FR-9/FR-4, not done here.
 
 **6. Completion.** Once every *assigned* stage is Approved, the project can be marked Completed
 and moves to Project History. Loophole: a project with only one stage ever assigned (of the five
@@ -413,9 +419,13 @@ Stated as product facts — what a user experiences — not as code defects.
   team's work, despite a dedicated Quality Checker role existing. **Deliberately not changed by
   FR-7** (see above) — Admin/PM keep approve rights; `qa_checker_id` now records who actually
   signed off, so this gap is visible in the audit trail rather than closed.
-- **Dates entered in the shop's local timezone are corrupted on edit.** The project-edit form
+- ~~**Dates entered in the shop's local timezone are corrupted on edit.** The project-edit form
   round-trips a date through JavaScript's UTC conversion before display; in UTC+8, an edited
-  project's dates can silently shift by a day when re-saved.
+  project's dates can silently shift by a day when re-saved.~~ — **Resolved (track A)**:
+  `EditProjectForm.jsx` used `new Date(x).toISOString().split('T')[0]` to populate its date
+  inputs, which parses to local midnight and renders in UTC — a day earlier in UTC+8. Replaced
+  with `utils/format.js`'s new `toDateInputValue`, which builds the date string from local
+  calendar parts instead of round-tripping through UTC.
 - ~~**A specific, currently-broken data path**: the Quality Checker's notification screen sends
   delete/clear-all/mark-read requests to the wrong host~~ — **Resolved (ARCHITECTURE_REVIEW.md
   P2)**: the three per-role notification screens (`AdminNotification`, `PMNotification`,
@@ -436,10 +446,10 @@ Stated as product facts — what a user experiences — not as code defects.
 | FR-3 | Inventory is a real, server-persisted module: items and variants via API, stock increment/decrement with an audit trail (who, when, how much, why), low-stock alerting against each variant's configurable `min_stock` **(✅ done, P1-11)**, and a record of materials consumed per project **(still open)**. |
 | FR-4 | Notifications carry per-user read state (not a single shared flag), are correctly filtered by the recipient's role, and update without a manual page reload (polling or push). |
 | FR-5 | Attendance status, late minutes, and overtime minutes are computed server-side from recorded time-in/time-out against the shop's defined working hours, not left at a default. |
-| FR-6 | Assignment status changes follow an enforced state machine (e.g. `Assigned → For QA → Approved`, `For QA → Repair → Assigned`) rather than accepting an arbitrary string **(✅ done — `jobOrderService.updateQAStatus`'s `WORKER_SUBMITTABLE_FROM` allow-list and role-scoped target statuses reject an invalid transition with a 409)**; QA rejections require a reason **(still open — this is really FR-7's audit trail, since there's nowhere to record the reason without `qa_notes` being written)**. |
+| FR-6 | Assignment status changes follow an enforced state machine (e.g. `Assigned → For QA → Approved`, `For QA → Repair → Assigned`) rather than accepting an arbitrary string **(✅ done — `jobOrderService.updateQAStatus`'s `WORKER_SUBMITTABLE_FROM` allow-list and role-scoped target statuses reject an invalid transition with a 409)**; QA rejections require a reason **(✅ done — a `Repair` with no non-empty reason 400s; see B.5 workflow 5)**. |
 | FR-7 | Every QA decision and every financial entry records who made it and when (audit trail on `job_assignments` and `project_profit`, actually populated). **(✅ done — see B.6.)** |
 | FR-8 | Project status is a single source of truth (the stored column, updated transactionally alongside the events that change it — not recomputed differently on read). **(✅ done — see B.6.)** |
-| FR-9 | Workers can see the full lifecycle of their own tasks, including those currently `For QA` or already `Approved`, and receive notification of QA outcomes including rejection reasons. |
+| FR-9 | Workers can see the full lifecycle of their own tasks, including those currently `For QA` or already `Approved`, and receive notification of QA outcomes including rejection reasons. **(Partially done — the rejection-reason display landed early alongside FR-6, see B.5 workflow 5; the `For QA`/`Approved` lifecycle view and actual notifications are still open.)** |
 
 ## C.2 Non-functional requirements
 

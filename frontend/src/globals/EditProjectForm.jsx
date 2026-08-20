@@ -4,6 +4,7 @@ import { api } from '../api/client';
 import { useToast } from '../context/ToastContext';
 import { useProjectForm } from '../hooks/useProjectForm';
 import ProjectFormFields from './ProjectFormFields';
+import { toDateInputValue } from '../utils/format';
 
 const EditProjectForm = ({ projectId, onCancel, onSuccess }) => {
   const [loading, setLoading] = useState(true);
@@ -38,8 +39,11 @@ const EditProjectForm = ({ projectId, onCancel, onSuccess }) => {
         if (result.success) {
           const p = result.data;
 
-          const formattedDateOrdered = p.date_ordered ? new Date(p.date_ordered).toISOString().split('T')[0] : '';
-          const formattedDueDate = p.due_date ? new Date(p.due_date).toISOString().split('T')[0] : '';
+          // PRD B.6: was `new Date(...).toISOString().split('T')[0]`, which parses to local
+          // midnight then renders in UTC — a day earlier in UTC+8. toDateInputValue builds the
+          // string from local calendar parts instead, so an untouched date survives a save.
+          const formattedDateOrdered = toDateInputValue(p.date_ordered);
+          const formattedDueDate = toDateInputValue(p.due_date);
 
           setFormData({
             projectName: p.project_name || '',

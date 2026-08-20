@@ -6,6 +6,7 @@ import {
   formatDate,
   formatDateShort,
   formatTime12h,
+  toDateInputValue,
 } from './format';
 
 describe('formatCurrency', () => {
@@ -67,6 +68,35 @@ describe('formatDateShort', () => {
   it('handles missing/invalid input', () => {
     expect(formatDateShort(null)).toBe('');
     expect(formatDateShort('not a date')).toBe('');
+  });
+});
+
+describe('toDateInputValue', () => {
+  // PRD B.6: the regression these guard is EditProjectForm.jsx's old
+  // `new Date(x).toISOString().split('T')[0]` — this test suite runs in Asia/Manila (UTC+8, the
+  // shop's own timezone), the exact zone the bug report names.
+
+  it('does not shift a date backward the way toISOString() did in UTC+8', () => {
+    // Postgres's `date` type gets parsed by the backend as LOCAL midnight (postgres-date's
+    // documented behavior for a bare YYYY-MM-DD), then serialized to JSON via toISOString() —
+    // for Aug 20 local midnight in UTC+8, that's "2026-08-19T16:00:00.000Z". The old
+    // `.toISOString().split('T')[0]` on the frontend re-read that same instant and kept
+    // "2026-08-19" — a day early. toDateInputValue must recover the original "2026-08-20".
+    expect(toDateInputValue('2026-08-19T16:00:00.000Z')).toBe('2026-08-20');
+  });
+
+  it('formats a bare YYYY-MM-DD date unchanged', () => {
+    expect(toDateInputValue('2026-08-20')).toBe('2026-08-20');
+  });
+
+  it('zero-pads single-digit month and day', () => {
+    expect(toDateInputValue('2026-01-05T00:00:00.000Z')).toBe('2026-01-05');
+  });
+
+  it('handles missing/invalid input', () => {
+    expect(toDateInputValue(null)).toBe('');
+    expect(toDateInputValue('')).toBe('');
+    expect(toDateInputValue('not a date')).toBe('');
   });
 });
 

@@ -568,7 +568,11 @@ Not urgent, but each of these increases the cost of every future change until ad
   separate, by decision, not oversight**: each is ~10 lines of a tabs array plus a route list that
   is genuinely per-role, and a shared `<RoleShell>` abstraction would cost more readability than
   four small files save. The `notifications` table's shared-`is_read` and ignored-`target_role`
-  defects (PRD B.6) remain untouched — out of scope for this bullet.
+  defects (PRD B.6) remain untouched — out of scope for this bullet. **Extended (track A, FR-6)**:
+  a third copy of the `wb-modal-overlay`/`wb-modal-box` confirmation-modal markup — this time
+  `globals/ProjectVerificationDetail.jsx`'s new repair-reason prompt, alongside the two that
+  already existed in `globals/JobOrderDetails.jsx` and `worker/WorkerJobOrderDetail.jsx` — became
+  a shared `globals/ConfirmModal.jsx`, and all three call sites now use it.
 - ~~**Client-side derived business logic duplicated with drift**~~ — **resolved**: `utils/format.js`
   now centralizes `formatCurrency`, `formatProjectId`, `formatWorkerId`, `formatDate`,
   `formatDateShort`, and `formatTime12h`. The same project now renders `WB-07` everywhere
@@ -604,10 +608,15 @@ Not urgent, but each of these increases the cost of every future change until ad
   rather than reintroducing the `EXISTS` recomputation FR-8 removed); extended `backend/src/tests/
   jobOrderService.test.js` and new `backend/src/tests/profitService.test.js` (FR-7's audit-trail
   writes — a reviewer decision records `qa_checker_id`/`qa_notes`, a worker submission records
-  neither, a profit save records `recorded_by`). The routes/services refactor's remaining
-  untested surface (`attendanceService`), the bulk of `Attendance.jsx`'s hoisted sub-components,
-  and everything else pre-P1-11 on the frontend — still zero automated coverage, and deliberately
-  left for a later pass.
+  neither, a profit save records `recorded_by`); extended `jobOrderService.test.js` again for
+  FR-6's rejection-reason requirement (a reason-less or whitespace-only `Repair` 400s, Approve
+  stays reason-optional). On the frontend: `utils/format.test.js` gained `toDateInputValue`
+  coverage (including the exact UTC+8 shift the old `toISOString()` bug produced) and new
+  `globals/ConfirmModal.test.jsx` (the shared modal FR-6's reason prompt introduced — rendering,
+  both button callbacks, and `confirmDisabled` actually blocking `onConfirm`). The routes/
+  services refactor's remaining untested surface (`attendanceService`), the bulk of
+  `Attendance.jsx`'s hoisted sub-components, and everything else pre-P1-11 on the frontend —
+  still zero automated coverage, and deliberately left for a later pass.
   ~~No CI~~ — **resolved**: `.github/workflows/ci.yml` (added in P1-10) runs backend install,
   frontend lint+test+build, and builds both Docker images; all three (`npm test` × 2, `npm run
   lint`) are now real gates — see the lint-errors bullet below for when the lint gate flipped.
@@ -704,11 +713,22 @@ Not urgent, but each of these increases the cost of every future change until ad
     everything pre-P1-11 on the frontend, and DESIGN.md §7 items 7–11 (the cross-cutting
     responsiveness backlog: the CSS custom-property/token migration, `.app-container`'s
     `overflow-x: hidden`, the 1024px icon-only rail, 7 unconverted `<table>`s, px/rem drift).
-13. **Track A, phase 1 — QA accountability (in progress).** FR-8 is ✅ done: `projects.status` is
-    now the single source of truth, with `markProjectAsCompleted` enforcing the completion rule
-    and 404/409 distinctly in the database rather than only in the frontend. FR-7 is ✅ done:
+13. **Track A, phase 1 — QA accountability** — ✅ done. FR-8: `projects.status` is now the
+    single source of truth, with `markProjectAsCompleted` enforcing the completion rule and
+    404/409 distinctly in the database rather than only in the frontend. FR-7:
     `qa_checker_id`/`qa_notes`/`project_profit.recorded_by` are populated on every reviewer
-    decision and every profit save — see PRD.md B.6 for both. Still to land in this phase: FR-6's
-    rejection-reason requirement, and the `EditProjectForm.jsx` date round-trip bug (PRD B.6).
-    Remaining after this phase: FR-4 (notifications), FR-9 (worker task lifecycle), FR-5
-    (attendance computation), and FR-3's materials-per-project half — see PRD.md C.1 for all seven.
+    decision and every profit save. FR-6: a `Repair` with no non-empty reason now 400s, and
+    `globals/ProjectVerificationDetail.jsx` prompts for one via a new shared
+    `globals/ConfirmModal.jsx` (extracted from its third near-identical usage, alongside
+    `globals/JobOrderDetails.jsx`'s complete-confirmation and `worker/WorkerJobOrderDetail.jsx`'s
+    submit-confirmation, which were migrated onto it too). `worker/WorkerJobOrderDetail.jsx` also
+    shows a rejected worker their own reason — a deliberate early slice of FR-9 (see PRD.md B.5
+    workflow 5). Also fixed: the `EditProjectForm.jsx` date round-trip bug (PRD B.6), via a new
+    `utils/format.js` `toDateInputValue` that builds a date-input value from local calendar parts
+    instead of `toISOString()`. See PRD.md B.6 for full detail on each. Backend tests
+    99 → 111 across the three commits; frontend tests 50 → 59.
+14. **Remaining after phase 1:** FR-4 (notifications — per-user read state, real role filtering,
+    live update), FR-9's remainder (the `For QA`/`Approved` worker lifecycle view, and actual QA-
+    outcome notifications — its rejection-reason display already landed in phase 1), FR-5
+    (attendance computation), and FR-3's materials-per-project half — see PRD.md C.1 for all seven,
+    and the track-A plan file for the dependency order they're sequenced in.

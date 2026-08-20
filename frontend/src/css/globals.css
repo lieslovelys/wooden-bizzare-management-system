@@ -3420,6 +3420,24 @@ html, body {
 }
 
 .wb-btn-yes:hover { background: #b8962e; }
+.wb-btn-yes:disabled {
+    background: #d9cba0;
+    cursor: not-allowed;
+}
+
+/* FR-6: the repair-reason textarea in globals/ProjectVerificationDetail.jsx's ConfirmModal */
+.wb-modal-textarea {
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 80px;
+    padding: 10px;
+    margin-bottom: 20px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    resize: vertical;
+}
 
 .wb-btn-no {
     background: #EAEAEA;
