@@ -33,10 +33,11 @@ const WorkerJobOrderDetail = ({ projectId, assignmentId, workerStatus, onBack })
             setLoading(true);
             try {
                 const details = await api.get(`/api/job-orders/${projectId}`);
+                // P1-3: this endpoint now answers {success, data, meta} instead of a bare array.
                 const assigns = await api.get(`/api/job-orders/${projectId}/assignments`);
                 if (ignore) return;
                 setProjectDetails(details);
-                setAssignments(assigns);
+                setAssignments(assigns.data || []);
             } catch (error) {
                 if (!ignore) console.error("Error fetching data:", error.message);
             } finally {

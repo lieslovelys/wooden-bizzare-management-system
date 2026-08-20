@@ -3,8 +3,12 @@ import "../css/admin.css";
 import { api, ApiError } from "../api/client";
 import { formatCurrency } from "../utils/format";
 
+// P1-3: /api/projects is now paged with a 25-row default — this dropdown wants every project
+// (including Completed ones, unlike globals/ProjectList.jsx, since profit can be entered for a
+// finished project too), so it asks for the backend's hard cap explicitly rather than inheriting
+// the smaller default. See ARCHITECTURE_REVIEW.md P1-3.
 async function fetchProjects() {
-  const result = await api.get("/api/projects");
+  const result = await api.get("/api/projects?limit=200");
   if (result.success && result.data) return result.data;
   if (Array.isArray(result)) return result;
   return [];

@@ -27,14 +27,18 @@ const JobOrderDetail = ({ jobId, onBack }) => {
 
     const [formData, setFormData] = useState({ stage: 'Carpenter', workerId: '', startDate: '', dueDate: '' });
 
+    // P1-3: both /job-orders/:id/assignments and /assignable-workers now answer
+    // {success, data, meta} instead of a bare array — see ARCHITECTURE_REVIEW.md P1-3.
     const fetchAllData = async () => {
         setLoading(true);
         try {
             setProjectDetails(await api.get(`/api/job-orders/${jobId}`));
-            setAssignments(await api.get(`/api/job-orders/${jobId}/assignments`));
+            const assignmentsResult = await api.get(`/api/job-orders/${jobId}/assignments`);
+            setAssignments(assignmentsResult.data || []);
 
             if (workers.length === 0) {
-                setWorkers(await api.get(`/api/assignable-workers`));
+                const workersResult = await api.get(`/api/assignable-workers`);
+                setWorkers(workersResult.data || []);
             }
         } catch (error) {
             console.error("Error fetching data:", error.message);

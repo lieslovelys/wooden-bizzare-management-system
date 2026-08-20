@@ -15,15 +15,17 @@ const ManagerDashboard = () => {
     // Kukunin natin nang sabay ang data mula sa dalawang magkaibang API
     const fetchDashboardData = async () => {
       try {
-        const [statsData, qaData] = await Promise.all([
+        const [statsData, qaResult] = await Promise.all([
           api.get('/api/dashboard/stats'),
           api.get('/api/qa/tasks'),
         ]);
 
-        // I-save sa state para lumabas sa screen
+        // P1-3: /api/qa/tasks is now paged — qaResult.data.length would only be the current
+        // page size (25), not the real total. meta.total is the actual count. See
+        // ARCHITECTURE_REVIEW.md P1-3.
         setStats({
           activeProjects: statsData.activeProjects,
-          toVerifyCount: qaData.length,
+          toVerifyCount: qaResult.meta?.total ?? 0,
         });
 
       } catch (error) {

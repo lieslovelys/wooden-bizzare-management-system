@@ -3,45 +3,44 @@ import { useLocation } from 'react-router-dom';
 import EditProjectForm from './EditProjectForm';
 import '../css/admin.css';
 import ProjectDetails from './ProjectDetails';
+import Pagination from './Pagination';
 import { api } from '../api/client';
 import { formatProjectId } from '../utils/format';
+import { usePaginatedList } from '../hooks/usePaginatedList';
 
 const ProjectList = () => {
-  const [projects, setProjects] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
-  const [loading, setLoading] = useState(true);
-  
-  const [editingProjectId, setEditingProjectId] = useState(null); 
-  const [viewingProjectId, setViewingProjectId] = useState(null);
+
+  const [editingProjectId, setEditingProjectId] = useState(null);
+
+  const location = useLocation();
+
+  // Derived from location.state at mount time (a notification link always mounts this
+  // component fresh via a route change) rather than an effect that calls setState directly,
+  // matching the fix already applied to globals/JobOrder.jsx's identical pattern — see
+  // ARCHITECTURE_REVIEW.md P2's lint-errors bullet.
+  const [viewingProjectId, setViewingProjectId] = useState(() => location.state?.targetProjectId ?? null);
 
   const [activeRowId, setActiveRowId] = useState(null);
 
-  const location = useLocation(); 
-
   useEffect(() => {
     if (location.state && location.state.targetProjectId) {
-        setViewingProjectId(location.state.targetProjectId);
         window.history.replaceState({}, document.title);
     }
   }, [location]);
 
-  const fetchProjects = async () => {
-    setLoading(true);
-    try {
-      const result = await api.get('/api/projects');
-
-      if (result.success) {
-        setProjects(result.data);
-      } else if (Array.isArray(result)) {
-        setProjects(result);
-      }
-    } catch (error) {
-      console.error('Error fetching data:', error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // P1-3: server-paginated and server-filtered — search and status used to be a client-side
+  // .filter() over the whole table (see ARCHITECTURE_REVIEW.md P1-3). Completed projects were
+  // always hidden regardless of the status dropdown; requesting both non-completed statuses
+  // explicitly (rather than baking the exclusion into the endpoint itself) preserves that
+  // exactly while leaving admin/Profit.jsx's project dropdown — which wants Completed projects
+  // too — unaffected, since it doesn't send a status param at all.
+  const status = statusFilter === 'All' ? ['Pending', 'In Progress'] : [statusFilter];
+  const { rows: filteredProjects, meta, page, setPage, loading, refetch } = usePaginatedList('/api/projects', {
+    params: { search: searchTerm, status },
+    pageSize: 25,
+  });
 
   // --- NEW DELETE HANDLER FUNCTION ---
   const handleDelete = async (id, name) => {
@@ -54,7 +53,7 @@ const ProjectList = () => {
 
       if (result.success) {
         alert('Project successfully deleted.');
-        fetchProjects(); // Refresh the list without wiping page state
+        refetch(); // Refresh the list without wiping page state
       } else {
         alert(result.message || 'Failed to delete project.');
       }
@@ -64,36 +63,15 @@ const ProjectList = () => {
     }
   };
 
-  useEffect(() => {
-    fetchProjects();
-  }, []);
-
-  const filteredProjects = projects.filter((project) => {
-    const currentStatus = project.status ? project.status.toLowerCase() : 'pending';
-    if (currentStatus === 'completed' || currentStatus === 'done') {
-        return false; 
-    }
-
-    if (statusFilter !== 'All' && currentStatus !== statusFilter.toLowerCase()) {
-        return false;
-    }
-
-    const searchLower = searchTerm.toLowerCase();
-    return (
-      (project.project_name && project.project_name.toLowerCase().includes(searchLower)) ||
-      (project.id && project.id.toString().includes(searchLower))
-    );
-  });
-
   if (editingProjectId) {
     return (
       <EditProjectForm 
         projectId={editingProjectId} 
         onCancel={() => setEditingProjectId(null)} 
         onSuccess={() => {
-          setEditingProjectId(null); 
-          fetchProjects(); 
-        }} 
+          setEditingProjectId(null);
+          refetch();
+        }}
       />
     );
   }
@@ -205,6 +183,8 @@ const ProjectList = () => {
               </div>
             )}
           </div>
+
+          <Pagination page={page} meta={meta} onChange={setPage} />
         </div>
       )}
     </div>

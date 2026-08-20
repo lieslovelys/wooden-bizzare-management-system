@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import '../css/admin.css';
 import { api } from '../api/client';
 import { formatDate, formatProjectId } from '../utils/format';
+import { usePaginatedList } from '../hooks/usePaginatedList';
+import Pagination from '../globals/Pagination';
 
 const ProjectHistory = () => {
-  const [historyData, setHistoryData] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [remarksFilter, setRemarksFilter] = useState('All');
 
   const [selectedProjectId, setSelectedProjectId] = useState(null);
@@ -13,29 +13,15 @@ const ProjectHistory = () => {
   const [projectTasks, setProjectTasks] = useState([]);
   const [detailsLoading, setDetailsLoading] = useState(false);
 
-  useEffect(() => {
-    const fetchHistory = async () => {
-      setLoading(true);
-      try {
-        const result = await api.get('/api/projects/history');
-
-        const dataArray = result.success ? result.data : (Array.isArray(result) ? result : []);
-
-        const formattedData = dataArray.map(proj => {
-          const remark = calculateRemark(proj.date_completed, proj.due_date);
-          return { ...proj, remark: remark };
-        });
-        setHistoryData(formattedData);
-
-      } catch (error) {
-        console.error("Error fetching project history:", error.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchHistory();
-  }, []);
+  // P1-3: server-paginated and server-filtered — `remark` used to be computed client-side from
+  // date_completed vs due_date after fetching the whole table (see ARCHITECTURE_REVIEW.md P1-3);
+  // the backend now returns it as a real column using the exact same comparison, so there's one
+  // definition instead of two that could drift.
+  const remark = remarksFilter === 'All' ? undefined : remarksFilter;
+  const { rows: displayedHistory, meta, page, setPage, loading } = usePaginatedList('/api/projects/history', {
+    params: { remark },
+    pageSize: 25,
+  });
 
   const handleRowClick = async (projectId) => {
     setSelectedProjectId(projectId);
@@ -44,11 +30,12 @@ const ProjectHistory = () => {
     try {
         const [detailsData, tasksData] = await Promise.all([
             api.get(`/api/job-orders/${projectId}`),
+            // P1-3: this endpoint now answers {success, data, meta} instead of a bare array.
             api.get(`/api/job-orders/${projectId}/assignments`)
         ]);
 
         setProjectDetails(detailsData);
-        setProjectTasks(tasksData);
+        setProjectTasks(tasksData.data || []);
     } catch (error) {
         console.error("Error fetching detailed project info:", error.message);
     } finally {
@@ -73,10 +60,6 @@ const ProjectHistory = () => {
     if (completedDate > dueDate) return 'Late';
     return 'On-time';
   };
-
-  const displayedHistory = remarksFilter === 'All' 
-    ? historyData 
-    : historyData.filter(proj => proj.remark === remarksFilter);
 
   const getBadgeClass = (remark) => {
     switch (remark) {
@@ -262,6 +245,8 @@ const ProjectHistory = () => {
                     </div>
                 )}
             </div>
+
+            <Pagination page={page} meta={meta} onChange={setPage} />
         </div>
       )}
     </div>

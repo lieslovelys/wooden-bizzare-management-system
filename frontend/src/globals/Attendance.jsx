@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { api } from '../api/client';
 import { useToast } from '../context/ToastContext';
 import { formatTime12h, formatWorkerId } from '../utils/format';
+import { usePaginatedList } from '../hooks/usePaginatedList';
+import Pagination from './Pagination';
 
 const API = '/api';
 
@@ -114,7 +116,7 @@ const EmployeeListView = ({ searchQuery, setSearchQuery, typeFilter, setTypeFilt
   </div>
 );
 
-const AttendanceLogView = ({ worker, logLoading, attendanceLog, onAddClick, onEditClick, onDeleteClick }) => {
+const AttendanceLogView = ({ worker, logLoading, attendanceLog, logMeta, logPage, onLogPageChange, onAddClick, onEditClick, onDeleteClick }) => {
   const workerLabel = worker
     ? `${worker.last_name ?? ''}, ${worker.first_name ?? ''} ${worker.middle_name && worker.middle_name !== 'None' ? worker.middle_name.charAt(0) + '.' : ''}`.trim().toUpperCase()
     : '—';
@@ -180,6 +182,8 @@ const AttendanceLogView = ({ worker, logLoading, attendanceLog, onAddClick, onEd
             )}
           </div>
         )}
+
+        <Pagination page={logPage} meta={logMeta} onChange={onLogPageChange} />
       </div>
     </div>
   );
@@ -318,9 +322,7 @@ const Attendance = () => {
   const [editingRecord, setEditingRecord] = useState(null);
   const [employees, setEmployees] = useState([]);
   const [selectedWorker, setSelectedWorker] = useState(null);
-  const [attendanceLog, setAttendanceLog] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [logLoading, setLogLoading] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState('All');
@@ -346,24 +348,23 @@ const Attendance = () => {
     return () => { ignore = true; };
   }, []);
 
-  const fetchAttendanceLog = async (workerId) => {
-    if (!workerId || workerId === 'undefined') { return; }
-    try {
-      setLogLoading(true);
-      const data = await api.get(`${API}/attendance/worker/${workerId}`);
-      setAttendanceLog(data);
-    } catch (err) {
-      console.error('Error fetching attendance:', err.message);
-    } finally {
-      setLogLoading(false);
-    }
-  };
+  // P1-3: server-paginated — the attendance log is the highest-cardinality list in the app (one
+  // row per worker per day, unbounded growth). See ARCHITECTURE_REVIEW.md P1-3. Keyed by the
+  // selected worker's id, so switching workers automatically refetches (and a falsy endpoint
+  // before a worker is selected skips fetching entirely).
+  const {
+    rows: attendanceLog,
+    setRows: setAttendanceLog,
+    meta: logMeta,
+    page: logPage,
+    setPage: setLogPage,
+    loading: logLoading,
+    refetch: refetchLog,
+  } = usePaginatedList(selectedWorker ? `${API}/attendance/worker/${selectedWorker.user_id}` : null, { pageSize: 25 });
 
   const handleSelectWorker = (worker) => {
-    const targetId = worker.user_id;
-    if (!targetId) { return; }
+    if (!worker.user_id) { return; }
     setSelectedWorker(worker);
-    fetchAttendanceLog(targetId);
     setView('log');
   };
 
@@ -377,6 +378,8 @@ const Attendance = () => {
     setShowConfirmModal(false);
     try {
       await api.delete(`${API}/attendance/${recordToDelete}`);
+      // Deleting a single row doesn't change which rows belong on this page, so update it in
+      // place rather than round-tripping for a full refetch.
       setAttendanceLog(prev => prev.filter(r => r.id !== recordToDelete));
       showToast("Record deleted successfully!", "success");
     } catch (err) {
@@ -439,6 +442,9 @@ const Attendance = () => {
           worker={selectedWorker}
           logLoading={logLoading}
           attendanceLog={attendanceLog}
+          logMeta={logMeta}
+          logPage={logPage}
+          onLogPageChange={setLogPage}
           onAddClick={() => setView('add')}
           onEditClick={(row) => { setEditingRecord(row); setView('edit'); }}
           onDeleteClick={handleDeleteClick}
@@ -450,7 +456,7 @@ const Attendance = () => {
           worker={selectedWorker}
           showToast={showToast}
           onClose={() => setView('log')}
-          onSaved={() => { fetchAttendanceLog(selectedWorker.user_id); setView('log'); }}
+          onSaved={() => { refetchLog(); setView('log'); }}
         />
       )}
 
@@ -459,7 +465,7 @@ const Attendance = () => {
           record={editingRecord}
           showToast={showToast}
           onClose={() => { setView('log'); setEditingRecord(null); }}
-          onSaved={() => { fetchAttendanceLog(selectedWorker.user_id); setView('log'); setEditingRecord(null); }}
+          onSaved={() => { refetchLog(); setView('log'); setEditingRecord(null); }}
         />
       )}
     </div>

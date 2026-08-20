@@ -18,11 +18,12 @@ const ProjectVerificationDetail = ({ projectId, onBack }) => {
             setLoading(true);
             try {
                 const info = await api.get(`/api/job-orders/${idToFetch}`);
+                // P1-3: this endpoint now answers {success, data, meta} instead of a bare array.
                 const assignData = await api.get(`/api/job-orders/${idToFetch}/assignments`);
                 if (ignore) return;
 
                 setProjectInfo(info);
-                const formattedTasks = assignData.map(t => ({
+                const formattedTasks = (assignData.data || []).map(t => ({
                     id: t.assignment_id,
                     stage: t.stage_name,
                     worker: `${t.first_name} ${t.last_name}`,
