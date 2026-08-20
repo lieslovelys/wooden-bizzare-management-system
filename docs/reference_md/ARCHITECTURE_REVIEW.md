@@ -608,8 +608,13 @@ Not urgent, but each of these increases the cost of every future change until ad
   ~~No `engines`/`.nvmrc`~~ — **resolved**: both `package.json`s pin `"node": ">=24"`, matching
   the Dockerfiles; root `.nvmrc` added. ~~`nodemon` in `dependencies`~~ — **resolved** (P1a).
   `frontend/README.md` is still the unmodified Vite template.
-- **Two unused database views** (`attendance_summary`, `project_profit_summary`) — either wire them
-  into the dashboard/reporting screens they were clearly built for, or drop them.
+- ~~**Two unused database views**~~ — **resolved (engineering-debt pass)**: `project_profit_summary`
+  (a bare `projects JOIN project_profit` with no aggregation, and `profitModel.js` already reads
+  `project_profit` directly) is dropped, via a migration whose `down` recreates it exactly —
+  verified with a real `up → down → up` round-trip against a local database, not just read by
+  inspection. `attendance_summary` is kept, deliberately unwired: every column it aggregates
+  (`status`, `late_minutes`, `overtime_minutes`) is frozen at its default until PRD FR-5 lands —
+  see PRD.md B.2 "Unused views" for the full reasoning.
 - ~~**~9 pre-existing frontend lint errors**~~ — **resolved (P2 frontend-consolidation pass)**:
   all fixed with the real underlying change rather than a suppression — the `UserContext` export
   moved out of `App.jsx` into `context/UserContext.js` (fast-refresh violation); the missing back
@@ -681,8 +686,17 @@ Not urgent, but each of these increases the cost of every future change until ad
     DESIGN.md §7 opened with (viewport-height units, tap-target sizing, the mobile control stack,
     the floating hamburger, hover-only tap affordances) are fixed — see that document's §7 for the
     detail. `docs/design/DESIGN.md` is tracked in git for the first time as part of this.
-11. **Still outstanding:** the deferred P2 component dedup (Create/Edit form pairs, the five
-    role-shell files), the two unused database views, backfilling test coverage for the
-    pre-P1-11 backend and pre-P2 frontend, and DESIGN.md §7 items 7–11 (the cross-cutting
-    responsiveness backlog: the CSS custom-property/token migration, `.app-container`'s
-    `overflow-x: hidden`, the 1024px icon-only rail, 7 unconverted `<table>`s, px/rem drift).
+11. **Engineering-debt pass** — ✅ done: backfilled `middleware/auth.js` (the whole P0-2 fix),
+    `jobOrderService.updateQAStatus`'s P0-3 self-approval guard, and `userService.login`'s
+    enumeration-oracle guarantee with real tests (backend: 65 → 99); deduped the Create/Edit
+    project and worker form pairs into shared field components + validators, while deliberately
+    leaving the five role-shell files separate (frontend: 37 → 50); dropped the unused
+    `project_profit_summary` view and documented why `attendance_summary` stays unwired pending
+    FR-5 — see the relevant bullets above for detail on each.
+12. **Still outstanding:** the deferred five-role-shell consolidation (declined by decision, not
+    revisited without new information), test coverage for `projectService`/`attendanceService`/
+    `profitService` and everything pre-P1-11 on the frontend, and DESIGN.md §7 items 7–11 (the
+    cross-cutting responsiveness backlog: the CSS custom-property/token migration,
+    `.app-container`'s `overflow-x: hidden`, the 1024px icon-only rail, 7 unconverted `<table>`s,
+    px/rem drift). Beyond this document: every PRD Part C functional requirement (FR-3 through
+    FR-9) is still open — see PRD.md B.6/C.1.

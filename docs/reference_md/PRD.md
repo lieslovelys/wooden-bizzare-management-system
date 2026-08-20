@@ -102,8 +102,11 @@ Checker role exists.
 
 ## B.2 Data model
 
-11 tables, 3 enum types, 4 indexes (all on one table), 2 unused reporting views. Single
-monolithic bootstrap script (`backend/index.sql`), no migration tool, not idempotent.
+11 tables, 3 enum types, 4 indexes (all on one table), 1 unused reporting view. ~~Single
+monolithic bootstrap script (`backend/index.sql`), no migration tool, not idempotent.~~ —
+**Resolved (P1-10)**: `index.sql` was folded into `backend/src/migrations/1700000000000_
+initial-schema.js` and deleted; schema changes now go through `node-pg-migrate`
+(`backend/src/migrations/`), each one reviewable and re-applied automatically on deploy.
 
 ### Entity relationship overview
 
@@ -185,8 +188,15 @@ no FK).
 
 ### Unused views
 
-`attendance_summary` and `project_profit_summary` are defined in `index.sql` but never queried by
-any backend code.
+~~`attendance_summary` and `project_profit_summary` are defined in `index.sql` but never queried
+by any backend code.~~ — **Resolved (engineering-debt pass)**: `project_profit_summary` — a bare
+`projects JOIN project_profit` with no aggregation, and `profitModel.js` already reads
+`project_profit` directly — was dropped (`backend/src/migrations/
+1787195165375_drop-unused-profit-summary-view.js`). `attendance_summary` is **kept, still
+unwired, on purpose**: every column it aggregates (`status`, `late_minutes`, `overtime_minutes`)
+is frozen at the database default until FR-5 ("Attendance status is never computed," below) is
+implemented — wiring it into a reporting screen today would render every worker as all-absent
+with zero minutes. It becomes worth using the moment FR-5 lands.
 
 ## B.3 API surface
 
