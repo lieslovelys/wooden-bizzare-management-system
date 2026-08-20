@@ -114,8 +114,8 @@ initial-schema.js` and deleted; schema changes now go through `node-pg-migrate`
 users ──┬─(1:N, CASCADE)──→ worker_details.user_id ──(1:N, CASCADE)──→ attendance.worker_id
         │                          ↑ (attendance targets worker_details.detail_id)
         ├─(1:N, CASCADE)──→ job_assignments.worker_id      ← targets users.user_id directly
-        ├─(1:N, SET NULL)─→ job_assignments.qa_checker_id  (never populated by any code path)
-        └─(1:N, SET NULL)─→ project_profit.recorded_by     (never populated by any code path)
+        ├─(1:N, SET NULL)─→ job_assignments.qa_checker_id  (FR-7: populated on every reviewer decision)
+        └─(1:N, SET NULL)─→ project_profit.recorded_by     (FR-7: populated on every profit save)
 
 projects ─┬─(1:N, CASCADE)─→ job_assignments.project_id
           ├─(1:N, CASCADE)─→ project_variables.project_id
@@ -158,13 +158,15 @@ Pending/In Progress/Completed — **FR-8**, previously unconstrained), `date_com
 **`job_assignments`** — `assignment_id` (PK), `project_id` (FK → projects, CASCADE),
 `worker_id` (FK → **users**, CASCADE), `stage_name` (NOT NULL), `start_date`/`due_date`,
 `status` (enum: Assigned/In Progress/For QA/Rework/Approved/Repair, default `Assigned`),
-`qa_checker_id` (FK → users, SET NULL, never written), `qa_notes` (never written),
+`qa_checker_id` (FK → users, SET NULL, **FR-7:** written on every reviewer Approve/Repair
+decision), `qa_notes` (**FR-7:** written on every reviewer decision; kept across a worker's
+resubmission rather than cleared, so a rejection reason stays visible through the next round),
 `date_completed` (`timestamp`), `date_submitted` (`date`).
 
-**`project_profit`** — one row per project (not `UNIQUE`-enforced, code assumes 1:1 via
-`LIMIT 1`). `client_payment`/`worker_wages`/`materials_cost`/`other_expenses`
+**`project_profit`** — one row per project (`UNIQUE`-enforced on `project_id` since P1-7).
+`client_payment`/`worker_wages`/`materials_cost`/`other_expenses`
 (`numeric(12,2) NOT NULL DEFAULT 0`), `total_expenses` and `net_profit` as **`GENERATED ALWAYS ...
-STORED`** columns, `recorded_by` (FK → users, never written), `updated_at`.
+STORED`** columns, `recorded_by` (FK → users, **FR-7:** written on every save), `updated_at`.
 
 **`project_expense_items`** — itemized expenses under a profit record: `profit_id` (FK →
 project_profit, CASCADE), `category`, `description`, `amount`.
@@ -377,9 +379,15 @@ Stated as product facts — what a user experiences — not as code defects.
   notification only appears after the user navigates to (or reloads) that screen.
 - **`Rework` is invisible in reporting.** The status enum includes both `Rework` and `Repair`, but
   only `Repair` is ever produced by the UI and only `Repair` is counted in productivity.
-- **No QA audit trail.** `qa_checker_id` and `qa_notes` exist on `job_assignments` but are never
+- ~~**No QA audit trail.** `qa_checker_id` and `qa_notes` exist on `job_assignments` but are never
   written by any code path, so there's no record of who approved or rejected a stage, or why.
-  `project_profit.recorded_by` is the same story for financial entries.
+  `project_profit.recorded_by` is the same story for financial entries.~~ — **Resolved (FR-7)**:
+  `jobOrderService.updateQAStatus` now writes `qa_checker_id` (the reviewer's own user id) and
+  `qa_notes` on every Approve/Repair decision — never on a worker's own submission, so a worker
+  resubmitting can't overwrite who reviewed a prior round. `profitService.saveProfit` writes
+  `project_profit.recorded_by` from the session user on every save. **By design, not a gap:**
+  Admin and Production Manager still both hold approve rights (see the segregation-of-duties
+  bullet below) — `qa_checker_id` makes that visible in the data rather than closing it.
 - ~~**Project status has two sources of truth**: a stored `status` column, and a value recomputed
   on read via a `CASE ... EXISTS` query. The two can disagree.~~ — **Resolved (FR-8)**: the
   `CASE ... EXISTS` in `models/projectModel.js`'s `getAllProjects` is gone; every read now selects
@@ -402,7 +410,9 @@ Stated as product facts — what a user experiences — not as code defects.
   alongside the month one, and compare against `AT TIME ZONE 'Asia/Manila'` rather than the
   server's local time.
 - **Segregation of duties**: both Admin and Production Manager can approve/reject QA on their own
-  team's work, despite a dedicated Quality Checker role existing.
+  team's work, despite a dedicated Quality Checker role existing. **Deliberately not changed by
+  FR-7** (see above) — Admin/PM keep approve rights; `qa_checker_id` now records who actually
+  signed off, so this gap is visible in the audit trail rather than closed.
 - **Dates entered in the shop's local timezone are corrupted on edit.** The project-edit form
   round-trips a date through JavaScript's UTC conversion before display; in UTC+8, an edited
   project's dates can silently shift by a day when re-saved.
@@ -427,7 +437,7 @@ Stated as product facts — what a user experiences — not as code defects.
 | FR-4 | Notifications carry per-user read state (not a single shared flag), are correctly filtered by the recipient's role, and update without a manual page reload (polling or push). |
 | FR-5 | Attendance status, late minutes, and overtime minutes are computed server-side from recorded time-in/time-out against the shop's defined working hours, not left at a default. |
 | FR-6 | Assignment status changes follow an enforced state machine (e.g. `Assigned → For QA → Approved`, `For QA → Repair → Assigned`) rather than accepting an arbitrary string **(✅ done — `jobOrderService.updateQAStatus`'s `WORKER_SUBMITTABLE_FROM` allow-list and role-scoped target statuses reject an invalid transition with a 409)**; QA rejections require a reason **(still open — this is really FR-7's audit trail, since there's nowhere to record the reason without `qa_notes` being written)**. |
-| FR-7 | Every QA decision and every financial entry records who made it and when (audit trail on `job_assignments` and `project_profit`, actually populated). |
+| FR-7 | Every QA decision and every financial entry records who made it and when (audit trail on `job_assignments` and `project_profit`, actually populated). **(✅ done — see B.6.)** |
 | FR-8 | Project status is a single source of truth (the stored column, updated transactionally alongside the events that change it — not recomputed differently on read). **(✅ done — see B.6.)** |
 | FR-9 | Workers can see the full lifecycle of their own tasks, including those currently `For QA` or already `Approved`, and receive notification of QA outcomes including rejection reasons. |
 

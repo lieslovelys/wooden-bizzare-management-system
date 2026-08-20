@@ -11,7 +11,8 @@ import { AppError } from "../errors/AppError.js";
 
 const getProfit = (projectId) => getProfitByProjectId(projectId);
 
-const saveProfit = (projectId, data) => upsertProfit(projectId, data);
+// FR-7: `recordedBy` is the session user's id, threaded through from the route.
+const saveProfit = (projectId, data, recordedBy) => upsertProfit(projectId, data, recordedBy);
 
 const deleteProfit = async (projectId) => {
   const deleted = await deleteProfitByProjectId(projectId);

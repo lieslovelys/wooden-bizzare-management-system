@@ -33,3 +33,12 @@ export const assignBody = z.object({
   startDate: z.string().optional(),
   dueDate: z.string().optional(),
 });
+
+// PUT /assignments/:assignmentId/status validated neither field before this — `status` reached
+// jobOrderService.updateQAStatus as a raw string (see track-A plan finding 2). `notes` is FR-6/
+// FR-7's rejection reason / review comment; shape-only validation here, the "a Repair must carry
+// a non-empty reason" business rule itself lives in the service per CLAUDE.md's layer contract.
+export const assignmentStatusBody = z.object({
+  status: z.enum(TASK_STATUS),
+  notes: z.string().trim().max(1000).optional(),
+});

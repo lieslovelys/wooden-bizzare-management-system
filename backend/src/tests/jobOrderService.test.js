@@ -2,8 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AppError } from '../errors/AppError.js';
 
 // jobOrderService.updateQAStatus carries the fix for P0-3 ("Workers can self-approve their own
-// QA") and the state-machine enforcement PRD FR-6 credits as done — see
-// ARCHITECTURE_REVIEW.md P0-3 and PRD.md FR-6. Neither had any test coverage before this file.
+// QA"), the state-machine enforcement PRD FR-6 credits as done, and (added in track A) FR-7's
+// qa_checker_id/qa_notes audit trail — see ARCHITECTURE_REVIEW.md P0-3 and PRD.md FR-6/FR-7.
 
 vi.mock('../models/jobOrderModel.js', () => ({
   getAllJobOrders: vi.fn(),
@@ -77,17 +77,21 @@ describe('jobOrderService.updateQAStatus', () => {
     });
   });
 
-  it("a Worker submitting 'For QA' passes WORKER_SUBMITTABLE_FROM and notifies QC exactly once", async () => {
+  it("a Worker submitting 'For QA' passes WORKER_SUBMITTABLE_FROM, writes no audit fields, and notifies QC exactly once", async () => {
     jobOrderModel.getAssignmentById.mockResolvedValue({ assignment_id: 1, worker_id: WORKER.user_id, status: 'Assigned' });
     jobOrderModel.updateAssignmentStatus.mockResolvedValue({ assignment_id: 1, status: 'For QA' });
 
     const result = await JobOrderService.updateQAStatus(1, 'For QA', WORKER);
 
     expect(result).toEqual({ assignment_id: 1, status: 'For QA' });
+    // FR-7: a worker's own submission never attributes qa_checker_id/qa_notes — those columns
+    // only ever get written on the reviewer branch below.
     expect(jobOrderModel.updateAssignmentStatus).toHaveBeenCalledWith(
       1,
       'For QA',
       ['Assigned', 'Repair', 'In Progress', 'Rework'],
+      null,
+      null,
     );
     expect(adminNotifModel.createNotification).toHaveBeenCalledTimes(1);
     expect(adminNotifModel.createNotification).toHaveBeenCalledWith(
@@ -99,25 +103,42 @@ describe('jobOrderService.updateQAStatus', () => {
     );
   });
 
-  it('a reviewer approving passes REVIEWABLE_FROM and sends no notification', async () => {
+  it('a reviewer approving passes REVIEWABLE_FROM, records who approved, and sends no notification', async () => {
     jobOrderModel.getAssignmentById.mockResolvedValue({ assignment_id: 1, worker_id: WORKER.user_id, status: 'For QA' });
     jobOrderModel.updateAssignmentStatus.mockResolvedValue({ assignment_id: 1, status: 'Approved' });
 
     const result = await JobOrderService.updateQAStatus(1, 'Approved', PM);
 
     expect(result).toEqual({ assignment_id: 1, status: 'Approved' });
-    expect(jobOrderModel.updateAssignmentStatus).toHaveBeenCalledWith(1, 'Approved', ['For QA']);
+    // FR-7: PM.user_id (2) is written as qa_checker_id even though PM keeps approve rights —
+    // the segregation gap PRD B.1 flags becomes visible in data rather than closed by fiat.
+    expect(jobOrderModel.updateAssignmentStatus).toHaveBeenCalledWith(1, 'Approved', ['For QA'], PM.user_id, null);
     expect(adminNotifModel.createNotification).not.toHaveBeenCalled();
   });
 
-  it('a reviewer setting Repair also passes REVIEWABLE_FROM and sends no notification', async () => {
+  it('a reviewer setting Repair with a reason passes it through as qa_notes', async () => {
+    jobOrderModel.getAssignmentById.mockResolvedValue({ assignment_id: 1, worker_id: WORKER.user_id, status: 'For QA' });
+    jobOrderModel.updateAssignmentStatus.mockResolvedValue({ assignment_id: 1, status: 'Repair' });
+
+    await JobOrderService.updateQAStatus(1, 'Repair', ADMIN, 'Joints are loose, redo the frame.');
+
+    expect(jobOrderModel.updateAssignmentStatus).toHaveBeenCalledWith(
+      1,
+      'Repair',
+      ['For QA'],
+      ADMIN.user_id,
+      'Joints are loose, redo the frame.',
+    );
+    expect(adminNotifModel.createNotification).not.toHaveBeenCalled();
+  });
+
+  it('a reviewer setting Repair with no notes writes qa_notes as null', async () => {
     jobOrderModel.getAssignmentById.mockResolvedValue({ assignment_id: 1, worker_id: WORKER.user_id, status: 'For QA' });
     jobOrderModel.updateAssignmentStatus.mockResolvedValue({ assignment_id: 1, status: 'Repair' });
 
     await JobOrderService.updateQAStatus(1, 'Repair', ADMIN);
 
-    expect(jobOrderModel.updateAssignmentStatus).toHaveBeenCalledWith(1, 'Repair', ['For QA']);
-    expect(adminNotifModel.createNotification).not.toHaveBeenCalled();
+    expect(jobOrderModel.updateAssignmentStatus).toHaveBeenCalledWith(1, 'Repair', ['For QA'], ADMIN.user_id, null);
   });
 });
 

@@ -5,7 +5,7 @@ import { parsePagination, buildMeta, MAX_LIMIT } from '../utils/pagination.js';
 import { ok } from '../utils/respond.js';
 import { validate } from '../middleware/validate.js';
 import { idParams } from '../schemas/common.js';
-import { jobOrdersQuery, workerTasksQuery, qaTasksQuery, assignBody } from '../schemas/jobOrderSchemas.js';
+import { jobOrdersQuery, workerTasksQuery, qaTasksQuery, assignBody, assignmentStatusBody } from '../schemas/jobOrderSchemas.js';
 
 const router = express.Router();
 
@@ -80,8 +80,9 @@ router.get('/assignments/:assignmentId', requireRole('Admin', 'Production Manage
 
 // Role/ownership branching for this one happens inside the service (worker submitting their
 // own task vs. a reviewer approving/rejecting someone else's) — requireAuth only here.
-router.put('/assignments/:assignmentId/status', requireAuth, validate({ params: idParams('assignmentId') }), async (req, res) => {
-    const updatedTask = await JobOrder.updateQAStatus(req.params.assignmentId, req.body.status, req.session.user);
+router.put('/assignments/:assignmentId/status', requireAuth, validate({ params: idParams('assignmentId'), body: assignmentStatusBody }), async (req, res) => {
+    const { status, notes } = req.valid.body;
+    const updatedTask = await JobOrder.updateQAStatus(req.params.assignmentId, status, req.session.user, notes);
     res.status(200).json(ok(updatedTask));
 });
 

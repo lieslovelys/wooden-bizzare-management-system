@@ -24,7 +24,7 @@ router.post("/:projectId", ADMIN_ONLY, validate({ params: idParams('projectId'),
     materials_cost,
     other_expenses,
     expense_items
-  });
+  }, req.session.user.user_id);
   res.json(ok(result));
 });
 

@@ -34,7 +34,10 @@ export async function getProfitByProjectId(projectId) {
   return { ...profit, expense_items: items };
 }
 
-export async function upsertProfit(projectId, { client_payment, worker_wages, materials_cost, other_expenses, expense_items = [] }) {
+// FR-7: `recorded_by` — never written by any code path before this — attributes a P&L entry to
+// whoever entered it. `recordedBy` is optional so existing callers/tests that don't pass one
+// don't break; the route is what actually supplies `req.session.user.user_id`.
+export async function upsertProfit(projectId, { client_payment, worker_wages, materials_cost, other_expenses, expense_items = [] }, recordedBy = null) {
   const client = await getClient();
   try {
     await client.query("BEGIN");
@@ -49,20 +52,20 @@ export async function upsertProfit(projectId, { client_payment, worker_wages, ma
     if (existingResult.rows.length > 0) {
       // Update existing record
       const updateResult = await client.query(
-        `UPDATE project_profit 
-         SET client_payment = $1, worker_wages = $2, materials_cost = $3, other_expenses = $4, updated_at = NOW()
+        `UPDATE project_profit
+         SET client_payment = $1, worker_wages = $2, materials_cost = $3, other_expenses = $4, updated_at = NOW(), recorded_by = $6
          WHERE project_id = $5
          RETURNING *`,
-        [client_payment, worker_wages, materials_cost, other_expenses, projectId]
+        [client_payment, worker_wages, materials_cost, other_expenses, projectId, recordedBy]
       );
       profit = updateResult.rows[0];
     } else {
       // Insert new record
       const insertResult = await client.query(
-        `INSERT INTO project_profit (project_id, client_payment, worker_wages, materials_cost, other_expenses, updated_at)
-         VALUES ($1, $2, $3, $4, $5, NOW())
+        `INSERT INTO project_profit (project_id, client_payment, worker_wages, materials_cost, other_expenses, updated_at, recorded_by)
+         VALUES ($1, $2, $3, $4, $5, NOW(), $6)
          RETURNING *`,
-        [projectId, client_payment, worker_wages, materials_cost, other_expenses]
+        [projectId, client_payment, worker_wages, materials_cost, other_expenses, recordedBy]
       );
       profit = insertResult.rows[0];
     }

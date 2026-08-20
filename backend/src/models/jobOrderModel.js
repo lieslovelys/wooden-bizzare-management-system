@@ -78,12 +78,19 @@ export const getWorkers = async ({ limit, offset }) => {
 // P1-3: capped-only — naturally bounded (assignment stages per project), no paging UI.
 // `assignment_id` is a primary key, so the existing ORDER BY is already a deterministic
 // tiebreaker on its own.
+// FR-7/FR-9: also selects `qa_notes` and the reviewer's name (joined via `qa_checker_id`, which
+// this same track-A pass is the first code to ever write) — feeds both
+// globals/ProjectVerificationDetail.jsx (showing a reviewer their own past decisions) and
+// worker/WorkerJobOrderDetail.jsx (showing a worker why their stage came back for repair).
 export const getProjectAssignments = async (projectId, { limit, offset }) => {
     const sql = `
         SELECT j.assignment_id, j.stage_name, j.start_date, j.due_date, j.date_completed, j.status,
-               u.first_name, u.last_name, COUNT(*) OVER() AS total_count
+               j.qa_notes, u.first_name, u.last_name,
+               q.first_name AS qa_checker_first_name, q.last_name AS qa_checker_last_name,
+               COUNT(*) OVER() AS total_count
         FROM job_assignments j
         LEFT JOIN users u ON j.worker_id = u.user_id
+        LEFT JOIN users q ON j.qa_checker_id = q.user_id
         WHERE j.project_id = $1
         ORDER BY j.assignment_id ASC
         LIMIT $2 OFFSET $3
@@ -240,7 +247,14 @@ export const getAssignmentById = async (assignmentId) => {
 // race window between an earlier read (getAssignmentById) and this update. If nothing matched
 // — wrong current state, or the assignment no longer exists — rows[0] is undefined and the
 // caller (jobOrderController.updateQAStatus) treats that as a 409, not a silent success.
-export const updateAssignmentStatus = async (assignmentId, newStatus, allowedFromStatuses) => {
+//
+// FR-7: `qaCheckerId`/`qaNotes` populate the audit-trail columns on a reviewer's Approved/Repair
+// transition — the service passes both as `null` on a worker's own 'For QA' submission, so this
+// only ever appends to the two branches below that a reviewer can reach. A stale `qa_notes` from
+// a previous repair round is deliberately left in place across a worker's resubmission (there's
+// no branch here that clears it) — FR-9 needs the worker to still be able to read why a prior
+// round was rejected.
+export const updateAssignmentStatus = async (assignmentId, newStatus, allowedFromStatuses, qaCheckerId = null, qaNotes = null) => {
     try {
         let sql;
 
@@ -249,7 +263,7 @@ export const updateAssignmentStatus = async (assignmentId, newStatus, allowedFro
             // would silently pin it to Manila midnight.
             sql = `
                 UPDATE job_assignments
-                SET status = $1, date_completed = NOW()
+                SET status = $1, date_completed = NOW(), qa_checker_id = $4, qa_notes = $5
                 WHERE assignment_id = $2 AND status = ANY($3::task_status[]) RETURNING *
             `;
         }
@@ -266,14 +280,15 @@ export const updateAssignmentStatus = async (assignmentId, newStatus, allowedFro
         }
         // -----------------------------------------------------
         else {
+            // Reviewer setting Repair (or any future non-Approved reviewer status).
             sql = `
                 UPDATE job_assignments
-                SET status = $1
+                SET status = $1, qa_checker_id = $4, qa_notes = $5
                 WHERE assignment_id = $2 AND status = ANY($3::task_status[]) RETURNING *
             `;
         }
 
-        const { rows } = await query(sql, [newStatus, assignmentId, allowedFromStatuses]);
+        const { rows } = await query(sql, [newStatus, assignmentId, allowedFromStatuses, qaCheckerId, qaNotes]);
         return rows[0];
 
     } catch (error) {

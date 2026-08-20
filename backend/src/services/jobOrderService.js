@@ -58,14 +58,21 @@ const REVIEWER_SETTABLE_STATUSES = ['Approved', 'Repair'];
 const REVIEWABLE_FROM = ['For QA'];
 
 // `caller` is the session user object (req.session.user) — the route passes it through since
-// this service never touches req/res itself.
-const updateQAStatus = async (assignmentId, status, caller) => {
+// this service never touches req/res itself. `notes` is FR-6/FR-7's rejection reason / review
+// comment — only ever attributed to a reviewer's own decision, never accepted from (or written
+// against) the worker-submission branch below, so a worker resubmitting can't overwrite who
+// reviewed a prior round or what they said.
+const updateQAStatus = async (assignmentId, status, caller, notes) => {
     const assignment = await getAssignmentById(assignmentId);
     if (!assignment) {
         throw new AppError(404, 'Task not found');
     }
 
     let allowedFromStatuses;
+    // FR-7: qa_checker_id/qa_notes on job_assignments — never written by any code path before
+    // this — record who reviewed a task and why. Stay null on the worker-submission branch.
+    let qaCheckerId = null;
+    let qaNotes = null;
 
     if (caller.user_role === 'Worker') {
         // A worker may only submit their OWN assignment, and only ever move it to 'For QA' —
@@ -84,9 +91,11 @@ const updateQAStatus = async (assignmentId, status, caller) => {
             throw new AppError(400, "Status must be 'Approved' or 'Repair'");
         }
         allowedFromStatuses = REVIEWABLE_FROM;
+        qaCheckerId = caller.user_id;
+        qaNotes = notes ?? null;
     }
 
-    const updatedTask = await updateAssignmentStatus(assignmentId, status, allowedFromStatuses);
+    const updatedTask = await updateAssignmentStatus(assignmentId, status, allowedFromStatuses, qaCheckerId, qaNotes);
     if (!updatedTask) {
         // The row existed (checked above) but wasn't in an allowed state to make this
         // transition — either it moved between the read and the write, or it was never in a
