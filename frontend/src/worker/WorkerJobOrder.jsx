@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useContext } from 'react';
 import '../css/worker.css';
 import WorkerJobOrderDetail from './WorkerJobOrderDetail';
+import Pagination from '../globals/Pagination';
 import { UserContext } from '../context/UserContext';
-import { api } from '../api/client';
 import { formatDateShort, formatProjectId } from '../utils/format';
+import { usePaginatedList } from '../hooks/usePaginatedList';
 
 const mapTasks = (data) => data.map(task => ({
     id: formatProjectId(task.project_id),
@@ -19,54 +20,37 @@ const WorkerJobOrder = () => {
 
     const [activeFilter, setActiveFilter] = useState('Assigned');
     const [priorityFilter, setPriorityFilter] = useState('All');
-    const [sortByDue, setSortByDue] = useState(false);
+    const [sortDesc, setSortDesc] = useState(false);
     const [selectedTaskId, setSelectedTaskId] = useState(null);
-    const [tasks, setTasks] = useState([]);
 
-    // Manual re-fetch (used after returning from the detail view) — kept as a plain function
-    // separate from the mount effect below, which needs its own ignore-guarded fetch rather than
-    // calling this one, per the pattern established in InventoryTable.jsx (P1-11).
-    const fetchMyTasks = async () => {
-        if (!userID) return;
-        try {
-            const data = await api.get(`/api/workers/${userID}/tasks`);
-            setTasks(mapTasks(data));
-        } catch (error) {
-            console.error("Error fetching worker tasks:", error.message);
+    // P1-3: server-paginated and server-filtered — status/priority/sort used to be client-side
+    // .filter()/.sort() over the whole fetched list (see ARCHITECTURE_REVIEW.md P1-3).
+    const { rows: rawTasks, meta, page, setPage, loading, refetch } = usePaginatedList(
+        userID ? `/api/workers/${userID}/tasks` : null,
+        {
+            params: {
+                status: activeFilter,
+                priority: priorityFilter !== 'All' ? priorityFilter : undefined,
+                sort: sortDesc ? 'desc' : undefined,
+            },
+            pageSize: 25,
         }
-    };
-
-    useEffect(() => {
-        let ignore = false;
-        (async () => {
-            if (!userID) return;
-            try {
-                const data = await api.get(`/api/workers/${userID}/tasks`);
-                if (!ignore) setTasks(mapTasks(data));
-            } catch (error) {
-                if (!ignore) console.error("Error fetching worker tasks:", error.message);
-            }
-        })();
-        return () => { ignore = true; };
-    }, [userID]);
-
-    let displayedTasks = tasks.filter(task => task.status === activeFilter);
-    if (priorityFilter !== 'All') displayedTasks = displayedTasks.filter(task => task.priority === priorityFilter);
-    if (sortByDue) displayedTasks.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+    );
+    const displayedTasks = mapTasks(rawTasks);
 
     if (selectedTaskId) {
-        const selectedTaskData = tasks.find(t => t.id === selectedTaskId);
-        const numericId = selectedTaskId.replace('WB-', '').replace(/^0+/, ''); 
+        const selectedTaskData = displayedTasks.find(t => t.id === selectedTaskId);
+        const numericId = selectedTaskId.replace('WB-', '').replace(/^0+/, '');
 
         return (
-            <WorkerJobOrderDetail 
-                projectId={numericId} 
-                assignmentId={selectedTaskData.assignmentId} 
-                workerStatus={selectedTaskData.status} 
+            <WorkerJobOrderDetail
+                projectId={numericId}
+                assignmentId={selectedTaskData.assignmentId}
+                workerStatus={selectedTaskData.status}
                 onBack={() => {
                     setSelectedTaskId(null); // Itago ang details
-                    fetchMyTasks(); // <-- TATAWAGIN NATIN ULIT YUNG BACKEND PARA MAG-REFRESH!
-                }} 
+                    refetch(); // <-- TATAWAGIN NATIN ULIT YUNG BACKEND PARA MAG-REFRESH!
+                }}
             />
         );
     }
@@ -80,7 +64,9 @@ const WorkerJobOrder = () => {
 
             <div className="wjo-controls">
                 <span className="wjo-filter-label">Filtered by:</span>
-                <button className="wjo-btn-dark" onClick={() => setSortByDue(!sortByDue)}>Due</button>
+                <button className="wjo-btn-dark" onClick={() => setSortDesc(prev => !prev)}>
+                    Due {sortDesc ? '▼' : '▲'}
+                </button>
                 <select className="wjo-btn-dark dropdown" value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value)}>
                     <option value="All">Priority</option>
                     <option value="High">High</option>
@@ -92,9 +78,9 @@ const WorkerJobOrder = () => {
             </div>
 
             <div className="wjo-list">
-                {!userID ? (
+                {!userID || loading ? (
                     <div style={{ padding: '20px', textAlign: 'center', color: '#cc0000' }}>
-                        Loading worker session...
+                        {!userID ? 'Loading worker session...' : 'Loading tasks...'}
                     </div>
                 ) : displayedTasks.length > 0 ? (
                     displayedTasks.map((task) => (
@@ -114,6 +100,8 @@ const WorkerJobOrder = () => {
                     </div>
                 )}
             </div>
+
+            <Pagination page={page} meta={meta} onChange={setPage} />
         </div>
     );
 };

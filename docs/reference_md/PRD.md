@@ -242,11 +242,20 @@ not done here. The 8 routes P1-11 added are listed separately below since they'r
 | DELETE | `/api/attendance/:id` | Delete row |
 | GET | `/api/attendance/:id` | Single record |
 
-No list endpoint supports pagination, filtering, or sorting parameters — every list request
-returns the full table and the frontend filters client-side.
+~~No list endpoint supports pagination, filtering, or sorting parameters — every list request
+returns the full table and the frontend filters client-side.~~ **Resolved by P1-3**: all 15 list
+endpoints (the ones above plus the P1-11 additions below) now take `?page`/`?limit` and answer
+`{success, data, meta}`; the 8 whose row count grows without bound also take server-side filters
+(`search`, `status`, `type`, `priority`, `stage`, `remark`, `sort`, depending on the endpoint) —
+see `ARCHITECTURE_REVIEW.md` P1-3 for exactly which. One new route was added specifically to keep
+a notification deep-link working once its target list was paged:
+
+| Method | Path | Purpose |
+|---|---|---|
+| GET | `/api/assignments/:assignmentId` | Single job-assignment lookup, for resolving a verification-notification deep link without depending on which page it would otherwise be on |
 
 **Added by P1-11**, all under `/api/inventory`, `requireRole('Admin', 'Production Manager',
-'Inventory Staff')`, `{success, data}` envelope:
+'Inventory Staff')`, `{success, data}` envelope (`meta` added by P1-3 on the two list routes):
 
 | Method | Path | Purpose |
 |---|---|---|

@@ -1,68 +1,54 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom'; // <-- 1. IDINAGDAG ITO
 import ProjectVerificationDetail from './ProjectVerificationDetail';
+import Pagination from './Pagination';
 import { api } from '../api/client';
 import { formatProjectId } from '../utils/format';
+import { usePaginatedList } from '../hooks/usePaginatedList';
 
 const ProjectVerification = () => {
     const [stageFilter, setStageFilter] = useState('All');
     const [selectedProjectId, setSelectedProjectId] = useState(null);
-    
-    const [tasks, setTasks] = useState([]);
-    const [loading, setLoading] = useState(true);
 
     const location = useLocation(); // <-- 2. I-SETUP ANG LOCATION
 
-    useEffect(() => {
-        const fetchQATasks = async () => {
-            try {
-                const data = await api.get('/api/qa/tasks');
+    // P1-3: server-paginated and server-filtered — `stage` used to be a client-side .filter()
+    // over the whole fetched list (see ARCHITECTURE_REVIEW.md P1-3).
+    const { rows: rawTasks, meta, page, setPage, loading } = usePaginatedList('/api/qa/tasks', {
+        params: { stage: stageFilter !== 'All' ? stageFilter : undefined },
+        pageSize: 25,
+    });
 
-                const formattedTasks = data.map(task => ({
-                    id: formatProjectId(task.project_id),
-                    rawProjectId: task.project_id,
-                    projectName: task.project_name,
-                    workerName: `${task.first_name} ${task.last_name}`,
-                    stage: task.stage_name,
-                    assignmentId: task.assignment_id
-                }));
-
-                setTasks(formattedTasks);
-            } catch (error) {
-                console.error("Error fetching QA tasks:", error.message);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchQATasks();
-    }, []); 
+    const displayedTasks = rawTasks.map(task => ({
+        id: formatProjectId(task.project_id),
+        rawProjectId: task.project_id,
+        projectName: task.project_name,
+        workerName: `${task.first_name} ${task.last_name}`,
+        stage: task.stage_name,
+        assignmentId: task.assignment_id
+    }));
 
     // --- 3. BAGONG USEEFFECT PARA SA NOTIFICATION ---
+    // P1-3: resolves the notification target directly via GET /api/assignments/:id instead of
+    // searching the (now paged) task list for it — the target task may not be on the currently
+    // loaded page. See ARCHITECTURE_REVIEW.md P1-3.
     useEffect(() => {
-        // Kailangan nating hintayin na ma-load yung 'tasks' (tasks.length > 0)
-        // bago natin hanapin yung match ng notification!
-        if (location.state && location.state.targetTaskId && tasks.length > 0) {
-            
-            // Hanapin ang task na may kaparehong assignmentId galing sa Notif
-            const matchedTask = tasks.find(
-                t => String(t.assignmentId) === String(location.state.targetTaskId)
-            );
-
-            if (matchedTask) {
-                // Kapag nahanap, i-set yung Project ID niya para bumukas ang Details!
-                setSelectedProjectId(matchedTask.rawProjectId);
-                
-                // I-clear ang location state
-                window.history.replaceState({}, document.title);
+        if (!(location.state && location.state.targetTaskId)) return;
+        let ignore = false;
+        (async () => {
+            try {
+                const result = await api.get(`/api/assignments/${location.state.targetTaskId}`);
+                if (!ignore && result?.data) {
+                    setSelectedProjectId(result.data.project_id);
+                    window.history.replaceState({}, document.title);
+                }
+            } catch (error) {
+                if (!ignore) console.error("Error resolving notification target:", error.message);
             }
-        }
-    }, [location, tasks]); // Babantayan niya ang 'location' at 'tasks'
+        })();
+        return () => { ignore = true; };
+    }, [location]);
     // ------------------------------------------------
-
-    const displayedTasks = stageFilter === 'All' 
-        ? tasks 
-        : tasks.filter(task => task.stage === stageFilter);
 
     if (selectedProjectId) {
         return (
@@ -126,6 +112,8 @@ const ProjectVerification = () => {
                     </div>
                 )}
             </div>
+
+            <Pagination page={page} meta={meta} onChange={setPage} />
         </div>
     );
 };

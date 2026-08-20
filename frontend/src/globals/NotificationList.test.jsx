@@ -4,9 +4,12 @@ import { MemoryRouter } from 'react-router-dom';
 import NotificationList from './NotificationList';
 
 // P2 (notification-component consolidation): NotificationList replaces AdminNotification,
-// PMNotification, and QualityCheckerNotification — see ARCHITECTURE_REVIEW.md P2. These tests
-// cover the `type` filter and the type-scoped bulk actions (the actual bug fix: PM/QC used to
-// loop one request per notification instead of issuing one scoped request like Admin's).
+// PMNotification, and QualityCheckerNotification — see ARCHITECTURE_REVIEW.md P2. P1-3 then
+// made the list itself server-paginated and server-filtered by `type` (previously the GET
+// fetched everything and filtered by type client-side) — see ARCHITECTURE_REVIEW.md P1-3.
+// These tests cover the `type` filter reaching the GET, and the type-scoped bulk actions (the
+// P2 bug fix: PM/QC used to loop one request per notification instead of issuing one scoped
+// request like Admin's).
 vi.mock('../api/client', () => ({
   api: {
     get: vi.fn(),
@@ -18,10 +21,14 @@ vi.mock('../api/client', () => ({
 
 const { api } = await import('../api/client');
 
-const NOTIFS = [
-  { id: 1, type: 'project', title: 'Project A', message: 'msg', is_read: false, reference_id: 10 },
-  { id: 2, type: 'verification', title: 'Task B', message: 'msg', is_read: false, reference_id: 20 },
-];
+const PROJECT_NOTIF = { id: 1, type: 'project', title: 'Project A', message: 'msg', is_read: false, reference_id: 10 };
+const VERIFICATION_NOTIF = { id: 2, type: 'verification', title: 'Task B', message: 'msg', is_read: false, reference_id: 20 };
+
+const pageOf = (rows) => ({
+  success: true,
+  data: rows,
+  meta: { page: 1, limit: 25, total: rows.length, totalPages: rows.length > 0 ? 1 : 0 },
+});
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -36,22 +43,24 @@ const renderList = (props) =>
   );
 
 describe('NotificationList', () => {
-  it('with no type filter, shows every notification (Admin behavior)', async () => {
-    api.get.mockResolvedValue(NOTIFS);
+  it('with no type filter, shows every notification and requests no ?type= (Admin behavior)', async () => {
+    api.get.mockResolvedValue(pageOf([PROJECT_NOTIF, VERIFICATION_NOTIF]));
     renderList({});
     expect(await screen.findByText('Project A')).toBeInTheDocument();
     expect(screen.getByText('Task B')).toBeInTheDocument();
+    expect(api.get).toHaveBeenCalledWith('/api/notifications?page=1&limit=25');
   });
 
-  it('with a type filter, shows only matching notifications (PM/QC behavior)', async () => {
-    api.get.mockResolvedValue(NOTIFS);
+  it('with a type filter, requests ?type= and shows only what the server returns (PM/QC behavior)', async () => {
+    api.get.mockResolvedValue(pageOf([PROJECT_NOTIF]));
     renderList({ type: 'project' });
     expect(await screen.findByText('Project A')).toBeInTheDocument();
     expect(screen.queryByText('Task B')).not.toBeInTheDocument();
+    expect(api.get).toHaveBeenCalledWith('/api/notifications?page=1&limit=25&type=project');
   });
 
   it('clicking a notification marks it read and navigates via resolveTarget', async () => {
-    api.get.mockResolvedValue(NOTIFS);
+    api.get.mockResolvedValue(pageOf([PROJECT_NOTIF, VERIFICATION_NOTIF]));
     api.put.mockResolvedValue({ message: 'ok' });
     const resolveTarget = vi.fn(() => ({ path: '/somewhere', state: { targetProjectId: 10 } }));
     renderList({ resolveTarget });
@@ -59,11 +68,11 @@ describe('NotificationList', () => {
     fireEvent.click(await screen.findByText('Project A'));
 
     await waitFor(() => expect(api.put).toHaveBeenCalledWith('/api/notifications/1/read'));
-    expect(resolveTarget).toHaveBeenCalledWith(NOTIFS[0]);
+    expect(resolveTarget).toHaveBeenCalledWith(PROJECT_NOTIF);
   });
 
   it('"Clear All" with a type issues one scoped request, not one per row', async () => {
-    api.get.mockResolvedValue(NOTIFS);
+    api.get.mockResolvedValue(pageOf([PROJECT_NOTIF]));
     api.delete.mockResolvedValue({ message: 'ok' });
     renderList({ type: 'project' });
 
@@ -74,7 +83,7 @@ describe('NotificationList', () => {
   });
 
   it('"Clear All" with no type issues one unscoped request (Admin behavior)', async () => {
-    api.get.mockResolvedValue(NOTIFS);
+    api.get.mockResolvedValue(pageOf([PROJECT_NOTIF, VERIFICATION_NOTIF]));
     api.delete.mockResolvedValue({ message: 'ok' });
     renderList({});
 
@@ -85,7 +94,7 @@ describe('NotificationList', () => {
   });
 
   it('"Mark All as Read" with a type issues one scoped request', async () => {
-    api.get.mockResolvedValue(NOTIFS);
+    api.get.mockResolvedValue(pageOf([VERIFICATION_NOTIF]));
     api.put.mockResolvedValue({ message: 'ok' });
     renderList({ type: 'verification' });
 

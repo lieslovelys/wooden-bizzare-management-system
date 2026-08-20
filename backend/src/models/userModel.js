@@ -1,4 +1,5 @@
 import { query, getClient } from "../config/db.js";
+import { splitCountedRows } from "../utils/pagination.js";
 
 const createUser = async (username, password, first_name, middle_name, last_name, suffix, user_role) => {
     try{
@@ -33,51 +34,58 @@ const deleteUserById = async (id) => {
 }
 
 // --- BAGONG FUNCTION PARA SA ACCOUNT LIST ---
-const getAllUsers = async () => {
+// P1-3: capped-only (headcount-bounded, no paging UI on the frontend) — see
+// ARCHITECTURE_REVIEW.md P1-3 for why capped-only endpoints default their limit to MAX_LIMIT
+// rather than the smaller DEFAULT_LIMIT other paged endpoints use.
+const getAllUsers = async ({ limit, offset }) => {
     try {
         const text = `
-            SELECT 
+            SELECT
                 '#' || LPAD(user_id::text, 3, '0') AS formatted_id,
                 user_id,
                 username,
                 TRIM(CONCAT_WS(' ', first_name, middle_name, last_name, NULLIF(suffix::text, 'None'))) AS full_name,
-                user_role
+                user_role,
+                COUNT(*) OVER() AS total_count
             FROM users
-            ORDER BY user_id ASC;
+            ORDER BY user_id ASC
+            LIMIT $1 OFFSET $2;
         `;
-        const result = await query(text);
-        return result.rows;
+        const result = await query(text, [limit, offset]);
+        return splitCountedRows(result.rows);
     }
     catch(e){
-        throw e; 
+        throw e;
     }
 }
 
-const getAllWorkers = async () => {
+const getAllWorkers = async ({ limit, offset }) => {
     try {
         const text = `
-            SELECT 
-                u.user_id,         
-                u.username,        
-                u.first_name,      
-                u.middle_name,     
-                u.last_name,       
+            SELECT
+                u.user_id,
+                u.username,
+                u.first_name,
+                u.middle_name,
+                u.last_name,
                 u.suffix,
-                w.detail_id,       
+                w.detail_id,
                 w.photo,           /* <--- SIGURADUHING NANDITO ITO PARA SA PICTURE */
                 'W-' || LPAD(u.user_id::text, 2, '0') AS formatted_id,
                 TRIM(CONCAT_WS(' ', u.first_name, u.middle_name, u.last_name, NULLIF(u.suffix::text, 'None'))) AS full_name,
                 w.job_type,
                 w.job_role,
                 w.contact,
-                w.rate
+                w.rate,
+                COUNT(*) OVER() AS total_count
             FROM users u
             LEFT JOIN worker_details w ON u.user_id = w.user_id
             WHERE u.user_role = 'Worker'
-            ORDER BY u.user_id ASC;
+            ORDER BY u.user_id ASC
+            LIMIT $1 OFFSET $2;
         `;
-        const result = await query(text);
-        return result.rows;
+        const result = await query(text, [limit, offset]);
+        return splitCountedRows(result.rows);
     } catch (e) {
         throw e;
     }

@@ -1,45 +1,46 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../css/admin.css';
 import { api } from '../api/client';
+import { usePaginatedList } from '../hooks/usePaginatedList';
+import Pagination from './Pagination';
 
 // Shared by admin/AdminNotification.jsx, product_manager/PMNotification.jsx, and
 // quality_checker/QualityCheckerNotification.jsx — those three were ~90% line-for-line
-// identical forks (see ARCHITECTURE_REVIEW.md P2). `type` scopes both the displayed list and
-// the two bulk actions to one notification type via the backend's `?type=` query param
-// (routes/adminNotifRoutes.js); omit it for the unscoped "all types" behavior Admin's screen
-// needs. Scoping the bulk actions server-side is the actual bug fix here, not just dedup: the
-// PM/QC forks used to loop and issue one request per notification to fake a type-scoped bulk
-// action, where Admin's always issued exactly one.
+// identical forks (see ARCHITECTURE_REVIEW.md P2). `type` scopes the displayed list and all
+// three actions (the GET as of P1-3, plus the two bulk actions since P2) to one notification
+// type via the backend's `?type=` query param (routes/adminNotifRoutes.js); omit it for the
+// unscoped "all types" behavior Admin's screen needs. Scoping the bulk actions server-side is
+// the actual bug fix from the P2 pass, not just dedup: the PM/QC forks used to loop and issue
+// one request per notification to fake a type-scoped bulk action, where Admin's always issued
+// exactly one.
 const NotificationList = ({ type, emptyMessage = 'No new notifications.', resolveTarget }) => {
-  const [notifications, setNotifications] = useState([]);
-  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  const displayed = type ? notifications.filter(n => n.type === type) : notifications;
-
-  useEffect(() => {
-    let ignore = false;
-    (async () => {
-      try {
-        const data = await api.get('/api/notifications');
-        if (!ignore) setNotifications(data);
-      } catch (error) {
-        if (!ignore) console.error("Error fetching notifications:", error.message);
-      } finally {
-        if (!ignore) setLoading(false);
-      }
-    })();
-    return () => { ignore = true; };
-  }, []);
+  // P1-3: server-paginated and server-filtered by `type` — this GET used to fetch every
+  // notification and filter by type client-side, which would show an empty/short page for a
+  // role-scoped screen (PM/QC) once the list is paged. See ARCHITECTURE_REVIEW.md P1-3.
+  const { rows: displayed, setRows, meta, page, setPage, loading, refetch } = usePaginatedList('/api/notifications', {
+    params: { type },
+    pageSize: 25,
+  });
 
   const handleDelete = async (id) => {
     try {
       await api.delete(`/api/notifications/${id}`);
-      setNotifications(prev => prev.filter(notif => notif.id !== id));
+      // Deleting a single row doesn't change which rows belong on this page, so update it in
+      // place rather than round-tripping for a full refetch.
+      setRows(prev => prev.filter(notif => notif.id !== id));
     } catch (error) {
       console.error("Error deleting notification:", error.message);
     }
+  };
+
+  // A bulk action changes how many rows exist in total, which can change which page the
+  // caller should be looking at — refetch (via page reset, or directly if already on page 1)
+  // rather than trying to guess the new local state.
+  const afterBulkAction = () => {
+    if (page !== 1) setPage(1); else refetch();
   };
 
   const handleClearAll = async () => {
@@ -51,7 +52,7 @@ const NotificationList = ({ type, emptyMessage = 'No new notifications.', resolv
     try {
       const qs = type ? `?type=${encodeURIComponent(type)}` : '';
       await api.delete(`/api/notifications/clear/all${qs}`);
-      setNotifications(prev => type ? prev.filter(n => n.type !== type) : []);
+      afterBulkAction();
     } catch (error) {
       console.error("Error clearing notifications:", error.message);
     }
@@ -61,7 +62,7 @@ const NotificationList = ({ type, emptyMessage = 'No new notifications.', resolv
     try {
       const qs = type ? `?type=${encodeURIComponent(type)}` : '';
       await api.put(`/api/notifications/mark-all-read${qs}`);
-      setNotifications(prev => prev.map(n => (!type || n.type === type) ? { ...n, is_read: true } : n));
+      afterBulkAction();
     } catch (error) {
       console.error("Error marking all as read:", error.message);
     }
@@ -69,7 +70,7 @@ const NotificationList = ({ type, emptyMessage = 'No new notifications.', resolv
 
   const handleNotifClick = async (notif) => {
     if (!notif.is_read) {
-      setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, is_read: true } : n));
+      setRows(prev => prev.map(n => n.id === notif.id ? { ...n, is_read: true } : n));
       try {
         await api.put(`/api/notifications/${notif.id}/read`);
       } catch (error) {
@@ -164,6 +165,8 @@ const NotificationList = ({ type, emptyMessage = 'No new notifications.', resolv
           </button>
         </div>
       )}
+
+      <Pagination page={page} meta={meta} onChange={setPage} />
     </div>
   );
 };

@@ -196,13 +196,83 @@ can reserve more RAM than this plan comfortably has to spare). Add sane
 skipping verification.
 
 ### P1-3. No pagination on any list endpoint
-Every list route (`/users`, `/workers`, `/api/projects`, `/api/projects/history`,
-`/api/job-orders`, `/api/notifications`, `/api/productivity`, `/api/qa/tasks`,
-`/api/attendance/worker/:id`) returns its entire table, unbounded. `GET /workers` additionally
-ships base64-encoded photos in the list payload. At even moderate row counts this becomes the
-dominant cost on every screen load. **Fix:** `limit`/`offset` (or cursor) on every list endpoint,
-with the frontend updated to request pages instead of filtering full result sets client-side (the
-current pattern on effectively every list screen).
+**Status: ✅ Resolved.** All 15 list endpoints now accept `?page`/`?limit`
+(`backend/src/utils/pagination.js`'s `parsePagination`, `DEFAULT_LIMIT` 25 / `MAX_LIMIT` 200) and
+answer `{ success, data, meta: { page, limit, total, totalPages } }` — no endpoint returns an
+unbounded result set anymore. `parsePagination` throws `AppError(400, ...)` on garbage
+(`page=0`, non-integer, etc.) and clamps an oversized `limit` down to the cap rather than
+erroring; the total comes from `COUNT(*) OVER()` in the same query (`splitCountedRows` strips it
+back off each row) rather than a second round trip, following the same one-connection-beats-two
+reasoning P1-6 already established for the dashboard-stats query.
+
+**Two tiers, by design.** 8 endpoints whose row count grows without bound got real paging UI and
+server-side filters on the frontend: `/api/projects` (`search`, `status`), `/api/projects/history`
+(`remark`, now a real SQL column instead of a client-side computation — see below),
+`/api/job-orders` (`priority`, `sort`), `/api/workers/:workerId/tasks` (`status`, `priority`,
+`sort`), `/api/qa/tasks` (`stage`), `/api/notifications` (`type`, extending the `?type=` the P2
+pass already gave the bulk-mutation routes to the read itself), `/api/attendance/worker/:workerId`
+(the highest-cardinality list in the app — one row per worker per day, no filter existed), and
+`/api/inventory/variants/:variantId/movements` (an append-only audit log, the strongest case for
+paging in the codebase). The other 7 — `/api/users`, `/api/workers`, `/api/assignable-workers`,
+`/api/job-orders/:id/assignments`, `/api/productivity`, `/api/inventory`,
+`/api/inventory/low-stock` — are bounded by headcount, SKU count, or assignment-stages-per-project
+and got no paging UI; they call `parsePagination` with `defaultLimit: MAX_LIMIT` so an unpaginated
+caller (every existing frontend consumer) still gets everything up to the 200-row cap instead of
+being silently truncated to 25.
+
+**A correctness prerequisite, not just an addition:** `OFFSET` paging over a nullable or
+non-unique `ORDER BY` column can duplicate or skip rows across pages. Seven models needed an
+explicit tiebreaker added (e.g. `ORDER BY due_date ASC, id ASC`) and one
+(`jobOrderModel.getWorkers`, the assignment dropdown) had **no `ORDER BY` at all** before this —
+fixed regardless of whether that endpoint is ever paged past its default limit in practice.
+
+**Real bugs fixed along the way, surfaced by actually tracing every consumer of a changed
+envelope:**
+- `globals/ProjectList.jsx` hid Completed projects via a client-side filter that ran regardless of
+  the status dropdown. Paginating naively would have made that exclusion produce short or empty
+  pages, since the server would count and slice Completed rows the client then discarded. Fixed
+  by having the screen request `status=Pending,In Progress` explicitly — `admin/Profit.jsx`'s
+  project dropdown, which deliberately wants Completed projects too, sends no `status` param and
+  is unaffected.
+- `admin/ProjectHistory.jsx` computed `remark` (`Early`/`Late`/`On-time`) client-side from
+  `date_completed` vs `due_date` after fetching the whole table. The backend now returns it as a
+  real column using the identical day-truncated comparison, so there's one definition instead of
+  two that could drift, and it's now a real filter (`?remark=`) instead of a client-side one.
+- `globals/ProjectVerification.jsx` resolved a verification-notification deep link by searching
+  the loaded task array for a matching `assignmentId` — silently doing nothing once that task
+  could sit on a page that was never fetched. Fixed with a new `GET
+  /api/assignments/:assignmentId` (added specifically for this) that resolves the link directly
+  instead of depending on what's currently loaded.
+- `quality_checker/QCDashboard.jsx` and `product_manager/PM_dashboard.jsx` derived their "tasks to
+  verify" tile from `data.length` on `/api/qa/tasks` — now `meta.total`, since `data.length` would
+  otherwise just be the page size.
+- `globals/JobOrder.jsx`'s "Sort by Nearest Due Date" button re-sorted whatever was currently
+  loaded, which only ever produced a no-op (the base query was already ascending by
+  default) — replaced with a real ascending/descending `sort` toggle against the server, and the
+  identical dead-toggle bug in `worker/WorkerJobOrder.jsx`'s "Due" button was fixed the same way.
+- `globals/NotificationList.jsx`'s optimistic local mutations for "Clear All"/"Mark All as Read"
+  assumed the whole notification set was in memory; a bulk action can now change the total (and
+  thus which page is valid), so those two handlers reset to page 1 or refetch instead — the
+  single-row delete/mark-read handlers still mutate in place via a `setRows` the new
+  `usePaginatedList` hook exposes, since neither changes page membership.
+
+**Frontend infrastructure:** `frontend/src/hooks/usePaginatedList.js` is the shared seam every
+paged screen hangs off — builds the query string, resets to page 1 when the filter set changes
+(adjusting state during render per React's documented pattern, not in a `useEffect`, so it takes
+effect in the same render), and debounces a `search` param (~300ms) without debouncing everything
+else. `frontend/src/globals/Pagination.jsx` is a self-contained `‹ Prev · Showing 26–50 of 312 ·
+Next ›` control that renders nothing at one page or fewer — it drops in below any list screen's
+markup since the app has no shared table component to hang paging state off of (confirmed: 10 list
+screens split between real `<table>`s and per-screen CSS-grid div "tables", each with its own
+class-prefix convention).
+
+**Deliberately out of scope:** cursor-based pagination (plain `LIMIT`/`OFFSET` is correct and
+sufficient at this data scale); a typeahead for the two dropdown feeds
+(`admin/Profit.jsx`'s project selector, `globals/JobOrderDetails.jsx`'s worker selector) that now
+explicitly request the 200-row cap rather than inheriting the smaller paged default — past that
+count they'd need one, which isn't this pass; the non-list response envelopes (`{message, body}`
+on signup, `{err, message}` on login) and `GET /logout` → `POST` (backend-contract slice); the
+`notifications` table's shared-`is_read` and ignored-`target_role` defects (PRD B.6, untouched).
 
 ### P1-4. Missing indexes on nearly every foreign key and filter column
 **Status: ✅ Resolved** — indexes added via `migrations/…_add-indexes.js`; the `ILIKE` cast
@@ -398,9 +468,9 @@ reader) — inventory alerts would otherwise inherit both bugs.
 
 **Deliberately deferred:** "materials consumed per project" (the fourth FR-3 clause) — it needs
 new UI on the project/job-order screens and a link between a stock movement and a project that
-doesn't exist yet. Also out of scope: pagination on the inventory list (P1-3 covers every list
-endpoint at once) and real-database integration tests (the new backend tests mock the
-model/service layers — see the P2 "No tests" bullet).
+doesn't exist yet. Pagination on the inventory list and its movement history landed later as part
+of P1-3 (see that section). Also out of scope here: real-database integration tests (the new
+backend tests mock the model/service layers — see the P2 "No tests" bullet).
 
 The rest of this section is kept as the historical record of what was wrong.
 
@@ -420,10 +490,12 @@ Not urgent, but each of these increases the cost of every future change until ad
   values and non-numeric `:id` path params currently surface as opaque 500s instead of 400s.
   Introduce `zod` or `express-validator` and validate at the route boundary.
 - **Inconsistent API contract.** Four different response envelope shapes (`{success, data}`, bare
-  arrays, `{err, message}`, `{message, body}`) still stand as the actual bytes on the wire — not
-  addressed by this pass or the routes/services refactor below, since fixing it means changing
-  every response shape's consumer, a materially bigger diff than either. `GET /logout` still
-  mutates state.
+  arrays, `{err, message}`, `{message, body}`) still stand as the actual bytes on the wire for
+  *non-list* endpoints — not addressed by this pass or the routes/services refactor below, since
+  fixing it means changing every response shape's consumer, a materially bigger diff than either.
+  ~~bare-array list endpoints~~ — **the list half is resolved by P1-3**: all 15 list endpoints
+  (previously a mix of `{success,data}` and 9 bare arrays) now answer one shape,
+  `{success, data, meta}` — see that section. `GET /logout` still mutates state.
   ~~auth/account routes mounted at `/` instead of `/api`~~ — **resolved as part of P1-10**:
   `userRoutes` now mounts at `/api` (`server.js`), with the ~7 frontend call sites updated to
   match. ~~three overlapping "workers" endpoints~~ — down to two intentionally distinct ones:
@@ -474,7 +546,8 @@ Not urgent, but each of these increases the cost of every future change until ad
   one HTTP request *per notification* to fake a type-scoped bulk action (`DELETE`/`PUT` per row)
   where Admin's issued exactly one unscoped request; `routes/adminNotifRoutes.js`'s
   `mark-all-read`/`clear/all` now take an optional `?type=` so all three screens issue exactly one
-  bulk request. **Deliberately deferred**: the five role-shell files (tabs array + `Navbar` +
+  bulk request (P1-3 later extended `?type=` to the `GET` itself, once the list was paginated —
+  see that section). **Deliberately deferred**: the five role-shell files (tabs array + `Navbar` +
   `Routes`) and the Create/Edit project and worker forms — this pass scoped itself to the
   notification dedup only (see P2's execution-order entry below); the `notifications` table's
   shared-`is_read` and ignored-`target_role` defects (PRD B.6) are untouched.
@@ -485,17 +558,22 @@ Not urgent, but each of these increases the cost of every future change until ad
   (previously also `₱ 1200.00` and bare `1,200` with no symbol, on `admin/A_Dashboard.jsx`'s
   monthly-profit tile).
 - **No tests, anywhere**, for either project — no test runner is even installed.
-  **Partially resolved (P1-11, extended by the P2 frontend-consolidation pass):** Vitest is
-  installed and gated in CI for both halves (`backend/src`: vitest + supertest, mocking
+  **Partially resolved (P1-11, extended by the P2 frontend-consolidation pass and P1-3):** Vitest
+  is installed and gated in CI for both halves (`backend/src`: vitest + supertest, mocking
   `models/`/`services/` — no database needed; `frontend`: vitest + `@testing-library/react`/jsdom,
   mocking `api/client.js`), but coverage is still limited to the code each pass actually added or
-  rewrote: the P1-11 Inventory files, plus (P2) `utils/format.test.js`,
+  rewrote: the P1-11 Inventory files, (P2) `utils/format.test.js`,
   `globals/ToastProvider.test.jsx`, `globals/NotificationList.test.jsx`, and
-  `backend/src/tests/adminNotifRoutes.test.js` (covering only the new `?type=` parameter). The
-  routes/services refactor, the bulk of `Attendance.jsx`'s hoisted sub-components, and everything
-  else pre-P1-11 — verified only by manual `curl`/click-through — still has zero automated
-  coverage. Backfilling that (starting with `userService.login` and
-  `jobOrderService.updateQAStatus`'s five `AppError` branches) is its own pass.
+  `backend/src/tests/adminNotifRoutes.test.js`, plus (P1-3) `backend/src/tests/pagination.test.js`
+  (`parsePagination`/`buildMeta`/`splitCountedRows` exhaustively), `backend/src/tests/
+  pagination-routes.test.js` (end-to-end coverage of one `{success,data}`-turned-paged route and
+  one bare-array-turned-paged route: `meta`, limit clamping, a bad filter 400ing, filters reaching
+  the service), and `frontend/src/hooks/usePaginatedList.test.js` +
+  `frontend/src/globals/Pagination.test.jsx`. The routes/services refactor, the bulk of
+  `Attendance.jsx`'s hoisted sub-components, and everything else pre-P1-11 — verified only by
+  manual `curl`/click-through — still has zero automated coverage. Backfilling that (starting with
+  `userService.login` and `jobOrderService.updateQAStatus`'s five `AppError` branches) is its own
+  pass.
   ~~No CI~~ — **resolved**: `.github/workflows/ci.yml` (added in P1-10) runs backend install,
   frontend lint+test+build, and builds both Docker images; all three (`npm test` × 2, `npm run
   lint`) are now real gates — see the lint-errors bullet below for when the lint gate flipped.
@@ -554,7 +632,17 @@ Not urgent, but each of these increases the cost of every future change until ad
    `ci.yml`'s lint step into a real gate. Deliberately deferred within P2: the Create/Edit
    form pairs and the five role-shell files (not consolidated), the four response-envelope
    shapes (unchanged), `zod`/`express-validator` route validation, and `GET /logout` → `POST`.
-8. **Still outstanding:** P1-3 (pagination), the remaining P2 backend-contract items (response
-   envelope standardization, input validation library, `GET /logout`), the deferred P2 component
+8. **P1-3 (pagination)** — ✅ done: all 15 list endpoints take `?page`/`?limit` and answer
+   `{success, data, meta}`; 8 whose row count grows without bound gained server-side search/
+   filter/sort (replacing what those screens did client-side) and real paging UI
+   (`frontend/src/hooks/usePaginatedList.js` + `frontend/src/globals/Pagination.jsx`); the other
+   7 are capped-only. Also closed the *list* half of the P2 "Inconsistent API contract" item (the
+   9 formerly-bare-array endpoints now match the 6 that were already `{success,data}`), fixed a
+   real deep-link bug in `globals/ProjectVerification.jsx` (a paged task list broke its
+   notification-click resolution) via a new `GET /api/assignments/:assignmentId`, and gave
+   `admin/ProjectHistory.jsx`'s `remark` a single server-side definition instead of a duplicated
+   client-side one.
+9. **Still outstanding:** the remaining P2 backend-contract items (the four non-list response
+   envelope shapes, input validation library, `GET /logout` → `POST`), the deferred P2 component
    dedup (Create/Edit forms, role shells), the two unused database views, and backfilling test
    coverage for the pre-P1-11 backend and the pre-P2 frontend.

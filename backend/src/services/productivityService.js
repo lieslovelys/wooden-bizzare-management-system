@@ -1,6 +1,6 @@
 import * as productivityModel from '../models/productivityModel.js';
 
-const getProductivityStats = () => productivityModel.getWorkerProductivity();
+const getProductivityStats = (pagination) => productivityModel.getWorkerProductivity(pagination);
 
 export default {
     getProductivityStats

@@ -11,9 +11,9 @@ import {
 } from "../models/inventoryModel.js";
 import { AppError } from "../errors/AppError.js";
 
-const getItems = () => getAllItems();
+const getItems = (pagination) => getAllItems(pagination);
 
-const getLowStockItems = () => getLowStock();
+const getLowStockItems = (pagination) => getLowStock(pagination);
 
 const getItem = async (id) => {
   const item = await getItemById(id);
@@ -49,10 +49,10 @@ const adjustStock = async (variantId, delta, reason, callerId) => {
   return resultingStock;
 };
 
-const getMovements = async (variantId) => {
+const getMovements = async (variantId, pagination) => {
   const variant = await getVariantById(variantId);
   if (!variant) throw new AppError(404, 'Variant not found');
-  return getVariantMovements(variantId);
+  return getVariantMovements(variantId, pagination);
 };
 
 export default {

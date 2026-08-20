@@ -1,4 +1,5 @@
 import { query, getClient } from "../config/db.js";
+import { splitCountedRows } from "../utils/pagination.js";
 
 // `total_stock` and `status` are derived here, not stored (see migrations/…_inventory-backend.js)
 // — one query, aggregating variants via json_agg so the list stays a single round trip rather
@@ -29,9 +30,21 @@ const itemSelect = (whereSql = '') => `
   GROUP BY i.id
 `;
 
-export async function getAllItems() {
-  const { rows } = await query(`${itemSelect()} ORDER BY i.name ASC`);
-  return rows;
+// P1-3: capped-only (SKU-bounded, no paging UI). LIMIT/OFFSET and ORDER BY are applied to a wrap
+// around itemSelect() rather than appended inline — itemSelect() already ends on `GROUP BY i.id`
+// used by getItemById too, and asserting the ORDER BY at the same level as LIMIT/OFFSET (rather
+// than inside the subquery, whose ordering Postgres doesn't guarantee survives an outer wrap) is
+// what keeps this correct. Paging still counts *items*, not the variant rows the GROUP BY
+// collapses, since itemSelect()'s aggregation runs first.
+export async function getAllItems({ limit, offset }) {
+  const { rows } = await query(
+    `SELECT t.*, COUNT(*) OVER() AS total_count
+     FROM (${itemSelect()}) t
+     ORDER BY t.name ASC
+     LIMIT $1 OFFSET $2`,
+    [limit, offset]
+  );
+  return splitCountedRows(rows);
 }
 
 export async function getItemById(id) {
@@ -39,17 +52,21 @@ export async function getItemById(id) {
   return rows[0] || null;
 }
 
-export async function getLowStock() {
+// P1-3: capped-only (low-stock variants are expected to be a small subset, no paging UI).
+export async function getLowStock({ limit, offset }) {
   const { rows } = await query(
     `SELECT
        v.id AS variant_id, v.variant_name, v.current_stock, v.min_stock,
-       i.id AS item_id, i.name AS item_name, i.category, i.unit
+       i.id AS item_id, i.name AS item_name, i.category, i.unit,
+       COUNT(*) OVER() AS total_count
      FROM item_variants v
      JOIN inventory_items i ON i.id = v.item_id
      WHERE v.current_stock <= v.min_stock
-     ORDER BY i.name ASC, v.variant_name ASC`
+     ORDER BY i.name ASC, v.variant_name ASC, v.id ASC
+     LIMIT $1 OFFSET $2`,
+    [limit, offset]
   );
-  return rows;
+  return splitCountedRows(rows);
 }
 
 export async function createItemWithVariants({ name, category, unit, variants }) {
@@ -196,16 +213,19 @@ export async function adjustVariantStock(variantId, delta, reason, userId) {
   }
 }
 
-export async function getVariantMovements(variantId) {
+// P1-3: paged — an append-only audit log with no ceiling, the strongest case for pagination in
+// the codebase. `m.id DESC` tiebreaks `created_at`, which can tie on rapid adjustments.
+export async function getVariantMovements(variantId, { limit, offset }) {
   const { rows } = await query(
     `SELECT
        m.id, m.variant_id, m.user_id, m.delta, m.resulting_stock, m.reason, m.created_at,
-       u.first_name, u.last_name
+       u.first_name, u.last_name, COUNT(*) OVER() AS total_count
      FROM stock_movements m
      LEFT JOIN users u ON u.user_id = m.user_id
      WHERE m.variant_id = $1
-     ORDER BY m.created_at DESC`,
-    [variantId]
+     ORDER BY m.created_at DESC, m.id DESC
+     LIMIT $2 OFFSET $3`,
+    [variantId, limit, offset]
   );
-  return rows;
+  return splitCountedRows(rows);
 }

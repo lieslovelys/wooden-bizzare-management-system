@@ -1,19 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import JobOrderDetails from './JobOrderDetails';
-import { api } from '../api/client';
+import Pagination from './Pagination';
 import { formatDateShort, formatProjectId } from '../utils/format';
+import { usePaginatedList } from '../hooks/usePaginatedList';
 
-// Pure — hoisted to module scope so it can be called from the fetch effect before the component
-// body declares it (previously a same-render "used before declared" lint error; see
-// ARCHITECTURE_REVIEW.md P2).
-const sortJobsByDate = (jobs) => {
-    return [...jobs].sort((a, b) => new Date(a.due_date) - new Date(b.due_date));
-};
+const ALL_PRIORITIES = ['High', 'Medium', 'Low'];
 
 const JobOrderList = () => {
-    const [jobOrders, setJobOrders] = useState([]);
-    
     const location = useLocation();
 
     // Binago natin 'to. Imbes na ID lang para ma-highlight,
@@ -25,7 +19,8 @@ const JobOrderList = () => {
     // eslint-plugin-react-hooks' set-state-in-effect rule flags as an avoidable extra render.
     const [viewingJobId, setViewingJobId] = useState(() => location.state?.targetProjectId ?? null);
 
-    const [activePriorities, setActivePriorities] = useState(['High', 'Medium', 'Low']);
+    const [activePriorities, setActivePriorities] = useState(ALL_PRIORITIES);
+    const [sortDesc, setSortDesc] = useState(false);
 
     // --- 3. BAGONG USEEFFECT PARA SA NOTIFICATION CLICK ---
     // I-clear ang history state para kung i-refresh ni user ang page, hindi siya mag-loop.
@@ -36,23 +31,17 @@ const JobOrderList = () => {
     }, [location]);
     // -----------------------------------------------------
 
-    useEffect(() => {
-        const fetchJobs = async () => {
-            try {
-                const data = await api.get('/api/job-orders');
-                const initialSorted = sortJobsByDate(data);
-                setJobOrders(initialSorted);
-            } catch (error) {
-                console.error("Failed to fetch job orders:", error.message);
-            }
-        };
-        fetchJobs();
-    }, []);
+    // P1-3: server-paginated, server-filtered, and server-sorted — the priority filter and the
+    // "sort by nearest due date" button both used to re-derive from the whole fetched table
+    // client-side (see ARCHITECTURE_REVIEW.md P1-3). Omitting `priority` when every option is
+    // selected preserves the original unfiltered request.
+    const priorityParam = activePriorities.length < ALL_PRIORITIES.length ? activePriorities : undefined;
+    const { rows: filteredJobs, meta, page, setPage, loading } = usePaginatedList('/api/job-orders', {
+        params: { priority: priorityParam, sort: sortDesc ? 'desc' : undefined },
+        pageSize: 25,
+    });
 
-    const handleSortClick = () => {
-        const sorted = sortJobsByDate(jobOrders);
-        setJobOrders(sorted);
-    };
+    const handleSortClick = () => setSortDesc(prev => !prev);
 
     const togglePriority = (priority) => {
         setActivePriorities(prev => {
@@ -60,13 +49,6 @@ const JobOrderList = () => {
             return [...prev, priority];
         });
     };
-
-    const filteredJobs = jobOrders.filter(job => {
-        const priority = job.priority_level 
-            ? job.priority_level.charAt(0).toUpperCase() + job.priority_level.slice(1).toLowerCase() 
-            : 'Low';
-        return activePriorities.includes(priority);
-    });
 
     // --- VIEW SWITCHER LOGIC ---
     // Kung may naka-set na viewingJobId, i-render ang Detail Page
@@ -89,7 +71,7 @@ const JobOrderList = () => {
 
             <div className="jol-controls">
                 <button className="jol-btn" onClick={handleSortClick}>
-                    Sort by Nearest Due Date
+                    Sort by Due Date ({sortDesc ? 'Farthest first' : 'Nearest first'})
                 </button>
 
                 <div className="jol-filter-group">
@@ -101,7 +83,11 @@ const JobOrderList = () => {
             </div>
 
             <div className="jol-list">
-                {filteredJobs.length > 0 ? (
+                {loading ? (
+                    <div style={{ padding: '20px', textAlign: 'center', color: '#8b816a' }}>
+                        Loading job orders...
+                    </div>
+                ) : filteredJobs.length > 0 ? (
                     filteredJobs.map((job) => (
                         <div
                             key={job.id}
@@ -121,6 +107,8 @@ const JobOrderList = () => {
                     </div>
                 )}
             </div>
+
+            <Pagination page={page} meta={meta} onChange={setPage} />
         </div>
     );
 };

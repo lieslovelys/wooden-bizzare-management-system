@@ -1,6 +1,6 @@
 import * as notifModel from '../models/adminNotifModel.js'; // Wag kalimutan yung .js
 
-const getNotifications = () => notifModel.getAllNotifications();
+const getNotifications = (pagination) => notifModel.getAllNotifications(pagination);
 
 const markAllAsRead = (type) => notifModel.markAllAsRead(type);
 

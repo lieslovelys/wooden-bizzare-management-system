@@ -19,7 +19,7 @@ function rethrowAsConflictIfDuplicate(err) {
   throw err;
 }
 
-const getWorkerAttendance = (workerId) => getAttendanceByWorkerId(workerId);
+const getWorkerAttendance = (workerId, pagination) => getAttendanceByWorkerId(workerId, pagination);
 
 const getAttendanceRecord = async (id) => {
   const record = await getAttendanceById(id);

@@ -13,7 +13,7 @@ import {
 import { createNotification } from '../models/adminNotifModel.js';
 import { AppError } from '../errors/AppError.js';
 
-const getJobOrders = () => getAllJobOrders();
+const getJobOrders = (pagination) => getAllJobOrders(pagination);
 
 const getJobOrderDetails = async (id) => {
     const details = await getJobOrderById(id);
@@ -23,18 +23,30 @@ const getJobOrderDetails = async (id) => {
     return details;
 };
 
-const getWorkersList = () => getWorkers();
+const getWorkersList = (pagination) => getWorkers(pagination);
 
-const getAssignments = (projectId) => getProjectAssignments(projectId);
+const getAssignments = (projectId, pagination) => getProjectAssignments(projectId, pagination);
 
 const assignTask = (projectId, workerId, stage, startDate, dueDate) =>
     createJobAssignment(projectId, workerId, stage, startDate, dueDate);
 
-const getWorkerTasks = (workerId) => getTasksByWorkerId(workerId);
+const getWorkerTasks = (workerId, pagination) => getTasksByWorkerId(workerId, pagination);
 
 // --- QUALITY CHECKER ---
 
-const getQATasks = () => getTasksForQA();
+const getQATasks = (pagination) => getTasksForQA(pagination);
+
+// P1-3: resolves a notification deep-link directly by assignment id rather than requiring the
+// caller to search a loaded (and now paged) task list for it — see
+// ARCHITECTURE_REVIEW.md P1-3 / globals/ProjectVerification.jsx's old `tasks.find(...)` lookup,
+// which silently did nothing once the target task could sit on a page that was never fetched.
+const getAssignmentDetails = async (assignmentId) => {
+    const assignment = await getAssignmentById(assignmentId);
+    if (!assignment) {
+        throw new AppError(404, 'Task not found');
+    }
+    return assignment;
+};
 
 // Statuses a task can be submitted FROM by the worker who owns it (i.e. not yet under review).
 // Includes 'In Progress' and 'Rework' even though no current code path produces them, so this
@@ -103,5 +115,6 @@ export default {
     assignTask,
     getWorkerTasks,
     getQATasks,
-    updateQAStatus
+    updateQAStatus,
+    getAssignmentDetails
 }

@@ -1,14 +1,36 @@
 import { query, getClient } from '../config/db.js';
+import { splitCountedRows } from '../utils/pagination.js';
 
-export const getAllJobOrders = async () => {
+// P1-3: paged. `priority` is an optional array of display-form values ('High'/'Medium'/'Low') —
+// matched against the same normalization globals/JobOrder.jsx used to do client-side
+// (`priority_level ? capitalize(lowercase) : 'Low'`), now done in SQL so the filter and the
+// badge the user sees always agree. `sort` flips the due-date direction; `id ASC` is a
+// tiebreaker so OFFSET paging over the nullable, non-unique `due_date` column is deterministic
+// (a nullable ORDER BY column with no tiebreaker can duplicate or skip rows across pages).
+export const getAllJobOrders = async ({ limit, offset, priority, sort } = {}) => {
+    const conditions = [`(status != 'Completed' OR status IS NULL)`];
+    const params = [];
+
+    if (priority && priority.length > 0) {
+        params.push(priority);
+        conditions.push(`INITCAP(LOWER(COALESCE(priority_level, 'Low'))) = ANY($${params.length}::text[])`);
+    }
+
+    const direction = sort === 'desc' ? 'DESC' : 'ASC';
+    params.push(limit);
+    const limitIdx = params.length;
+    params.push(offset);
+    const offsetIdx = params.length;
+
     const sqlString = `
-        SELECT id, project_name, due_date, priority_level, status
+        SELECT id, project_name, due_date, priority_level, status, COUNT(*) OVER() AS total_count
         FROM projects
-        WHERE status != 'Completed' OR status IS NULL
-        ORDER BY due_date ASC;
+        WHERE ${conditions.join(' AND ')}
+        ORDER BY due_date ${direction}, id ASC
+        LIMIT $${limitIdx} OFFSET $${offsetIdx};
     `;
-    const { rows } = await query(sqlString);
-    return rows;
+    const { rows } = await query(sqlString, params);
+    return splitCountedRows(rows);
 };
 
 export const getJobOrderById = async (projectId) => {
@@ -35,28 +57,39 @@ export const getJobOrderById = async (projectId) => {
     };
 };
 
-export const getWorkers = async () => {
+// P1-3: capped-only — a dropdown feed (globals/JobOrderDetails.jsx's worker-assignment select),
+// no paging UI on the frontend. Previously had NO `ORDER BY` at all, which made OFFSET paging
+// nondeterministic (rows could duplicate or go missing across pages) — added one even though
+// this endpoint isn't expected to page past its default limit in practice.
+export const getWorkers = async ({ limit, offset }) => {
     const sql = `
-        SELECT u.user_id, u.first_name, u.last_name, w.job_role, w.photo, w.job_type
+        SELECT u.user_id, u.first_name, u.last_name, w.job_role, w.photo, w.job_type,
+               COUNT(*) OVER() AS total_count
         FROM users u
         LEFT JOIN worker_details w ON u.user_id = w.user_id
         WHERE u.user_role = 'Worker'
+        ORDER BY u.user_id ASC
+        LIMIT $1 OFFSET $2
     `;
-    const { rows } = await query(sql);
-    return rows;
+    const { rows } = await query(sql, [limit, offset]);
+    return splitCountedRows(rows);
 };
 
-export const getProjectAssignments = async (projectId) => {
+// P1-3: capped-only — naturally bounded (assignment stages per project), no paging UI.
+// `assignment_id` is a primary key, so the existing ORDER BY is already a deterministic
+// tiebreaker on its own.
+export const getProjectAssignments = async (projectId, { limit, offset }) => {
     const sql = `
         SELECT j.assignment_id, j.stage_name, j.start_date, j.due_date, j.date_completed, j.status,
-               u.first_name, u.last_name
+               u.first_name, u.last_name, COUNT(*) OVER() AS total_count
         FROM job_assignments j
         LEFT JOIN users u ON j.worker_id = u.user_id
         WHERE j.project_id = $1
         ORDER BY j.assignment_id ASC
+        LIMIT $2 OFFSET $3
     `;
-    const { rows } = await query(sql, [projectId]);
-    return rows;
+    const { rows } = await query(sql, [projectId, limit, offset]);
+    return splitCountedRows(rows);
 };
 
 
@@ -97,24 +130,49 @@ export const createJobAssignment = async (projectId, workerId, stageName, startD
     }
 };
 
-export const getTasksByWorkerId = async (workerId) => {
+// P1-3: paged. `status` matches the task_status enum exactly (the frontend's Assigned/Repair
+// toggle buttons); `priority` matches `p.priority_level` exactly too — worker/WorkerJobOrder.jsx
+// never normalized case here (unlike JobOrder.jsx's INITCAP treatment), so the filter stays a
+// literal match to preserve exactly what the client-side `.filter()` it replaces used to do.
+// `assignment_id ASC` tiebreaks the nullable, non-unique `due_date` for deterministic paging.
+export const getTasksByWorkerId = async (workerId, { limit, offset, status, priority, sort } = {}) => {
     try {
+        const conditions = ['ja.worker_id = $1'];
+        const params = [workerId];
+
+        if (status) {
+            params.push(status);
+            conditions.push(`ja.status = $${params.length}::task_status`);
+        }
+        if (priority) {
+            params.push(priority);
+            conditions.push(`p.priority_level = $${params.length}`);
+        }
+
+        const direction = sort === 'desc' ? 'DESC' : 'ASC';
+        params.push(limit);
+        const limitIdx = params.length;
+        params.push(offset);
+        const offsetIdx = params.length;
+
         const sql = `
-            SELECT 
+            SELECT
                 ja.assignment_id,
                 p.id AS project_id,
                 p.project_name,
                 ja.due_date,
                 p.priority_level AS priority,
                 ja.status,
-                ja.stage_name
+                ja.stage_name,
+                COUNT(*) OVER() AS total_count
             FROM job_assignments ja
             JOIN projects p ON ja.project_id = p.id
-            WHERE ja.worker_id = $1
-            ORDER BY ja.due_date ASC
+            WHERE ${conditions.join(' AND ')}
+            ORDER BY ja.due_date ${direction}, ja.assignment_id ASC
+            LIMIT $${limitIdx} OFFSET $${offsetIdx}
         `;
-        const { rows } = await query(sql, [workerId]);
-        return rows;
+        const { rows } = await query(sql, params);
+        return splitCountedRows(rows);
     } catch (error) {
         console.error("DATABASE ERROR in getTasksByWorkerId:", error.message);
         throw error;
@@ -122,10 +180,24 @@ export const getTasksByWorkerId = async (workerId) => {
 };
 
 
-export const getTasksForQA = async () => {
+// P1-3: paged. `stage` matches `ja.stage_name` exactly (the QC screen's Stage dropdown).
+export const getTasksForQA = async ({ limit, offset, stage } = {}) => {
     try {
+        const conditions = [`ja.status = 'For QA'`];
+        const params = [];
+
+        if (stage) {
+            params.push(stage);
+            conditions.push(`ja.stage_name = $${params.length}`);
+        }
+
+        params.push(limit);
+        const limitIdx = params.length;
+        params.push(offset);
+        const offsetIdx = params.length;
+
         const sql = `
-            SELECT 
+            SELECT
                 ja.assignment_id,
                 p.id AS project_id,
                 p.project_name,
@@ -134,15 +206,17 @@ export const getTasksForQA = async () => {
                 ja.status,
                 ja.stage_name,
                 u.first_name,
-                u.last_name
+                u.last_name,
+                COUNT(*) OVER() AS total_count
             FROM job_assignments ja
             LEFT JOIN projects p ON ja.project_id = p.id
-            LEFT JOIN users u ON ja.worker_id = u.user_id 
-            WHERE ja.status = 'For QA'
-            ORDER BY ja.due_date ASC
+            LEFT JOIN users u ON ja.worker_id = u.user_id
+            WHERE ${conditions.join(' AND ')}
+            ORDER BY ja.due_date ASC, ja.assignment_id ASC
+            LIMIT $${limitIdx} OFFSET $${offsetIdx}
         `;
-        const { rows } = await query(sql);
-        return rows;
+        const { rows } = await query(sql, params);
+        return splitCountedRows(rows);
     } catch (error) {
         console.error("DATABASE ERROR in getTasksForQA:", error.message);
         throw error;

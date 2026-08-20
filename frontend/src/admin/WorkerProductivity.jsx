@@ -12,8 +12,11 @@ const WorkerProductivity = () => {
     useEffect(() => {
         const fetchProductivity = async () => {
             try {
+                // P1-3: capped-only, defaulting to a high limit server-side — no ?limit= is sent
+                // here, so this still gets the full leaderboard, just wrapped in
+                // {success, data, meta} instead of a bare array. See ARCHITECTURE_REVIEW.md P1-3.
                 const result = await api.get('/api/productivity');
-                setProductivityData(result);
+                setProductivityData(result.data || []);
             } catch (error) {
                 console.error("Error fetching productivity data:", error.message);
             } finally {

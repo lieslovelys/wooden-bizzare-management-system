@@ -12,9 +12,11 @@ const QCDashboard = () => {
     // Gagamitin natin yung existing API mo para sa QA tasks
     const fetchQATasks = async () => {
       try {
-        const data = await api.get('/api/qa/tasks');
-        // Bibilangin lang natin kung ilang tasks ang ibinalik ng database
-        setToVerifyCount(data.length);
+        // P1-3: /api/qa/tasks is now paged — data.length would only be the current page size
+        // (25), not the real total. meta.total is the actual count. See
+        // ARCHITECTURE_REVIEW.md P1-3.
+        const result = await api.get('/api/qa/tasks');
+        setToVerifyCount(result.meta?.total ?? 0);
       } catch (error) {
         console.error("Error fetching tasks to verify:", error.message);
       }

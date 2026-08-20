@@ -32,7 +32,9 @@ beforeEach(() => {
 
 describe('InventoryTable', () => {
   it('renders items fetched from the API', async () => {
-    api.get.mockResolvedValue({ success: true, data: [SAMPLE_ITEM] });
+    // P1-3: /api/inventory now also carries a `meta` block — InventoryTable doesn't read it
+    // (capped-only, no paging UI), so this only needs to keep resolving {success,data}.
+    api.get.mockResolvedValue({ success: true, data: [SAMPLE_ITEM], meta: { page: 1, limit: 200, total: 1, totalPages: 1 } });
 
     render(<InventoryTable />);
 

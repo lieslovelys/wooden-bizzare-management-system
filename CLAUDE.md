@@ -50,6 +50,7 @@ backend/
     scripts/               createAdmin.js, migrate.js
     middleware/            auth.js, errorHandler.js
     errors/                 AppError.js
+    utils/                  pagination.js   # parsePagination/buildMeta/splitCountedRows — see below
     routes/ services/ models/
     tests/                 # vitest; services mocked via vi.mock, routes via supertest
 frontend/
@@ -63,6 +64,7 @@ frontend/
     api/client.js                                                    # shared fetch wrapper
     context/    UserContext.js, ToastContext.js         # createContext() only — see below
     utils/      format.js                               # shared display formatters — see below
+    hooks/      usePaginatedList.js                     # server-paginated list fetching — see below
     css/
     tests/                 # vitest setup (jsdom + @testing-library/react); test files sit next
                            # to the component they cover, e.g. globals/InventoryTable.test.jsx
@@ -174,6 +176,23 @@ dashboard). The layers have a strict, one-directional contract:
 Every module `default`-exports an object of named functions — follow that shape for new files
 rather than mixing named and default exports.
 
+**List endpoints are paginated** (P1-3): a route parses `?page`/`?limit` with
+`parsePagination(req.query)` (`backend/src/utils/pagination.js`) — it throws `AppError(400, ...)`
+on garbage input and clamps an oversized `limit` down to `MAX_LIMIT` (200) rather than erroring.
+Every list model takes `{ limit, offset, ...filters }`, adds `COUNT(*) OVER()` to its query, and
+returns `{ rows, total }` via `splitCountedRows` from the same file; the route wraps that as
+`{ success: true, data: rows, meta: buildMeta({ page, limit, total }) }`. A handful of
+headcount/SKU-bounded lists (accounts, workers, productivity, inventory items) are capped-only —
+no real paging UI on the frontend — and call `parsePagination(req.query, { defaultLimit:
+MAX_LIMIT })` so an unpaginated caller still gets everything up to the cap instead of a silently
+truncated 25-row page. New list endpoints should follow this pattern rather than returning a bare
+array or an unbounded result set.
+
+Any `ORDER BY` a paginated query relies on must be over a column (or column set) that's actually
+unique — a nullable or non-unique sort column needs an explicit tiebreaker (e.g. `ORDER BY
+due_date ASC, id ASC`), or `OFFSET` paging can duplicate or skip rows across pages. See the
+`getAllJobOrders`/`getWorkerProductivity`/etc. models in `backend/src/models/` for the pattern.
+
 Frontend is plain React + Vite, no TypeScript, no state-management library (`useState`/`useEffect`
 + one `UserContext` for the logged-in user, `context/UserContext.js`), CSS in plain global
 stylesheets under `frontend/src/css/`. All API calls go through the shared client in
@@ -190,6 +209,17 @@ Display formatting (currency, project/worker IDs, dates, times) goes through the
 in `frontend/src/utils/format.js` rather than a local inline formatter, so the same value renders
 identically everywhere (P2; before this, the same project id rendered as `WB7`, `WB-7`, or
 `WB-07` depending on the screen).
+
+A screen backed by a paged list endpoint uses `usePaginatedList(endpoint, { params, pageSize })`
+(`frontend/src/hooks/usePaginatedList.js`) rather than its own `useState`/`useEffect` fetch —
+it unwraps `{success, data, meta}`, resets to page 1 when `params` changes, debounces a `search`
+param (~300ms) so typing doesn't fire a request per keystroke, and returns `setRows` for
+optimistic single-row updates that don't change which rows belong on the current page (a bulk
+action should call `refetch()` or change `page` instead, since either can change the total).
+Render `<Pagination page={page} meta={meta} onChange={setPage} />`
+(`frontend/src/globals/Pagination.jsx`) below the list — it renders nothing at one page or fewer.
+A capped-only endpoint (no paging UI) is still consumed as `{success, data, meta}`, just without
+the hook or the `<Pagination>` component.
 
 ## Non-negotiable rules for new code
 
@@ -239,18 +269,17 @@ identically everywhere (P2; before this, the same project id rendered as `WB7`, 
   and reviewed on a machine without Docker installed — `.github/workflows/ci.yml`'s
   `docker-build` job is the first place they're actually built. Watch that Actions run before
   trusting a fresh image.
-- Pagination (P1-3) is still outstanding — not part of the P0/P0-prerequisite/P1a/P1-10/P1-11/P2
-  work completed so far.
-
 P0 (authorization, session-secret fail-fast, rate limiting), P1a (session store, connection pool
 limits, indexes, transactions, uniqueness constraints, `timestamptz`, baseline production
 middleware), P1-10 (Docker Compose deployment, `/api` route namespace, backups, CI), the P2
 routes/services refactor (`controllers/` → `services/`, `AppError`), P1-11 (Inventory:
 real `/api/inventory` backend with a stock-movement audit trail, replacing the old
-`localStorage`-only screen), and a P2 frontend-consolidation pass (shared `ToastProvider`/
+`localStorage`-only screen), a P2 frontend-consolidation pass (shared `ToastProvider`/
 `useToast()`, shared `utils/format.js` display formatters, hoisting `Attendance.jsx`'s five
 nested components to module scope, merging the three near-identical notification components into
 one `NotificationList`, and fixing every frontend lint error so `npm run lint` is now a real CI
-gate) are complete — see `ARCHITECTURE_REVIEW.md` for exactly what each covered.
+gate), and P1-3 (pagination — every list endpoint now takes `?page`/`?limit`, with server-side
+search/filter/sort replacing what 8 screens used to do client-side over an unbounded result set)
+are complete — see `ARCHITECTURE_REVIEW.md` for exactly what each covered.
 
 Full findings, severity, and fix order live in `docs/reference_md/ARCHITECTURE_REVIEW.md`.

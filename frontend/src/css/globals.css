@@ -3848,4 +3848,47 @@ html, body {
     .qc-pvd-progress-header { flex-direction: column; align-items: flex-start; gap: 15px; }
 }
 
+/* --- Pagination (P1-3) --- */
+/* Self-contained so it drops in below any list screen's markup — real <table>s and the
+   per-screen CSS-grid div "tables" alike. */
+.wb-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    padding: 18px 0;
+    margin-top: 10px;
+}
+
+.wb-pagination-range {
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: #8b816a;
+    font-variant-numeric: tabular-nums;
+}
+
+.wb-pagination-btn {
+    padding: 8px 18px;
+    border: 1.5px solid #dcd7c9;
+    color: #5b5035;
+    background: #ffffff;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-radius: 25px;
+}
+
+.wb-pagination-btn:hover:not(:disabled) {
+    background: #fbf5e8;
+    border-color: #cca43b;
+    color: #8a6d1f;
+}
+
+.wb-pagination-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
 

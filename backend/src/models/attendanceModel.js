@@ -1,7 +1,11 @@
 import { query } from "../config/db.js";
+import { splitCountedRows } from "../utils/pagination.js";
 
+// P1-3: paged — one row per worker per day, the highest-cardinality list in the app, and the
+// strongest case for pagination in the codebase (no ceiling on how long a worker's history
+// grows). `a.id ASC` tiebreaks `a.date`, which is not unique per worker.
 // Kinukuha ang attendance gamit ang user_id galing sa React
-export async function getAttendanceByWorkerId(userId) {
+export async function getAttendanceByWorkerId(userId, { limit, offset }) {
   const { rows } = await query(
     `SELECT
        a.id,
@@ -14,14 +18,16 @@ export async function getAttendanceByWorkerId(userId) {
        a.late_minutes,
        a.overtime_minutes,
        a.notes,
-       a.created_at
+       a.created_at,
+       COUNT(*) OVER() AS total_count
      FROM attendance a
      JOIN worker_details w ON a.worker_id = w.detail_id
      WHERE w.user_id = $1
-     ORDER BY a.date ASC`,
-    [userId]
+     ORDER BY a.date ASC, a.id ASC
+     LIMIT $2 OFFSET $3`,
+    [userId, limit, offset]
   );
-  return rows; 
+  return splitCountedRows(rows);
 }
 
 export async function getAttendanceById(id) {

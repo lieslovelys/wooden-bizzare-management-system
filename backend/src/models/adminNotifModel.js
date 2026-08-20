@@ -1,9 +1,21 @@
-import { query } from '../config/db.js'; 
+import { query } from '../config/db.js';
+import { splitCountedRows } from '../utils/pagination.js';
 
-
-export const getAllNotifications = async () => {
-    const { rows } = await query('SELECT * FROM notifications ORDER BY created_at DESC');
-    return rows;
+// P1-3: paged, plus the `type` filter this GET never had (the two bulk mutations below already
+// took an optional `type` — see P2 notification-component consolidation — but the read itself
+// filtered client-side in globals/NotificationList.jsx, which would show an empty/short page once
+// this list is paged server-side for a role-scoped screen). `id DESC` tiebreaks `created_at`,
+// which is not unique.
+export const getAllNotifications = async ({ limit, offset, type = null }) => {
+    const { rows } = await query(
+        `SELECT *, COUNT(*) OVER() AS total_count
+         FROM notifications
+         WHERE ($1::text IS NULL OR type = $1)
+         ORDER BY created_at DESC, id DESC
+         LIMIT $2 OFFSET $3`,
+        [type, limit, offset]
+    );
+    return splitCountedRows(rows);
 };
 
 
