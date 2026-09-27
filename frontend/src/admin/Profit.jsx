@@ -327,7 +327,7 @@ export default function Profit() {
                     </button>
                   </div>
 
-                  <table className="profit-table">
+                  <table className="profit-table wb-card-table">
                     <thead>
                       <tr>
                         <th>Expense Item</th>
@@ -345,7 +345,7 @@ export default function Profit() {
                       ) : (
                         breakdown.map((row, i) => (
                           <tr key={i}>
-                            <td>
+                            <td data-label="Expense Item">
                               <input
                                 type="text"
                                 value={row.description}
@@ -353,7 +353,7 @@ export default function Profit() {
                                 className="profit-table-input"
                               />
                             </td>
-                            <td>
+                            <td data-label="Amount">
                               <input
                                 type="number"
                                 value={row.amount === 0 && row.amount !== "" ? "" : row.amount}
@@ -362,7 +362,7 @@ export default function Profit() {
                                 className="profit-table-input profit-table-amount"
                               />
                             </td>
-                            <td>
+                            <td data-label="Action">
                               <button
                                 type="button"
                                 onClick={() => removeExpenseItem(i)}

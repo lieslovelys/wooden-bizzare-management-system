@@ -702,67 +702,9 @@
         width: 100%;
     }
 
-    /* --- Modern Table to Mobile Cards Conversion --- */
-    /* Itago ang default table header */
-    .wjo-table thead {
-        display: none;
-    }
-
-    /* Gawing block-level ang table elements */
-    .wjo-table, .wjo-table tbody, .wjo-table tr, .wjo-table td {
-        display: block;
-        width: 100%;
-    }
-
-    /* Style ang bawat hilera (row) bilang hiwalay na Card */
-    .wjo-table tr {
-        margin-bottom: 15px;
-        border: 1px solid #eaeaea;
-        border-radius: 12px;
-        padding: 15px;
-        background-color: #ffffff;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.02);
-    }
-
-    /* I-disable ang gray hover sa mobile rows */
-    .wjo-table tr:hover td {
-        background-color: transparent; 
-    }
-
-    /* Layout ng bawat data row sa loob ng card */
-    .wjo-table td {
-        text-align: right;
-        padding: 10px 0;
-        border-bottom: 1px dashed #eaeaea;
-        position: relative;
-        display: flex;
-        justify-content: flex-end;
-        align-items: center;
-    }
-
-    .wjo-table td:last-child {
-        border-bottom: none;
-        padding-bottom: 0;
-    }
-
-    /* Auto-Labels para sa Mobile Cards */
-    .wjo-table td::before {
-        position: absolute;
-        left: 0;
-        text-align: left;
-        font-size: 0.75rem;
-        font-weight: 700;
-        color: #888888;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }
-
-    /* Ginamitan ko ng nth-child para hindi mo na kailangang i-edit yung React JSX mo! */
-    .wjo-table td:nth-child(1)::before { content: "Stage"; }
-    .wjo-table td:nth-child(2)::before { content: "Worker"; }
-    .wjo-table td:nth-child(3)::before { content: "Start Date"; }
-    .wjo-table td:nth-child(4)::before { content: "Due Date"; }
-    .wjo-table td:nth-child(5)::before { content: "Status"; }
+    /* Table → mobile cards: now the shared `.wb-card-table` utility (DESIGN.md §7#10,
+       css/globals.css) instead of a one-off `.wjo-table`-only version — WorkerJobOrderDetail.jsx
+       carries both classes and a `data-label` per <td>. */
 
     /* Action Button Fix */
     .wjo-action-btn {

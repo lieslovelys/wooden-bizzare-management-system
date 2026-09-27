@@ -153,7 +153,7 @@ const ProjectVerificationDetail = ({ projectId, onBack }) => {
                     </div>
                 </div>
                 
-                <table className="qc-pvd-table">
+                <table className="qc-pvd-table wb-card-table">
                     <thead>
                         <tr>
                             <th>STAGE</th>
@@ -166,11 +166,11 @@ const ProjectVerificationDetail = ({ projectId, onBack }) => {
                     <tbody>
                         {tasks.map(task => (
                             <tr key={task.id}>
-                                <td>{task.stage}</td>
-                                <td>{task.worker}</td>
-                                <td>{task.start}</td>
-                                <td>{task.due}</td>
-                                <td>
+                                <td data-label="Stage">{task.stage}</td>
+                                <td data-label="Worker">{task.worker}</td>
+                                <td data-label="Start Date">{task.start}</td>
+                                <td data-label="Due Date">{task.due}</td>
+                                <td data-label="Status">
                                     {task.status === 'For QA' ? (
                                         <div className="qc-pvd-actions">
                                             <button 

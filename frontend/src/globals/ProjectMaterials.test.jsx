@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import ProjectMaterials from './ProjectMaterials';
+import { expectCardLabels } from '../tests/expectCardLabels';
 
 // FR-3 (final clause): materials consumed per project. Mocks the shared client rather than a
 // real backend, matching the convention InventoryTable.test.jsx and Attendance.test.jsx already
@@ -30,12 +31,14 @@ beforeEach(() => {
 
 describe('ProjectMaterials', () => {
   it('renders the materials summary fetched from the API', async () => {
-    render(<ProjectMaterials projectId={7} />);
+    const { container } = render(<ProjectMaterials projectId={7} />);
 
     expect(await screen.findByText('Plywood')).toBeInTheDocument();
     expect(screen.getByText('4x8')).toBeInTheDocument();
     expect(screen.getByText('2 sheet')).toBeInTheDocument();
     expect(api.get).toHaveBeenCalledWith('/api/inventory/projects/7/materials');
+    // DESIGN.md §7#10 — mobile card conversion (css/globals.css's .wb-card-table).
+    expectCardLabels(container, '.jod-table');
   });
 
   it('submits a Used record with the expected body', async () => {

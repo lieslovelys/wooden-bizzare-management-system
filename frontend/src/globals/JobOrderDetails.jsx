@@ -193,7 +193,7 @@ const JobOrderDetail = ({ jobId, onBack }) => {
                     </div>
                 </div>
                 
-                <table className="jod-table">
+                <table className="jod-table wb-card-table">
                     <thead>
                         <tr>
                             <th>STAGE</th>
@@ -206,11 +206,11 @@ const JobOrderDetail = ({ jobId, onBack }) => {
                     <tbody>
                         {assignments.map((assignment) => (
                             <tr key={assignment.assignment_id}>
-                                <td>{assignment.stage_name}</td>
-                                <td>{assignment.first_name} {assignment.last_name}</td>
-                                <td>{formatDate(assignment.start_date)}</td>
-                                <td>{assignment.date_completed ? formatDate(assignment.date_completed) : '-'}</td>
-                                <td><span className={`jod-status ${getStatusClass(assignment.status)}`}>{assignment.status}</span></td>
+                                <td data-label="Stage">{assignment.stage_name}</td>
+                                <td data-label="Worker">{assignment.first_name} {assignment.last_name}</td>
+                                <td data-label="Start Date">{formatDate(assignment.start_date)}</td>
+                                <td data-label="Date Completed">{assignment.date_completed ? formatDate(assignment.date_completed) : '-'}</td>
+                                <td data-label="Status"><span className={`jod-status ${getStatusClass(assignment.status)}`}>{assignment.status}</span></td>
                             </tr>
                         ))}
                         {assignments.length === 0 && (

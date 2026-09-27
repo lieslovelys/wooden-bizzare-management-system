@@ -509,7 +509,32 @@ html, body {
     min-height: 100dvh; /* DESIGN.md §3.6 */
     margin: 0;
     padding: 0;
-    overflow-x: hidden; /* Iwas horizontal scroll sa buong app */
+    /* DESIGN.md §3.5/§7#8 — was `overflow-x: hidden`, hiding a too-wide screen's excess instead
+       of fixing it (the excess became unreachable, not scrollable). Removed once every overflow
+       source the pass's browser sweep actually found (item 10's raw tables, several `min-width:
+       auto` CSS Grid/flex traps, and a few unguarded fixed-width containers — see item 20 in
+       ARCHITECTURE_REVIEW.md) was fixed at its source instead. */
+}
+
+/* DESIGN.md §7#8 — a CSS Grid or flex item's default `min-width: auto` lets one long, unbroken
+   value (a worker's name, a long project name) force its own track/item past its fluid `fr`
+   share, which is what the app-container rule above used to paper over globally. Every
+   div-based "table" row in the app (Pagination.jsx's comment calls these out as the CSS-grid
+   equivalent of a real <table>) resets it on its cells, the same way .wb-card-table's real
+   <table> conversion doesn't need to, since a real <td> already shrinks by default. */
+.jol-item > *,
+.qc-pv-row > *,
+.wjo-item > *,
+.att-header > *,
+.att-item > *,
+.log-header > *,
+.log-item > *,
+.ph-header > *,
+.ph-item > *,
+.account-list .al-header > *,
+.account-list .al-item > * {
+    min-width: 0;
+    overflow-wrap: break-word;
 }
 
 /* Wrapper para sa Sidebar + Main Content area */
@@ -524,6 +549,8 @@ html, body {
 /* Ang mismong white space kung saan lumalabas yung Dashboard, Logout, etc. */
 .page-content {
     flex: 1; /* Sasakop sa natitirang space sa tabi ng sidebar */
+    min-width: 0; /* DESIGN.md §7#8 — a flex child's default min-width:auto let a wide table
+                     stretch this past the viewport instead of shrinking to it */
     padding: 40px; /* Mas maluwag na padding para mas premium tignan */
     background-color: #FFFFFF;
 
@@ -1790,7 +1817,11 @@ html, body {
 .attendance-module {
   padding: 30px;
   font-family: 'Inter', sans-serif;
-  width: 1000px;
+  /* DESIGN.md §3.8/§7#8 — was an unguarded `width: 1000px`, forcing a horizontal scroll on
+     anything narrower; max-width keeps the same large-screen cap without forcing it. */
+  width: 100%;
+  max-width: 1000px;
+  box-sizing: border-box;
   margin: 0 auto;
 }
 
@@ -2273,13 +2304,18 @@ html, body {
 .project-form-container .project-form {
   background: #ffffff;
   border: 1px solid #f0ede5;
-  border-radius: 16px; 
-  padding: 40px; 
+  border-radius: 16px;
+  padding: 40px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03); /* Soft elegant shadow */
   display: flex;
   flex-direction: column;
   gap: 20px;
-  width: 1000px; /* Pinipigilang masyadong humaba ang inputs sa wide screens */
+  /* DESIGN.md §3.8/§7#8 — was an unguarded `width: 1000px` (the goal, per the Tagalog comment,
+     was only to cap input length on a wide screen); max-width keeps that cap without forcing a
+     horizontal scroll on anything narrower. */
+  width: 100%;
+  max-width: 1000px;
+  box-sizing: border-box;
   margin: 0 auto;
 }
 
@@ -2861,6 +2897,10 @@ html, body {
     display: flex;
     gap: 10px;
     align-items: center;
+    /* DESIGN.md §3.1/§7#8 — sweep-discovered: .jol-controls itself already wraps, but this,
+       one of its two children, didn't wrap its own label+3-buttons row, so it alone still
+       overflowed a 360px screen even on its own line. */
+    flex-wrap: wrap;
 }
 
 .jol-filter-label {
@@ -4004,6 +4044,93 @@ html, body {
     .wb-pagination-btn {
         flex: 1;
         max-width: 160px;
+    }
+}
+
+/* --- Raw <table> → mobile cards (DESIGN.md §7#10) --- */
+/* Shared so every table screen gets the same conversion instead of re-deriving it per file —
+   generalizes the original one-off .wjo-table version (now removed from worker.css in favor of
+   this). A table opts in with `className="… wb-card-table"` and puts the column name on every
+   non-colspan <td> via `data-label="…"`, which the ::before rule below reads with
+   `attr(data-label)` — safer than a hardcoded `:nth-child` list, since a reordered column can't
+   silently mislabel a card. */
+@media (max-width: 768px) {
+    .wb-card-table thead {
+        display: none;
+    }
+
+    .wb-card-table, .wb-card-table tbody, .wb-card-table tr, .wb-card-table td {
+        display: block;
+        width: 100%;
+    }
+
+    .wb-card-table tr {
+        margin-bottom: 15px;
+        border: 1px solid #eaeaea;
+        border-radius: 12px;
+        padding: 15px;
+        background-color: #ffffff;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+    }
+
+    .wb-card-table tr:hover td {
+        background-color: transparent;
+    }
+
+    .wb-card-table td {
+        text-align: right;
+        padding: 10px 0;
+        border-bottom: 1px dashed #eaeaea;
+        position: relative;
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 10px;
+        /* A flex container doesn't grow past its own `width: 100%` to fit its children, but an
+           unbroken value (e.g. a contact number) can still overflow it visually rather than
+           shrinking, since a flex item's default min-width is its own content's width. This
+           lowers that minimum instead of adding min-width:0 to an item that's often just an
+           anonymous text run and can't be targeted directly. */
+        overflow-wrap: anywhere;
+    }
+
+    .wb-card-table td:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+
+    .wb-card-table td[data-label]::before {
+        content: attr(data-label);
+        text-align: left;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #888888;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-right: auto;
+    }
+
+    /* A colspan row (an empty-state message, or an expandable detail row) has nothing to label
+       and reads left-to-right like normal block content instead of a label/value pair — plain
+       `display: block` rather than the flex layout above, so a block child (e.g. inventory's
+       `.variants-details`) still gets the full card width instead of shrinking to its own
+       content width as an unstretched flex item would. */
+    .wb-card-table td[colspan] {
+        display: block;
+        text-align: left;
+    }
+
+    /* DESIGN.md §3.3 — every interactive element inside a converted card, not just the row
+       itself, needs a real tap target. min-width covers icon-only buttons (e.g. the inventory
+       edit/delete actions), whose width would otherwise be their icon's, not their height's. */
+    .wb-card-table td button,
+    .wb-card-table td select,
+    .wb-card-table td input {
+        min-height: 44px;
+    }
+
+    .wb-card-table td button {
+        min-width: 44px;
     }
 }
 

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import Profit from './Profit';
+import { expectCardLabels } from '../tests/expectCardLabels';
 
 // Previously untested (ARCHITECTURE_REVIEW.md item 12/19). Also the regression test for a real
 // bug this pass fixed: handleProjectChange compared the <select>'s string value against `p.id`
@@ -53,7 +54,7 @@ describe('Profit', () => {
   it('fills the form from the fetched profit data', async () => {
     api.get.mockImplementation((url) => {
       if (url === '/api/projects?limit=200') return Promise.resolve({ data: PROJECTS });
-      if (url === '/api/profit/7') return Promise.resolve({ data: { client_payment: 1000, worker_wages: 200, materials_cost: 100, other_expenses: 0, expense_items: [] } });
+      if (url === '/api/profit/7') return Promise.resolve({ data: { client_payment: 1000, worker_wages: 200, materials_cost: 100, other_expenses: 0, expense_items: [{ description: 'Varnish', amount: 500 }] } });
       return Promise.reject(new ApiError(404, 'Not found'));
     });
 
@@ -66,6 +67,8 @@ describe('Profit', () => {
       expect(inputs[1]).toHaveValue(200);
       expect(inputs[2]).toHaveValue(100);
     });
+    // DESIGN.md §7#10 — mobile card conversion (css/globals.css's .wb-card-table).
+    expectCardLabels(container, '.profit-table');
   });
 
   it('shows a blank form (not an error) on a 404 — no profit saved for this project yet', async () => {

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import WorkerJobOrderDetail from './WorkerJobOrderDetail';
+import { expectCardLabels } from '../tests/expectCardLabels';
 
 // Previously untested (ARCHITECTURE_REVIEW.md item 12/19) — the worker-side submit action and
 // FR-9's "show the worker their own repair reason" display had no coverage.
@@ -29,8 +30,10 @@ describe('WorkerJobOrderDetail', () => {
         mockGets([{ assignment_id: 1, stage_name: 'Carpenter', first_name: 'Juan', last_name: 'Dela Cruz', start_date: '2026-09-05', due_date: '2026-09-10', status: 'Assigned' }]);
         api.put.mockResolvedValue({ success: true, data: {} });
 
-        render(<WorkerJobOrderDetail projectId={7} assignmentId={1} workerStatus="Assigned" onBack={vi.fn()} />);
+        const { container } = render(<WorkerJobOrderDetail projectId={7} assignmentId={1} workerStatus="Assigned" onBack={vi.fn()} />);
         await screen.findByText('Cabinet Set');
+        // DESIGN.md §7#10 — mobile card conversion (css/globals.css's .wb-card-table).
+        expectCardLabels(container, '.wjo-table');
 
         fireEvent.click(screen.getByText('I AM DONE'));
         fireEvent.click(screen.getByText('Yes, Submit'));

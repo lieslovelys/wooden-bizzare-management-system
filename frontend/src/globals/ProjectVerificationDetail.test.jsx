@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import ProjectVerificationDetail from './ProjectVerificationDetail';
+import { expectCardLabels } from '../tests/expectCardLabels';
 
 // Previously untested (ARCHITECTURE_REVIEW.md item 12/19) — the QA Approve/Repair actions and
 // FR-6's rejection-reason requirement had no coverage from the reviewer side (jobOrderService's
@@ -40,8 +41,10 @@ describe('ProjectVerificationDetail', () => {
         mockGets();
         api.put.mockResolvedValue({ success: true, data: {} });
 
-        render(<ProjectVerificationDetail projectId={7} onBack={vi.fn()} />);
+        const { container } = render(<ProjectVerificationDetail projectId={7} onBack={vi.fn()} />);
         await screen.findByText('Cabinet Set');
+        // DESIGN.md §7#10 — mobile card conversion (css/globals.css's .wb-card-table).
+        expectCardLabels(container, '.qc-pvd-table');
 
         fireEvent.click(screen.getByText('✓ Approve'));
 

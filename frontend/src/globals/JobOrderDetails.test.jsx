@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import JobOrderDetails from './JobOrderDetails';
+import { expectCardLabels } from '../tests/expectCardLabels';
 
 // Previously untested (ARCHITECTURE_REVIEW.md item 12/19) — the assign-worker form and the
 // FR-8 "every assigned stage must be Approved" complete gate had no coverage at all.
@@ -81,9 +82,12 @@ describe('JobOrderDetails — mark as completed', () => {
                 { assignment_id: 2, stage_name: 'Carver', first_name: 'Maria', last_name: 'Santos', start_date: '2026-09-05', status: 'For QA' },
             ],
         });
-        render(<JobOrderDetails jobId={7} onBack={vi.fn()} />);
+        const { container } = render(<JobOrderDetails jobId={7} onBack={vi.fn()} />);
         await screen.findByText('Cabinet Set');
         expect(screen.getByText('Mark as Completed')).toBeDisabled();
+        // DESIGN.md §7#10 — the mobile card conversion (css/globals.css's .wb-card-table) reads
+        // a label off each <td>'s data-label attribute; this catches a cell missing one.
+        expectCardLabels(container, '.jod-table');
     });
 
     it('completes the project once every assigned stage is Approved', async () => {

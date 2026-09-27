@@ -236,7 +236,7 @@ const InventoryTable = () => {
                 <p style={{ textAlign: 'center', padding: '20px' }}>Loading inventory...</p>
             ) : (
             <div className="table-wrapper">
-                <table className="inventory-table">
+                <table className="inventory-table wb-card-table">
                     <thead>
                         <tr>
                             <th>Item</th>
@@ -260,17 +260,17 @@ const InventoryTable = () => {
                                 return (
                                     <React.Fragment key={item.id}>
                                         <tr className={`main-row ${isExpanded ? 'active' : ''}`} onClick={() => toggleRow(item.id)}>
-                                            <td className="item-name">{item.name}</td>
-                                            <td><span className="category-pill">{item.category}</span></td>
-                                            <td className="variants-cell">
+                                            <td data-label="Item" className="item-name">{item.name}</td>
+                                            <td data-label="Category"><span className="category-pill">{item.category}</span></td>
+                                            <td data-label="Variants" className="variants-cell">
                                                 {item.variants?.map(v => (
                                                     <span key={v.id} className="variant-pill">{v.name}</span>
                                                 ))}
                                             </td>
-                                            <td className="stock-cell"><strong>{item.total_stock}</strong> {item.unit}</td>
-                                            <td><span className={`status-pill ${item.status?.toLowerCase()}`}>{item.status}</span></td>
+                                            <td data-label="Total Stock" className="stock-cell"><strong>{item.total_stock}</strong> {item.unit}</td>
+                                            <td data-label="Status"><span className={`status-pill ${item.status?.toLowerCase()}`}>{item.status}</span></td>
 
-                                            <td className="actions-cell">
+                                            <td data-label="Actions" className="actions-cell">
                                                 <button className="action-btn edit-btn" onClick={(e) => openEditModal(e, item)} title="Edit">
                                                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#bfa15f" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                                         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>

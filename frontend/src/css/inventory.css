@@ -8,14 +8,19 @@
     padding: 20px;
 }
 
+/* DESIGN.md §3.1/§7#8 — sweep-discovered: neither row wrapped, so the four category filters
+   plus "+ Add Item" together overflowed a 360px screen well before the table below does. */
 .inventory-header {
     display: flex;
     justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
     margin-bottom: 20px;
 }
 
 .filters {
     display: flex;
+    flex-wrap: wrap;
     gap: 10px;
 }
 
@@ -53,7 +58,9 @@
 .table-wrapper {
     border: 2px solid #bfa15f;
     border-radius: 8px;
-    overflow: hidden;
+    /* DESIGN.md §3.5 — was `hidden`, a second violation on top of item 10's raw <table>: it
+       didn't just fail to let a too-wide table scroll, it made the excess unreachable outright. */
+    overflow-x: auto;
 }
 
 .inventory-table {
@@ -257,6 +264,48 @@
 .adjust-btn:disabled {
     opacity: 0.4;
     cursor: not-allowed;
+}
+
+/* DESIGN.md §7#10 — the expanded row's own inner layout (not the outer <table>, which the
+   .wb-card-table utility in css/globals.css handles) is a fixed-width flex row that never had a
+   mobile treatment; at 360px .var-name/.progress-bar-container/.var-stock/.var-adjusters alone
+   already exceed the viewport before wrapping. */
+@media (max-width: 768px) {
+    /* Wins over css/globals.css's shared `.wb-card-table td[colspan]` rule on specificity
+       (3 classes + a type, vs. that rule's 2 classes + an attribute + a type) — keeps this
+       row's own flush/bordered look instead of the generic padded one every other colspan row
+       (an empty-state message) gets. */
+    .inventory-table.wb-card-table .expanded-row td {
+        padding: 0;
+        border-bottom: 2px solid #bfa15f;
+    }
+
+    .variants-details {
+        padding: 15px 20px;
+    }
+
+    .variant-line {
+        flex-wrap: wrap;
+        row-gap: 10px;
+    }
+
+    .var-name {
+        width: 100%;
+    }
+
+    .progress-bar-container {
+        margin: 0;
+        width: 100%;
+    }
+
+    .var-stock {
+        width: auto;
+    }
+
+    .var-adjusters {
+        flex-wrap: wrap;
+        width: 100%;
+    }
 }
 
 /* =========================================

@@ -53,11 +53,14 @@
 .create-account .tab-content-container {
   background: #ffffff; /* Clean white card */
   border: 1px solid #f0ede5;
-  border-radius: 16px; 
-  padding: 40px; 
+  border-radius: 16px;
+  padding: 40px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03); /* Soft elegant shadow */
   width: 100%;
-  width: 1000px; /* Para hindi masyadong banat ang form sa malaking monitor */
+  /* DESIGN.md §3.8/§7#8 — was a second, unguarded `width: 1000px` (the intent, per the Tagalog
+     comment, was only to cap it on a large monitor) that overrode `width: 100%` outright and
+     forced a horizontal scroll on anything narrower. max-width keeps that cap without forcing it. */
+  max-width: 1000px;
   margin: 0 auto; /* Para pumagitna ang card */
   display: block;
   box-sizing: border-box;
@@ -435,6 +438,42 @@
 .profit-add-btn:hover {
   background: #fbf5e8;
   border-style: solid;
+}
+
+/* DESIGN.md §3.1/§7#8 — sweep-discovered: `.profit-input-grid`'s two fixed `1fr` CSS Grid
+   columns don't shrink below their content's own minimum (a decrement/number/increment
+   `.profit-spinner` doesn't compress much), so at 360px the second column alone pushed the page
+   past the viewport well before the breakdown table (item 10) does anything. Same class of
+   overflow-hidden-clipped-content bug as everywhere else in this pass, just via CSS Grid's
+   default `min-width: auto` on a track's items rather than a hardcoded pixel width. */
+@media (max-width: 768px) {
+  .profit-container {
+    padding: 20px 15px;
+  }
+
+  .profit-card {
+    padding: 25px 20px;
+  }
+
+  .profit-input-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .profit-add-item {
+    flex-wrap: wrap;
+  }
+
+  .profit-add-amount {
+    max-width: none;
+    flex: 1 1 100%;
+  }
+
+  /* The breakdown table's mobile card conversion (css/globals.css's .wb-card-table) makes each
+     <td> a flex row of label + value — full width here, instead of the desktop table's own
+     120px cap, actually fills that row. */
+  .profit-table-amount {
+    width: 100%;
+  }
 }
 
 /* --- BREAKDOWN TABLE --- */
@@ -1006,6 +1045,23 @@
   background-size: 12px auto;
 }
 
+/* DESIGN.md §3.1/§7#8 — sweep-discovered: this header had no mobile rule at all, so its two
+   fixed-content `.filter-dropdown`s (which don't shrink) forced the page wider than the
+   viewport well before the table below it does anything. */
+@media (max-width: 768px) {
+    .worker-search-header {
+        flex-wrap: wrap;
+    }
+
+    .worker-search-header .search-bar {
+        flex-basis: 100%;
+    }
+
+    .worker-search-header .filter-dropdown {
+        flex: 1;
+    }
+}
+
 /* Banner */
 .worker-banner {
   background-color: #D1AA3A;
@@ -1048,6 +1104,15 @@
   border: 1px solid #D1AA3A;
   color: #000;
 }
+
+/* DESIGN.md §7#10 — a stack of empty cards has no equivalent to a short table's height-filler
+   rows, so the mobile card conversion (css/globals.css's .wb-card-table) just drops them. */
+@media (max-width: 768px) {
+  .worker-table-filler {
+    display: none;
+  }
+}
+
 /* Type Badges */
 .type-badge {
   padding: 5px 5px;
@@ -1288,7 +1353,11 @@
 .ph-container {
     padding: 30px;
     font-family: 'Inter', sans-serif; /* Modern base font */
-    width: 1000px;
+    /* DESIGN.md §3.8/§7#8 — was an unguarded `width: 1000px`, forcing a horizontal scroll on
+       anything narrower; max-width keeps the same large-screen cap without forcing it. */
+    width: 100%;
+    max-width: 1000px;
+    box-sizing: border-box;
     margin: 0 auto;
 }
 
@@ -2008,6 +2077,22 @@
     font-size: 1.1rem;
     font-weight: 700;
     letter-spacing: 0.5px;
+}
+
+/* DESIGN.md §7#8/#10 — item 10 lists this table but the wrapper had no scroll rule at all, and
+   the mobile card conversion's default text-align:right/justify-content:flex-end (from
+   css/globals.css's .wb-card-table) would otherwise fight this cell's own left-aligned
+   badge+name header layout; two classes here outweighs .wb-card-table td's one-class-plus-tag
+   specificity. */
+.prod-table-responsive {
+    overflow-x: auto;
+}
+
+@media (max-width: 768px) {
+    .wb-card-table .rank-col {
+        text-align: left;
+        justify-content: flex-start;
+    }
 }
 
 .rank-role {

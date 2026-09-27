@@ -139,7 +139,7 @@ const WorkerList = () => {
       {loading ? (
         <p style={{ textAlign: 'center', padding: '20px' }}>Loading workers...</p>
       ) : (
-        <table className="worker-table">
+        <table className="worker-table wb-card-table">
           <thead>
             <tr>
               <th>ID</th>
@@ -148,27 +148,27 @@ const WorkerList = () => {
               <th>ROLE</th>
               <th>CONTACT</th>
               <th>RATE</th>
-              <th>ACTION</th> 
+              <th>ACTION</th>
             </tr>
           </thead>
           <tbody>
             {filteredWorkers.length > 0 ? (
               filteredWorkers.map((worker, index) => (
                 <tr key={index}>
-                  <td className="fw-bold" style={{ fontWeight: 'normal' }}>{worker.formatted_id}</td>
-                  <td className="fw-bold" style={{ fontWeight: 'normal' }}>{worker.full_name}</td>
-                  <td>
+                  <td data-label="ID" className="fw-bold" style={{ fontWeight: 'normal' }}>{worker.formatted_id}</td>
+                  <td data-label="Name" className="fw-bold" style={{ fontWeight: 'normal' }}>{worker.full_name}</td>
+                  <td data-label="Type">
                     <span className={`type-badge ${worker.job_type === 'Part-Time' ? 'part-time' : 'regular'}`}>
                       {worker.job_type || 'N/A'}
                     </span>
                   </td>
-                  <td className="fw-bold" style={{ fontWeight: 'normal' }}>{worker.job_role || 'N/A'}</td>
-                  <td className="fw-bold" style={{ fontWeight: 'normal' }}>{worker.contact || 'N/A'}</td>
-                  <td className="fw-bold" style={{ fontWeight: 'normal' }}>
+                  <td data-label="Role" className="fw-bold" style={{ fontWeight: 'normal' }}>{worker.job_role || 'N/A'}</td>
+                  <td data-label="Contact" className="fw-bold" style={{ fontWeight: 'normal' }}>{worker.contact || 'N/A'}</td>
+                  <td data-label="Rate" className="fw-bold" style={{ fontWeight: 'normal' }}>
                     {worker.rate ? formatCurrency(worker.rate) : ''}
                   </td>
-                  <td>
-                    <button 
+                  <td data-label="Action">
+                    <button
                       onClick={() => {
                         setSelectedWorker(worker);
                         setIsEditModalOpen(true);
@@ -185,8 +185,10 @@ const WorkerList = () => {
                 <td colSpan="7" style={{ textAlign: 'center', padding: '20px' }}>No workers found.</td>
               </tr>
             )}
+            {/* Desktop-only height filler for a short result set — DESIGN.md §7#10's mobile card
+                conversion hides these, since a stack of empty cards has no equivalent purpose. */}
             {Array.from({ length: Math.max(0, 5 - filteredWorkers.length) }).map((_, i) => (
-              <tr key={`blank-${i}`}>
+              <tr key={`blank-${i}`} className="worker-table-filler">
                 <td style={{height: '40px'}}></td><td></td><td></td><td></td><td></td><td></td><td></td>
               </tr>
             ))}

@@ -70,7 +70,7 @@ const WorkerProductivity = () => {
                 <p style={{ textAlign: 'center', marginTop: '20px' }}>Loading productivity records...</p>
             ) : (
                 <div className="prod-table-responsive">
-                    <table className="prod-table">
+                    <table className="prod-table wb-card-table">
                         <thead>
                             <tr>
                                 <th style={{textAlign: 'left', paddingLeft: '20px'}}>Rank & Name</th>
@@ -85,13 +85,15 @@ const WorkerProductivity = () => {
                             {filteredData.length > 0 ? (
                                 filteredData.map((worker, index) => {
                                     // LOGIC PARA SA LEADERBOARD COLORS
-                                    const rankClass = index === 0 ? 'rank-gold' 
-                                                    : index === 1 ? 'rank-silver' 
-                                                    : index === 2 ? 'rank-bronze' 
+                                    const rankClass = index === 0 ? 'rank-gold'
+                                                    : index === 1 ? 'rank-silver'
+                                                    : index === 2 ? 'rank-bronze'
                                                     : 'rank-normal';
 
                                     return (
                                         <tr key={worker.user_id} className={`prod-row ${rankClass}`}>
+                                            {/* No data-label: this cell is the card's own header (rank + name), not a
+                                                label/value pair like the stat columns below it. */}
                                             <td className="rank-col">
                                                 <div className="rank-badge-container">
                                                     <span className="rank-number">{index + 1}</span>
@@ -101,11 +103,11 @@ const WorkerProductivity = () => {
                                                     <span className="rank-role">{worker.job_role || 'Worker'}</span>
                                                 </div>
                                             </td>
-                                            <td><span className="stat-pill">{worker.early_count}</span></td>
-                                            <td><span className="stat-pill">{worker.on_time_count}</span></td>
-                                            <td><span className="stat-pill error-text">{worker.late_count}</span></td>
-                                            <td><span className="stat-pill success-text">{worker.accepted_count}</span></td>
-                                            <td><span className="stat-pill error-text">{worker.repair_count}</span></td>
+                                            <td data-label="Early"><span className="stat-pill">{worker.early_count}</span></td>
+                                            <td data-label="On-Time"><span className="stat-pill">{worker.on_time_count}</span></td>
+                                            <td data-label="Late"><span className="stat-pill error-text">{worker.late_count}</span></td>
+                                            <td data-label="Accepted"><span className="stat-pill success-text">{worker.accepted_count}</span></td>
+                                            <td data-label="For Repair"><span className="stat-pill error-text">{worker.repair_count}</span></td>
                                         </tr>
                                     );
                                 })

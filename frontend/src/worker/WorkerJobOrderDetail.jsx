@@ -199,7 +199,7 @@ const WorkerJobOrderDetail = ({ projectId, assignmentId, workerStatus, onBack })
                 <div className="wjo-progress-header">
                     <h3 className="wjo-container-title">Project Progress</h3>
                 </div>
-                <table className="wjo-table">
+                <table className="wjo-table wb-card-table">
                     <thead>
                         <tr>
                             <th>STAGE</th>
@@ -212,12 +212,12 @@ const WorkerJobOrderDetail = ({ projectId, assignmentId, workerStatus, onBack })
                     <tbody>
                         {assignments.map(assign => (
                             <tr key={assign.assignment_id}>
-                                <td>{assign.stage_name}</td>
-                                <td>{assign.first_name} {assign.last_name}</td>
+                                <td data-label="Stage">{assign.stage_name}</td>
+                                <td data-label="Worker">{assign.first_name} {assign.last_name}</td>
                                 {/* FIX: Ginamit ang formatDate function dito */}
-                                <td>{formatDate(assign.start_date)}</td>
-                                <td>{formatDate(assign.due_date)}</td>
-                                <td><span className={`wjo-status ${assign.status.toLowerCase().replace(' ', '-')}`}>{assign.status}</span></td>
+                                <td data-label="Start Date">{formatDate(assign.start_date)}</td>
+                                <td data-label="Due Date">{formatDate(assign.due_date)}</td>
+                                <td data-label="Status"><span className={`wjo-status ${assign.status.toLowerCase().replace(' ', '-')}`}>{assign.status}</span></td>
                             </tr>
                         ))}
                     </tbody>

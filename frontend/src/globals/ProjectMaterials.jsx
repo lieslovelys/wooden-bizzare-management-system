@@ -93,7 +93,7 @@ const ProjectMaterials = ({ projectId }) => {
             {loading ? (
                 <p style={{ textAlign: 'center', padding: '20px' }}>Loading materials...</p>
             ) : (
-                <table className="jod-table">
+                <table className="jod-table wb-card-table">
                     <thead>
                         <tr>
                             <th>ITEM</th>
@@ -106,11 +106,11 @@ const ProjectMaterials = ({ projectId }) => {
                     <tbody>
                         {materials.map((row) => (
                             <tr key={row.variant_id}>
-                                <td>{row.item_name}</td>
-                                <td>{row.variant_name}</td>
-                                <td>{row.used} {row.unit}</td>
-                                <td>{row.returned} {row.unit}</td>
-                                <td>{row.net_used} {row.unit}</td>
+                                <td data-label="Item">{row.item_name}</td>
+                                <td data-label="Variant">{row.variant_name}</td>
+                                <td data-label="Used">{row.used} {row.unit}</td>
+                                <td data-label="Returned">{row.returned} {row.unit}</td>
+                                <td data-label="Net">{row.net_used} {row.unit}</td>
                             </tr>
                         ))}
                         {materials.length === 0 && (

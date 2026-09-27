@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import InventoryTable from './InventoryTable';
+import { expectCardLabels } from '../tests/expectCardLabels';
 
 // P1-11: InventoryTable now talks to /api/inventory instead of localStorage — see
 // ARCHITECTURE_REVIEW.md P1-11. These tests mock the shared client rather than hitting a real
@@ -36,10 +37,12 @@ describe('InventoryTable', () => {
     // (capped-only, no paging UI), so this only needs to keep resolving {success,data}.
     api.get.mockResolvedValue({ success: true, data: [SAMPLE_ITEM], meta: { page: 1, limit: 200, total: 1, totalPages: 1 } });
 
-    render(<InventoryTable />);
+    const { container } = render(<InventoryTable />);
 
     expect(await screen.findByText('Plywood')).toBeInTheDocument();
     expect(api.get).toHaveBeenCalledWith('/api/inventory');
+    // DESIGN.md §7#10 — mobile card conversion (css/globals.css's .wb-card-table).
+    expectCardLabels(container, '.inventory-table');
   });
 
   it('submits the add-item form with the expected body', async () => {
