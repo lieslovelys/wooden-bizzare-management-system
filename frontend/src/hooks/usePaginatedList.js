@@ -24,7 +24,12 @@ function useDebouncedValue(value, delayMs) {
 
 const emptyMeta = (limit) => ({ page: 1, limit, total: 0, totalPages: 0 });
 
-export function usePaginatedList(endpoint, { params = {}, pageSize = 25 } = {}) {
+// `refreshKey` (FR-4): an opaque value a caller can bump (e.g. an "arrivals" counter from
+// globals/NotificationProvider.jsx) to make the list refetch when something external changed —
+// same effect as calling `refetch()`, but expressible as a dependency instead of an imperative
+// call, so a component that only re-renders when the key changes doesn't need its own effect.
+// It never becomes a query parameter and never resets the page, unlike a change to `params`.
+export function usePaginatedList(endpoint, { params = {}, pageSize = 25, refreshKey } = {}) {
   const { search, ...restParams } = params;
   const debouncedSearch = useDebouncedValue(search, DEBOUNCE_MS);
   const effectiveKey = JSON.stringify({ ...restParams, search: debouncedSearch });
@@ -76,7 +81,7 @@ export function usePaginatedList(endpoint, { params = {}, pageSize = 25 } = {}) 
       }
     })();
     return () => { ignore = true; };
-  }, [endpoint, page, pageSize, effectiveKey, refetchTick]);
+  }, [endpoint, page, pageSize, effectiveKey, refetchTick, refreshKey]);
 
   const refetch = useCallback(() => setRefetchTick((t) => t + 1), []);
 

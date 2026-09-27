@@ -1,6 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { UserContext } from '../context/UserContext';
+import { useNotifications } from '../context/NotificationContext';
 import Logout from './Logout';
 
 const Navbar = ({ tabs, accountType }) => {
@@ -13,6 +14,10 @@ const Navbar = ({ tabs, accountType }) => {
     const [isMobileOpen, setIsMobileOpen] = useState(false);
     
     const { userRole, firstName, lastName } = useContext(UserContext);
+    // FR-4: a tab opts into the badge with `showUnreadBadge: true` — without a NotificationProvider
+    // mounted above (Worker/Inventory Staff, which have no notification screen yet),
+    // useNotifications() returns its default of 0, so the badge just never renders.
+    const { unreadCount } = useNotifications();
 
     const getRoleAbbreviation = (role) => {
         switch (role) {
@@ -88,7 +93,12 @@ const Navbar = ({ tabs, accountType }) => {
                         return (
                             <Link key={tab.key} to={tabPath} style={{ textDecoration: 'none' }} onClick={() => setIsMobileOpen(false)}>
                                 <div className={`nav-item ${isActive ? 'active' : ''}`}>
-                                    <i className={tab.icon}></i>
+                                    <span className="nav-icon-wrap">
+                                        <i className={tab.icon}></i>
+                                        {tab.showUnreadBadge && unreadCount > 0 && (
+                                            <span className="nav-badge">{unreadCount > 99 ? '99+' : unreadCount}</span>
+                                        )}
+                                    </span>
                                     <span>{tab.name}</span>
                                 </div>
                             </Link>

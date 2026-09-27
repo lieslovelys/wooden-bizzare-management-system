@@ -19,6 +19,15 @@ vi.mock('../api/client', () => ({
   },
 }));
 
+// FR-4: NotificationList calls refreshUnread() after every mutating action so the navbar badge
+// (which polls independently) doesn't wait out its own interval to reflect the change. Mocked
+// here rather than wrapped in a real NotificationProvider, since these tests only care that the
+// call happens, not the polling behavior itself (covered by NotificationProvider.test.jsx).
+const mockRefreshUnread = vi.fn();
+vi.mock('../context/NotificationContext', () => ({
+  useNotifications: () => ({ arrivals: 0, refreshUnread: mockRefreshUnread }),
+}));
+
 const { api } = await import('../api/client');
 
 const PROJECT_NOTIF = { id: 1, type: 'project', title: 'Project A', message: 'msg', is_read: false, reference_id: 10 };
@@ -59,7 +68,18 @@ describe('NotificationList', () => {
     expect(api.get).toHaveBeenCalledWith('/api/notifications?page=1&limit=25&type=project');
   });
 
-  it('clicking a notification marks it read and navigates via resolveTarget', async () => {
+  it('deleting a single notification dismisses it and refreshes the unread count', async () => {
+    api.get.mockResolvedValue(pageOf([PROJECT_NOTIF]));
+    api.delete.mockResolvedValue({ message: 'ok' });
+    renderList({});
+
+    fireEvent.click(await screen.findByTitle('Delete Notification'));
+
+    await waitFor(() => expect(api.delete).toHaveBeenCalledWith('/api/notifications/1'));
+    expect(mockRefreshUnread).toHaveBeenCalled();
+  });
+
+  it('clicking a notification marks it read, navigates via resolveTarget, and refreshes the unread count', async () => {
     api.get.mockResolvedValue(pageOf([PROJECT_NOTIF, VERIFICATION_NOTIF]));
     api.put.mockResolvedValue({ message: 'ok' });
     const resolveTarget = vi.fn(() => ({ path: '/somewhere', state: { targetProjectId: 10 } }));
@@ -69,9 +89,10 @@ describe('NotificationList', () => {
 
     await waitFor(() => expect(api.put).toHaveBeenCalledWith('/api/notifications/1/read'));
     expect(resolveTarget).toHaveBeenCalledWith(PROJECT_NOTIF);
+    expect(mockRefreshUnread).toHaveBeenCalled();
   });
 
-  it('"Clear All" with a type issues one scoped request, not one per row', async () => {
+  it('"Clear All" with a type issues one scoped request, not one per row, and refreshes the unread count', async () => {
     api.get.mockResolvedValue(pageOf([PROJECT_NOTIF]));
     api.delete.mockResolvedValue({ message: 'ok' });
     renderList({ type: 'project' });
@@ -80,6 +101,7 @@ describe('NotificationList', () => {
 
     await waitFor(() => expect(api.delete).toHaveBeenCalledTimes(1));
     expect(api.delete).toHaveBeenCalledWith('/api/notifications/clear/all?type=project');
+    expect(mockRefreshUnread).toHaveBeenCalled();
   });
 
   it('"Clear All" with no type issues one unscoped request (Admin behavior)', async () => {
@@ -93,7 +115,7 @@ describe('NotificationList', () => {
     expect(api.delete).toHaveBeenCalledWith('/api/notifications/clear/all');
   });
 
-  it('"Mark All as Read" with a type issues one scoped request', async () => {
+  it('"Mark All as Read" with a type issues one scoped request and refreshes the unread count', async () => {
     api.get.mockResolvedValue(pageOf([VERIFICATION_NOTIF]));
     api.put.mockResolvedValue({ message: 'ok' });
     renderList({ type: 'verification' });
@@ -102,5 +124,6 @@ describe('NotificationList', () => {
 
     await waitFor(() => expect(api.put).toHaveBeenCalledWith('/api/notifications/mark-all-read?type=verification'));
     expect(api.put).toHaveBeenCalledTimes(1);
+    expect(mockRefreshUnread).toHaveBeenCalled();
   });
 });

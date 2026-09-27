@@ -641,6 +641,18 @@ html, body {
 .nav-item:hover { background-color: rgba(204, 164, 59, 0.1); color: #D1AA3A; }
 .nav-item:hover i { transform: scale(1.1); }
 
+/* FR-4 unread badge — attached to the icon itself (not the nav-item's padding/hit area) so it
+   shows identically whether the tab is rendering full text (desktop/mobile) or icon-only
+   (tablet, @media 1024px below), without affecting the tap-target size DESIGN.md governs. */
+.nav-icon-wrap { position: relative; display: inline-flex; }
+.nav-badge {
+    position: absolute; top: -6px; right: -10px;
+    background-color: #d9534f; color: #FFFFFF;
+    font-size: 0.65rem; font-weight: 700; line-height: 1;
+    min-width: 16px; height: 16px; padding: 0 4px;
+    border-radius: 999px; display: flex; align-items: center; justify-content: center;
+}
+
 .nav-item.active {
     background-color: #D1AA3A; color: #FFFFFF; font-weight: 700;
     box-shadow: 0 4px 12px rgba(209, 170, 58, 0.2); 

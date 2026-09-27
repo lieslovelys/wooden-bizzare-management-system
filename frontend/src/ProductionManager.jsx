@@ -1,7 +1,8 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useContext } from "react";
 import { UserContext } from "./context/UserContext";
-import Navbar from "./globals/Navbar"; 
+import Navbar from "./globals/Navbar";
+import NotificationProvider from "./globals/NotificationProvider";
 import InventoryTable from "./globals/InventoryTable";
 import JobOrder from "./globals/JobOrder";
 import ProjectVerification from "./globals/ProjectVerification";
@@ -20,26 +21,30 @@ const ProductionManager = () => {
         { name: 'Inventory', url: 'inventory', key: 'in', icon: 'fas fa-clipboard-check' },
         { name: 'Attendance', url: 'attendance', key: 'at', icon: 'fas fa-user-check' },
         { name: 'Project History', url: 'history', key: 'ph', icon: 'fas fa-history' },
-        { name: 'Notifications', url: 'notifications', key: 'nt', icon: 'fas fa-bell' },
+        { name: 'Notifications', url: 'notifications', key: 'nt', icon: 'fas fa-bell', showUnreadBadge: true },
     ];
 
     return (
-        <div className="role-layout">
-            <Navbar tabs={pmTabs} accountType="production-manager" username={username || "Production Manager"} />
-            
-            <div className="page-content">
-                <Routes>
-                    <Route index element={<Navigate to="dashboard" replace />} />
-                    <Route path="job-order" element={<JobOrder />} />
-                    <Route path="inventory/*" element={<InventoryTable />} />
-                    <Route path="verification" element={<ProjectVerification />} />
-                    <Route path="history" element={<ProjectHistory />} />
-                    <Route path="notifications" element={<PMNotification />} />
-                    <Route path="dashboard" element={<PM_dashboard />} />
-                    <Route path="attendance" element={< Attendance />} />
-                </Routes>
+        // FR-4: unread-count polling for the navbar badge and NotificationList's live refresh —
+        // see globals/NotificationProvider.jsx.
+        <NotificationProvider>
+            <div className="role-layout">
+                <Navbar tabs={pmTabs} accountType="production-manager" username={username || "Production Manager"} />
+
+                <div className="page-content">
+                    <Routes>
+                        <Route index element={<Navigate to="dashboard" replace />} />
+                        <Route path="job-order" element={<JobOrder />} />
+                        <Route path="inventory/*" element={<InventoryTable />} />
+                        <Route path="verification" element={<ProjectVerification />} />
+                        <Route path="history" element={<ProjectHistory />} />
+                        <Route path="notifications" element={<PMNotification />} />
+                        <Route path="dashboard" element={<PM_dashboard />} />
+                        <Route path="attendance" element={< Attendance />} />
+                    </Routes>
+                </div>
             </div>
-        </div>
+        </NotificationProvider>
     );
 }
 

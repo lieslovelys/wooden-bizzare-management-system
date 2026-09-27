@@ -1,7 +1,8 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useContext } from "react";
 import { UserContext } from "./context/UserContext";
-import Navbar from "./globals/Navbar"; 
+import Navbar from "./globals/Navbar";
+import NotificationProvider from "./globals/NotificationProvider";
 import CreateAccount from "./admin/CreateAccount";
 import AdminDashboard from "./admin/A_Dashboard";
 import WorkerList from "./admin/WorkerList";
@@ -29,35 +30,39 @@ const Admin = () => {
         { name: 'Profit', url: 'profit', key: 'pr', icon: 'fas fa-peso-sign' },
         { name: 'Worker Productivity', url: 'productivity', key: 'wp', icon: 'fas fa-chart-line' },
         { name: 'Project History', url: 'project-history', key: 'ph', icon: 'fas fa-clock-rotate-left' },
-        { name: 'Notification', url: 'notification', key: 'nt', icon: 'fas fa-bell' },
+        { name: 'Notification', url: 'notification', key: 'nt', icon: 'fas fa-bell', showUnreadBadge: true },
     ];
 
     return (
-        <div className="role-layout">
-            <Navbar tabs={adminTabs} accountType="Admin" username={username || "Admin"} />
-            
-            <div className="page-content">
-                <Routes>
-                    <Route index element={<Navigate to="dashboard" replace />} />
-                    <Route path="dashboard" element={<AdminDashboard />} />
-                    <Route path="account-creation" element={<CreateAccount />} />
-                    <Route path="job-order" element={<JobOrder />} />
-                    <Route path="worker-list" element={<WorkerList />} />
-                    <Route path="project-verification" element={<ProjectVerification />} />
-                    <Route path="attendance" element={<Attendance />} />
-                    <Route path="profit" element={<Profit />} />
-                    <Route path="productivity" element={<WorkerProductivity />} />
-                    <Route path="project-history" element={<ProjectHistory />} />
-                    <Route path="notification" element={<AdminNotification />} />
-                    <Route path="create-project" element={<CreateProject />} />
-                    <Route path="inventory" element={<InventoryTable />} />
+        // FR-4: unread-count polling for the navbar badge and NotificationList's live refresh —
+        // see globals/NotificationProvider.jsx.
+        <NotificationProvider>
+            <div className="role-layout">
+                <Navbar tabs={adminTabs} accountType="Admin" username={username || "Admin"} />
 
-                    {/* Catch-all — every other role shell (Worker.jsx, etc.) already redirects
-                        an unknown sub-path instead of rendering an empty page-content. */}
-                    <Route path="*" element={<Navigate to="dashboard" replace />} />
-                </Routes>
+                <div className="page-content">
+                    <Routes>
+                        <Route index element={<Navigate to="dashboard" replace />} />
+                        <Route path="dashboard" element={<AdminDashboard />} />
+                        <Route path="account-creation" element={<CreateAccount />} />
+                        <Route path="job-order" element={<JobOrder />} />
+                        <Route path="worker-list" element={<WorkerList />} />
+                        <Route path="project-verification" element={<ProjectVerification />} />
+                        <Route path="attendance" element={<Attendance />} />
+                        <Route path="profit" element={<Profit />} />
+                        <Route path="productivity" element={<WorkerProductivity />} />
+                        <Route path="project-history" element={<ProjectHistory />} />
+                        <Route path="notification" element={<AdminNotification />} />
+                        <Route path="create-project" element={<CreateProject />} />
+                        <Route path="inventory" element={<InventoryTable />} />
+
+                        {/* Catch-all — every other role shell (Worker.jsx, etc.) already redirects
+                            an unknown sub-path instead of rendering an empty page-content. */}
+                        <Route path="*" element={<Navigate to="dashboard" replace />} />
+                    </Routes>
+                </div>
             </div>
-        </div>
+        </NotificationProvider>
     );
 }
 

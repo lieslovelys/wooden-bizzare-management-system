@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import '../css/admin.css';
 import { api } from '../api/client';
 import { usePaginatedList } from '../hooks/usePaginatedList';
+import { useNotifications } from '../context/NotificationContext';
 import Pagination from './Pagination';
 
 // Shared by admin/AdminNotification.jsx, product_manager/PMNotification.jsx, and
@@ -16,6 +17,10 @@ import Pagination from './Pagination';
 // exactly one.
 const NotificationList = ({ type, emptyMessage = 'No new notifications.', resolveTarget }) => {
   const navigate = useNavigate();
+  // FR-4: `arrivals` ticks up whenever NotificationProvider's poll sees the unread count go up,
+  // so this list picks up a new notification without a manual reload — see
+  // globals/NotificationProvider.jsx and hooks/usePaginatedList.js's `refreshKey`.
+  const { arrivals, refreshUnread } = useNotifications();
 
   // P1-3: server-paginated and server-filtered by `type` — this GET used to fetch every
   // notification and filter by type client-side, which would show an empty/short page for a
@@ -23,6 +28,7 @@ const NotificationList = ({ type, emptyMessage = 'No new notifications.', resolv
   const { rows: displayed, setRows, meta, page, setPage, loading, refetch } = usePaginatedList('/api/notifications', {
     params: { type },
     pageSize: 25,
+    refreshKey: arrivals,
   });
 
   const handleDelete = async (id) => {
@@ -31,6 +37,7 @@ const NotificationList = ({ type, emptyMessage = 'No new notifications.', resolv
       // Deleting a single row doesn't change which rows belong on this page, so update it in
       // place rather than round-tripping for a full refetch.
       setRows(prev => prev.filter(notif => notif.id !== id));
+      refreshUnread();
     } catch (error) {
       console.error("Error deleting notification:", error.message);
     }
@@ -44,15 +51,18 @@ const NotificationList = ({ type, emptyMessage = 'No new notifications.', resolv
   };
 
   const handleClearAll = async () => {
+    // FR-4: Clear All only dismisses the caller's own copy — it no longer removes the
+    // notification for every other viewer with access to this list.
     const confirmMsg = type
-      ? `Are you sure you want to clear all ${type} notifications?`
-      : 'Are you sure you want to clear all notifications?';
+      ? `Clear all ${type} notifications from your own list? Other users will still see them.`
+      : 'Clear all notifications from your own list? Other users will still see them.';
     if (!window.confirm(confirmMsg)) return;
 
     try {
       const qs = type ? `?type=${encodeURIComponent(type)}` : '';
       await api.delete(`/api/notifications/clear/all${qs}`);
       afterBulkAction();
+      refreshUnread();
     } catch (error) {
       console.error("Error clearing notifications:", error.message);
     }
@@ -63,6 +73,7 @@ const NotificationList = ({ type, emptyMessage = 'No new notifications.', resolv
       const qs = type ? `?type=${encodeURIComponent(type)}` : '';
       await api.put(`/api/notifications/mark-all-read${qs}`);
       afterBulkAction();
+      refreshUnread();
     } catch (error) {
       console.error("Error marking all as read:", error.message);
     }
@@ -73,6 +84,7 @@ const NotificationList = ({ type, emptyMessage = 'No new notifications.', resolv
       setRows(prev => prev.map(n => n.id === notif.id ? { ...n, is_read: true } : n));
       try {
         await api.put(`/api/notifications/${notif.id}/read`);
+        refreshUnread();
       } catch (error) {
         console.error("Error marking notification as read:", error.message);
       }

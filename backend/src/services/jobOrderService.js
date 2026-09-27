@@ -116,7 +116,7 @@ const updateQAStatus = async (assignmentId, status, caller, notes) => {
             'verification', // type
             'Task Ready for Verification', // title
             `A worker has submitted a task. Please check the Project Verification page.`,
-            'QC',
+            'Quality Checker', // FR-4: target_role is now the real user_role enum value, not 'QC'
             assignmentId
         );
     }

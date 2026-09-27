@@ -21,7 +21,7 @@ const createProject = async (body) => {
             'project',
             'New Project Arrived',
             `A new project has been created. See Job Orders to view and assign workers.`,
-            'PM',
+            'Production Manager', // FR-4: target_role is now the real user_role enum value, not 'PM'
             projectId
         );
     } catch (notifErr) {

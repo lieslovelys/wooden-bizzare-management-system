@@ -240,11 +240,12 @@ not done here. The 8 routes P1-11 added are listed separately below since they'r
 | GET | `/api/qa/tasks` | Assignments with status `For QA` |
 | PUT | `/api/assignments/:assignmentId/status` | Change an assignment's status |
 | GET | `/api/productivity` | Per-worker performance leaderboard |
-| GET | `/api/notifications` | All notifications (not filtered by role) |
-| PUT | `/api/notifications/mark-all-read` | Mark every notification read, globally |
-| DELETE | `/api/notifications/clear/all` | Delete all notifications |
-| DELETE | `/api/notifications/:id` | Delete one |
-| PUT | `/api/notifications/:id/read` | Mark one read |
+| GET | `/api/notifications` | Notifications visible to the caller's role, with the caller's own read/dismissed state (FR-4) |
+| GET | `/api/notifications/unread-count` | Caller's own unread count, for the navbar badge (FR-4) |
+| PUT | `/api/notifications/mark-all-read` | Mark every notification the caller can see as read for that caller only (FR-4) |
+| DELETE | `/api/notifications/clear/all` | Dismiss every notification the caller can see, for that caller only (FR-4) |
+| DELETE | `/api/notifications/:id` | Dismiss one, for the caller only (FR-4) |
+| PUT | `/api/notifications/:id/read` | Mark one read, for the caller only (FR-4) |
 | GET | `/api/dashboard/stats` | Active projects / total workers / monthly net profit |
 | GET | `/api/profit/:projectId` | P&L + expense items |
 | POST | `/api/profit/:projectId` | Upsert P&L (a `POST` used for an idempotent update) |
@@ -331,8 +332,11 @@ sent with no non-empty reason, and `globals/ProjectVerificationDetail.jsx` promp
 submitting (Approve stays reason-optional). `worker/WorkerJobOrderDetail.jsx` shows the reason
 (and who sent it) on the worker's own task — a deliberate early slice of FR-9, since collecting a
 reason no worker can read would defeat the point. **Still open:** a dedicated notification
-telling the worker their task *changed*, independent of them happening to open it — that's the
-rest of FR-9/FR-4, not done here.
+telling the worker their task *changed*, independent of them happening to open it. FR-4 (see B.6)
+built the per-user read state, real role filtering, and live-update polling this needs, but
+`notifications.target_role` only targets a whole role, not one specific worker — routing a QA
+outcome to the one worker whose task changed (rather than every Worker) is part of what's left of
+FR-9, alongside the Worker notification screen itself (Workers have none yet).
 
 **6. Completion.** Once every *assigned* stage is Approved, the project can be marked Completed
 and moves to Project History. Loophole: a project with only one stage ever assigned (of the five
@@ -369,20 +373,22 @@ Stated as product facts — what a user experiences — not as code defects.
 - **Attendance status is never computed.** Every record keeps the database default `'Absent'`
   with zero late/overtime minutes regardless of the times entered, which makes the
   `attendance_summary` view and any payroll derivation from this data meaningless as it stands.
-- **Notifications are global, not per-user.** One shared `is_read` flag means one person opening
-  a notification marks it read for every other person with access to that list. `target_role`
-  values (`'PM'`, `'QC'`) don't match the role enum (`'Production Manager'`, `'Quality Checker'`)
-  and the reader ignores the column anyway — every logged-in user's notification list currently
-  includes every role's notifications, filtered only by `type` in the browser. **Partially
-  improved (ARCHITECTURE_REVIEW.md P2):** the three per-role screens (`AdminNotification`,
-  `PMNotification`, `QualityCheckerNotification`) are now one shared component
-  (`globals/NotificationList.jsx`), and "mark all read"/"clear all" take an optional `?type=` so
-  a Production Manager or Quality Checker no longer has to issue one request per notification to
-  fake a type-scoped bulk action — but this only changed how the *bulk actions* are scoped, not
-  the underlying per-user `is_read` sharing or the ignored `target_role` column, both of which
-  remain exactly as described above.
-- **Notifications never update live.** There is no polling or push of any kind; a new
-  notification only appears after the user navigates to (or reloads) that screen.
+- ~~**Notifications are global, not per-user.**~~ **Resolved (FR-4).** `target_role` is now a real
+  `user_role` value (the old `'PM'`/`'QC'` are normalized on migration), and every notification
+  query — list, unread-count, mark-read, dismiss — filters by it: a caller sees a notification only
+  when `target_role` matches their own role, or they're Admin (who sees everything, per B.1).
+  Read/dismissed state moved off the single shared `notifications.is_read` column into a per-user
+  `notification_receipts` table, so one person opening or clearing a notification no longer
+  affects anyone else's list — see `migrations/1790500717992_per-user-notifications.js` and
+  `models/adminNotifModel.js`. The P2 per-role screen consolidation
+  (`globals/NotificationList.jsx`) and its `?type=` bulk-action scoping are unaffected by this.
+- ~~**Notifications never update live.**~~ **Resolved (FR-4).** `globals/NotificationProvider.jsx`
+  polls `GET /api/notifications/unread-count` every 30s (paused while the browser tab is hidden,
+  and re-polled immediately when it becomes visible again) for the three notification-bearing role
+  shells (Admin, Production Manager, Quality Checker). The navbar badge and
+  `globals/NotificationList.jsx`'s list both pick up a new notification without a manual reload.
+  Polling, not push — see CLAUDE.md "Hosting target" for why a WebSocket/SSE channel isn't
+  justified on the one-vCPU deployment target for this few roles/users.
 - **`Rework` is invisible in reporting.** The status enum includes both `Rework` and `Repair`, but
   only `Repair` is ever produced by the UI and only `Repair` is counted in productivity.
 - ~~**No QA audit trail.** `qa_checker_id` and `qa_notes` exist on `job_assignments` but are never
@@ -444,7 +450,7 @@ Stated as product facts — what a user experiences — not as code defects.
 | FR-1 | Every state-changing API request is authorized server-side against the caller's actual role and, where applicable, ownership (e.g. a worker may only read/act on their own tasks and attendance). |
 | FR-2 | Account creation is an Admin-only, authenticated action with a whitelist of assignable roles. There is no unauthenticated path to creating any account. |
 | FR-3 | Inventory is a real, server-persisted module: items and variants via API, stock increment/decrement with an audit trail (who, when, how much, why), low-stock alerting against each variant's configurable `min_stock` **(✅ done, P1-11)**, and a record of materials consumed per project **(still open)**. |
-| FR-4 | Notifications carry per-user read state (not a single shared flag), are correctly filtered by the recipient's role, and update without a manual page reload (polling or push). |
+| FR-4 | Notifications carry per-user read state (not a single shared flag), are correctly filtered by the recipient's role, and update without a manual page reload (polling or push). **(✅ done — see B.6.)** |
 | FR-5 | Attendance status, late minutes, and overtime minutes are computed server-side from recorded time-in/time-out against the shop's defined working hours, not left at a default. |
 | FR-6 | Assignment status changes follow an enforced state machine (e.g. `Assigned → For QA → Approved`, `For QA → Repair → Assigned`) rather than accepting an arbitrary string **(✅ done — `jobOrderService.updateQAStatus`'s `WORKER_SUBMITTABLE_FROM` allow-list and role-scoped target statuses reject an invalid transition with a 409)**; QA rejections require a reason **(✅ done — a `Repair` with no non-empty reason 400s; see B.5 workflow 5)**. |
 | FR-7 | Every QA decision and every financial entry records who made it and when (audit trail on `job_assignments` and `project_profit`, actually populated). **(✅ done — see B.6.)** |

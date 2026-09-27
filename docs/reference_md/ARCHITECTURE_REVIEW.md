@@ -728,7 +728,30 @@ Not urgent, but each of these increases the cost of every future change until ad
     instead of `toISOString()`. See PRD.md B.6 for full detail on each. Backend tests
     99 → 111 across the three commits; frontend tests 50 → 59.
 14. **Remaining after phase 1:** FR-4 (notifications — per-user read state, real role filtering,
-    live update), FR-9's remainder (the `For QA`/`Approved` worker lifecycle view, and actual QA-
-    outcome notifications — its rejection-reason display already landed in phase 1), FR-5
-    (attendance computation), and FR-3's materials-per-project half — see PRD.md C.1 for all seven,
-    and the track-A plan file for the dependency order they're sequenced in.
+    live update — done next, see item 15), FR-9's remainder (the `For QA`/`Approved` worker
+    lifecycle view, and actual QA-outcome notifications — its rejection-reason display already
+    landed in phase 1), FR-5 (attendance computation), and FR-3's materials-per-project half — see
+    PRD.md C.1 for all seven.
+15. **FR-4 (notifications)** — ✅ done. `notifications.target_role` is now a real `user_role` value
+    (migration `1790500717992_per-user-notifications.js` normalizes the legacy `'PM'`/`'QC'`
+    values and preflight-checks for anything else, same pattern as
+    `1787200873418_project-status-single-source-of-truth.js`), and every notification query
+    (list, unread-count, mark-read, dismiss) filters by it — a caller sees a notification only
+    when it matches their own role, or they're Admin. Read/dismissed state moved off the single
+    shared `notifications.is_read` column (one person opening or clearing a notification used to
+    affect everyone) into a per-user `notification_receipts` table; `DELETE /:id` and
+    `DELETE /clear/all` are now a per-user "dismiss" (an upsert into that table) rather than a
+    physical row delete. `services/adminNotifService.js` and `models/adminNotifModel.js` take the
+    caller's identity as an explicit argument, same pattern as `jobOrderService.updateQAStatus`.
+    Live updates: `globals/NotificationProvider.jsx` polls a new `GET
+    /api/notifications/unread-count` every 30s (paused while the tab is hidden, immediate on
+    becoming visible again), feeding both a new navbar unread badge (`globals/Navbar.jsx`) and a
+    `refreshKey` on `hooks/usePaginatedList.js` that lets `globals/NotificationList.jsx` pick up a
+    new notification without a reload. Polling, not push — see CLAUDE.md "Hosting target" for why
+    a WebSocket/SSE channel isn't justified here. Mounted only around the three notification-
+    bearing role shells (Admin, Production Manager, Quality Checker) — Worker and Inventory Staff
+    have no notification screen yet (that's part of FR-9's remainder). See PRD.md B.6 for the
+    full before/after. Backend tests 111 → 132 (new `adminNotifService.test.js`,
+    `adminNotifModel.test.js`, extended `adminNotifRoutes.test.js`); frontend tests 59 → 67 (new
+    `NotificationProvider.test.jsx`, extended `NotificationList.test.jsx` and
+    `usePaginatedList.test.js`).

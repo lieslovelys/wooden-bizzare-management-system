@@ -98,7 +98,7 @@ describe('jobOrderService.updateQAStatus', () => {
       'verification',
       expect.any(String),
       expect.any(String),
-      'QC',
+      'Quality Checker', // FR-4: target_role is the real user_role enum value, not 'QC'
       1,
     );
   });

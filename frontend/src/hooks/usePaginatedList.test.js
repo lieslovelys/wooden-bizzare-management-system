@@ -84,4 +84,25 @@ describe('usePaginatedList', () => {
     await waitFor(() => expect(api.get).toHaveBeenLastCalledWith('/api/things?page=1&limit=25&search=cab'));
     expect(api.get).toHaveBeenCalledTimes(2);
   });
+
+  // FR-4: globals/NotificationList.jsx passes NotificationProvider's `arrivals` counter as
+  // `refreshKey` so a new notification refetches the list without a manual reload — see
+  // globals/NotificationProvider.jsx.
+  it('bumping refreshKey refetches without resetting the page or adding a query param', async () => {
+    api.get.mockResolvedValue(PAGE_1);
+    const { result, rerender } = renderHook(
+      ({ refreshKey }) => usePaginatedList('/api/things', { refreshKey }),
+      { initialProps: { refreshKey: 0 } }
+    );
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    act(() => result.current.setPage(2));
+    await waitFor(() => expect(result.current.page).toBe(2));
+    api.get.mockClear();
+
+    rerender({ refreshKey: 1 });
+
+    await waitFor(() => expect(api.get).toHaveBeenCalledTimes(1));
+    expect(api.get).toHaveBeenCalledWith('/api/things?page=2&limit=25');
+    expect(result.current.page).toBe(2);
+  });
 });

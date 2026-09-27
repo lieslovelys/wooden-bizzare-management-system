@@ -212,6 +212,16 @@ in `frontend/src/utils/format.js` rather than a local inline formatter, so the s
 identically everywhere (P2; before this, the same project id rendered as `WB7`, `WB-7`, or
 `WB-07` depending on the screen).
 
+Notification read/dismissed state is per-user (FR-4): `notifications.target_role` gates who can
+see a row at all (a real `user_role` value, checked in every query in
+`backend/src/models/adminNotifModel.js`), and `notification_receipts` — not
+`notifications.is_read` — records whether *this* caller has read or dismissed it, so one user
+acting on a notification never affects anyone else's list. `globals/NotificationProvider.jsx`
+(mounted in `Admin.jsx`/`ProductionManager.jsx`/`QualityChecker.jsx` — the three roles with a
+notification screen) polls the unread count for the navbar badge and to refresh
+`globals/NotificationList.jsx` live; consume it via `useNotifications()`
+(`frontend/src/context/NotificationContext.js`) rather than adding another poll loop.
+
 A screen backed by a paged list endpoint uses `usePaginatedList(endpoint, { params, pageSize })`
 (`frontend/src/hooks/usePaginatedList.js`) rather than its own `useState`/`useEffect` fetch —
 it unwraps `{success, data, meta}`, resets to page 1 when `params` changes, debounces a `search`
