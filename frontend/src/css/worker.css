@@ -142,6 +142,10 @@
 .wjo-filter-btn:active { transform: translateY(0) scale(0.98); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
 .wjo-filter-btn.assigned { background-color: #cca43b; } /* Gold */
 .wjo-filter-btn.repair { background-color: #1A1612; } /* Dark Espresso */
+/* FR-9 remainder: the two new lifecycle filters — matches wjo-status's for-qa/approved hues,
+   solid instead of the pale badge background so an inactive vs. active filter stays legible. */
+.wjo-filter-btn.for-qa { background-color: #5c4a11; } /* Golden Brown */
+.wjo-filter-btn.approved { background-color: #2e6b3b; } /* Workshop Green */
 .wjo-filter-btn:not(.active) { opacity: 0.5; background-color: #b3b3b3; color: #ffffff; }
 
 /* --- LIST ITEMS (MODERN CARDS) --- */
@@ -644,10 +648,17 @@
     background-color: #1e5631; 
 }
 
-.wjo-action-btn.submitted { 
-    background-color: #eaeaea; 
+.wjo-action-btn.submitted {
+    background-color: #eaeaea;
     color: #888888;
-    cursor: not-allowed; 
+    cursor: not-allowed;
+}
+
+/* FR-9 remainder: shown (disabled) once a reviewer has Approved this worker's own stage. */
+.wjo-action-btn.approved {
+    background-color: rgba(46, 107, 59, 0.15);
+    color: #2e6b3b;
+    cursor: not-allowed;
 }
 
 /* =========================================

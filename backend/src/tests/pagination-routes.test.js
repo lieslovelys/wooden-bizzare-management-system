@@ -141,5 +141,17 @@ describe('GET /api/assignments/:assignmentId (new deep-link endpoint)', () => {
     const res = await request(app).get('/api/assignments/5');
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ success: true, data: { assignment_id: 5, project_id: 3 } });
+    expect(JobOrder.getAssignmentDetails).toHaveBeenCalledWith('5', PM);
+  });
+
+  // FR-9 remainder: a Worker's own task-notification deep-link uses this same endpoint now —
+  // the service (not this route) enforces they can only look up their own assignment.
+  it('allows a Worker caller, forwarding their identity for the service to scope', async () => {
+    const WORKER = { user_id: 9, user_role: 'Worker' };
+    JobOrder.getAssignmentDetails.mockResolvedValue({ assignment_id: 5, worker_id: 9 });
+    const app = buildApp(WORKER, '/api', jobOrderRoutes);
+    const res = await request(app).get('/api/assignments/5');
+    expect(res.status).toBe(200);
+    expect(JobOrder.getAssignmentDetails).toHaveBeenCalledWith('5', WORKER);
   });
 });

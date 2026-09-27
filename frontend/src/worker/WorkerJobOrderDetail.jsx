@@ -126,6 +126,12 @@ const WorkerJobOrderDetail = ({ projectId, assignmentId, workerStatus, onBack })
                     WORK SUBMITTED
                 </button>
             );
+        } else if (currentStatus === 'Approved') {
+            return (
+                <button className="wjo-action-btn approved" disabled>
+                    APPROVED
+                </button>
+            );
         }
         return null;
     };

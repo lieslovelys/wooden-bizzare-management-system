@@ -9,8 +9,9 @@ import { typeQuery } from '../schemas/adminNotifSchemas.js';
 
 const router = express.Router();
 
-// Worker and Inventory Staff have no notification screens.
-const NOTIF_ROLES = requireRole('Admin', 'Production Manager', 'Quality Checker');
+// FR-9 remainder: Worker now has a notification screen too (QA-outcome notifications, see
+// jobOrderService.updateQAStatus) — only Inventory Staff still has none.
+const NOTIF_ROLES = requireRole('Admin', 'Production Manager', 'Quality Checker', 'Worker');
 
 // FR-4: every handler passes req.session.user through as `caller` so the service/model layer can
 // scope visibility (target_role) and read/dismiss state (notification_receipts) to that one

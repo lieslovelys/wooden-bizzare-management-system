@@ -14,9 +14,10 @@ const Navbar = ({ tabs, accountType }) => {
     const [isMobileOpen, setIsMobileOpen] = useState(false);
     
     const { userRole, firstName, lastName } = useContext(UserContext);
-    // FR-4: a tab opts into the badge with `showUnreadBadge: true` — without a NotificationProvider
-    // mounted above (Worker/Inventory Staff, which have no notification screen yet),
-    // useNotifications() returns its default of 0, so the badge just never renders.
+    // FR-4/FR-9: a tab opts into the badge with `showUnreadBadge: true` — without a
+    // NotificationProvider mounted above (Inventory Staff is the only role left with no
+    // notification screen), useNotifications() returns its default of 0, so the badge just never
+    // renders.
     const { unreadCount } = useNotifications();
 
     const getRoleAbbreviation = (role) => {

@@ -216,10 +216,15 @@ Notification read/dismissed state is per-user (FR-4): `notifications.target_role
 see a row at all (a real `user_role` value, checked in every query in
 `backend/src/models/adminNotifModel.js`), and `notification_receipts` — not
 `notifications.is_read` — records whether *this* caller has read or dismissed it, so one user
-acting on a notification never affects anyone else's list. `globals/NotificationProvider.jsx`
-(mounted in `Admin.jsx`/`ProductionManager.jsx`/`QualityChecker.jsx` — the three roles with a
-notification screen) polls the unread count for the navbar badge and to refresh
-`globals/NotificationList.jsx` live; consume it via `useNotifications()`
+acting on a notification never affects anyone else's list. `notifications.target_user_id` (FR-9)
+adds an optional per-user target alongside the role target, for a notification that belongs to
+one specific caller (e.g. `jobOrderService.updateQAStatus`'s "your task was approved/repaired") —
+when set, it's visible only to that user, not to Admin, since it's a personal message rather than
+a role broadcast; a new notification should target a role via `target_role` or one user via
+`target_user_id`, not both. `globals/NotificationProvider.jsx` (mounted in
+`Admin.jsx`/`ProductionManager.jsx`/`QualityChecker.jsx`/`Worker.jsx` — every role but Inventory
+Staff, which has no notification screen) polls the unread count for the navbar badge and to
+refresh `globals/NotificationList.jsx` live; consume it via `useNotifications()`
 (`frontend/src/context/NotificationContext.js`) rather than adding another poll loop.
 
 A screen backed by a paged list endpoint uses `usePaginatedList(endpoint, { params, pageSize })`

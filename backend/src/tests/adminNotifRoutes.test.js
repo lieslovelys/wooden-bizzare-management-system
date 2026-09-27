@@ -36,7 +36,9 @@ function buildApp(user) {
 }
 
 const PM = { user_id: 1, user_role: 'Production Manager' };
-const WORKER = { user_id: 9, user_role: 'Worker' };
+// FR-9 remainder: Worker now has a notification screen (QA-outcome notifications); Inventory
+// Staff is the one role that still has none.
+const INVENTORY = { user_id: 9, user_role: 'Inventory Staff' };
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -54,8 +56,8 @@ describe('GET /api/notifications', () => {
     );
   });
 
-  it('Worker (no notification screen) gets 403', async () => {
-    const app = buildApp(WORKER);
+  it('Inventory Staff (no notification screen) gets 403', async () => {
+    const app = buildApp(INVENTORY);
     const res = await request(app).get('/api/notifications');
     expect(res.status).toBe(403);
     expect(Notif.getNotifications).not.toHaveBeenCalled();
@@ -66,6 +68,16 @@ describe('GET /api/notifications', () => {
     const res = await request(app).get('/api/notifications');
     expect(res.status).toBe(401);
     expect(Notif.getNotifications).not.toHaveBeenCalled();
+  });
+
+  // FR-9 remainder: Worker now has a notification screen (QA-outcome notifications).
+  it('a Worker caller is allowed through', async () => {
+    const WORKER = { user_id: 9, user_role: 'Worker' };
+    Notif.getNotifications.mockResolvedValue({ rows: [], total: 0 });
+    const app = buildApp(WORKER);
+    const res = await request(app).get('/api/notifications');
+    expect(res.status).toBe(200);
+    expect(Notif.getNotifications).toHaveBeenCalledWith(WORKER, expect.any(Object));
   });
 });
 

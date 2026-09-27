@@ -730,8 +730,8 @@ Not urgent, but each of these increases the cost of every future change until ad
 14. **Remaining after phase 1:** FR-4 (notifications — per-user read state, real role filtering,
     live update — done next, see item 15), FR-9's remainder (the `For QA`/`Approved` worker
     lifecycle view, and actual QA-outcome notifications — its rejection-reason display already
-    landed in phase 1), FR-5 (attendance computation), and FR-3's materials-per-project half — see
-    PRD.md C.1 for all seven.
+    landed in phase 1; done next, see item 16), FR-5 (attendance computation), and FR-3's
+    materials-per-project half — see PRD.md C.1 for all seven.
 15. **FR-4 (notifications)** — ✅ done. `notifications.target_role` is now a real `user_role` value
     (migration `1790500717992_per-user-notifications.js` normalizes the legacy `'PM'`/`'QC'`
     values and preflight-checks for anything else, same pattern as
@@ -755,3 +755,26 @@ Not urgent, but each of these increases the cost of every future change until ad
     `adminNotifModel.test.js`, extended `adminNotifRoutes.test.js`); frontend tests 59 → 67 (new
     `NotificationProvider.test.jsx`, extended `NotificationList.test.jsx` and
     `usePaginatedList.test.js`).
+16. **FR-9 remainder (worker lifecycle view + QA-outcome notifications)** — ✅ done, closing out
+    FR-9 entirely. `worker/WorkerJobOrder.jsx` gets two new filters, `For QA` and `Approved`,
+    alongside the existing `Assigned`/`Repair` — the backend already accepted any `task_status` on
+    `GET /api/workers/:workerId/tasks`, so this half was frontend-only; the task-selection state
+    also moved from a formatted project id to `{projectId, assignmentId, status}`, fixing a latent
+    bug where a worker with two stages on the same project couldn't distinguish which one they'd
+    clicked. QA-outcome notifications needed a new targeting axis: `notifications.target_role` can
+    only address a whole role, so a per-worker "your task was approved/repaired" message would
+    otherwise have had to broadcast to every Worker. Migration
+    `1790503216322_per-user-notification-target.js` adds `notifications.target_user_id`
+    (nullable, `ON DELETE CASCADE`), and every query in `models/adminNotifModel.js` widens its
+    visibility predicate to `target_user_id = caller OR (target_user_id IS NULL AND <existing
+    role check>)` — a user-targeted row is visible only to that one user, deliberately not to
+    Admin, since it's a personal message rather than a role broadcast.
+    `jobOrderService.updateQAStatus` now fires a `'task'`-typed, target-user-scoped notification
+    to the assignment's owning worker on every Approve/Repair decision (the Repair message
+    includes the reviewer's reason); the existing `'For QA'` → Quality Checker notification is
+    unchanged. Worker gets its first notification screen (`worker/WorkerNotification.jsx`, the
+    same `globals/NotificationList.jsx` FR-4 built), mounts `globals/NotificationProvider.jsx` for
+    the navbar badge and live polling, and `GET /api/assignments/:assignmentId` (the deep-link
+    endpoint) now allows a Worker caller, scoped in the service to their own assignment only —
+    Inventory Staff is the one role left with no notification screen. Backend tests 132 → 138;
+    frontend tests 67 → 71 (new `worker/WorkerJobOrder.test.jsx`).

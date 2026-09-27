@@ -103,22 +103,32 @@ describe('jobOrderService.updateQAStatus', () => {
     );
   });
 
-  it('a reviewer approving passes REVIEWABLE_FROM, records who approved, and sends no notification', async () => {
+  it('a reviewer approving passes REVIEWABLE_FROM, records who approved, and notifies the owning worker (FR-9)', async () => {
     jobOrderModel.getAssignmentById.mockResolvedValue({ assignment_id: 1, worker_id: WORKER.user_id, status: 'For QA' });
-    jobOrderModel.updateAssignmentStatus.mockResolvedValue({ assignment_id: 1, status: 'Approved' });
+    jobOrderModel.updateAssignmentStatus.mockResolvedValue({ assignment_id: 1, status: 'Approved', stage_name: 'Carpenter' });
 
     const result = await JobOrderService.updateQAStatus(1, 'Approved', PM);
 
-    expect(result).toEqual({ assignment_id: 1, status: 'Approved' });
+    expect(result).toEqual({ assignment_id: 1, status: 'Approved', stage_name: 'Carpenter' });
     // FR-7: PM.user_id (2) is written as qa_checker_id even though PM keeps approve rights —
     // the segregation gap PRD B.1 flags becomes visible in data rather than closed by fiat.
     expect(jobOrderModel.updateAssignmentStatus).toHaveBeenCalledWith(1, 'Approved', ['For QA'], PM.user_id, null);
-    expect(adminNotifModel.createNotification).not.toHaveBeenCalled();
+    // FR-9 remainder: 'task'-typed, target_user_id-scoped to the worker who owns the assignment —
+    // never a 'Worker'-wide broadcast, which would put every other worker's outcome in their list.
+    expect(adminNotifModel.createNotification).toHaveBeenCalledTimes(1);
+    expect(adminNotifModel.createNotification).toHaveBeenCalledWith(
+      'task',
+      expect.any(String),
+      expect.stringContaining('Carpenter'),
+      null,
+      1,
+      WORKER.user_id,
+    );
   });
 
-  it('a reviewer setting Repair with a reason passes it through as qa_notes', async () => {
+  it('a reviewer setting Repair with a reason passes it through as qa_notes and notifies the worker with that reason (FR-9)', async () => {
     jobOrderModel.getAssignmentById.mockResolvedValue({ assignment_id: 1, worker_id: WORKER.user_id, status: 'For QA' });
-    jobOrderModel.updateAssignmentStatus.mockResolvedValue({ assignment_id: 1, status: 'Repair' });
+    jobOrderModel.updateAssignmentStatus.mockResolvedValue({ assignment_id: 1, status: 'Repair', stage_name: 'Painter' });
 
     await JobOrderService.updateQAStatus(1, 'Repair', ADMIN, 'Joints are loose, redo the frame.');
 
@@ -129,7 +139,15 @@ describe('jobOrderService.updateQAStatus', () => {
       ADMIN.user_id,
       'Joints are loose, redo the frame.',
     );
-    expect(adminNotifModel.createNotification).not.toHaveBeenCalled();
+    expect(adminNotifModel.createNotification).toHaveBeenCalledTimes(1);
+    expect(adminNotifModel.createNotification).toHaveBeenCalledWith(
+      'task',
+      expect.any(String),
+      expect.stringContaining('Joints are loose, redo the frame.'),
+      null,
+      1,
+      WORKER.user_id,
+    );
   });
 
   // FR-6: PRD B.5 workflow 5 used to let a repair action carry no reason at all — a worker
@@ -167,9 +185,28 @@ describe('jobOrderService.getAssignmentDetails', () => {
     await expect(JobOrderService.getAssignmentDetails(999)).rejects.toBeInstanceOf(AppError);
   });
 
-  it('returns the assignment when found', async () => {
+  it('returns the assignment when found (no caller — reviewer deep-link)', async () => {
     jobOrderModel.getAssignmentById.mockResolvedValue({ assignment_id: 1 });
     const result = await JobOrderService.getAssignmentDetails(1);
     expect(result).toEqual({ assignment_id: 1 });
+  });
+
+  // FR-9 remainder: a Worker can now deep-link into this same endpoint from their own task
+  // notification — restricted to their own assignment, same shape as updateQAStatus's guard.
+  it("403s a Worker looking up another worker's assignment", async () => {
+    jobOrderModel.getAssignmentById.mockResolvedValue({ assignment_id: 1, worker_id: OTHER_WORKER.user_id });
+    await expect(JobOrderService.getAssignmentDetails(1, WORKER)).rejects.toMatchObject({ status: 403 });
+  });
+
+  it('returns the assignment for the Worker who owns it', async () => {
+    jobOrderModel.getAssignmentById.mockResolvedValue({ assignment_id: 1, worker_id: WORKER.user_id });
+    const result = await JobOrderService.getAssignmentDetails(1, WORKER);
+    expect(result).toEqual({ assignment_id: 1, worker_id: WORKER.user_id });
+  });
+
+  it('returns any assignment for a reviewer caller', async () => {
+    jobOrderModel.getAssignmentById.mockResolvedValue({ assignment_id: 1, worker_id: OTHER_WORKER.user_id });
+    const result = await JobOrderService.getAssignmentDetails(1, ADMIN);
+    expect(result).toEqual({ assignment_id: 1, worker_id: OTHER_WORKER.user_id });
   });
 });

@@ -9,6 +9,15 @@ import { splitCountedRows } from '../utils/pagination.js';
 // target_role. Comparing target_role as text (`n.target_role::text = $role`) rather than casting
 // the role parameter to the enum keeps the JS side a plain string, matching every other caller of
 // this module.
+//
+// FR-9 remainder: target_user_id (migration 1790503216322_per-user-notification-target.js) adds
+// an optional per-user target alongside the role target, for a notification that belongs to one
+// specific caller (e.g. "your task was approved") rather than a whole role. A user-targeted row
+// is visible ONLY to that user — not to Admin — since it's a personal message, not a role
+// broadcast; Admin already sees everything role-targeted, but seeing every worker's individual
+// task outcomes too would defeat the point of scoping it. When target_user_id is set, the role
+// predicate is skipped entirely. Spelled out inline in every query below rather than factored into
+// a shared fragment, matching the rest of this module's style.
 
 // P1-3: paged, plus the role-scoped visibility filter FR-4 adds. `id DESC` tiebreaks
 // `created_at`, which is not unique. The LEFT JOIN's absence of a row means "never read or
@@ -19,7 +28,8 @@ export const getAllNotifications = async ({ userId, role, limit, offset, type = 
          FROM notifications n
          LEFT JOIN notification_receipts r
            ON r.notification_id = n.id AND r.user_id = $1
-         WHERE ($2 = 'Admin' OR n.target_role::text = $2)
+         WHERE (n.target_user_id = $1
+                OR (n.target_user_id IS NULL AND ($2 = 'Admin' OR n.target_role::text = $2)))
            AND r.dismissed_at IS NULL
            AND ($3::text IS NULL OR n.type = $3)
          ORDER BY n.created_at DESC, n.id DESC
@@ -38,7 +48,8 @@ export const countUnread = async ({ userId, role }) => {
          FROM notifications n
          LEFT JOIN notification_receipts r
            ON r.notification_id = n.id AND r.user_id = $1
-         WHERE ($2 = 'Admin' OR n.target_role::text = $2)
+         WHERE (n.target_user_id = $1
+                OR (n.target_user_id IS NULL AND ($2 = 'Admin' OR n.target_role::text = $2)))
            AND r.dismissed_at IS NULL
            AND r.read_at IS NULL`,
         [userId, role]
@@ -47,14 +58,15 @@ export const countUnread = async ({ userId, role }) => {
 };
 
 // `type` is optional (null/undefined = all types) — see routes/adminNotifRoutes.js. Used so a
-// single role-scoped screen (PM/QC) can bulk-act on just its own notification type instead of
-// issuing one request per row, matching what Admin's unscoped call already did.
+// single role-scoped screen (PM/QC/Worker) can bulk-act on just its own notification type instead
+// of issuing one request per row, matching what Admin's unscoped call already did.
 export const markAllAsRead = async ({ userId, role, type = null }) => {
     const { rows } = await query(
         `INSERT INTO notification_receipts (notification_id, user_id, read_at)
          SELECT n.id, $1, now()
          FROM notifications n
-         WHERE ($2 = 'Admin' OR n.target_role::text = $2)
+         WHERE (n.target_user_id = $1
+                OR (n.target_user_id IS NULL AND ($2 = 'Admin' OR n.target_role::text = $2)))
            AND ($3::text IS NULL OR n.type = $3)
          ON CONFLICT (notification_id, user_id)
          DO UPDATE SET read_at = COALESCE(notification_receipts.read_at, now())
@@ -72,7 +84,9 @@ export const dismissNotification = async (id, { userId, role }) => {
         `INSERT INTO notification_receipts (notification_id, user_id, read_at, dismissed_at)
          SELECT n.id, $1, now(), now()
          FROM notifications n
-         WHERE n.id = $2 AND ($3 = 'Admin' OR n.target_role::text = $3)
+         WHERE n.id = $2
+           AND (n.target_user_id = $1
+                OR (n.target_user_id IS NULL AND ($3 = 'Admin' OR n.target_role::text = $3)))
          ON CONFLICT (notification_id, user_id)
          DO UPDATE SET
            read_at = COALESCE(notification_receipts.read_at, now()),
@@ -90,7 +104,8 @@ export const dismissAllNotifications = async ({ userId, role, type = null }) => 
         `INSERT INTO notification_receipts (notification_id, user_id, read_at, dismissed_at)
          SELECT n.id, $1, now(), now()
          FROM notifications n
-         WHERE ($2 = 'Admin' OR n.target_role::text = $2)
+         WHERE (n.target_user_id = $1
+                OR (n.target_user_id IS NULL AND ($2 = 'Admin' OR n.target_role::text = $2)))
            AND ($3::text IS NULL OR n.type = $3)
          ON CONFLICT (notification_id, user_id)
          DO UPDATE SET
@@ -100,13 +115,16 @@ export const dismissAllNotifications = async ({ userId, role, type = null }) => 
     );
 };
 
-export const createNotification = async (type, title, message, targetRole, referenceId = null) => {
+// FR-9 remainder: `targetUserId` (default null) lets a caller scope a notification to one
+// specific user instead of (or as well as — though every current caller passes one or the other,
+// not both) a whole role. See the module-level comment above for how the two combine on read.
+export const createNotification = async (type, title, message, targetRole, referenceId = null, targetUserId = null) => {
     const sql = `
-        INSERT INTO notifications (type, title, message, target_role, reference_id)
-        VALUES ($1, $2, $3, $4, $5)
+        INSERT INTO notifications (type, title, message, target_role, reference_id, target_user_id)
+        VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING *
     `;
-    const { rows } = await query(sql, [type, title, message, targetRole, referenceId]);
+    const { rows } = await query(sql, [type, title, message, targetRole, referenceId, targetUserId]);
     return rows[0];
 };
 
@@ -117,7 +135,9 @@ export const markOneAsRead = async (id, { userId, role }) => {
         `INSERT INTO notification_receipts (notification_id, user_id, read_at)
          SELECT n.id, $1, now()
          FROM notifications n
-         WHERE n.id = $2 AND ($3 = 'Admin' OR n.target_role::text = $3)
+         WHERE n.id = $2
+           AND (n.target_user_id = $1
+                OR (n.target_user_id IS NULL AND ($3 = 'Admin' OR n.target_role::text = $3)))
          ON CONFLICT (notification_id, user_id)
          DO UPDATE SET read_at = COALESCE(notification_receipts.read_at, now())
          RETURNING notification_id`,

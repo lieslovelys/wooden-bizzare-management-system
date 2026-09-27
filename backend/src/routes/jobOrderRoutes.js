@@ -71,10 +71,11 @@ router.get('/qa/tasks', requireRole('Admin', 'Production Manager', 'Quality Chec
 
 // P1-3: resolves a notification deep-link to a single assignment directly, so
 // globals/ProjectVerification.jsx doesn't have to search a (now paged) task list for a row that
-// may not be on the currently-loaded page. Same role set as /qa/tasks, since this is only ever
-// used from the verification-notification flow.
-router.get('/assignments/:assignmentId', requireRole('Admin', 'Production Manager', 'Quality Checker'), validate({ params: idParams('assignmentId') }), async (req, res) => {
-    const assignment = await JobOrder.getAssignmentDetails(req.params.assignmentId);
+// may not be on the currently-loaded page. FR-9 remainder: also used by
+// worker/WorkerJobOrder.jsx's own task-notification deep-link, so Worker is allowed too — the
+// service enforces a Worker can only look up their own assignment.
+router.get('/assignments/:assignmentId', requireRole('Admin', 'Production Manager', 'Quality Checker', 'Worker'), validate({ params: idParams('assignmentId') }), async (req, res) => {
+    const assignment = await JobOrder.getAssignmentDetails(req.params.assignmentId, req.session.user);
     res.status(200).json(ok(assignment));
 });
 

@@ -40,10 +40,17 @@ const getQATasks = (pagination) => getTasksForQA(pagination);
 // caller to search a loaded (and now paged) task list for it — see
 // ARCHITECTURE_REVIEW.md P1-3 / globals/ProjectVerification.jsx's old `tasks.find(...)` lookup,
 // which silently did nothing once the target task could sit on a page that was never fetched.
-const getAssignmentDetails = async (assignmentId) => {
+//
+// FR-9 remainder: also used by a Worker's own task-notification deep-link
+// (worker/WorkerJobOrder.jsx), so a Worker caller is restricted to their own assignment — a
+// reviewer (Admin/PM/QC) can look up any assignment, same as before.
+const getAssignmentDetails = async (assignmentId, caller) => {
     const assignment = await getAssignmentById(assignmentId);
     if (!assignment) {
         throw new AppError(404, 'Task not found');
+    }
+    if (caller?.user_role === 'Worker' && String(assignment.worker_id) !== String(caller.user_id)) {
+        throw new AppError(403, 'You can only view your own assigned tasks');
     }
     return assignment;
 };
@@ -119,6 +126,15 @@ const updateQAStatus = async (assignmentId, status, caller, notes) => {
             'Quality Checker', // FR-4: target_role is now the real user_role enum value, not 'QC'
             assignmentId
         );
+    } else {
+        // FR-9 remainder: tell the worker who owns this task what happened to it — a whole-role
+        // 'Worker' broadcast would put every other worker's task outcomes in everyone's list, so
+        // this is target_user_id-scoped (see models/adminNotifModel.js) rather than target_role.
+        const stage = updatedTask.stage_name;
+        const [title, message] = status === 'Approved'
+            ? ['Task Approved', `Your ${stage} task was approved.`]
+            : ['Task Sent Back for Repair', `Your ${stage} task needs repair. Reason: ${qaNotes}`];
+        await createNotification('task', title, message, null, assignmentId, assignment.worker_id);
     }
 
     return updatedTask;

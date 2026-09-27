@@ -30,7 +30,7 @@ export const PRIORITY = ['High', 'Medium', 'Low'];
 export const REMARK = ['Early', 'On-time', 'Late', 'Unknown'];
 export const INVENTORY_CATEGORY = ['Raw Material', 'Tool', 'Consumable'];
 export const ADJUST_REASON = ['Received', 'Used', 'Damaged', 'Correction'];
-export const NOTIF_TYPE = ['project', 'verification'];
+export const NOTIF_TYPE = ['project', 'verification', 'task'];
 
 // A comma-separated multi-value filter, e.g. `?status=Pending,In Progress`. Replaces the
 // near-identical parseStatusFilter (projectRoutes.js) / parsePriorityFilter (jobOrderRoutes.js)

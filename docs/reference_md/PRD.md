@@ -318,25 +318,26 @@ re-assign, or delete-assignment action anywhere — a wrong assignment is perman
 stage ordering or dependency: Delivery can be assigned and approved before Carpenter has even
 started.
 
-**4. Worker executes and submits.** A worker sees their assigned stages (filtered to `Assigned`
+**4. Worker executes and submits.** ~~A worker sees their assigned stages (filtered to `Assigned`
 or `Repair` — **there is no way for a worker to view stages currently `For QA` or already
-`Approved`**; submitted work simply disappears from their list). Submitting sets status to
-`For QA`, stamps `date_submitted`, and fires a notification to the Quality Checker.
+`Approved`**; submitted work simply disappears from their list).~~ — **Resolved (FR-9)**:
+`worker/WorkerJobOrder.jsx` now has `For QA` and `Approved` filters alongside `Assigned`/`Repair`,
+so a submitted or completed task stays visible instead of vanishing from the list. Submitting sets
+status to `For QA`, stamps `date_submitted`, and fires a notification to the Quality Checker.
 
 **5. QA review.** The Quality Checker (or Admin/Production Manager — see B.1) reviews stages with
 status `For QA` and either Approves (stamps `date_completed`) or sends to `Repair`. ~~**A repair
 action carries no reason, comment, or evidence** — the worker learns only that the status
 changed, with no notification channel of their own to see why (Workers receive no notifications
-at all).~~ — **Partially resolved (FR-6)**: `jobOrderService.updateQAStatus` now 400s a `Repair`
-sent with no non-empty reason, and `globals/ProjectVerificationDetail.jsx` prompts for one before
+at all).~~ — **Resolved (FR-6/FR-9)**: `jobOrderService.updateQAStatus` now 400s a `Repair` sent
+with no non-empty reason, and `globals/ProjectVerificationDetail.jsx` prompts for one before
 submitting (Approve stays reason-optional). `worker/WorkerJobOrderDetail.jsx` shows the reason
-(and who sent it) on the worker's own task — a deliberate early slice of FR-9, since collecting a
-reason no worker can read would defeat the point. **Still open:** a dedicated notification
-telling the worker their task *changed*, independent of them happening to open it. FR-4 (see B.6)
-built the per-user read state, real role filtering, and live-update polling this needs, but
-`notifications.target_role` only targets a whole role, not one specific worker — routing a QA
-outcome to the one worker whose task changed (rather than every Worker) is part of what's left of
-FR-9, alongside the Worker notification screen itself (Workers have none yet).
+(and who sent it) on the worker's own task. On top of that, every Approve/Repair decision now
+fires a `'task'`-typed notification targeted at just that one worker (`notifications.target_user_id`,
+migration `1790503216322_per-user-notification-target.js`) — not a `'Worker'`-wide broadcast,
+which would put every other worker's task outcomes in everyone's list — surfaced on a new Worker
+notification screen (`worker/WorkerNotification.jsx`, using the same `globals/NotificationList.jsx`
+FR-4 built) with a navbar badge and live polling like the other three roles.
 
 **6. Completion.** Once every *assigned* stage is Approved, the project can be marked Completed
 and moves to Project History. Loophole: a project with only one stage ever assigned (of the five
@@ -455,7 +456,7 @@ Stated as product facts — what a user experiences — not as code defects.
 | FR-6 | Assignment status changes follow an enforced state machine (e.g. `Assigned → For QA → Approved`, `For QA → Repair → Assigned`) rather than accepting an arbitrary string **(✅ done — `jobOrderService.updateQAStatus`'s `WORKER_SUBMITTABLE_FROM` allow-list and role-scoped target statuses reject an invalid transition with a 409)**; QA rejections require a reason **(✅ done — a `Repair` with no non-empty reason 400s; see B.5 workflow 5)**. |
 | FR-7 | Every QA decision and every financial entry records who made it and when (audit trail on `job_assignments` and `project_profit`, actually populated). **(✅ done — see B.6.)** |
 | FR-8 | Project status is a single source of truth (the stored column, updated transactionally alongside the events that change it — not recomputed differently on read). **(✅ done — see B.6.)** |
-| FR-9 | Workers can see the full lifecycle of their own tasks, including those currently `For QA` or already `Approved`, and receive notification of QA outcomes including rejection reasons. **(Partially done — the rejection-reason display landed early alongside FR-6, see B.5 workflow 5; the `For QA`/`Approved` lifecycle view and actual notifications are still open.)** |
+| FR-9 | Workers can see the full lifecycle of their own tasks, including those currently `For QA` or already `Approved`, and receive notification of QA outcomes including rejection reasons. **(✅ done — see B.5 workflows 4/5.)** |
 
 ## C.2 Non-functional requirements
 
