@@ -23,6 +23,7 @@ vi.mock('../models/adminNotifModel.js', () => ({
 }));
 
 const projectModel = await import('../models/projectModel.js');
+const adminNotifModel = await import('../models/adminNotifModel.js');
 const ProjectService = (await import('../services/projectService.js')).default;
 
 beforeEach(() => {
@@ -60,5 +61,42 @@ describe('projectService.completeProject', () => {
     const completed = { id: 1, status: 'Completed', date_completed: '2026-08-20' };
     projectModel.markProjectAsCompleted.mockResolvedValue(completed);
     await expect(ProjectService.completeProject(1)).resolves.toEqual(completed);
+  });
+});
+
+// Previously untested (ARCHITECTURE_REVIEW.md item 12/19) — the same 404-on-missing-project
+// shape completeProject already covers above.
+describe('projectService.getSingleProject', () => {
+  it('404s when the project does not exist', async () => {
+    projectModel.getProjectById.mockResolvedValue(null);
+    await expect(ProjectService.getSingleProject(999)).rejects.toMatchObject({ status: 404 });
+  });
+
+  it('returns the project when found', async () => {
+    const project = { id: 1, project_name: 'Cabinet Set' };
+    projectModel.getProjectById.mockResolvedValue(project);
+    await expect(ProjectService.getSingleProject(1)).resolves.toEqual(project);
+  });
+});
+
+describe('projectService.removeProject', () => {
+  it('404s when nothing was deleted', async () => {
+    projectModel.deleteProjectById.mockResolvedValue(false);
+    await expect(ProjectService.removeProject(999)).rejects.toMatchObject({ status: 404 });
+  });
+
+  it('resolves silently on a real delete', async () => {
+    projectModel.deleteProjectById.mockResolvedValue(true);
+    await expect(ProjectService.removeProject(1)).resolves.toBeUndefined();
+  });
+});
+
+describe('projectService.createProject', () => {
+  it('still returns the new project id when the notification insert fails', async () => {
+    // Deliberate swallow (see the service's own try/catch) — a notifications-table hiccup must
+    // never fail project creation itself.
+    projectModel.createProjectWithVariables.mockResolvedValue(42);
+    adminNotifModel.createNotification.mockRejectedValue(new Error('notifications table missing'));
+    await expect(ProjectService.createProject({ project_name: 'Cabinet Set' })).resolves.toBe(42);
   });
 });

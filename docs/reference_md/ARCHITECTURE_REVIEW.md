@@ -617,7 +617,14 @@ Not urgent, but each of these increases the cost of every future change until ad
   both button callbacks, and `confirmDisabled` actually blocking `onConfirm`). The routes/
   services refactor's remaining untested surface (`attendanceService`), the bulk of
   `Attendance.jsx`'s hoisted sub-components, and everything else pre-P1-11 on the frontend —
-  still zero automated coverage, and deliberately left for a later pass.
+  still zero automated coverage at the time, deliberately left for a later pass.
+  **Backfilled since (item 19):** a route-authorization matrix covering all 51 backend routes
+  against the real `app.js` (`backend/src/tests/routeAuthorization.test.js`), plus five
+  previously-untested core-workflow screens (`Login.jsx`, `auth-components/RoleBasedRedirect.jsx`/
+  `ProtectedRoute.jsx`, `globals/JobOrderDetails.jsx`, `globals/ProjectVerificationDetail.jsx`,
+  `worker/WorkerJobOrderDetail.jsx`, `admin/Profit.jsx`). The remaining admin list/modal screens,
+  `Navbar.jsx`, and `App.jsx`'s session bootstrap are still uncovered — see item 19 for the exact
+  list.
   ~~No CI~~ — **resolved**: `.github/workflows/ci.yml` (added in P1-10) runs backend install,
   frontend lint+test+build, and builds both Docker images; all three (`npm test` × 2, `npm run
   lint`) are now real gates — see the lint-errors bullet below for when the lint gate flipped.
@@ -710,12 +717,15 @@ Not urgent, but each of these increases the cost of every future change until ad
     leaving the five role-shell files separate (frontend: 37 → 50); dropped the unused
     `project_profit_summary` view and documented why `attendance_summary` stays unwired pending
     FR-5 — see the relevant bullets above for detail on each.
-12. **Still outstanding:** the deferred five-role-shell consolidation (declined by decision, not
-    revisited without new information), test coverage for `profitService` and everything
-    pre-P1-11 on the frontend (`attendanceService`'s gap closed by item 17), and DESIGN.md §7
-    items 7–11 (the cross-cutting
-    responsiveness backlog: the CSS custom-property/token migration, `.app-container`'s
-    `overflow-x: hidden`, the 1024px icon-only rail, 7 unconverted `<table>`s, px/rem drift).
+12. **Still outstanding at the time:** the deferred five-role-shell consolidation (declined by
+    decision, not revisited without new information), test coverage for `profitService` and
+    everything pre-P1-11 on the frontend (`attendanceService`'s gap closed by item 17;
+    `profitService` and the route-authorization/core-screen gap closed by item 19 below — that
+    correction is item 19's own, since `profitService.test.js` had actually existed since the
+    track-A phase-1 pass, several items before this one was written), and DESIGN.md §7 items 7–11
+    (the cross-cutting responsiveness backlog: the CSS custom-property/token migration,
+    `.app-container`'s `overflow-x: hidden`, the 1024px icon-only rail, 7 unconverted `<table>`s,
+    px/rem drift) — still open, see item 19's own note on what's left after it.
 13. **Track A, phase 1 — QA accountability** — ✅ done. FR-8: `projects.status` is now the
     single source of truth, with `markProjectAsCompleted` enforcing the completion rule and
     404/409 distinctly in the database rather than only in the frontend. FR-7:
@@ -836,3 +846,45 @@ Not urgent, but each of these increases the cost of every future change until ad
     161 → 177 (extended `inventoryService.test.js` and `inventoryRoutes.test.js`); frontend tests
     72 → 77 (new `globals/ProjectMaterials.test.jsx`, extended `InventoryTable.test.jsx`). See
     PRD.md FR-3/B.2/B.6 for the full before/after.
+19. **Test-coverage backfill: route-authorization matrix + core-workflow screens** — ✅ done. With
+    all of PRD C.1 closed except FR-5's overtime clause (blocked on the client), this is the
+    remaining item-12 gap that isn't declined-by-decision or CSS backlog. Two parts:
+    - **Route authorization.** New `backend/src/tests/routeAuthorization.test.js` imports the
+      *real* `app.js` (only `config/db.js`, `express-session`, and `connect-pg-simple` are
+      mocked, plus every `services/*.js` automocked) and drives it with `supertest` under a fake
+      session middleware keyed off a test header. A hand-maintained `ROUTES` table lists all 51
+      routes this app serves with the access rule each is supposed to enforce (a role allowlist,
+      `ANY_AUTH` for the two routes gated only by `requireAuth`/an in-handler check, `SELF_OR_ADMIN`
+      for `GET /workers/:workerId/tasks`, or `PUBLIC_NO_AUTH` for `POST /logout`, which must keep
+      answering 200 with no session at all) and fires one request per (route, role) pair,
+      asserting only on 401/403 — a mocked service returning `undefined` may make an allowed-role
+      request 400/500, which is fine, since the assertion never checks the 2xx body. A second test
+      walks each router's own `.stack` and asserts, in both directions, that `ROUTES` is exactly
+      the live route set: a new route with no matrix row fails it, and so does a stale row for a
+      route that no longer exists. Manually verified both failure modes before landing (temporarily
+      deleting a `ROUTES` row, and temporarily widening a route's `requireRole(...)` allowlist) —
+      each made the guard fail, then was reverted. Small related gaps closed alongside it:
+      `projectService.test.js` gained `getSingleProject`/`removeProject`/`createProject`'s
+      notification-swallow coverage, `jobOrderService.test.js` gained `getJobOrderDetails`'s 404.
+    - **Core-workflow screens.** New tests for five previously-uncovered screens: `Login.jsx`
+      (submit, and the shared incorrect-credentials message), `auth-components/RoleBasedRedirect.jsx`
+      + `ProtectedRoute.jsx` (every role's landing shell, the unknown/undefined-role fallback to
+      `/login`, and the allow/deny gate), `globals/JobOrderDetails.jsx` (the assign-worker form's
+      auto-selected-worker submission, and FR-8's complete gate — disabled with zero or partial
+      approvals, the full confirm-and-complete flow, and a failed complete not navigating away),
+      `globals/ProjectVerificationDetail.jsx` (Approve, and FR-6's Repair-reason requirement:
+      Send stays disabled for blank/whitespace-only input), and `worker/WorkerJobOrderDetail.jsx`
+      (submit-to-QA, FR-9's own-repair-reason display — including that another stage's notes on
+      the same project don't leak into it — and the disabled Approved state). Found and fixed a
+      real bug while writing the last of these: `admin/Profit.jsx`'s `handleProjectChange` compared
+      the `<select>`'s string value against `p.id` (a number) with `===`, so "Profit Detail —
+      &lt;name&gt;" never showed a project's name once one was selected — fixed to `String(p.id)
+      === projId`, with `admin/Profit.test.jsx`'s header assertion as the regression test; that
+      file also covers the fetch-fill/404-blank-form/save paths.
+    - Backend tests 177 → 235; frontend tests 77 → 103.
+    - **Still open after this:** the remaining admin list/modal screens (`AccountList.jsx`,
+      `WorkerList.jsx`, `AddWorkerModal.jsx`, `EditWorkerModal.jsx`, `ProjectHistory.jsx`,
+      `WorkerProductivity.jsx`), `InventoryTable.jsx`'s CRUD-modal half (its adjuster/project-tagging
+      half is already covered, from item 18), `globals/Navbar.jsx`, and `App.jsx`'s session
+      bootstrap — plus the DESIGN.md §7 cross-cutting CSS backlog and the declined role-shell
+      consolidation, neither of which this item touched.

@@ -179,6 +179,19 @@ describe('jobOrderService.updateQAStatus', () => {
   });
 });
 
+describe('jobOrderService.getJobOrderDetails', () => {
+  it('404s when the model finds nothing', async () => {
+    jobOrderModel.getJobOrderById.mockResolvedValue(null);
+    await expect(JobOrderService.getJobOrderDetails(999)).rejects.toMatchObject({ status: 404 });
+  });
+
+  it('returns the job order when found', async () => {
+    const details = { id: 1, project_name: 'Cabinet Set' };
+    jobOrderModel.getJobOrderById.mockResolvedValue(details);
+    await expect(JobOrderService.getJobOrderDetails(1)).resolves.toEqual(details);
+  });
+});
+
 describe('jobOrderService.getAssignmentDetails', () => {
   it('404s when the model finds nothing', async () => {
     jobOrderModel.getAssignmentById.mockResolvedValue(null);

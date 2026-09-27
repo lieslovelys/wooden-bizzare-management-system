@@ -164,7 +164,10 @@ export default function Profit() {
 
   function handleProjectChange(e) {
     const projId = e.target.value;
-    const proj = projects.find(p => p.id === projId);
+    // `projId` is the <select>'s (string) value; `p.id` comes off the API as a number — this
+    // was `p.id === projId`, which never matched, so the "Profit Detail — <name>" header never
+    // showed a name (ARCHITECTURE_REVIEW.md item 19).
+    const proj = projects.find(p => String(p.id) === projId);
     setSelectedProjectId(projId);
     setProjectName(proj?.project_name || "");
   }

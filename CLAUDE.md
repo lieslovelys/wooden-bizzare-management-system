@@ -110,8 +110,12 @@ from the repo root. See `deploy/README.md`.
 
 **Tests** (Vitest in both halves — `npm test` from `backend/src` or `frontend`): backend tests
 mock the model/service layers (`vi.mock`) and, for routes, use `supertest` against `app.js`'s
-exported `app` with a stubbed `req.session` — no database or listening port needed. Frontend
-tests mock `api/client.js` and render with `@testing-library/react` (jsdom). Coverage is not yet
+exported `app` with a stubbed `req.session` — no database or listening port needed.
+`backend/src/tests/routeAuthorization.test.js` is the one exception: it imports the real `app.js`
+(mocking only `config/db.js`/`express-session`/`connect-pg-simple` and automocking every service)
+and drives every route with a real `supertest` request, checking 401/403 across all five roles —
+see ARCHITECTURE_REVIEW.md item 19 and the "Route auth" rule below. Frontend tests mock
+`api/client.js` and render with `@testing-library/react` (jsdom). Coverage is not yet
 comprehensive — see `ARCHITECTURE_REVIEW.md`'s P2 "No tests, anywhere" item for what's still
 missing.
 
@@ -271,7 +275,10 @@ the hook or the `<Pagination>` component.
   `requireAuth`, `requireRole(...roles)`, `requireSelfOrRole(paramName, ...roles)`), applied
   per-route inside each router file. Any new route needs an explicit role check from this
   middleware — there is no blanket `app.use()` gate, so an unguarded route is a live hole, not a
-  gap waiting to be closed.
+  gap waiting to be closed. It also needs a row in `backend/src/tests/routeAuthorization.test.js`'s
+  `ROUTES` table (see ARCHITECTURE_REVIEW.md item 19) — that file's completeness guard walks every
+  router's real route table and fails CI if a mounted route has no matching row, or a row no
+  longer matches a real route.
 - **Every backend route lives under `/api`** (as of P1-10) — mount new routers with
   `app.use('/api/...', ...)` in `server.js`, not at root. This is what lets the Nginx reverse
   proxy (`frontend/nginx.conf`) use one general `/api/` rule instead of a growing list of
