@@ -627,9 +627,10 @@ Not urgent, but each of these increases the cost of every future change until ad
   (a bare `projects JOIN project_profit` with no aggregation, and `profitModel.js` already reads
   `project_profit` directly) is dropped, via a migration whose `down` recreates it exactly —
   verified with a real `up → down → up` round-trip against a local database, not just read by
-  inspection. `attendance_summary` is kept, deliberately unwired: every column it aggregates
-  (`status`, `late_minutes`, `overtime_minutes`) is frozen at its default until PRD FR-5 lands —
-  see PRD.md B.2 "Unused views" for the full reasoning.
+  inspection. `attendance_summary` was kept, deliberately unwired: every column it aggregates
+  (`status`, `late_minutes`, `overtime_minutes`) was frozen at its default until PRD FR-5 landed —
+  see item 17 below (`status`/`late_minutes` are now real; `overtime_minutes` is still on hold,
+  so the view stays unwired) and PRD.md B.2 "Unused views" for the full reasoning.
 - ~~**~9 pre-existing frontend lint errors**~~ — **resolved (P2 frontend-consolidation pass)**:
   all fixed with the real underlying change rather than a suppression — the `UserContext` export
   moved out of `App.jsx` into `context/UserContext.js` (fast-refresh violation); the missing back
@@ -709,8 +710,9 @@ Not urgent, but each of these increases the cost of every future change until ad
     `project_profit_summary` view and documented why `attendance_summary` stays unwired pending
     FR-5 — see the relevant bullets above for detail on each.
 12. **Still outstanding:** the deferred five-role-shell consolidation (declined by decision, not
-    revisited without new information), test coverage for `attendanceService`/`profitService` and
-    everything pre-P1-11 on the frontend, and DESIGN.md §7 items 7–11 (the cross-cutting
+    revisited without new information), test coverage for `profitService` and everything
+    pre-P1-11 on the frontend (`attendanceService`'s gap closed by item 17), and DESIGN.md §7
+    items 7–11 (the cross-cutting
     responsiveness backlog: the CSS custom-property/token migration, `.app-container`'s
     `overflow-x: hidden`, the 1024px icon-only rail, 7 unconverted `<table>`s, px/rem drift).
 13. **Track A, phase 1 — QA accountability** — ✅ done. FR-8: `projects.status` is now the
@@ -730,8 +732,8 @@ Not urgent, but each of these increases the cost of every future change until ad
 14. **Remaining after phase 1:** FR-4 (notifications — per-user read state, real role filtering,
     live update — done next, see item 15), FR-9's remainder (the `For QA`/`Approved` worker
     lifecycle view, and actual QA-outcome notifications — its rejection-reason display already
-    landed in phase 1; done next, see item 16), FR-5 (attendance computation), and FR-3's
-    materials-per-project half — see PRD.md C.1 for all seven.
+    landed in phase 1; done next, see item 16), FR-5 (attendance computation — done next, see
+    item 17), and FR-3's materials-per-project half — see PRD.md C.1 for all seven.
 15. **FR-4 (notifications)** — ✅ done. `notifications.target_role` is now a real `user_role` value
     (migration `1790500717992_per-user-notifications.js` normalizes the legacy `'PM'`/`'QC'`
     values and preflight-checks for anything else, same pattern as
@@ -778,3 +780,25 @@ Not urgent, but each of these increases the cost of every future change until ad
     endpoint) now allows a Worker caller, scoped in the service to their own assignment only —
     Inventory Staff is the one role left with no notification screen. Backend tests 132 → 138;
     frontend tests 67 → 71 (new `worker/WorkerJobOrder.test.jsx`).
+17. **FR-5 (attendance status/late-minutes computation)** — ✅ done, status/late minutes only;
+    overtime deliberately deferred. `services/attendanceService.js` gains a frozen
+    `WORKING_HOURS` constant (shift 08:30–17:00, a 15-minute grace period, lunch 12:00–13:00
+    excluded from worked time, a worked day under 4 hours is `Half-day` regardless of arrival
+    time and takes priority over `Late`) and a pure `computeAttendance()` that
+    `postAttendance`/`putAttendance` now run on every insert/update, replacing the old
+    pass-the-times-straight-to-Postgres behavior; two new `AppError(400)` guards reject a
+    `time_out` with no `time_in` and a `time_out` at or before `time_in` (the `time`-typed, no
+    date-part columns can't represent an overnight shift — see PRD.md B.2). Migration
+    `1790505569341_compute-attendance-status.js` backfills every pre-existing row with the same
+    formula, inlined as raw SQL rather than importing the service (a migration must keep behaving
+    exactly as written even if the app's rules change later) — verified with a real
+    up → down → up round-trip. `schemas/attendanceSchemas.js` now constrains `time_in`/`time_out`
+    to `HH:MM[:SS]` instead of accepting any string. `globals/Attendance.jsx` gets a new Status
+    column showing the computed badge (e.g. "Late · 16m"); `.log-header`/`.log-item` go from 5 to
+    6 grid columns. **`overtime_minutes` is deliberately still not computed** — the client hasn't
+    specified the rule yet (e.g. whether partial minutes count, or only whole hours past shift
+    end) — so `attendance_summary`'s overtime columns stay meaningless and the view remains
+    unwired; see PRD.md B.6. This also closes item 12's `attendanceService` test-coverage gap
+    (`profitService` and everything pre-P1-11 on the frontend remain open). Backend tests
+    138 → 161 (new `attendanceService.test.js`, new `attendanceRoutes.test.js`); frontend tests
+    71 → 72 (new `globals/Attendance.test.jsx`). See PRD.md FR-5/B.6 for the full before/after.

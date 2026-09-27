@@ -1920,9 +1920,11 @@ html, body {
 }
 
 /* 2. ATTENDANCE LOG GRID */
+/* FR-5: gained a Status column (Day/Date/Time In/Time Out/Status/Actions) alongside the existing
+   raw times — 5 columns -> 6. */
 .log-header {
   display: grid;
-  grid-template-columns: 1fr 1.5fr 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1.5fr 1fr 1fr 1fr 1fr;
   padding: 0 25px 10px 25px;
   text-transform: uppercase;
   font-size: 0.85rem;
@@ -1932,9 +1934,9 @@ html, body {
 }
 .log-item {
   display: grid;
-  grid-template-columns: 1fr 1.5fr 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1.5fr 1fr 1fr 1fr 1fr;
   align-items: center;
-  padding: 18px 25px; 
+  padding: 18px 25px;
   background-color: #ffffff;
   font-size: 0.95rem;
   font-weight: 500;
@@ -1947,6 +1949,34 @@ html, body {
 .log-item:hover {
   background-color: #faf7f0;
   border-color: #d1ccbf;
+}
+
+/* FR-5: server-computed attendance status badge. Palette matches the existing status-badge
+   conventions used elsewhere (e.g. worker.css's .wjo-status) — green for good, amber for a
+   partial/late day, red for absent. */
+.att-status-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.att-status-badge.present {
+  background-color: rgba(46, 107, 59, 0.12);
+  color: #2e6b3b;
+}
+.att-status-badge.late {
+  background-color: rgba(92, 74, 17, 0.12);
+  color: #5c4a11;
+}
+.att-status-badge.half-day {
+  background-color: rgba(180, 130, 30, 0.12);
+  color: #8a5f10;
+}
+.att-status-badge.absent {
+  background-color: rgba(198, 40, 40, 0.1);
+  color: #c62828;
 }
 
 /* --- ATTENDANCE PROFILE HEADER (EXACT MATCH SA IMAGE) --- */

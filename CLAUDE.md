@@ -259,6 +259,12 @@ the hook or the `<Pagination>` component.
 - **Money is `numeric(12,2)`.** `net_profit` and `total_expenses` on `project_profit` are
   **generated stored columns** — computed by Postgres from the other columns. Never recompute
   profit in JS; read the generated column.
+- **The shop's working hours (FR-5) live in one place**: `WORKING_HOURS`-derived constants at the
+  top of `backend/src/services/attendanceService.js` (shift 08:30–17:00, a 15-minute grace period,
+  lunch 12:00–13:00 excluded from worked time, `Half-day` under 4 worked hours). Change the rule
+  there, not in the model or the migration that backfilled existing rows (that migration inlines
+  the same formula as raw SQL deliberately — see its header comment). `overtime_minutes` is not
+  computed yet, pending the client's overtime rule.
 - **New comments in English.** Existing Tagalog comments in the codebase are being left as-is —
   don't rewrite them as a side effect of an unrelated change, and don't add new Tagalog comments.
 - **Route auth**: real server-side authorization exists (`backend/src/middleware/auth.js` —

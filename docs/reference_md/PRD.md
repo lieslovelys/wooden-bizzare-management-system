@@ -197,9 +197,11 @@ by any backend code.~~ — **Resolved (engineering-debt pass)**: `project_profit
 `project_profit` directly — was dropped (`backend/src/migrations/
 1787195165375_drop-unused-profit-summary-view.js`). `attendance_summary` is **kept, still
 unwired, on purpose**: every column it aggregates (`status`, `late_minutes`, `overtime_minutes`)
-is frozen at the database default until FR-5 ("Attendance status is never computed," below) is
-implemented — wiring it into a reporting screen today would render every worker as all-absent
-with zero minutes. It becomes worth using the moment FR-5 lands.
+was frozen at the database default until FR-5 ("Attendance status is never computed," below) was
+implemented. `status`/`late_minutes` are now real (see B.6) — `overtime_minutes` is still frozen
+at 0 pending the client's overtime rule, so this view isn't wired into a reporting screen yet;
+doing so today would be accurate on attendance/lateness but silently show zero overtime for
+everyone.
 
 ## B.3 API surface
 
@@ -354,8 +356,10 @@ worker's daily rate and recorded attendance, despite both existing in the system
 
 **8. Attendance → productivity.** Attendance is **entirely retrospective and admin-entered** —
 there is no worker-facing clock-in/out anywhere in the product. An Admin or Production Manager
-opens a worker's log and manually adds a date/time-in/time-out record. Nothing computes
-`status`/`late_minutes`/`overtime_minutes` from the times entered (see B.6). The productivity
+opens a worker's log and manually adds a date/time-in/time-out record. **FR-5 (done, overtime on
+hold):** `status`/`late_minutes` are now computed from the times entered against the shop's
+working hours (see B.6) and shown on the log; `overtime_minutes` is still not computed, pending
+the client's overtime rule. The productivity
 leaderboard separately compares each assignment's `date_submitted` against its `due_date` to
 classify Early/On-time/Late, and counts current-status `Approved`/`Repair` — meaning a stage that
 was once sent to Repair and later Approved shows only as Accepted, and repair history silently
@@ -371,9 +375,16 @@ Stated as product facts — what a user experiences — not as code defects.
   Admin, Production Manager, and Inventory Staff. **Still missing:** there is no link between
   inventory and projects — nothing records material consumed by a job. That remains open under
   FR-3.
-- **Attendance status is never computed.** Every record keeps the database default `'Absent'`
-  with zero late/overtime minutes regardless of the times entered, which makes the
-  `attendance_summary` view and any payroll derivation from this data meaningless as it stands.
+- ~~**Attendance status is never computed.**~~ **Resolved (FR-5), status/late minutes only.**
+  `services/attendanceService.js` now computes `status`/`late_minutes` server-side against the
+  shop's working hours (shift 08:30–17:00, a 15-minute grace period before `Late`, lunch
+  12:00–13:00 excluded from worked time, and a worked day under 4 hours is `Half-day` regardless
+  of arrival time, taking priority over `Late`) on every insert/update, and a migration backfilled
+  every pre-existing row with the same formula — see `WORKING_HOURS` in that file for the exact
+  rules. **`overtime_minutes` is deliberately still left at 0** — the client hasn't specified the
+  overtime rule yet (e.g. whether a few extra minutes count, or only whole hours past shift end)
+  — so `attendance_summary`'s overtime columns remain meaningless until that's clarified, even
+  though its status/late-minutes columns are now real.
 - ~~**Notifications are global, not per-user.**~~ **Resolved (FR-4).** `target_role` is now a real
   `user_role` value (the old `'PM'`/`'QC'` are normalized on migration), and every notification
   query — list, unread-count, mark-read, dismiss — filters by it: a caller sees a notification only
@@ -452,7 +463,7 @@ Stated as product facts — what a user experiences — not as code defects.
 | FR-2 | Account creation is an Admin-only, authenticated action with a whitelist of assignable roles. There is no unauthenticated path to creating any account. |
 | FR-3 | Inventory is a real, server-persisted module: items and variants via API, stock increment/decrement with an audit trail (who, when, how much, why), low-stock alerting against each variant's configurable `min_stock` **(✅ done, P1-11)**, and a record of materials consumed per project **(still open)**. |
 | FR-4 | Notifications carry per-user read state (not a single shared flag), are correctly filtered by the recipient's role, and update without a manual page reload (polling or push). **(✅ done — see B.6.)** |
-| FR-5 | Attendance status, late minutes, and overtime minutes are computed server-side from recorded time-in/time-out against the shop's defined working hours, not left at a default. |
+| FR-5 | Attendance status, late minutes, and overtime minutes are computed server-side from recorded time-in/time-out against the shop's defined working hours, not left at a default. **(✅ status/late minutes done — see B.6; overtime deliberately on hold, see below.)** |
 | FR-6 | Assignment status changes follow an enforced state machine (e.g. `Assigned → For QA → Approved`, `For QA → Repair → Assigned`) rather than accepting an arbitrary string **(✅ done — `jobOrderService.updateQAStatus`'s `WORKER_SUBMITTABLE_FROM` allow-list and role-scoped target statuses reject an invalid transition with a 409)**; QA rejections require a reason **(✅ done — a `Repair` with no non-empty reason 400s; see B.5 workflow 5)**. |
 | FR-7 | Every QA decision and every financial entry records who made it and when (audit trail on `job_assignments` and `project_profit`, actually populated). **(✅ done — see B.6.)** |
 | FR-8 | Project status is a single source of truth (the stored column, updated transactionally alongside the events that change it — not recomputed differently on read). **(✅ done — see B.6.)** |
