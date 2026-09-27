@@ -29,7 +29,9 @@ export const STAGE = ['Carpenter', 'Carver', 'Liha', 'Painter', 'Delivery'];
 export const PRIORITY = ['High', 'Medium', 'Low'];
 export const REMARK = ['Early', 'On-time', 'Late', 'Unknown'];
 export const INVENTORY_CATEGORY = ['Raw Material', 'Tool', 'Consumable'];
-export const ADJUST_REASON = ['Received', 'Used', 'Damaged', 'Correction'];
+// FR-3: 'Returned' nets a stock-movement back into a project's consumption total — see
+// inventorySchemas.js's adjustBody for the reason/projectId pairing rules.
+export const ADJUST_REASON = ['Received', 'Used', 'Damaged', 'Correction', 'Returned'];
 export const NOTIF_TYPE = ['project', 'verification', 'task'];
 
 // A comma-separated multi-value filter, e.g. `?status=Pending,In Progress`. Replaces the

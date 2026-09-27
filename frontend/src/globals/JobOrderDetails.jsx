@@ -3,6 +3,7 @@ import { api } from '../api/client';
 import { useToast } from '../context/ToastContext';
 import { formatDate, formatProjectId } from '../utils/format';
 import ConfirmModal from './ConfirmModal';
+import ProjectMaterials from './ProjectMaterials';
 
 const JobOrderDetail = ({ jobId, onBack }) => {
     const [projectDetails, setProjectDetails] = useState(null);
@@ -239,6 +240,8 @@ const JobOrderDetail = ({ jobId, onBack }) => {
                     )}
                 </div>
             </div>
+
+            <ProjectMaterials projectId={jobId} />
 
             <div className="jod-container jod-assign-container">
                 <div className="jod-assign-header">

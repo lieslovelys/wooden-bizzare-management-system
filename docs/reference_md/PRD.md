@@ -180,9 +180,15 @@ project_profit, CASCADE), `category`, `description`, `amount`.
 same layer contract as the rest of the backend. `total_stock`/`status` are no longer stored
 columns — both are derived from `item_variants` on every read (sum of `current_stock`; `'Low'` if
 any variant is at or below its `min_stock`) to avoid a second source of truth. **`stock_movements`**
-(new) is the audit trail every adjustment writes to: `variant_id` (FK, CASCADE), `user_id` (FK →
-users, `SET NULL`), signed `delta`, `resulting_stock`, `reason`, `created_at`. See B.6 for what's
-still open (materials consumed per project).
+is the audit trail every adjustment writes to: `variant_id` (FK, CASCADE), `user_id` (FK →
+users, `SET NULL`), signed `delta`, `resulting_stock`, `reason`, `created_at`, and **`project_id`**
+(FK → projects, `SET NULL` — FR-3's final clause: tags a `'Used'`/`'Returned'` movement to the
+project it was consumed by / returned to; `SET NULL` rather than `CASCADE` so deleting a project
+doesn't rewrite inventory history the stock movement genuinely happened). A project's materials-
+consumed record is simply its tagged `stock_movements` rows, netted per variant — no separate
+ledger. Deleting a *variant* still `CASCADE`s its movements (the P1-11 design, unchanged here), so
+it drops that variant's history from any project total that included it, same as it always has
+for the audit trail generally.
 
 **`notifications`** — `type`, `title`, `message`, `is_read` (boolean, **one flag shared by every
 viewer**), `target_role` (varchar, free text — written as `'PM'`/`'QC'` while the actual role enum
@@ -369,12 +375,16 @@ disappears from the metric over time.
 
 Stated as product facts — what a user experiences — not as code defects.
 
-- **Inventory has a real backend now (P1-11), except for the project link.** Items, variants,
-  stock adjustment (with a who/when/how-much/why audit trail via `stock_movements`), and
-  low-stock reporting are all server-persisted through `/api/inventory`, shared correctly across
-  Admin, Production Manager, and Inventory Staff. **Still missing:** there is no link between
-  inventory and projects — nothing records material consumed by a job. That remains open under
-  FR-3.
+- ~~**Inventory has a real backend now (P1-11), except for the project link.**~~ **Resolved
+  (FR-3's final clause).** Items, variants, stock adjustment (with a who/when/how-much/why audit
+  trail via `stock_movements`), low-stock reporting, and now materials-consumed-per-project are
+  all server-persisted through `/api/inventory`, shared correctly across Admin, Production
+  Manager, and Inventory Staff. A stock adjustment reason `'Used'`/`'Returned'` may optionally
+  carry a `projectId`, recorded from either the Job Order detail screen (`ProjectMaterials.jsx`)
+  or the Inventory screen's adjuster row (so Inventory Staff, who have no job-order screen, can
+  tag usage too); the project must be open (`Pending`/`In Progress`) and a `'Returned'` amount
+  can't exceed that project's net consumption of the variant so far. Quantities only — nothing
+  feeds Profit's `materials_cost`, since variants carry no unit price; that stays hand-entered.
 - ~~**Attendance status is never computed.**~~ **Resolved (FR-5), status/late minutes only.**
   `services/attendanceService.js` now computes `status`/`late_minutes` server-side against the
   shop's working hours (shift 08:30–17:00, a 15-minute grace period before `Late`, lunch
@@ -461,7 +471,7 @@ Stated as product facts — what a user experiences — not as code defects.
 |---|---|
 | FR-1 | Every state-changing API request is authorized server-side against the caller's actual role and, where applicable, ownership (e.g. a worker may only read/act on their own tasks and attendance). |
 | FR-2 | Account creation is an Admin-only, authenticated action with a whitelist of assignable roles. There is no unauthenticated path to creating any account. |
-| FR-3 | Inventory is a real, server-persisted module: items and variants via API, stock increment/decrement with an audit trail (who, when, how much, why), low-stock alerting against each variant's configurable `min_stock` **(✅ done, P1-11)**, and a record of materials consumed per project **(still open)**. |
+| FR-3 | Inventory is a real, server-persisted module: items and variants via API, stock increment/decrement with an audit trail (who, when, how much, why), low-stock alerting against each variant's configurable `min_stock` **(✅ done, P1-11)**, and a record of materials consumed per project **(✅ done — see B.6.)**. |
 | FR-4 | Notifications carry per-user read state (not a single shared flag), are correctly filtered by the recipient's role, and update without a manual page reload (polling or push). **(✅ done — see B.6.)** |
 | FR-5 | Attendance status, late minutes, and overtime minutes are computed server-side from recorded time-in/time-out against the shop's defined working hours, not left at a default. **(✅ status/late minutes done — see B.6; overtime deliberately on hold, see below.)** |
 | FR-6 | Assignment status changes follow an enforced state machine (e.g. `Assigned → For QA → Approved`, `For QA → Repair → Assigned`) rather than accepting an arbitrary string **(✅ done — `jobOrderService.updateQAStatus`'s `WORKER_SUBMITTABLE_FROM` allow-list and role-scoped target statuses reject an invalid transition with a 409)**; QA rejections require a reason **(✅ done — a `Repair` with no non-empty reason 400s; see B.5 workflow 5)**. |

@@ -173,12 +173,25 @@ export async function getVariantById(variantId) {
   return rows[0] || null;
 }
 
+// Sentinels adjustVariantStock can return instead of a resulting-stock number. `null` keeps its
+// pre-FR-3 meaning ("no such variant" or "would go negative" — the service disambiguates with a
+// follow-up lookup); OVER_RETURN is new and distinct, since it's a different 409 message and
+// doesn't need that follow-up lookup.
+export const OVER_RETURN = Symbol('over-return');
+
 // The concurrency-critical write: current_stock is adjusted and the audit row is written in one
 // transaction, with the guard against going negative expressed directly in the UPDATE's WHERE
 // clause rather than as a separate read-then-check — so two concurrent adjustments on the same
 // variant serialize correctly instead of racing on a stale read. A zero rowCount means either
 // "no such variant" or "would go negative"; the service disambiguates with a follow-up lookup.
-export async function adjustVariantStock(variantId, delta, reason, userId) {
+//
+// FR-3: `projectId` optionally tags the movement as consumed by / returned to a project (the
+// schema layer already restricts which reason/delta combinations may carry one — see
+// schemas/inventorySchemas.js). A 'Returned' movement is additionally checked here, inside the
+// same transaction, against that project+variant's net consumption so far — the UPDATE above
+// already serializes concurrent adjustments to this variant, so this read can't race with
+// another adjustment to the same variant.
+export async function adjustVariantStock(variantId, delta, reason, userId, projectId = null) {
   const client = await getClient();
   try {
     await client.query('BEGIN');
@@ -195,11 +208,24 @@ export async function adjustVariantStock(variantId, delta, reason, userId) {
       return null;
     }
 
+    if (reason === 'Returned' && projectId != null) {
+      const netRes = await client.query(
+        `SELECT COALESCE(-SUM(delta), 0)::int AS net_used
+         FROM stock_movements
+         WHERE variant_id = $1 AND project_id = $2`,
+        [variantId, projectId]
+      );
+      if (delta > netRes.rows[0].net_used) {
+        await client.query('ROLLBACK');
+        return OVER_RETURN;
+      }
+    }
+
     const resultingStock = updateRes.rows[0].current_stock;
     await client.query(
-      `INSERT INTO stock_movements (variant_id, user_id, delta, resulting_stock, reason)
-       VALUES ($1, $2, $3, $4, $5)`,
-      [variantId, userId, delta, resultingStock, reason || null]
+      `INSERT INTO stock_movements (variant_id, user_id, delta, resulting_stock, reason, project_id)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [variantId, userId, delta, resultingStock, reason || null, projectId]
     );
 
     await client.query('COMMIT');
@@ -218,14 +244,38 @@ export async function adjustVariantStock(variantId, delta, reason, userId) {
 export async function getVariantMovements(variantId, { limit, offset }) {
   const { rows } = await query(
     `SELECT
-       m.id, m.variant_id, m.user_id, m.delta, m.resulting_stock, m.reason, m.created_at,
-       u.first_name, u.last_name, COUNT(*) OVER() AS total_count
+       m.id, m.variant_id, m.user_id, m.delta, m.resulting_stock, m.reason, m.project_id,
+       m.created_at, u.first_name, u.last_name, COUNT(*) OVER() AS total_count
      FROM stock_movements m
      LEFT JOIN users u ON u.user_id = m.user_id
      WHERE m.variant_id = $1
      ORDER BY m.created_at DESC, m.id DESC
      LIMIT $2 OFFSET $3`,
     [variantId, limit, offset]
+  );
+  return splitCountedRows(rows);
+}
+
+// FR-3: a project's "materials consumed" record — one row per variant this project has ever
+// touched, netting 'Used' against 'Returned' movements. Capped-only (a project draws from a
+// small, bounded set of variants in practice), following the same pattern as getLowStock.
+export async function getProjectMaterials(projectId, { limit, offset }) {
+  const { rows } = await query(
+    `SELECT
+       i.id AS item_id, i.name AS item_name, i.unit,
+       v.id AS variant_id, v.variant_name,
+       COALESCE(-SUM(m.delta) FILTER (WHERE m.delta < 0), 0)::int AS used,
+       COALESCE(SUM(m.delta) FILTER (WHERE m.delta > 0), 0)::int AS returned,
+       COALESCE(-SUM(m.delta), 0)::int AS net_used,
+       COUNT(*) OVER() AS total_count
+     FROM stock_movements m
+     JOIN item_variants v ON v.id = m.variant_id
+     JOIN inventory_items i ON i.id = v.item_id
+     WHERE m.project_id = $1
+     GROUP BY i.id, i.name, v.id, v.variant_name
+     ORDER BY i.name ASC, v.variant_name ASC, v.id ASC
+     LIMIT $2 OFFSET $3`,
+    [projectId, limit, offset]
   );
   return splitCountedRows(rows);
 }

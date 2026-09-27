@@ -14,6 +14,8 @@ vi.mock('../services/inventoryService.js', () => ({
     removeItem: vi.fn(),
     adjustStock: vi.fn(),
     getMovements: vi.fn(),
+    getOpenProjects: vi.fn(),
+    getMaterials: vi.fn(),
   },
 }));
 
@@ -98,6 +100,39 @@ describe('GET /api/inventory/low-stock', () => {
     });
     expect(Inventory.getLowStockItems).toHaveBeenCalledOnce();
     expect(Inventory.getItem).not.toHaveBeenCalled();
+  });
+});
+
+describe('GET /api/inventory/projects', () => {
+  it('resolves to the project-picker endpoint, not GET /:id', async () => {
+    Inventory.getOpenProjects.mockResolvedValue({ rows: [{ id: 1, project_name: 'Cabinet' }], total: 1 });
+    const app = buildApp(ADMIN);
+    const res = await request(app).get('/api/inventory/projects');
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual([{ id: 1, project_name: 'Cabinet' }]);
+    expect(Inventory.getItem).not.toHaveBeenCalled();
+  });
+});
+
+describe('GET /api/inventory/projects/:projectId/materials', () => {
+  it('resolves to the materials endpoint, not GET /:id', async () => {
+    Inventory.getMaterials.mockResolvedValue({ rows: [{ variant_id: 5, net_used: 2 }], total: 1 });
+    const app = buildApp(ADMIN);
+    const res = await request(app).get('/api/inventory/projects/1/materials');
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({
+      success: true,
+      data: [{ variant_id: 5, net_used: 2 }],
+      meta: { page: 1, limit: 200, total: 1, totalPages: 1 },
+    });
+    expect(Inventory.getItem).not.toHaveBeenCalled();
+  });
+
+  it('400s a non-numeric projectId', async () => {
+    const app = buildApp(ADMIN);
+    const res = await request(app).get('/api/inventory/projects/abc/materials');
+    expect(res.status).toBe(400);
+    expect(Inventory.getMaterials).not.toHaveBeenCalled();
   });
 });
 
@@ -225,7 +260,7 @@ describe('POST /api/inventory/variants/:variantId/adjust', () => {
       .send({ delta: -1, reason: 'Used' });
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ success: true, data: { resultingStock: 4 } });
-    expect(Inventory.adjustStock).toHaveBeenCalledWith('5', -1, 'Used', 1);
+    expect(Inventory.adjustStock).toHaveBeenCalledWith('5', -1, 'Used', 1, undefined);
   });
 
   it('renders a service AppError(409) via the centralized error handler', async () => {
@@ -236,6 +271,63 @@ describe('POST /api/inventory/variants/:variantId/adjust', () => {
       .send({ delta: -100, reason: 'Used' });
     expect(res.status).toBe(409);
     expect(res.body).toEqual({ success: false, error: 'Insufficient stock' });
+  });
+
+  // FR-3: the reason/projectId/delta pairing rules enforced by schemas/inventorySchemas.js's
+  // adjustBody superRefine.
+  describe('project tagging', () => {
+    it('400s a Returned adjustment with no projectId', async () => {
+      const app = buildApp(ADMIN);
+      const res = await request(app)
+        .post('/api/inventory/variants/5/adjust')
+        .send({ delta: 1, reason: 'Returned' });
+      expect(res.status).toBe(400);
+      expect(Inventory.adjustStock).not.toHaveBeenCalled();
+    });
+
+    it('400s a Returned adjustment with a negative delta', async () => {
+      const app = buildApp(ADMIN);
+      const res = await request(app)
+        .post('/api/inventory/variants/5/adjust')
+        .send({ delta: -1, reason: 'Returned', projectId: 1 });
+      expect(res.status).toBe(400);
+    });
+
+    it('400s a projectId tagged to a Damaged adjustment', async () => {
+      const app = buildApp(ADMIN);
+      const res = await request(app)
+        .post('/api/inventory/variants/5/adjust')
+        .send({ delta: -1, reason: 'Damaged', projectId: 1 });
+      expect(res.status).toBe(400);
+    });
+
+    it('400s a Used adjustment tagged to a project with a positive delta', async () => {
+      const app = buildApp(ADMIN);
+      const res = await request(app)
+        .post('/api/inventory/variants/5/adjust')
+        .send({ delta: 1, reason: 'Used', projectId: 1 });
+      expect(res.status).toBe(400);
+    });
+
+    it('forwards a valid projectId to the service', async () => {
+      Inventory.adjustStock.mockResolvedValue(4);
+      const app = buildApp(ADMIN);
+      const res = await request(app)
+        .post('/api/inventory/variants/5/adjust')
+        .send({ delta: -3, reason: 'Used', projectId: 1 });
+      expect(res.status).toBe(200);
+      expect(Inventory.adjustStock).toHaveBeenCalledWith('5', -3, 'Used', 1, 1);
+    });
+
+    it('forwards a valid Returned projectId to the service', async () => {
+      Inventory.adjustStock.mockResolvedValue(4);
+      const app = buildApp(ADMIN);
+      const res = await request(app)
+        .post('/api/inventory/variants/5/adjust')
+        .send({ delta: 3, reason: 'Returned', projectId: 1 });
+      expect(res.status).toBe(200);
+      expect(Inventory.adjustStock).toHaveBeenCalledWith('5', 3, 'Returned', 1, 1);
+    });
   });
 });
 

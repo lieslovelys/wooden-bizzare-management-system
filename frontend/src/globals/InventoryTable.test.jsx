@@ -86,4 +86,72 @@ describe('InventoryTable', () => {
       reason: 'Received',
     }));
   });
+
+  // FR-3
+  describe('project tagging', () => {
+    const OPEN_PROJECTS = [{ id: 3, project_name: 'Cabinet Set' }];
+
+    it('lazily loads open projects only once Used/Returned is picked', async () => {
+      api.get.mockImplementation((url) => {
+        if (url === '/api/inventory') return Promise.resolve({ success: true, data: [SAMPLE_ITEM] });
+        if (url === '/api/inventory/projects') return Promise.resolve({ success: true, data: OPEN_PROJECTS });
+        return Promise.resolve({ success: true, data: [] });
+      });
+
+      render(<InventoryTable />);
+      await screen.findByText('Plywood');
+      fireEvent.click(screen.getByText('Plywood'));
+
+      expect(api.get).not.toHaveBeenCalledWith('/api/inventory/projects');
+
+      fireEvent.change(screen.getByTitle('Reason for adjustment'), { target: { value: 'Used' } });
+
+      await waitFor(() => expect(api.get).toHaveBeenCalledWith('/api/inventory/projects'));
+      expect(await screen.findByText('WB-03 — Cabinet Set')).toBeInTheDocument();
+    });
+
+    it('posts a tagged -1 Used adjustment once a project is selected', async () => {
+      api.get.mockImplementation((url) => {
+        if (url === '/api/inventory') return Promise.resolve({ success: true, data: [SAMPLE_ITEM] });
+        if (url === '/api/inventory/projects') return Promise.resolve({ success: true, data: OPEN_PROJECTS });
+        return Promise.resolve({ success: true, data: [] });
+      });
+      api.post.mockResolvedValue({ success: true, data: { resultingStock: 3 } });
+
+      render(<InventoryTable />);
+      await screen.findByText('Plywood');
+      fireEvent.click(screen.getByText('Plywood'));
+
+      fireEvent.change(screen.getByTitle('Reason for adjustment'), { target: { value: 'Used' } });
+      await screen.findByText('WB-03 — Cabinet Set');
+      fireEvent.change(screen.getByTitle('Project'), { target: { value: '3' } });
+
+      fireEvent.click(screen.getByText('-1'));
+
+      await waitFor(() => expect(api.post).toHaveBeenCalledWith('/api/inventory/variants/5/adjust', {
+        delta: -1,
+        reason: 'Used',
+        projectId: 3,
+      }));
+    });
+
+    it('disables +1 for Returned until a project is selected', async () => {
+      api.get.mockImplementation((url) => {
+        if (url === '/api/inventory') return Promise.resolve({ success: true, data: [SAMPLE_ITEM] });
+        if (url === '/api/inventory/projects') return Promise.resolve({ success: true, data: OPEN_PROJECTS });
+        return Promise.resolve({ success: true, data: [] });
+      });
+
+      render(<InventoryTable />);
+      await screen.findByText('Plywood');
+      fireEvent.click(screen.getByText('Plywood'));
+
+      fireEvent.change(screen.getByTitle('Reason for adjustment'), { target: { value: 'Returned' } });
+      await screen.findByText('WB-03 — Cabinet Set');
+
+      expect(screen.getByText('+1')).toBeDisabled();
+      fireEvent.change(screen.getByTitle('Project'), { target: { value: '3' } });
+      expect(screen.getByText('+1')).not.toBeDisabled();
+    });
+  });
 });

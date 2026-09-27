@@ -35,6 +35,25 @@ router.get('/low-stock', INVENTORY_ROLES, async (req, res) => {
   res.status(200).json(ok(rows, buildMeta({ ...pagination, total })));
 });
 
+// FR-3: the project picker for tagging a stock movement — GET /api/projects is Admin-only, so
+// Inventory Staff (who can adjust stock but can't see the Projects screen) need their own way to
+// list open projects. Registered before GET /:id for the same route-order reason as /low-stock.
+// P1-3: capped-only (open projects are naturally bounded).
+router.get('/projects', INVENTORY_ROLES, async (req, res) => {
+  const pagination = parsePagination(req.query, { defaultLimit: MAX_LIMIT });
+  const { rows, total } = await Inventory.getOpenProjects(pagination);
+  res.status(200).json(ok(rows, buildMeta({ ...pagination, total })));
+});
+
+// FR-3: a project's materials-consumed summary, read by globals/ProjectMaterials.jsx. Also
+// registered before GET /:id for the same reason.
+// P1-3: capped-only (a project draws from a small, bounded set of variants in practice).
+router.get('/projects/:projectId/materials', INVENTORY_ROLES, validate({ params: idParams('projectId') }), async (req, res) => {
+  const pagination = parsePagination(req.query, { defaultLimit: MAX_LIMIT });
+  const { rows, total } = await Inventory.getMaterials(req.params.projectId, pagination);
+  res.status(200).json(ok(rows, buildMeta({ ...pagination, total })));
+});
+
 router.get('/:id', INVENTORY_ROLES, validate({ params: idParams() }), async (req, res) => {
   const item = await Inventory.getItem(req.params.id);
   res.status(200).json(ok(item));
@@ -51,12 +70,13 @@ router.delete('/:id', INVENTORY_ROLES, validate({ params: idParams() }), async (
 });
 
 router.post('/variants/:variantId/adjust', INVENTORY_ROLES, validate({ params: idParams('variantId'), body: adjustBody }), async (req, res) => {
-  const { delta, reason } = req.body;
+  const { delta, reason, projectId } = req.body;
   const resultingStock = await Inventory.adjustStock(
     req.params.variantId,
     delta,
     reason,
-    req.session.user.user_id
+    req.session.user.user_id,
+    projectId
   );
   res.status(200).json(ok({ resultingStock }));
 });

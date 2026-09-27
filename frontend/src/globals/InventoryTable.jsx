@@ -2,8 +2,11 @@ import React, { useState, useEffect } from 'react';
 import '../css/inventory.css';
 import { api } from '../api/client';
 import { useToast } from '../context/ToastContext';
+import { formatProjectId } from '../utils/format';
 
-const ADJUST_REASONS = ['Received', 'Used', 'Damaged', 'Correction'];
+const ADJUST_REASONS = ['Received', 'Used', 'Damaged', 'Correction', 'Returned'];
+// FR-3: only these two reasons can be tagged to a project — see schemas/inventorySchemas.js.
+const PROJECT_TAGGABLE_REASONS = ['Used', 'Returned'];
 
 const InventoryTable = () => {
     // P1-11: inventory now persists server-side via /api/inventory instead of localStorage —
@@ -18,6 +21,12 @@ const InventoryTable = () => {
     // Which adjustment reason is currently selected per variant (+1/-1 both use it) — keyed by
     // variant id so each row's dropdown is independent.
     const [reasonByVariant, setReasonByVariant] = useState({});
+    // FR-3: which project a Used/Returned adjustment is tagged to, keyed by variant id the same
+    // way. '' means untagged (only valid for Used — Returned requires a project).
+    const [projectByVariant, setProjectByVariant] = useState({});
+    // Open projects for the tagging dropdown — fetched lazily, the first time a row's reason is
+    // set to Used or Returned, so the screen's initial load stays at one request.
+    const [openProjects, setOpenProjects] = useState(null);
 
     // States for Modal
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -61,6 +70,21 @@ const InventoryTable = () => {
     const getReason = (variantId) => reasonByVariant[variantId] || ADJUST_REASONS[0];
     const handleReasonChange = (variantId, reason) => {
         setReasonByVariant(prev => ({ ...prev, [variantId]: reason }));
+        if (PROJECT_TAGGABLE_REASONS.includes(reason) && openProjects === null) {
+            (async () => {
+                try {
+                    const result = await api.get('/api/inventory/projects');
+                    if (result.success) setOpenProjects(result.data);
+                } catch (error) {
+                    showToast(error.message || 'Failed to load projects.', 'error');
+                }
+            })();
+        }
+    };
+
+    const getProjectId = (variantId) => projectByVariant[variantId] || '';
+    const handleProjectChange = (variantId, projectId) => {
+        setProjectByVariant(prev => ({ ...prev, [variantId]: projectId }));
     };
 
     const handleDelete = async (e, id) => {
@@ -77,10 +101,15 @@ const InventoryTable = () => {
 
     const handleAdjustStock = async (e, itemId, variantId, amount) => {
         e.stopPropagation();
+        const reason = getReason(variantId);
+        const projectId = getProjectId(variantId);
         try {
             await api.post(`/api/inventory/variants/${variantId}/adjust`, {
                 delta: amount,
-                reason: getReason(variantId),
+                reason,
+                ...(PROJECT_TAGGABLE_REASONS.includes(reason) && projectId
+                    ? { projectId: Number(projectId) }
+                    : {}),
             });
             fetchItems();
         } catch (error) {
@@ -297,8 +326,34 @@ const InventoryTable = () => {
                                                                                 <option key={r} value={r}>{r}</option>
                                                                             ))}
                                                                         </select>
-                                                                        <button className="adjust-btn" onClick={(e) => handleAdjustStock(e, item.id, variant.id, 1)}>+1</button>
-                                                                        <button className="adjust-btn" onClick={(e) => handleAdjustStock(e, item.id, variant.id, -1)}>-1</button>
+                                                                        {/* FR-3: 'Used' consumes stock (only -1 makes sense) and 'Returned' restores
+                                                                            it (only +1 makes sense, and it requires a project) — see
+                                                                            schemas/inventorySchemas.js's adjustBody for the same rule enforced
+                                                                            server-side. */}
+                                                                        {PROJECT_TAGGABLE_REASONS.includes(getReason(variant.id)) && (
+                                                                            <select
+                                                                                className="project-select"
+                                                                                value={getProjectId(variant.id)}
+                                                                                onChange={(e) => handleProjectChange(variant.id, e.target.value)}
+                                                                                title="Project"
+                                                                            >
+                                                                                {getReason(variant.id) === 'Used' && <option value="">— No project —</option>}
+                                                                                {getReason(variant.id) === 'Returned' && <option value="">— Select a project —</option>}
+                                                                                {(openProjects || []).map(p => (
+                                                                                    <option key={p.id} value={p.id}>{formatProjectId(p.id)} — {p.project_name}</option>
+                                                                                ))}
+                                                                            </select>
+                                                                        )}
+                                                                        <button
+                                                                            className="adjust-btn"
+                                                                            disabled={getReason(variant.id) === 'Used' || (getReason(variant.id) === 'Returned' && !getProjectId(variant.id))}
+                                                                            onClick={(e) => handleAdjustStock(e, item.id, variant.id, 1)}
+                                                                        >+1</button>
+                                                                        <button
+                                                                            className="adjust-btn"
+                                                                            disabled={getReason(variant.id) === 'Returned'}
+                                                                            onClick={(e) => handleAdjustStock(e, item.id, variant.id, -1)}
+                                                                        >-1</button>
                                                                     </div>
                                                                 </div>
                                                             );

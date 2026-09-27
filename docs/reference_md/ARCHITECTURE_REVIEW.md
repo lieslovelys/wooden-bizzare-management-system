@@ -442,9 +442,9 @@ genuinely needs more than one core, that's a plan-upgrade decision (Hostinger's 
 not something to work around in Compose config.
 
 ### P1-11. Inventory is not multi-user at all
-**Status: ✅ Resolved** (for items, variants, stock adjustment, and low-stock reporting —
-"materials consumed per project," the fourth clause of PRD FR-3, is deliberately deferred; see
-below). `globals/InventoryTable.jsx` now talks to `/api/inventory` instead of `localStorage`, so
+**Status: ✅ Resolved**, now including "materials consumed per project" (the fourth clause of PRD
+FR-3 — closed by item 18; see below for what item 18 added on top of the rest of this section).
+`globals/InventoryTable.jsx` now talks to `/api/inventory` instead of `localStorage`, so
 Admin, Production Manager, and Inventory Staff finally see one shared, server-persisted view
 instead of three silently divergent per-browser copies.
 
@@ -468,11 +468,12 @@ dedicated `GET /api/inventory/low-stock` endpoint — deliberately **not** wired
 `is_read` flag; `target_role` values that don't match the role enum and are ignored by the
 reader) — inventory alerts would otherwise inherit both bugs.
 
-**Deliberately deferred:** "materials consumed per project" (the fourth FR-3 clause) — it needs
-new UI on the project/job-order screens and a link between a stock movement and a project that
-doesn't exist yet. Pagination on the inventory list and its movement history landed later as part
-of P1-3 (see that section). Also out of scope here: real-database integration tests (the new
-backend tests mock the model/service layers — see the P2 "No tests" bullet).
+**"Materials consumed per project" (the fourth FR-3 clause) — resolved, see item 18.** Deferred
+at the time this section was first written; item 18 added the `stock_movements.project_id` link
+and the UI on both the Job Order and Inventory screens. Pagination on the inventory list and its
+movement history landed later as part of P1-3 (see that section). Also out of scope here:
+real-database integration tests (the new backend tests mock the model/service layers — see the P2
+"No tests" bullet).
 
 The rest of this section is kept as the historical record of what was wrong.
 
@@ -668,9 +669,9 @@ Not urgent, but each of these increases the cost of every future change until ad
    did and didn't change.
 6. **P1-11 (Inventory backend)** — ✅ done: items/variants/stock-adjustment/low-stock now served
    from `/api/inventory` with a `stock_movements` audit trail, replacing the `localStorage`-only
-   screen; "materials consumed per project" (part of FR-3) deliberately deferred. Also landed:
-   Vitest in both halves, gated in CI, covering the new Inventory code (see the P2 "No tests"
-   bullet for what's still uncovered).
+   screen; "materials consumed per project" (part of FR-3) deliberately deferred at the time (later
+   closed — see item 18). Also landed: Vitest in both halves, gated in CI, covering the new
+   Inventory code (see the P2 "No tests" bullet for what's still uncovered).
 7. **P2 frontend-consolidation pass** — ✅ done: shared `ToastProvider`/`useToast()` replacing 12
    copy-pasted toast implementations; shared `utils/format.js` display formatters closing the
    `WB7`/`WB-7`/`WB-07` and `₱ 1200.00`/`₱1,200`/`1,200` drift; `globals/Attendance.jsx`'s five
@@ -733,7 +734,8 @@ Not urgent, but each of these increases the cost of every future change until ad
     live update — done next, see item 15), FR-9's remainder (the `For QA`/`Approved` worker
     lifecycle view, and actual QA-outcome notifications — its rejection-reason display already
     landed in phase 1; done next, see item 16), FR-5 (attendance computation — done next, see
-    item 17), and FR-3's materials-per-project half — see PRD.md C.1 for all seven.
+    item 17), and FR-3's materials-per-project half (done next, see item 18) — see PRD.md C.1 for
+    all seven.
 15. **FR-4 (notifications)** — ✅ done. `notifications.target_role` is now a real `user_role` value
     (migration `1790500717992_per-user-notifications.js` normalizes the legacy `'PM'`/`'QC'`
     values and preflight-checks for anything else, same pattern as
@@ -802,3 +804,35 @@ Not urgent, but each of these increases the cost of every future change until ad
     (`profitService` and everything pre-P1-11 on the frontend remain open). Backend tests
     138 → 161 (new `attendanceService.test.js`, new `attendanceRoutes.test.js`); frontend tests
     71 → 72 (new `globals/Attendance.test.jsx`). See PRD.md FR-5/B.6 for the full before/after.
+18. **FR-3's final clause (materials consumed per project)** — ✅ done, closing out FR-3 entirely.
+    A stock movement can now be tagged with the project it was consumed by or returned to, via one
+    write path: both screens still call the existing
+    `POST /api/inventory/variants/:variantId/adjust` (no second ledger). Migration
+    `1790509115968_stock-movement-project-link.js` adds `stock_movements.project_id` (FK →
+    projects, `SET NULL`, partial index `WHERE project_id IS NOT NULL`) — verified with a real
+    up → down → up round-trip. `schemas/inventorySchemas.js`'s `adjustBody` gains a `superRefine`
+    pairing rule: a `'Returned'` movement requires a `projectId` and a positive delta; a `projectId`
+    on any other reason is only allowed on `'Used'` and requires a negative delta. `ADJUST_REASON`
+    (schemas/common.js) gains `'Returned'`. `services/inventoryService.js`'s `adjustStock` checks
+    the tagged project exists (404) and isn't `Completed` (409) before writing; `adjustVariantStock`
+    (models/inventoryModel.js) additionally checks, inside the same transaction that already
+    row-locks the variant, that a `'Returned'` amount doesn't exceed that project+variant's net
+    consumption so far (409 `Cannot return more than this project has used` — a new `OVER_RETURN`
+    sentinel, distinct from the existing `null` "no such variant / would go negative" sentinel). A
+    project's materials-consumed record is simply its tagged movements netted per variant — new
+    `getProjectMaterials` (model) / `getMaterials` (service) / `GET
+    /api/inventory/projects/:projectId/materials` (route, capped-only); a new `GET
+    /api/inventory/projects` (capped-only, both registered ahead of `GET /:id` for the same
+    route-order reason as `/low-stock`) feeds the project picker on both screens, since
+    `GET /api/projects` is Admin-only and Inventory Staff need one too. New
+    `globals/ProjectMaterials.jsx`, mounted on `globals/JobOrderDetails.jsx` between the progress
+    table and the assign-worker form, shows the running summary (used/returned/net per variant)
+    and a record-usage/return form. `globals/InventoryTable.jsx`'s existing adjuster row gains a
+    project `<select>` (lazily fetched — only once a row's reason is set to `Used`/`Returned`, so
+    the screen's initial load stays at one request) and disables `+1` for `Used` and `-1` for
+    `Returned` (and `+1` for `Returned` until a project is picked), mirroring the schema's pairing
+    rule client-side. Deliberately out of scope, per the client's own instruction: nothing feeds
+    Profit's `materials_cost` — quantities only, since variants carry no unit price. Backend tests
+    161 → 177 (extended `inventoryService.test.js` and `inventoryRoutes.test.js`); frontend tests
+    72 → 77 (new `globals/ProjectMaterials.test.jsx`, extended `InventoryTable.test.jsx`). See
+    PRD.md FR-3/B.2/B.6 for the full before/after.
