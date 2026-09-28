@@ -60,36 +60,63 @@ Numbered so a review comment can cite one directly.
 
 ## 4. Palette (locked)
 
-The values already in production use, canonicalized. This table is also what the token migration
-(§5) reads from — the CSS variable names below are what `:root` should define, not something in
-place yet.
+**Landed** (§5, §7#7): every token below is a real CSS custom property on `:root` in
+`frontend/src/css/globals.css`, defined first (before any component stylesheet) since `main.jsx`
+imports it first. New UI work references the token, not the literal — §3 rule 7.
 
-| Role | Value | Proposed token | Notes |
+| Role | Canonical value | Token | Notes |
 |---|---|---|---|
-| Accent (primary) | `#cca43b` | `--color-accent` | The brand gold. 83 uses — the canonical one. |
-| Accent (variants in use) | `#D1AA3A`, `#b8a040`, `#d4c47a`, `#8b7a2a` | — | Drift, not intentional variety. Consolidate onto `--color-accent` (+ a computed hover/tint) during the token migration rather than keeping five golds. |
-| Surface (dark) | `#1A1612` | `--color-surface-dark` | "Dark espresso" — sidebar, dark buttons. |
-| Surface (light) | `#ffffff` | `--color-surface` | Page background. |
-| Surface (cream) | `#fbf5e8`, `#fcfaf5` | `--color-surface-cream` | Soft accent panels (e.g. worker detail box). |
-| Border / divider | `#eaeaea`, `#f0ede5` | `--color-border` | |
-| Text (muted) | `#8b816a`, `#888888` | `--color-text-muted` | |
-| Text on gold (dark) | `#5c4a11`, `#5a4a00`, `#4a3b00`, `#3a2e00` | `--color-accent-text` | Also drift — pick one during migration. |
-| Semantic: danger | `#d32f2f` | `--color-danger` | Overdue dates, rework/reject states. |
-| Semantic: success | `#2e6b3b` | `--color-success` | Approved states. |
-| Semantic: info | `#2b4c7e` | `--color-info` | In-progress states. |
+| Accent (primary) | `#cca43b` | `--color-accent` (+ `--color-accent-rgb`) | The brand gold. |
+| Accent (light) | `#d4c47a` | `--color-accent-light` | Light tint. |
+| Accent (dark) | `#8b7a2a` | `--color-accent-dark` | Hover/press shade — kept as its own token rather than folded into `--color-accent`, since it's a genuinely distinct shade, not drift. |
+| Surface (dark) | `#1a1612` | `--color-surface-dark` (+ `-rgb`) | "Dark espresso" — sidebar, dark buttons. Doubles as `--color-text` in a `color:` property — see the consolidation note below. |
+| Surface (light) | `#ffffff` | `--color-surface` (+ `-rgb`) | Page background. Doubles as `--color-text-inverse` in a `color:` property. |
+| Surface (cream) | `#fbf5e8` | `--color-surface-cream` | Soft accent panels (e.g. worker detail box). |
+| Border / divider | `#eaeaea` | `--color-border` | |
+| Text | `#1a1612` | `--color-text` | Same hex as surface-dark — see above. |
+| Text (muted) | `#8b816a` | `--color-text-muted` | |
+| Text (inverse) | `#ffffff` | `--color-text-inverse` | Same hex as surface — see above. |
+| Semantic: danger | `#d32f2f` | `--color-danger` (+ `-rgb`) | Overdue dates, rework/reject states. |
+| Semantic: success | `#2e6b3b` | `--color-success` (+ `-rgb`) | Approved states. |
+| Semantic: success (dark) | `#1e5631` | `--color-success-dark` | Hover shade. |
+| Semantic: info | `#2b4c7e` | `--color-info` (+ `-rgb`) | In-progress states. |
 
-If the redesign changes the palette, this table (and the tokens it defines) is the one place that
-needs updating for the change to propagate — that's the point of §5.
+**Consolidation map** — the drift each token's migration folded onto it (see item 7 in §7 for how
+this was done and verified):
+- `--color-accent`: `#D1AA3A`, `#d4af37`, `#d4b54e`, `#c8b060`, `#c8b840`, `#bfa15f`, `#b8a040`,
+  `#b8a030`, `#b89132` (9 variants, one brand color).
+- `--color-accent-light`: `#e8d98a`, `#e2ce8f`, `#d4c060`.
+- `--color-accent-text`: `#5a4a00`, `#4a3b00`, `#3a2e00`, `#4b3b1a`, `#4b3600`, `#4a3c0e`,
+  `#5b4614` (7 variants onto `#5c4a11`).
+- `--color-surface-cream`: `#fcfaf5`, `#faf7f0`, `#fdf8ee`, `#faf4e6`.
+- `--color-border`: `#f0ede5`, `#f4f4f4`.
+- `--color-text`: `#1a1a1a`, `#333`.
+- `--color-text-muted`: `#888888`, `#888`.
+- `--color-danger`: `#c62828`, `#cc3300`, `#ff0000`, `#d9534f`.
+
+**The literal tail.** ~92 distinct one-off colors (badge/status accents, the warning oranges
+`#f57c00`/`#e67e22`, rank bronze/silver, a handful of generic greys distinct from the muted-text
+family, etc.), each used a handful of times or fewer, stay as literals — forcing every incidental
+color onto an ill-fitting token isn't the goal; undoing the gold/brown/cream/border/text drift
+above was. If the redesign changes the palette, `:root`'s definitions are the one place that
+needs updating for the change to propagate.
+
+**Not migrated, and recorded here as a follow-up rather than silently dropped:** 54 inline
+`style={{ color: '#...' }}`-style hex literals in `.jsx` files (JobOrderDetails, InventoryTable,
+Navbar, ProjectVerification, etc.). A JSX inline style can reference a token exactly like any
+other CSS value (`style={{ color: 'var(--color-accent)' }}` works, since `:root`'s custom
+properties are visible everywhere) — this was simply out of scope for a pass scoped to
+`frontend/src/css/`, not a technical limitation, and is a small, mechanical follow-up.
 
 ## 5. Design tokens
 
-**Commitment:** migrate the hardcoded hex values above to CSS custom properties on `:root`,
-starting with the accent and neutrals (highest occurrence count, most drifted). This is a
-**separate pass** from the Worker responsiveness backlog in §7 — do not block worker fixes on it,
-and do not let a worker-fix PR turn into a repo-wide find/replace.
+**Landed.** The hardcoded hex values are migrated to the CSS custom properties on `:root` listed
+in §4, covering the accent and neutrals (highest occurrence count, most drifted) plus the
+semantic colors. This landed as its own pass, after the Worker responsiveness backlog in §7's
+worker-path items — not folded into a worker-fix PR as a repo-wide find/replace.
 
-Until the migration lands, rule 7 (§3) still applies: reuse an existing literal from §4 rather
-than inventing a new one.
+Rule 7 (§3) now means exactly what it always pointed at: reference the token from §4, and if a
+genuinely new color is needed, add it as a token rather than a new literal.
 
 ## 6. Priority: the Worker path
 
@@ -122,11 +149,15 @@ stack into a two-column grid, the floating hamburger moved into a real `.mobile-
 scrolled content can't run under it, and `:hover`-only affordances gated behind
 `@media (hover: hover)` with `:active` states added. Two things fixed beyond this table's original
 scope: `.wjo-back-btn` (`worker.css`) was also under 44px — a genuine §3.3 failure this backlog
-didn't enumerate — and the three `inset: 0` overlay conversions above. Not yet done: a human
-DevTools pass at 360×640 to visually confirm all six — jsdom computes no layout, so none of this
-could be asserted by the automated test suite. See §7 cross-cutting item 7's gold count below,
-which grew from 83 to **86** while this pass was in flight — the token migration is not yet
-reducing the drift it's meant to stop.
+didn't enumerate — and the three `inset: 0` overlay conversions above.
+
+The cross-cutting pass below (items 7–11) closed the "not yet done" gap this status used to note:
+a scratchpad-only Playwright sweep (cached Chromium, fixture-mocked API, never committed —
+driving every screen for every role at 360/768/1024px) now programmatically confirms zero
+horizontal page-body overflow and flags any interactive element under 44px, which jsdom's test
+suite structurally cannot do. What that sweep still can't confirm, and what remains genuinely
+unverified: how any of this actually feels on a real budget Android phone — touch responsiveness,
+on-screen keyboard behavior, and legibility under real shop-floor glare.
 
 | # | Finding | Where | Rule violated |
 |---|---|---|---|
@@ -139,13 +170,29 @@ reducing the drift it's meant to stop.
 
 ### Cross-cutting (after the worker path)
 
-| # | Finding | Where |
-|---|---|---|
-| 7 | Zero CSS custom properties exist anywhere in `frontend/src/css/`. The accent gold alone is hardcoded 86 times (up from 83) and has already drifted into 5 variants — the concrete case for §5. | all of `frontend/src/css/` |
-| 8 | `.app-container { overflow-x: hidden }` hides horizontal overflow instead of fixing its source — content wider than the viewport becomes unreachable rather than scrollable. | `frontend/src/css/globals.css:508-513` |
-| 9 | Tablet view (1024px) collapses the sidebar to icon-only with all labels hidden. For Worker specifically — one tab — that's a 90px rail holding a single unlabeled icon. | `frontend/src/css/globals.css:677-696` |
-| 10 | 8 screens (`admin/Profit.jsx`, `admin/WorkerList.jsx`, `admin/WorkerProductivity.jsx`, `globals/InventoryTable.jsx`, `globals/JobOrderDetails.jsx`, `globals/ProjectVerificationDetail.jsx`, `worker/WorkerJobOrderDetail.jsx`) use raw `<table>` with no mobile card conversion — `worker/WorkerJobOrderDetail.jsx`'s table is the one exception, already converted at 768px (`css/worker.css:625+`). | listed files |
-| 11 | Font-size unit drift: 92 `px` declarations vs. 218 `rem` across `frontend/src/css/`. | repo-wide |
+**Status: ✅ Resolved, items 7–11**, plus two related findings not originally enumerated here
+(a stray third breakpoint, and several overflow sources the sweep found beyond the raw tables
+item 10 named). Scoping this pass also corrected two things this table had gotten stale: item 10
+actually covered 7 unconverted tables, not 8 — `worker/WorkerJobOrderDetail.jsx`'s was already
+done — and FR-3 had added an 8th (`ProjectMaterials.jsx`) since this table was last written; and
+item 9's "Worker — one tab" was stale since FR-4 added a Notifications tab.
+
+| # | Finding | Where | Resolution |
+|---|---|---|---|
+| 7 | ~~Zero CSS custom properties exist anywhere in `frontend/src/css/`. The accent gold alone is hardcoded 86 times and has already drifted into 5+ variants.~~ | all of `frontend/src/css/` | **Resolved**: `:root` tokens (§4/§5), 820 literal→`var()` replacements across all 7 non-empty CSS files. A ~92-color literal tail of one-off badge/status colors deliberately stays literal — see §4. |
+| 8 | ~~`.app-container { overflow-x: hidden }` hides horizontal overflow instead of fixing its source.~~ | `frontend/src/css/globals.css` | **Resolved**: the rule is removed outright. Getting there required fixing every real overflow source it was masking — three unguarded `width: 1000px` containers with no `max-width` pairing, several unwrapped control rows, and a systemic CSS Grid/flex `min-width: auto` trap across every div-based "table" row in the app — not just item 10's tables. A scratchpad Playwright sweep confirms 0/105 overflow checks across every role/screen/viewport with the rule gone. |
+| 9 | ~~Tablet view (1024px) collapses the sidebar to icon-only with all labels hidden. For Worker specifically — one tab — that's a 90px rail holding a single unlabeled icon.~~ | `frontend/src/css/globals.css` | **Resolved**: every tab keeps its label now, stacked under the icon (96px rail, `min-height: 44px`, wraps to 2 lines for a longer label like "Project Verification"). Verified at 900px across Admin's full 13-tab set: zero overlap, every row ≥44px tall. |
+| 10 | ~~7 screens use raw `<table>` with no mobile card conversion.~~ | `admin/Profit.jsx`, `admin/WorkerList.jsx`, `admin/WorkerProductivity.jsx`, `globals/InventoryTable.jsx`, `globals/JobOrderDetails.jsx`, `globals/ProjectMaterials.jsx`, `globals/ProjectVerificationDetail.jsx` | **Resolved**: a shared `.wb-card-table` utility (generalizing the pre-existing `worker/WorkerJobOrderDetail.jsx` conversion) applied to all 7, plus `InventoryTable`'s expandable variants panel getting its own mobile treatment. New `tests/expectCardLabels.js` pins the data-label wiring across 8 test files. |
+| 11 | ~~Font-size unit drift: 92 `px` declarations vs. 218 `rem`.~~ | repo-wide | **Resolved**: all 92 converted (`N/16` rem, pixel-identical at the default root size). |
+| — | *Not originally listed*: two `@media (max-width: 900px)` rules (login, account list) violated rule 2 (§3) — a stray third breakpoint. | `globals.css` (login), `admin.css` (account list) | **Resolved**: both widened to the existing 1024px breakpoint. |
+
+**Known residual gap, not touched by this pass.** Several raw-table action buttons (inventory
+edit/delete, the profit-table delete icon, the inventory reason/adjust controls) are still under
+44px specifically in the 769–1024px tablet range: `.wb-card-table`'s conversion, like the
+Worker-path original it generalizes, is deliberately mobile-only (`max-width: 768px`), matching
+the codebase's existing breakpoint convention. Fixing this would mean resizing these controls at
+every width, including desktop, which is a design decision, not a responsiveness bug fix — left
+for a future pass rather than folded in silently here.
 
 ## 8. Deliberately deferred
 

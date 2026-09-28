@@ -725,7 +725,7 @@ Not urgent, but each of these increases the cost of every future change until ad
     track-A phase-1 pass, several items before this one was written), and DESIGN.md §7 items 7–11
     (the cross-cutting responsiveness backlog: the CSS custom-property/token migration,
     `.app-container`'s `overflow-x: hidden`, the 1024px icon-only rail, 7 unconverted `<table>`s,
-    px/rem drift) — still open, see item 19's own note on what's left after it.
+    px/rem drift) — closed by item 20 below.
 13. **Track A, phase 1 — QA accountability** — ✅ done. FR-8: `projects.status` is now the
     single source of truth, with `markProjectAsCompleted` enforcing the completion rule and
     404/409 distinctly in the database rather than only in the frontend. FR-7:
@@ -883,8 +883,62 @@ Not urgent, but each of these increases the cost of every future change until ad
       file also covers the fetch-fill/404-blank-form/save paths.
     - Backend tests 177 → 235; frontend tests 77 → 103.
     - **Still open after this:** the remaining admin list/modal screens (`AccountList.jsx`,
-      `WorkerList.jsx`, `AddWorkerModal.jsx`, `EditWorkerModal.jsx`, `ProjectHistory.jsx`,
-      `WorkerProductivity.jsx`), `InventoryTable.jsx`'s CRUD-modal half (its adjuster/project-tagging
-      half is already covered, from item 18), `globals/Navbar.jsx`, and `App.jsx`'s session
-      bootstrap — plus the DESIGN.md §7 cross-cutting CSS backlog and the declined role-shell
-      consolidation, neither of which this item touched.
+      `AddWorkerModal.jsx`, `EditWorkerModal.jsx`, `ProjectHistory.jsx` — `WorkerList.jsx` and
+      `WorkerProductivity.jsx` gained a render test as a side effect of item 20's mobile-card
+      conversion, but neither has real interaction coverage), `InventoryTable.jsx`'s CRUD-modal
+      half (its adjuster/project-tagging half is already covered, from item 18),
+      `globals/Navbar.jsx`, and `App.jsx`'s session bootstrap — plus the declined role-shell
+      consolidation, which this item didn't touch. The DESIGN.md §7 cross-cutting CSS backlog
+      this note used to list is closed — see item 20.
+
+20. **DESIGN.md §7 cross-cutting CSS backlog (items 7–11)** — ✅ done, six commits on `main`. With
+    this, everything in item 12's "still outstanding" list is closed except the declined
+    role-shell consolidation. See `docs/design/DESIGN.md` §4/§5/§7 for the binding-rule detail;
+    this entry covers what changed and how it was verified.
+    - **Mobile card tables + eliminate page overflow (items 10, 8).** A shared `.wb-card-table`
+      utility (`css/globals.css`) generalizes the pre-existing `worker/WorkerJobOrderDetail.jsx`
+      conversion — hide `<thead>`, turn each `<tr>` into a card, read each `<td>`'s label from a
+      `data-label` attribute via `::before`/`attr()` instead of a hardcoded `:nth-child` list — and
+      is applied to the 7 other raw `<table>`s (`admin/Profit.jsx`, `admin/WorkerList.jsx`,
+      `admin/WorkerProductivity.jsx`, `globals/InventoryTable.jsx`, `globals/JobOrderDetails.jsx`,
+      `globals/ProjectMaterials.jsx` — added by FR-3 since DESIGN.md's list was last written —
+      `globals/ProjectVerificationDetail.jsx`), with a new `tests/expectCardLabels.js` helper
+      wired into 8 test files (2 of them new: `WorkerList.jsx`/`WorkerProductivity.jsx` had zero
+      coverage before this). Removing `.app-container`'s `overflow-x: hidden` (item 8) required
+      first fixing everything it was masking beyond the tables: three unguarded `width: 1000px`
+      containers with no `max-width` pairing (`CreateAccount`, `ProjectHistory`,
+      `CreateProjectForm`, `Attendance`), several unwrapped control rows (`WorkerList`'s search
+      header, `JobOrder`'s priority filters, `InventoryTable`'s header, `Profit`'s input grid), and
+      a systemic CSS Grid/flex `min-width: auto` trap across every div-based "table" row in the app
+      (`.jol-item`, `.qc-pv-row`, `.wjo-item`, `.att-item`/`.log-item`, `.ph-item`, `.al-item`).
+    - **Labeled tablet rail (item 9).** The 769–1024px sidebar now keeps every tab's label
+      (stacked under the icon, wraps to 2 lines) instead of hiding it outright, closing the
+      specific case DESIGN.md called out (Worker's rail reduced to unlabeled icons).
+    - **Two stray `900px` breakpoints** (not in DESIGN.md's original item list, found scoping this
+      pass) — login and the account list — widened to the codebase's real 1024px breakpoint.
+    - **Font-size `px` → `rem` (item 11).** All 92 declarations converted; pixel-identical at the
+      default root size, since nothing overrides it.
+    - **Design tokens (item 7).** `:root` custom properties for the accent/surface/border/text/
+      semantic families, with ~9–18 drifted variants per family folded onto each; 820
+      literal-to-`var()` replacements across all 7 non-empty `css/` files via a scratchpad-only
+      script (never committed itself). A ~92-color literal tail (one-off badge/status colors)
+      deliberately stays literal — see DESIGN.md §4 for the full consolidation map and the
+      rationale for not forcing everything onto a token.
+    - **Verification.** A scratchpad-only Playwright sweep (cached Chromium, fixture-mocked
+      `/api/*`, never committed — no backend or database involved) drove every screen for every
+      role at 360/768/1024px after each step: 25 overflow failures at baseline, 0 after item 8
+      landed, still 0 after every later step. Frontend suite 105/105 throughout (up from 96 at the
+      start of this item — the 8 `expectCardLabels` wirings plus 2 new test files), lint clean (3
+      pre-existing warnings), build clean at every step.
+    - **Known residual gap, not touched:** several raw-table action buttons (inventory
+      edit/delete, the profit delete icon, the inventory reason/adjust controls) stay under 44px
+      specifically in the 769–1024px tablet range, since `.wb-card-table` is mobile-only
+      (`max-width: 768px`) by design, matching the codebase's breakpoint convention. Resizing
+      these at every width (including desktop) is a design decision, not a responsiveness fix.
+    - **Not verifiable in this environment, and not claimed:** how any of this feels on a real
+      budget Android phone — touch responsiveness, on-screen keyboard behavior, legibility under
+      shop-floor glare. The Playwright sweep confirms layout geometry, not feel.
+    - **Still open after this:** the 54 JSX inline-style hex literals the token migration didn't
+      touch (scoped to `frontend/src/css/` — see DESIGN.md §4), and everything item 19 already
+      left open (the remaining admin list/modal screens, `Navbar.jsx`, `App.jsx`'s session
+      bootstrap, and the declined role-shell consolidation).

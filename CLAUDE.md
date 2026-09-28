@@ -216,6 +216,16 @@ in `frontend/src/utils/format.js` rather than a local inline formatter, so the s
 identically everywhere (P2; before this, the same project id rendered as `WB7`, `WB-7`, or
 `WB-07` depending on the screen).
 
+Colors come from the `:root` custom properties defined at the top of `frontend/src/css/globals.css`
+(`--color-accent`, `--color-text`, `--color-danger`, etc. — see `docs/design/DESIGN.md` §4 for the
+full list and what each means) — don't add a new hex literal or reuse an existing one directly; if
+none of the tokens fit, that's a real new color and should become a new token, not a one-off
+literal (DESIGN.md §3 rule 7). A table that needs a mobile-responsive layout uses the shared
+`.wb-card-table` utility (same file) plus a `data-label` attribute on every non-`colspan` `<td>`,
+rather than a bespoke per-table mobile conversion — see any of `globals/JobOrderDetails.jsx`,
+`admin/Profit.jsx`, or `globals/InventoryTable.jsx` for the pattern, and
+`frontend/src/tests/expectCardLabels.js` for how it's tested.
+
 Notification read/dismissed state is per-user (FR-4): `notifications.target_role` gates who can
 see a row at all (a real `user_role` value, checked in every query in
 `backend/src/models/adminNotifModel.js`), and `notification_receipts` — not
