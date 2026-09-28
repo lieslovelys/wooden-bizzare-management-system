@@ -7,6 +7,12 @@
 // config object config/db.js would, and hands that to the runner directly.
 //
 // Usage (from backend/src): `npm run migrate` (up) or `npm run migrate:down` (down one step).
+//
+// Deliberately plain console.log/console.error, not config/logger.js's structured pino logger:
+// this is a one-shot CLI tool a human operator runs and reads directly (also true of
+// createAdmin.js and backfillPhotos.js) — `verbose: true` above already makes node-pg-migrate
+// itself print plain, human-readable progress, and JSON log lines would be strictly harder to
+// read next to that, for no aggregation/correlation benefit a script run by hand ever needs.
 import { runner } from 'node-pg-migrate';
 import path from 'path';
 import fs from 'fs';

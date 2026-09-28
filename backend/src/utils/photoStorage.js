@@ -8,6 +8,7 @@ import fsp from 'fs/promises';
 import path from 'path';
 import crypto from 'crypto';
 import { AppError } from '../errors/AppError.js';
+import { logger } from '../config/logger.js';
 
 // Docker sets this to a named volume (see docker-compose.yml's `uploads` volume); local
 // (non-Docker) dev defaults to a gitignored folder next to the rest of the backend source.
@@ -101,7 +102,10 @@ export async function savePhoto(buffer, ext) {
 // Best-effort delete: a missing file (already cleaned up, or never written) is not an error —
 // callers use this for both "replace the old photo" and "roll back a half-finished write", and
 // neither case should ever throw past this point. Any OTHER failure (permissions, disk error) is
-// logged with the filename, per CLAUDE.md's "no raw objects, an event + an id" logging rule.
+// logged with the filename, per CLAUDE.md's "no raw objects, an event + an id" logging rule —
+// via the shared base logger, not req.log: this util is called from both request-scoped code
+// (services/userService.js) and a bare CLI script (scripts/backfillPhotos.js), neither of which
+// can hand it a `req` to log through even if it wanted to.
 export async function removePhoto(name) {
   if (!name) return;
   try {
@@ -109,7 +113,10 @@ export async function removePhoto(name) {
     await fsp.rm(full);
   } catch (e) {
     if (e.code === 'ENOENT') return;
-    console.error('[photoStorage] failed to remove photo:', name, e.message);
+    // `photoPath`, not `photo` — the latter is one of config/logger.js's redacted field names
+    // (it means something different there: the legacy base64 column), and `name` here is just a
+    // filename, exactly the thing worth seeing in the log.
+    logger.error({ err: e, photoPath: name }, '[photoStorage] failed to remove photo');
   }
 }
 

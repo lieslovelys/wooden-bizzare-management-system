@@ -7,6 +7,9 @@
 //
 // Requires the same environment as the server (backend/src/.env) since it uses the same
 // db connection and user-creation logic.
+//
+// Deliberately plain console.log/console.error, not config/logger.js — see migrate.js's comment
+// on why: a one-shot CLI tool a human runs directly, not request/application logging.
 
 import 'dotenv/config';
 import User from '../services/userService.js';

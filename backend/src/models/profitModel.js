@@ -1,4 +1,5 @@
 import { query, getClient } from "../config/db.js";
+import { logger } from "../config/logger.js";
 
 // ============================================================
 // PROFIT MODEL
@@ -124,9 +125,13 @@ export async function getMonthlyProfit() {
     `);
     
     // Ibabalik nito ang computed profit (e.g., 34000)
-    return parseFloat(rows[0].total_monthly_profit); 
+    return parseFloat(rows[0].total_monthly_profit);
   } catch (err) {
-    console.error("Error getting monthly profit:", err);
+    // Unlike the model functions above, this one deliberately swallows the error rather than
+    // rethrowing (a dashboard tile failing shouldn't 500 the whole dashboard) — so, unlike those,
+    // this IS the only place this particular failure ever gets logged. Models can't touch `req`
+    // (CLAUDE.md), so the shared base logger, not req.log, is the right layer here too.
+    logger.error({ err }, "getMonthlyProfit: query failed, returning 0");
     return 0; // Para safe at hindi mag-crash, ibabalik ay 0 kapag may error
   }
 }

@@ -10,10 +10,17 @@
 // can be investigated by hand later rather than silently losing its photo.
 //
 // Usage (from backend/src): `npm run photos:backfill`
+//
+// Uses config/logger.js's structured logger, unlike migrate.js/createAdmin.js — those are
+// interactive tools a human types and reads directly (and migrate.js also wraps node-pg-migrate's
+// own plain-text verbose output, so partially structuring just its two lines would be
+// inconsistent); this one runs unattended on every container boot (docker-entrypoint.sh), so its
+// output lands in `docker compose logs` for someone to read later, not a live terminal.
 
 import 'dotenv/config';
 import { query } from '../config/db.js';
 import photoStorage from '../utils/photoStorage.js';
+import { logger } from '../config/logger.js';
 
 // Exported so tests can drive it against a mocked `query`/`photoStorage` without spawning a
 // process — see tests/backfillPhotos.test.js.
@@ -39,7 +46,7 @@ export async function backfillPhotos() {
       );
       migrated++;
     } catch (e) {
-      console.error('[backfillPhotos] could not migrate detail_id', row.detail_id, '-', e.message);
+      logger.error({ err: e, detailId: row.detail_id }, '[backfillPhotos] could not migrate row');
       skipped++;
     }
   }
@@ -49,7 +56,7 @@ export async function backfillPhotos() {
 
 async function main() {
   const { total, migrated, skipped } = await backfillPhotos();
-  console.log(`[backfillPhotos] ${migrated}/${total} migrated, ${skipped} skipped.`);
+  logger.info({ total, migrated, skipped }, '[backfillPhotos] done');
   process.exit(0);
 }
 
@@ -57,7 +64,7 @@ async function main() {
 // imported by the test suite.
 if (import.meta.url === `file://${process.argv[1]}`) {
   main().catch((err) => {
-    console.error('[backfillPhotos] failed:', err.message);
+    logger.error({ err }, '[backfillPhotos] failed');
     process.exit(1);
   });
 }

@@ -93,7 +93,9 @@ export async function createItemWithVariants({ name, category, unit, variants })
     return itemId;
   } catch (error) {
     await client.query('ROLLBACK');
-    console.error('Error in createItemWithVariants:', error.message);
+    // Not logged here — this always propagates to errorHandler.js, which logs every unexpected
+    // error centrally (structured, with the request's correlation id); a second log line here
+    // would just be an unstructured duplicate with neither.
     throw error;
   } finally {
     client.release();
@@ -156,7 +158,7 @@ export async function updateItemWithVariants(id, { name, category, unit, variant
     return id;
   } catch (error) {
     await client.query('ROLLBACK');
-    console.error('Error in updateItemWithVariants:', error.message);
+    // See createItemWithVariants above — errorHandler.js logs this centrally.
     throw error;
   } finally {
     client.release();
@@ -232,7 +234,7 @@ export async function adjustVariantStock(variantId, delta, reason, userId, proje
     return resultingStock;
   } catch (error) {
     await client.query('ROLLBACK');
-    console.error('Error in adjustVariantStock:', error.message);
+    // See createItemWithVariants above — errorHandler.js logs this centrally.
     throw error;
   } finally {
     client.release();

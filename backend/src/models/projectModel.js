@@ -35,8 +35,9 @@ const createProjectWithVariables = async (projectData) => {
     await client.query('COMMIT');
     return projectId;
   } catch (error) {
-    await client.query('ROLLBACK'); 
-    console.error("Error in createProjectWithVariables:", error);
+    await client.query('ROLLBACK');
+    // Not logged here — always propagates to errorHandler.js, which logs every unexpected error
+    // centrally (structured, with the request's correlation id).
     throw error;
   } finally {
     client.release();

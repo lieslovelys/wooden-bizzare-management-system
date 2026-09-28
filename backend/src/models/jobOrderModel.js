@@ -130,7 +130,8 @@ export const createJobAssignment = async (projectId, workerId, stageName, startD
         return rows[0];
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error("DATABASE ERROR in createJobAssignment:", error.message);
+        // Not logged here — always propagates to errorHandler.js, which logs every unexpected
+        // error centrally (structured, with the request's correlation id).
         throw error;
     } finally {
         client.release();
@@ -181,7 +182,7 @@ export const getTasksByWorkerId = async (workerId, { limit, offset, status, prio
         const { rows } = await query(sql, params);
         return splitCountedRows(rows);
     } catch (error) {
-        console.error("DATABASE ERROR in getTasksByWorkerId:", error.message);
+        // See createJobAssignment above — errorHandler.js logs this centrally.
         throw error;
     }
 };
@@ -225,7 +226,7 @@ export const getTasksForQA = async ({ limit, offset, stage } = {}) => {
         const { rows } = await query(sql, params);
         return splitCountedRows(rows);
     } catch (error) {
-        console.error("DATABASE ERROR in getTasksForQA:", error.message);
+        // See createJobAssignment above — errorHandler.js logs this centrally.
         throw error;
     }
 };
@@ -292,7 +293,7 @@ export const updateAssignmentStatus = async (assignmentId, newStatus, allowedFro
         return rows[0];
 
     } catch (error) {
-        console.error("DATABASE ERROR in updateAssignmentStatus:", error.message);
+        // See createJobAssignment above — errorHandler.js logs this centrally.
         throw error;
     }
 };
