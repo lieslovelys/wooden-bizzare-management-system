@@ -3562,6 +3562,11 @@ html, body {
     font-weight: bold;
 }
 
+/* Destructive-action variant (ConfirmModal's `danger` prop) — replaces the inline
+   `style={{color: 'var(--color-danger)'}}` that admin/AccountList.jsx and globals/Attendance.jsx
+   used to hardcode on their own bespoke modal copies. See ARCHITECTURE_REVIEW.md item 26. */
+.wb-modal-title.danger { color: var(--color-danger); }
+
 .wb-modal-text {
     color: #555;
     margin-bottom: 25px;
@@ -3590,6 +3595,13 @@ html, body {
     background: #d9cba0;
     cursor: not-allowed;
 }
+
+/* Destructive-action variant — see .wb-modal-title.danger above. Both `.wb-btn-yes` and its
+   `:hover` are also defined in css/admin.css at the same (0,3,0) specificity, so this explicit
+   `:hover` rule is needed to win regardless of which stylesheet loads last; `filter` avoids
+   adding a new hex literal (DESIGN.md §3 rule 7) for the darker hover shade. */
+.wb-btn-yes.danger { background: var(--color-danger); }
+.wb-btn-yes.danger:hover { background: var(--color-danger); filter: brightness(0.9); }
 
 /* FR-6: the repair-reason textarea in globals/ProjectVerificationDetail.jsx's ConfirmModal */
 .wb-modal-textarea {

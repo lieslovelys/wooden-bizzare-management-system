@@ -4,6 +4,7 @@ import { useToast } from '../context/ToastContext';
 import { formatTime12h, formatWorkerId, workerPhotoUrl } from '../utils/format';
 import { usePaginatedList } from '../hooks/usePaginatedList';
 import Pagination from './Pagination';
+import ConfirmModal from './ConfirmModal';
 
 const API = '/api';
 
@@ -331,7 +332,7 @@ const Attendance = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState('All');
 
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  // recordToDelete being non-null is what opens the modal — no separate boolean needed.
   const [recordToDelete, setRecordToDelete] = useState(null);
 
   const showToast = useToast();
@@ -376,22 +377,20 @@ const Attendance = () => {
 
   const handleDeleteClick = (id) => {
     setRecordToDelete(id);
-    setShowConfirmModal(true);
   };
 
   const executeDelete = async () => {
     if (!recordToDelete) return;
-    setShowConfirmModal(false);
+    const id = recordToDelete;
+    setRecordToDelete(null);
     try {
-      await api.delete(`${API}/attendance/${recordToDelete}`);
+      await api.delete(`${API}/attendance/${id}`);
       // Deleting a single row doesn't change which rows belong on this page, so update it in
       // place rather than round-tripping for a full refetch.
-      setAttendanceLog(prev => prev.filter(r => r.id !== recordToDelete));
+      setAttendanceLog(prev => prev.filter(r => r.id !== id));
       showToast("Record deleted successfully!", "success");
     } catch (err) {
       showToast(err.message || "Failed to delete record.", "error");
-    } finally {
-      setRecordToDelete(null);
     }
   };
 
@@ -410,25 +409,15 @@ const Attendance = () => {
   return (
     <div className="attendance-module">
       {/* RENDER CUSTOM CONFIRMATION MODAL PARA SA DELETE */}
-      {showConfirmModal && (
-        <div className="wb-modal-overlay">
-            <div className="wb-modal-box">
-                <h3 className="wb-modal-title" style={{color: 'var(--color-danger)'}}>Delete Record?</h3>
-                <p className="wb-modal-text">
-                    Are you sure you want to permanently delete this attendance record?
-                </p>
-                <div className="wb-modal-actions">
-                    <button className="wb-btn-no" onClick={() => setShowConfirmModal(false)}>Cancel</button>
-                    <button
-                        className="wb-btn-yes"
-                        style={{ backgroundColor: 'var(--color-danger)' }}
-                        onClick={executeDelete}
-                    >
-                        Yes, Delete
-                    </button>
-                </div>
-            </div>
-        </div>
+      {recordToDelete && (
+        <ConfirmModal
+          danger
+          title="Delete Record?"
+          text="Are you sure you want to permanently delete this attendance record?"
+          confirmLabel="Yes, Delete"
+          onCancel={() => setRecordToDelete(null)}
+          onConfirm={executeDelete}
+        />
       )}
 
       {view === 'list' && (

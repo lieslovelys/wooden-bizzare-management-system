@@ -50,4 +50,22 @@ describe('ConfirmModal', () => {
     render(<ConfirmModal title="Send Back for Repair?" confirmLabel="Send" confirmDisabled={false} onCancel={vi.fn()} onConfirm={vi.fn()} />);
     expect(screen.getByText('Send')).not.toBeDisabled();
   });
+
+  it('exposes a dialog role naming the title, for screen readers and for tests', () => {
+    render(<ConfirmModal title="Delete Account?" onCancel={vi.fn()} onConfirm={vi.fn()} />);
+    const dialog = screen.getByRole('dialog', { name: 'Delete Account?' });
+    expect(dialog).toBeInTheDocument();
+  });
+
+  it('applies the danger class to the title and confirm button when danger is set', () => {
+    render(<ConfirmModal danger title="Delete Account?" confirmLabel="Yes, Delete" onCancel={vi.fn()} onConfirm={vi.fn()} />);
+    expect(screen.getByText('Delete Account?')).toHaveClass('danger');
+    expect(screen.getByText('Yes, Delete')).toHaveClass('danger');
+  });
+
+  it('omits the danger class by default', () => {
+    render(<ConfirmModal title="Mark as Completed?" onCancel={vi.fn()} onConfirm={vi.fn()} />);
+    expect(screen.getByText('Mark as Completed?')).not.toHaveClass('danger');
+    expect(screen.getByText('Yes')).not.toHaveClass('danger');
+  });
 });

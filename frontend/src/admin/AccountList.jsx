@@ -2,14 +2,14 @@ import React, { useState, useEffect } from 'react';
 import '../css/admin.css';
 import { api } from '../api/client';
 import { useToast } from '../context/ToastContext';
+import ConfirmModal from '../globals/ConfirmModal';
 
 const AccountList = () => {
   const [accounts, setAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeRowId, setActiveRowId] = useState(null);
 
-  // --- BAGONG STATES PARA SA POP-UPS ---
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  // accountToDelete being non-null is what opens the modal — no separate boolean needed.
   const [accountToDelete, setAccountToDelete] = useState(null);
 
   const showToast = useToast();
@@ -33,19 +33,18 @@ const AccountList = () => {
 
   // --- BINAGONG DELETE FUNCTION: Papalabasin lang muna yung Modal ---
   const handleDeleteClick = (id, name, e) => {
-    e.stopPropagation(); 
+    e.stopPropagation();
     setAccountToDelete({ id, name }); // I-save kung sino yung buburahin
-    setShowConfirmModal(true); // Ipakita yung modal
   };
 
   // --- ITO YUNG MAG-EEXECUTE KAPAG NAG-YES SA MODAL ---
   const executeDelete = async () => {
     if (!accountToDelete) return;
-    
-    setShowConfirmModal(false); // Itago yung modal
-    
+    const { id } = accountToDelete;
+    setAccountToDelete(null); // Itago yung modal
+
     try {
-      const result = await api.delete(`/api/users/${accountToDelete.id}`);
+      const result = await api.delete(`/api/users/${id}`);
 
       if (result.success) {
         showToast('Account deleted successfully!', 'success');
@@ -56,8 +55,6 @@ const AccountList = () => {
     } catch (error) {
       console.error('Delete error:', error.message);
       showToast(error.message || 'An error occurred while deleting.', 'error');
-    } finally {
-      setAccountToDelete(null); // I-clear state
     }
   };
 
@@ -65,25 +62,18 @@ const AccountList = () => {
     <div className="account-list">
 
       {/* RENDER CUSTOM CONFIRMATION MODAL */}
-      {showConfirmModal && (
-        <div className="wb-modal-overlay">
-            <div className="wb-modal-box">
-                <h3 className="wb-modal-title" style={{color: 'var(--color-danger)'}}>Delete Account?</h3>
-                <p className="wb-modal-text">
-                    Are you sure you want to permanently delete the account of <strong>{accountToDelete?.name}</strong>?
-                </p>
-                <div className="wb-modal-actions">
-                    <button className="wb-btn-no" onClick={() => setShowConfirmModal(false)}>Cancel</button>
-                    <button 
-                        className="wb-btn-yes" 
-                        style={{ backgroundColor: 'var(--color-danger)' }}
-                        onClick={executeDelete}
-                    >
-                        Yes, Delete
-                    </button>
-                </div>
-            </div>
-        </div>
+      {accountToDelete && (
+        <ConfirmModal
+          danger
+          title="Delete Account?"
+          confirmLabel="Yes, Delete"
+          onCancel={() => setAccountToDelete(null)}
+          onConfirm={executeDelete}
+        >
+          <p className="wb-modal-text">
+            Are you sure you want to permanently delete the account of <strong>{accountToDelete.name}</strong>?
+          </p>
+        </ConfirmModal>
       )}
 
       <div className="account-list-container">
