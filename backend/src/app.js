@@ -70,6 +70,17 @@ app.use(compression());
 // CLAUDE.md's logging rule for why services/models don't: they never touch `req`.
 const httpLogger = pinoHttp({
     logger,
+    // Trims pino-http's default req/res serializers, which otherwise dump every request AND
+    // response header (helmet's full CSP string included) into every single log line — several
+    // hundred bytes of near-constant noise per request, not "structured" so much as "verbose."
+    // method/url/statusCode/responseTime is what every access-log line has always needed.
+    serializers: {
+        // `id` is what actually makes this a correlation id in the log output, not just in the
+        // X-Request-Id response header — easy to lose by accident when overriding the default
+        // serializer, since pino-http attaches it onto the same `req` object being serialized.
+        req: (req) => ({ id: req.id, method: req.method, url: req.url }),
+        res: (res) => ({ statusCode: res.statusCode }),
+    },
     genReqId: (req, res) => {
         const id = req.headers['x-request-id'] || randomUUID();
         res.setHeader('X-Request-Id', id);
