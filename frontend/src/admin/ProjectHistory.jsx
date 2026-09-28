@@ -81,7 +81,7 @@ const ProjectHistory = () => {
               </button>
 
               {detailsLoading || !projectDetails ? (
-                  <p style={{ textAlign: 'center', marginTop: '50px', color: '#888' }}>Loading project details...</p>
+                  <p style={{ textAlign: 'center', marginTop: '50px', color: 'var(--color-text-muted)' }}>Loading project details...</p>
               ) : (
                   <div className="ph-detailed-view">
                       
@@ -111,7 +111,7 @@ const ProjectHistory = () => {
                                   {projectDetails.variables && projectDetails.variables.length > 0 ? (
                                       projectDetails.variables.map(v => (
                                           <div key={v.id} style={{ marginBottom: '8px' }}>
-                                            <strong style={{color: '#1A1612'}}>{v.variable_name}:</strong> {v.variable_detail}
+                                            <strong style={{color: 'var(--color-text)'}}>{v.variable_name}:</strong> {v.variable_detail}
                                           </div>
                                       ))
                                   ) : (
@@ -139,7 +139,7 @@ const ProjectHistory = () => {
 
                           <div className="ph-task-table">
                               {/* Grid Header */}
-                              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr 1fr 1fr 1fr', padding: '15px', borderBottom: '2px solid #eaeaea', fontWeight: 700, color: '#8b816a', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '1px', textAlign: 'center' }}>
+                              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr 1fr 1fr 1fr', padding: '15px', borderBottom: '2px solid var(--color-border)', fontWeight: 700, color: 'var(--color-text-muted)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '1px', textAlign: 'center' }}>
                                   <div>Stage</div>
                                   <div>Worker</div>
                                   <div>Start Date</div>
@@ -162,8 +162,8 @@ const ProjectHistory = () => {
                                               : task.status;
 
                                           return (
-                                              <div key={task.assignment_id} style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr 1fr 1fr 1fr', padding: '18px 15px', borderBottom: '1px solid #f4f4f4', alignItems: 'center', textAlign: 'center', fontSize: '0.95rem', color: '#1A1612', fontWeight: 500 }}>
-                                                  <div><strong style={{color: '#1A1612'}}>{task.stage_name}</strong></div>
+                                              <div key={task.assignment_id} style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr 1fr 1fr 1fr', padding: '18px 15px', borderBottom: '1px solid var(--color-border)', alignItems: 'center', textAlign: 'center', fontSize: '0.95rem', color: 'var(--color-text)', fontWeight: 500 }}>
+                                                  <div><strong style={{color: 'var(--color-text)'}}>{task.stage_name}</strong></div>
                                                   <div>{task.first_name} {task.last_name}</div>
                                                   <div>{formatDate(task.start_date)}</div>
                                                   <div>{formatDate(actualDateCompleted)}</div> {/* Gumamit na rin ng actualDateCompleted dito */}
@@ -176,7 +176,7 @@ const ProjectHistory = () => {
                                           );
                                       })
                                   ) : (
-                                      <div style={{textAlign: 'center', padding: '30px', color: '#888'}}>
+                                      <div style={{textAlign: 'center', padding: '30px', color: 'var(--color-text-muted)'}}>
                                           No workers assigned yet.
                                       </div>
                                   )}
@@ -207,7 +207,7 @@ const ProjectHistory = () => {
       </div>
 
       {loading ? (
-        <p style={{ textAlign: 'center', color: '#888' }}>Loading history...</p>
+        <p style={{ textAlign: 'center', color: 'var(--color-text-muted)' }}>Loading history...</p>
       ) : (
         <div className="ph-grid-wrapper">
             
@@ -230,7 +230,7 @@ const ProjectHistory = () => {
                             onClick={() => handleRowClick(proj.id)}
                             title="Click to view details"
                         >
-                            <div className="ph-col" style={{color: '#888888', fontWeight: 600}}>{formatProjectId(proj.id)}</div>
+                            <div className="ph-col" style={{color: 'var(--color-text-muted)', fontWeight: 600}}>{formatProjectId(proj.id)}</div>
                             <div className="ph-col ph-project-name">{proj.project_name}</div>
                             <div className="ph-col">{formatDate(proj.date_started)}</div>
                             <div className="ph-col">{formatDate(proj.date_completed)}</div>

@@ -187,7 +187,7 @@ const ProjectVerificationDetail = ({ projectId, onBack }) => {
                                             </button>
                                         </div>
                                     ) : task.status === 'Repair' ? (
-                                        <span className="qc-pvd-status-badge" style={{backgroundColor: '#ff0000', color: '#ffffff'}}>Needs Repair</span>
+                                        <span className="qc-pvd-status-badge" style={{backgroundColor: 'var(--color-danger)', color: 'var(--color-text-inverse)'}}>Needs Repair</span>
                                     ) : (
                                         <span className="qc-pvd-status-badge">{task.status}</span>
                                     )}

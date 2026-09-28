@@ -48,7 +48,7 @@ const WorkerAvatar = ({ worker, size = 64, className = '' }) => {
     return <img src={src} alt="avatar" style={style} className={className} onError={() => setImgError(true)} />;
   }
   return (
-    <div className={className} style={{ ...style, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fbf5e8', color: '#cca43b', fontWeight: 700, fontSize: size * 0.35 }}>
+    <div className={className} style={{ ...style, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-surface-cream)', color: 'var(--color-accent)', fontWeight: 700, fontSize: size * 0.35 }}>
       {getInitials(worker)}
     </div>
   );
@@ -413,7 +413,7 @@ const Attendance = () => {
       {showConfirmModal && (
         <div className="wb-modal-overlay">
             <div className="wb-modal-box">
-                <h3 className="wb-modal-title" style={{color: '#C62828'}}>Delete Record?</h3>
+                <h3 className="wb-modal-title" style={{color: 'var(--color-danger)'}}>Delete Record?</h3>
                 <p className="wb-modal-text">
                     Are you sure you want to permanently delete this attendance record?
                 </p>
@@ -421,7 +421,7 @@ const Attendance = () => {
                     <button className="wb-btn-no" onClick={() => setShowConfirmModal(false)}>Cancel</button>
                     <button
                         className="wb-btn-yes"
-                        style={{ backgroundColor: '#C62828' }}
+                        style={{ backgroundColor: 'var(--color-danger)' }}
                         onClick={executeDelete}
                     >
                         Yes, Delete

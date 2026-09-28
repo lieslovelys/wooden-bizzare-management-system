@@ -77,7 +77,7 @@ const Navbar = ({ tabs, accountType }) => {
                     
                     <div className="user-info" style={{ marginLeft: '10px' }}>
                         <h2 style={{ margin: '0', fontSize: '1.2rem' }}>{userRole}</h2>
-                        <p style={{ margin: '0', fontSize: '0.9rem', color: '#666' }}>
+                        <p style={{ margin: '0', fontSize: '0.9rem', color: 'var(--color-text-muted)' }}>
                             {firstName} {lastName}
                         </p>
                     </div>
@@ -116,7 +116,7 @@ const Navbar = ({ tabs, accountType }) => {
                         style={{
                             marginTop: 'auto',
                             cursor: 'pointer',
-                            color: '#d9534f',
+                            color: 'var(--color-danger)',
                             fontWeight: 'bold',
                             borderTop: '1px solid rgba(255, 255, 255, 0.1)', // Ginawang lighter ang border para mas kita sa dark theme
                             paddingTop: '20px'

@@ -114,7 +114,7 @@ const ProjectMaterials = ({ projectId }) => {
                             </tr>
                         ))}
                         {materials.length === 0 && (
-                            <tr><td colSpan="5" style={{ textAlign: 'center', color: '#8b816a' }}>No materials recorded yet.</td></tr>
+                            <tr><td colSpan="5" style={{ textAlign: 'center', color: 'var(--color-text-muted)' }}>No materials recorded yet.</td></tr>
                         )}
                     </tbody>
                 </table>

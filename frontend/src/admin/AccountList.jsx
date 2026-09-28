@@ -68,7 +68,7 @@ const AccountList = () => {
       {showConfirmModal && (
         <div className="wb-modal-overlay">
             <div className="wb-modal-box">
-                <h3 className="wb-modal-title" style={{color: '#C62828'}}>Delete Account?</h3>
+                <h3 className="wb-modal-title" style={{color: 'var(--color-danger)'}}>Delete Account?</h3>
                 <p className="wb-modal-text">
                     Are you sure you want to permanently delete the account of <strong>{accountToDelete?.name}</strong>?
                 </p>
@@ -76,7 +76,7 @@ const AccountList = () => {
                     <button className="wb-btn-no" onClick={() => setShowConfirmModal(false)}>Cancel</button>
                     <button 
                         className="wb-btn-yes" 
-                        style={{ backgroundColor: '#C62828' }} 
+                        style={{ backgroundColor: 'var(--color-danger)' }}
                         onClick={executeDelete}
                     >
                         Yes, Delete
@@ -137,7 +137,7 @@ const AccountList = () => {
                   </div>
                 ))
               ) : (
-                <div style={{ textAlign: 'center', padding: '30px', color: '#8b816a', backgroundColor: '#ffffff', borderRadius: '12px' }}>
+                <div style={{ textAlign: 'center', padding: '30px', color: 'var(--color-text-muted)', backgroundColor: 'var(--color-surface)', borderRadius: '12px' }}>
                   No accounts found.
                 </div>
               )}

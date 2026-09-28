@@ -168,7 +168,7 @@ const ProjectList = () => {
                       {/* --- ADDED DELETE BUTTON --- */}
                       <button 
                         className="btn-action delete" 
-                        style={{ backgroundColor: '#dc3545', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer' }}
+                        style={{ backgroundColor: 'var(--color-danger)', color: 'var(--color-text-inverse)', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer' }}
                         onClick={(e) => {
                             e.stopPropagation(); // Stops the grid row from expanding/activating
                             handleDelete(proj.id, proj.project_name);
@@ -181,7 +181,7 @@ const ProjectList = () => {
                 </div>
               ))
             ) : (
-              <div style={{ textAlign: 'center', padding: '30px', color: '#8b816a', backgroundColor: '#ffffff', borderRadius: '12px' }}>
+              <div style={{ textAlign: 'center', padding: '30px', color: 'var(--color-text-muted)', backgroundColor: 'var(--color-surface)', borderRadius: '12px' }}>
                 No projects match your search or filter.
               </div>
             )}

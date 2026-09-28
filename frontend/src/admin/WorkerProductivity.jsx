@@ -113,7 +113,7 @@ const WorkerProductivity = () => {
                                 })
                             ) : (
                                 <tr>
-                                    <td colSpan="6" style={{ textAlign: 'center', padding: '30px', color: '#8B7E5C' }}>
+                                    <td colSpan="6" style={{ textAlign: 'center', padding: '30px', color: 'var(--color-text-muted)' }}>
                                         No workers found for this category.
                                     </td>
                                 </tr>

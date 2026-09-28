@@ -176,7 +176,7 @@ const JobOrderDetail = ({ jobId, onBack }) => {
                                 </div>
                             ))
                         ) : (
-                            <p style={{ fontSize: '12px', fontStyle: 'italic', color: '#8b816a' }}>No variables assigned.</p>
+                            <p style={{ fontSize: '12px', fontStyle: 'italic', color: 'var(--color-text-muted)' }}>No variables assigned.</p>
                         )}
                     </div>
                 </div>
@@ -214,7 +214,7 @@ const JobOrderDetail = ({ jobId, onBack }) => {
                             </tr>
                         ))}
                         {assignments.length === 0 && (
-                            <tr><td colSpan="5" style={{ textAlign: 'center', color: '#8b816a' }}>No workers assigned yet.</td></tr>
+                            <tr><td colSpan="5" style={{ textAlign: 'center', color: 'var(--color-text-muted)' }}>No workers assigned yet.</td></tr>
                         )}
                     </tbody>
                 </table>
@@ -234,7 +234,7 @@ const JobOrderDetail = ({ jobId, onBack }) => {
                     </button>
                     {/* INFO TEXT: Para malaman ni PM kung bakit disabled yung button */}
                     {isCompleteDisabled && totalAssigned > 0 && (
-                        <span style={{ fontSize: '12px', color: '#d9534f', fontStyle: 'italic' }}>
+                        <span style={{ fontSize: '12px', color: 'var(--color-danger)', fontStyle: 'italic' }}>
                             *All assigned stages must be Approved before completing.
                         </span>
                     )}

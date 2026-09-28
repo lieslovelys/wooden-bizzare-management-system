@@ -122,7 +122,7 @@ const WorkerJobOrder = () => {
 
             <div className="wjo-list">
                 {!userID || loading ? (
-                    <div style={{ padding: '20px', textAlign: 'center', color: '#cc0000' }}>
+                    <div style={{ padding: '20px', textAlign: 'center', color: 'var(--color-danger)' }}>
                         {!userID ? 'Loading worker session...' : 'Loading tasks...'}
                     </div>
                 ) : displayedTasks.length > 0 ? (
@@ -142,7 +142,7 @@ const WorkerJobOrder = () => {
                         </div>
                     ))
                 ) : (
-                    <div style={{ padding: '20px', textAlign: 'center', color: '#8b816a' }}>
+                    <div style={{ padding: '20px', textAlign: 'center', color: 'var(--color-text-muted)' }}>
                         {EMPTY_MESSAGE[activeFilter] || 'No tasks.'}
                     </div>
                 )}

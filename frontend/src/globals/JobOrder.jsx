@@ -84,7 +84,7 @@ const JobOrderList = () => {
 
             <div className="jol-list">
                 {loading ? (
-                    <div style={{ padding: '20px', textAlign: 'center', color: '#8b816a' }}>
+                    <div style={{ padding: '20px', textAlign: 'center', color: 'var(--color-text-muted)' }}>
                         Loading job orders...
                     </div>
                 ) : filteredJobs.length > 0 ? (
@@ -102,7 +102,7 @@ const JobOrderList = () => {
                         </div>
                     ))
                 ) : (
-                    <div style={{ padding: '20px', textAlign: 'center', color: '#8b816a' }}>
+                    <div style={{ padding: '20px', textAlign: 'center', color: 'var(--color-text-muted)' }}>
                         No projects match the selected priority filters.
                     </div>
                 )}

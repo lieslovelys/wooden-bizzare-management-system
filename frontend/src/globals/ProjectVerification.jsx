@@ -107,7 +107,7 @@ const ProjectVerification = () => {
                         </div>
                     ))
                 ) : (
-                    <div style={{ padding: '20px', textAlign: 'center', color: '#8b816a', fontStyle: 'italic' }}>
+                    <div style={{ padding: '20px', textAlign: 'center', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>
                         No pending projects for Quality Check.
                     </div>
                 )}
