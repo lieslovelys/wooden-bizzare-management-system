@@ -120,8 +120,11 @@ exported `app` with a stubbed `req.session` — no database or listening port ne
 and drives every route with a real `supertest` request, checking 401/403 across all five roles —
 see ARCHITECTURE_REVIEW.md item 19 and the "Route auth" rule below. Frontend tests mock
 `api/client.js` and render with `@testing-library/react` (jsdom). Coverage is not yet
-comprehensive — see `ARCHITECTURE_REVIEW.md`'s P2 "No tests, anywhere" item for what's still
-missing.
+comprehensive — item 23 closed out item 19/20's specific list of untested screens (the remaining
+admin list/modal screens, `InventoryTable.jsx`'s CRUD-modal half, `Navbar.jsx`, `App.jsx`'s
+session bootstrap), but several screens (the per-role dashboards, `CreateAccount.jsx`/
+`CreateProject.jsx`, the project detail/verification/job-order screens) still have none — see
+`ARCHITECTURE_REVIEW.md`'s P2 "No tests, anywhere" item for the fuller history.
 
 **Trap if you're migrating a pre-existing local database created before the initial-schema
 migration existed** (i.e. one originally bootstrapped by hand from the now-deleted

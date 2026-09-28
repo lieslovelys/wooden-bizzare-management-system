@@ -625,9 +625,10 @@ Not urgent, but each of these increases the cost of every future change until ad
   against the real `app.js` (`backend/src/tests/routeAuthorization.test.js`), plus five
   previously-untested core-workflow screens (`Login.jsx`, `auth-components/RoleBasedRedirect.jsx`/
   `ProtectedRoute.jsx`, `globals/JobOrderDetails.jsx`, `globals/ProjectVerificationDetail.jsx`,
-  `worker/WorkerJobOrderDetail.jsx`, `admin/Profit.jsx`). The remaining admin list/modal screens,
-  `Navbar.jsx`, and `App.jsx`'s session bootstrap are still uncovered — see item 19 for the exact
-  list.
+  `worker/WorkerJobOrderDetail.jsx`, `admin/Profit.jsx`).
+  **Backfilled since (item 23):** the remaining admin list/modal screens, `Navbar.jsx`
+  (+`Logout.jsx`), and `App.jsx`'s session bootstrap — closing this paragraph's frontend gap in
+  full except the declined role-shell consolidation, which was never a test-coverage question.
   ~~No CI~~ — **resolved**: `.github/workflows/ci.yml` (added in P1-10) runs backend install,
   frontend lint+test+build, and builds both Docker images; all three (`npm test` × 2, `npm run
   lint`) are now real gates — see the lint-errors bullet below for when the lint gate flipped.
@@ -885,14 +886,10 @@ Not urgent, but each of these increases the cost of every future change until ad
       === projId`, with `admin/Profit.test.jsx`'s header assertion as the regression test; that
       file also covers the fetch-fill/404-blank-form/save paths.
     - Backend tests 177 → 235; frontend tests 77 → 103.
-    - **Still open after this:** the remaining admin list/modal screens (`AccountList.jsx`,
-      `AddWorkerModal.jsx`, `EditWorkerModal.jsx`, `ProjectHistory.jsx` — `WorkerList.jsx` and
-      `WorkerProductivity.jsx` gained a render test as a side effect of item 20's mobile-card
-      conversion, but neither has real interaction coverage), `InventoryTable.jsx`'s CRUD-modal
-      half (its adjuster/project-tagging half is already covered, from item 18),
-      `globals/Navbar.jsx`, and `App.jsx`'s session bootstrap — plus the declined role-shell
-      consolidation, which this item didn't touch. The DESIGN.md §7 cross-cutting CSS backlog
-      this note used to list is closed — see item 20.
+    - ~~Still open after this: the remaining admin list/modal screens ..., `InventoryTable.jsx`'s
+      CRUD-modal half, `globals/Navbar.jsx`, and `App.jsx`'s session bootstrap~~ — **closed, see
+      item 23.** The declined role-shell consolidation remains open. The DESIGN.md §7
+      cross-cutting CSS backlog this note used to list is closed — see item 20.
 
 20. **DESIGN.md §7 cross-cutting CSS backlog (items 7–11)** — ✅ done, six commits on `main`. With
     this, everything in item 12's "still outstanding" list is closed except the declined
@@ -942,9 +939,8 @@ Not urgent, but each of these increases the cost of every future change until ad
       budget Android phone — touch responsiveness, on-screen keyboard behavior, legibility under
       shop-floor glare. The Playwright sweep confirms layout geometry, not feel.
     - **Still open after this:** the 54 JSX inline-style hex literals the token migration didn't
-      touch (scoped to `frontend/src/css/` — see DESIGN.md §4), and everything item 19 already
-      left open (the remaining admin list/modal screens, `Navbar.jsx`, `App.jsx`'s session
-      bootstrap, and the declined role-shell consolidation).
+      touch (scoped to `frontend/src/css/` — see DESIGN.md §4), and the declined role-shell
+      consolidation. Item 19's remaining test-coverage gaps are closed — see item 23.
 
 21. **PRD.md C.2 "Storage discipline": worker photos moved off the database** — ✅ done, three
     commits on `main`. This was the last C.2 NFR not blocked on the client or on VPS access — see
@@ -1089,3 +1085,48 @@ Not urgent, but each of these increases the cost of every future change until ad
       measurement noted above, plus PRD C.2's own "50–300 concurrent users" distinction, which
       still wants validating against real usage patterns once the app is live, not this pass's
       synthetic one.
+
+23. **Remaining frontend test coverage** — ✅ done, five commits on `main`. Closes item 19's and
+    item 20's "still open" lists in full except the declined role-shell consolidation and the 54
+    JSX inline-hex literals (both still open, unrelated to test coverage).
+    - **A real bug, found while scoping this item.**
+      `admin/WorkerList.jsx`'s `handleSaveNewWorker` caught its own errors and toasted them, but
+      `admin/AddWorkerModal.jsx`'s `handleSubmit` unconditionally showed a success toast and
+      cleared the form after `await`ing `onSave` — so a failed add (a duplicate username, a
+      validation 400, a 500) showed **both** the error toast and the success toast, and wiped
+      everything the admin had typed, on every failure. `EditWorkerModal.jsx` wasn't affected (it
+      neither awaits `onUpdate` nor toasts on success). Fixed by making `AddWorkerModal` the sole
+      owner of both toasts: `WorkerList`'s handler no longer catches, and `AddWorkerModal`'s catch
+      now surfaces the server's actual message. The regression test for this was verified against
+      the unfixed code first (confirmed it failed there) before the fix landed, matching the
+      precedent item 19 set with `Profit.jsx`'s `handleProjectChange` bug.
+    - **New coverage, previously untested screens:** `admin/AddWorkerModal.jsx`,
+      `admin/AccountList.jsx` (list, empty state, the delete-confirm modal, and both delete
+      outcomes), `admin/ProjectHistory.jsx` (built against the real `usePaginatedList` hook rather
+      than a mock, so the remark-filter query string and the "All" → no-param case are asserted
+      directly; the row-click drill-down; the per-task remark calculation including its fallback
+      to the project's own `date_completed`/`due_date` when a done task has neither),
+      `globals/Navbar.jsx` (role/name display, tab hrefs, the active-tab pathname match including
+      the bare-role-path → dashboard-tab fallback, the unread badge's `showUnreadBadge`/`99+`/
+      zero-count rules, the mobile menu) plus `globals/Logout.jsx`'s confirm portal, and
+      `App.jsx`'s session bootstrap — the `/api/session-user` `{success, data}` unwrap the file's
+      own comment calls "the highest-blast-radius site in the app," including the full redirect
+      chain a disallowed role's URL takes (`/admin/* → /login → / → their own shell`, never
+      actually rendering the shell it wasn't allowed into).
+    - **Interaction coverage added to already-render-tested screens:** `admin/WorkerList.jsx`
+      (search by name/formatted-id, role/type filters, the empty state, add/edit round-trips),
+      `admin/WorkerProductivity.jsx` (the Regular/Part-time tab switch, the role filter, the
+      empty-category message, gold/silver rank classes), and `globals/InventoryTable.jsx`'s
+      CRUD-modal half — the adjuster/project-tagging half was already covered from item 18 (Edit
+      prefilled from the row and keeping an existing variant's numeric id on submit, a
+      newly-added variant getting `id: undefined`, blank-named variants dropped, Cancel, both
+      delete outcomes, the category filter).
+    - **Noted, not touched:** `admin/WorkerProductivity.jsx`'s role filter omits "Delivery"
+      (present in `WorkerJobFields.jsx`'s `RoleSelect`, used by the add/edit worker forms) — may
+      be intentional, since delivery isn't a QC-scored production stage with early/late/repair
+      counts of its own, but flagged here rather than silently assumed either way.
+    - **Verification.** Frontend tests 125 → 177 across the five commits; lint clean throughout
+      (the same 3 pre-existing `JobOrderDetails.jsx` warnings, unrelated to this item); both
+      builds clean. Backend untouched by this item — its suite still 273/273.
+    - **Still open after this:** the declined role-shell consolidation, and the 54 JSX inline-hex
+      literals (item 20's own "still open" note) — neither is a test-coverage gap.
