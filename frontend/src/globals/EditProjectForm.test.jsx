@@ -113,9 +113,9 @@ describe('EditProjectForm', () => {
       </ToastContext.Provider>
     );
 
-    await vi.waitFor(() => expect(field(container, 'projectName').value).toBe('Bookshelf'));
+    await waitFor(() => expect(field(container, 'projectName').value).toBe('Bookshelf'));
     submitForm(container);
-    await vi.waitFor(() => expect(showToast).toHaveBeenCalledWith('Project successfully updated!', 'success'));
+    await waitFor(() => expect(showToast).toHaveBeenCalledWith('Project successfully updated!', 'success'));
 
     expect(onSuccess).not.toHaveBeenCalled();
     vi.advanceTimersByTime(1500);

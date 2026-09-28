@@ -64,14 +64,14 @@ describe('ProjectList', () => {
   it('debounces the search input', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     renderList();
-    await vi.waitFor(() => expect(screen.getByText('Dining Set')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Dining Set')).toBeInTheDocument());
     api.get.mockClear();
 
     fireEvent.change(screen.getByPlaceholderText('Search project ID or name....'), { target: { value: 'cab' } });
     expect(api.get).not.toHaveBeenCalled();
 
     await act(async () => { vi.advanceTimersByTime(300); });
-    await vi.waitFor(() => {
+    await waitFor(() => {
       const call = api.get.mock.calls.find(([url]) => url.startsWith('/api/projects'));
       expect(paramsOf(call[0]).get('search')).toBe('cab');
     });

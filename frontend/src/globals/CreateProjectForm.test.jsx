@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import CreateProjectForm from './CreateProjectForm';
 import { ToastContext } from '../context/ToastContext';
 
@@ -73,7 +73,7 @@ describe('CreateProjectForm', () => {
     fireEvent.change(field(container, 'projectName'), { target: { value: 'Cabinet Set' } });
     submitForm(container);
 
-    await vi.waitFor(() => expect(showToast).toHaveBeenCalledWith('Project successfully created!', 'success'));
+    await waitFor(() => expect(showToast).toHaveBeenCalledWith('Project successfully created!', 'success'));
     expect(field(container, 'projectName').value).toBe('');
   });
 
@@ -83,7 +83,7 @@ describe('CreateProjectForm', () => {
 
     submitForm(container);
 
-    await vi.waitFor(() => expect(showToast).toHaveBeenCalledWith('Server exploded', 'error'));
+    await waitFor(() => expect(showToast).toHaveBeenCalledWith('Server exploded', 'error'));
   });
 
   it('adds a variable row, and disables remove at the last row', () => {
