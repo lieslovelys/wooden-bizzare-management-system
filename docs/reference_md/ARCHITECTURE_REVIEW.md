@@ -627,8 +627,11 @@ Not urgent, but each of these increases the cost of every future change until ad
   `ProtectedRoute.jsx`, `globals/JobOrderDetails.jsx`, `globals/ProjectVerificationDetail.jsx`,
   `worker/WorkerJobOrderDetail.jsx`, `admin/Profit.jsx`).
   **Backfilled since (item 23):** the remaining admin list/modal screens, `Navbar.jsx`
-  (+`Logout.jsx`), and `App.jsx`'s session bootstrap — closing this paragraph's frontend gap in
-  full except the declined role-shell consolidation, which was never a test-coverage question.
+  (+`Logout.jsx`), and `App.jsx`'s session bootstrap.
+  **Backfilled since (item 25):** the project detail/list/verification/job-order screens, the
+  three role dashboards, and account/project creation — closing this paragraph's frontend gap in
+  full except the declined role-shell consolidation, which was never a test-coverage question, and
+  a short, deliberate list of routing-only/thin-wrapper files item 25 itself names.
   ~~No CI~~ — **resolved**: `.github/workflows/ci.yml` (added in P1-10) runs backend install,
   frontend lint+test+build, and builds both Docker images; all three (`npm test` × 2, `npm run
   lint`) are now real gates — see the lint-errors bullet below for when the lint gate flipped.
@@ -1130,8 +1133,11 @@ Not urgent, but each of these increases the cost of every future change until ad
     - **Verification.** Frontend tests 125 → 177 across the five commits; lint clean throughout
       (the same 3 pre-existing `JobOrderDetails.jsx` warnings, unrelated to this item); both
       builds clean. Backend untouched by this item — its suite still 273/273.
-    - **Still open after this:** the declined role-shell consolidation — see item 24 for the JSX
-      inline-hex literals, item 20's own "still open" note (neither was a test-coverage gap).
+    - **Still open after this, at the time:** the declined role-shell consolidation — see item 24
+      for the JSX inline-hex literals, item 20's own "still open" note (neither was a
+      test-coverage gap) — plus a further slice of untested screens this item's own scoping
+      hadn't enumerated: the project detail/list/verification/job-order screens, the three role
+      dashboards, and account/project creation. Closed by item 25 below.
 
 24. **JSX inline-hex literals migrated onto the `:root` tokens** — ✅ done, one commit on `main`
     plus this doc pass. Closes the last item on item 20's/item 23's "still open" lists — the 54
@@ -1164,11 +1170,16 @@ Not urgent, but each of these increases the cost of every future change until ad
       `--color-text-muted`. These are small, deliberate visual shifts of the same kind the CSS
       pass itself already accepted when it folded, e.g., `#ff0000` onto `#d32f2f`.
     - **Kept as a literal tail (8), matching the CSS pass's own precedent for what stays literal:**
-      `#666` (`Navbar.jsx`, `EditWorkerModal.jsx`), `#000000` and `#5C4033` (`EditWorkerModal.jsx`
-      — the worker-name heading's two-tone styling), `#5b5035` (`ProjectVerification.jsx`), `#999`
+      `#666`, `#000000`, and `#5C4033` (all three in `EditWorkerModal.jsx` — the subtitle plus the
+      worker-name heading's two-tone styling), `#5b5035` (`ProjectVerification.jsx`), `#999`
       (`PhotoUpload.jsx`), and `#ddd` (`AddWorkerModal.jsx` ×2) — neutral greys and a brown
       distinct from the muted-text family, each used once or twice, which is exactly what
-      DESIGN.md §4's literal-tail paragraph already describes for the CSS side.
+      DESIGN.md §4's literal-tail paragraph already describes for the CSS side. (Correction, made
+      during item 25's doc pass: this bullet originally also listed `Navbar.jsx`'s `#666` here,
+      but the implementation actually migrated that one site onto `--color-text-muted` — a
+      reasonable per-site call, since it's the same muted-subtitle role, just not what this bullet
+      said at the time. The count of 8 literals and the re-grep verification below were already
+      counting the corrected, as-shipped state; only this bullet's prose was stale.)
     - **No behavior change.** Every substitution is either the token's exact existing value or one
       of the drift folds above — nothing here is a new color decision beyond the four drift
       folds, which are named explicitly rather than silently absorbed.
@@ -1179,5 +1190,49 @@ Not urgent, but each of these increases the cost of every future change until ad
       2 out-of-scope exclusions above, confirming nothing was missed or double-counted. Frontend
       suite 177/177 (unchanged — no test asserts on any of these values), lint clean (the same 3
       pre-existing `JobOrderDetails.jsx` warnings), build clean. Backend untouched.
-    - **Still open after this:** the declined role-shell consolidation is the one item left on
-      this backlog's "still open" lists.
+    - **Still open after this:** the declined role-shell consolidation, plus item 23's own
+      leftover list of untested screens — closed by item 25 below.
+
+25. **Remaining frontend test coverage, second pass** — ✅ done, three commits on `main` plus this
+    doc pass. Closes CLAUDE.md's "Tests" paragraph list of still-untested screens: the per-role
+    dashboards, `CreateAccount.jsx`/`CreateProject.jsx`, and the project detail/verification/
+    job-order screens.
+    - **New coverage.** `globals/ProjectList.jsx` (default `status=Pending,In Progress`, the
+      status dropdown, debounced search, delete confirm/alert/refetch, and its Edit/notification
+      deep-link switches into the real `EditProjectForm`/`ProjectDetails`); `globals/
+      ProjectDetails.jsx` (render, the empty-variables fallback, the fetch-failure "Project not
+      found" state, Back); `globals/CreateProjectForm.jsx`/`globals/EditProjectForm.jsx` (POST/PUT
+      payload shape, the shared `useProjectForm` due-before-ordered validation blocking submit,
+      success/error toasts, `EditProjectForm`'s PRD B.6 date-prefill via `toDateInputValue` and its
+      1500ms post-submit `onSuccess` delay); `globals/JobOrder.jsx` (the priority-toggle filter,
+      including the "all three selected → no param sent" case; the sort-direction toggle; the
+      notification deep-link); `globals/ProjectVerification.jsx` (the stage filter; the
+      notification deep-link's `GET /api/assignments/:id` resolution — the same P1-3 fix item 8
+      made); `TempSignup.jsx` (the signup body shape, digit-stripping on the name fields, reset +
+      success toast, error toast leaving the form intact); `admin/A_Dashboard.jsx`/
+      `product_manager/PM_dashboard.jsx`/`quality_checker/QCDashboard.jsx` (stats-card rendering,
+      and for the latter two, the P1-3 regression their own code comments warn about — "tasks to
+      verify" must read `meta.total`, not the current page's `data.length`); `admin/
+      CreateAccount.jsx`/`admin/CreateProject.jsx` (the tab switch between their two children).
+    - **Testing note, not a source change.** Submitting a form in a test uses
+      `fireEvent.submit(form)` rather than clicking the submit button — jsdom runs the same
+      `required`/`min` constraint validation a real browser does on a button-driven submission, so
+      a click silently no-ops before `handleSubmit` (and the JS-level `validateDates()` check)
+      ever runs. Dispatching the submit event directly is testing-library's documented way around
+      that. Also: `vi.waitFor` (vitest's own) polls a condition but doesn't wrap it in React's
+      `act()`, so a DOM read taken right after one resolves can catch a state update mid-flight
+      when that update lands in the same tick as the awaited call — caught here by a stale read on
+      `TempSignup`'s post-submit form-reset. Every new file in this item (and the three
+      already-committed ones from earlier in this item that had used it) uses
+      `@testing-library/react`'s `waitFor` instead, which does wrap in `act()`.
+    - **Deliberately still not covered**, and not considered a gap: the five role-shell files
+      (`Admin.jsx`/`ProductionManager.jsx`/`QualityChecker.jsx`/`Worker.jsx`/`Inventory.jsx`),
+      which are routing-only and tied to the declined role-shell consolidation; the three one-line
+      `*Notification.jsx` wrappers over the already-tested `NotificationList.jsx`; `globals/
+      InfoCard.jsx`, exercised indirectly by every dashboard test above; `auth-components/
+      ProtectedRoute.jsx`, already covered by `RoleBasedRedirect.test.jsx`.
+    - **Verification.** Frontend tests 177 → 221 across the three commits; lint clean throughout
+      (the same 3 pre-existing `JobOrderDetails.jsx` warnings); both builds clean. Backend
+      untouched — its suite still 273/273.
+    - **Still open after this:** only the declined role-shell consolidation remains on this
+      backlog's "still open" lists.

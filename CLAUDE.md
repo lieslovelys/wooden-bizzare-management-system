@@ -119,12 +119,14 @@ exported `app` with a stubbed `req.session` — no database or listening port ne
 (mocking only `config/db.js`/`express-session`/`connect-pg-simple` and automocking every service)
 and drives every route with a real `supertest` request, checking 401/403 across all five roles —
 see ARCHITECTURE_REVIEW.md item 19 and the "Route auth" rule below. Frontend tests mock
-`api/client.js` and render with `@testing-library/react` (jsdom). Coverage is not yet
-comprehensive — item 23 closed out item 19/20's specific list of untested screens (the remaining
-admin list/modal screens, `InventoryTable.jsx`'s CRUD-modal half, `Navbar.jsx`, `App.jsx`'s
-session bootstrap), but several screens (the per-role dashboards, `CreateAccount.jsx`/
-`CreateProject.jsx`, the project detail/verification/job-order screens) still have none — see
-`ARCHITECTURE_REVIEW.md`'s P2 "No tests, anywhere" item for the fuller history.
+`api/client.js` and render with `@testing-library/react` (jsdom). Items 23 and 25 closed out
+every screen with real logic that used to have no coverage. What's left untested is a short,
+deliberate list, not a gap: the five role-shell files (routing only, tied to the declined
+role-shell consolidation), the three one-line `*Notification.jsx` wrappers over the
+already-tested `NotificationList.jsx`, `globals/InfoCard.jsx` (exercised indirectly by every
+dashboard test), and `auth-components/ProtectedRoute.jsx` (covered by
+`RoleBasedRedirect.test.jsx`) — see `ARCHITECTURE_REVIEW.md` items 23/25 and its P2 "No tests,
+anywhere" item for the fuller history.
 
 **Trap if you're migrating a pre-existing local database created before the initial-schema
 migration existed** (i.e. one originally bootstrapped by hand from the now-deleted
