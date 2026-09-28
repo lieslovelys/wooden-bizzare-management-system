@@ -345,8 +345,11 @@ code already assumes.
 **Status: ✅ Resolved** — `server.js` now runs `helmet` (CSP rebuilt without
 `script-src 'unsafe-eval'`; `style-src 'unsafe-inline'` is kept deliberately, since the
 frontend relies on it — removing that dependency is a separate P2 frontend refactor),
-`compression`, `morgan`, `app.set('trust proxy', 1)`, `GET /healthz`/`GET /readyz`, and a
-`SIGTERM`/`SIGINT` graceful-shutdown handler that drains requests and closes the pool.
+`compression`, structured request logging, `app.set('trust proxy', 1)`, `GET /healthz`/
+`GET /readyz`, and a `SIGTERM`/`SIGINT` graceful-shutdown handler that drains requests and closes
+the pool. `morgan` (plain-text access logging) was replaced by `pino`/`pino-http` — see item 22 —
+once the "no request logging" gap this item closed grew a follow-up requirement of its own
+(structured logs, correlation ids) that morgan can't provide.
 
 No `helmet`, no `express-rate-limit` (beyond the login-specific fix in P0-8), no `compression`, no
 centralized error-handling middleware, no request logging, no health/readiness endpoint, no
@@ -1010,3 +1013,79 @@ Not urgent, but each of these increases the cost of every future change until ad
       any not-yet-migrated photo); `attendance.photo` (unused — no route or service reads or
       writes it, so there's nothing to migrate); off-box backup sync automation (already
       P1-10's own open item, unchanged by this).
+
+22. **PRD.md C.2 "Observability": structured logging, correlation IDs, and a first real latency
+    measurement** — ✅ done, four commits on `main`. The last C.2 item that needed no one else's
+    input — see PRD.md C.2's own Observability/Latency/Database-pooling rows for the resolved-
+    state summary.
+    - **The problem.** `morgan` gave a plain-text access log (method/path/status) and nothing
+      else: no way to tell which of several log lines belonged to the same request, no structured
+      (parseable) format, and ~33 separate `console.log`/`console.error` calls scattered across
+      15 files, several of which logged an error and then rethrew it — duplicating, in an
+      unstructured and un-correlated form, what the centralized error handler already saw.
+      Meanwhile, the NFR's own p95 latency target had never actually been measured — it was a
+      number in a table, not a verified property.
+    - **Structured logging.** `morgan` is gone; `pino` + `pino-http` (net **−1** dependency) give
+      one shared logger (`config/logger.js`, JSON always — no `pino-pretty`, kept simple) with a
+      `redact` config as defense-in-depth alongside the existing "never log passwords/financial
+      payloads" rule. `pino-http` (`app.js`) generates a correlation id per request (honors an
+      incoming `X-Request-Id`, otherwise mints a UUID), echoes it on the response, and hands every
+      request a `req.log` child logger pre-bound with that id — trimmed to
+      `{id, method, url}`/`{statusCode}` rather than pino-http's default full-header dump, which
+      was several hundred bytes of near-constant noise per line (caught and fixed by checking real
+      log output from a running server, not just the test suite — see below). `/healthz`/`/readyz`
+      are excluded from the automatic access log (polled every 10–15s by the Docker healthcheck;
+      logging every poll is noise, not a request worth correlating anything to), but still logged
+      explicitly on a real `/readyz` failure.
+    - **The `console.*` sweep.** Every call site outside `tests/` is now one of: `req.log` (routes,
+      errorHandler.js — where a request is in scope); the shared `logger` directly (services/
+      models/`server.js`/`config/db.js` — these can't touch `req`, per CLAUDE.md's architecture
+      rule, so no correlation id, which is correct: they're not request-scoped events); or a
+      documented exception. The biggest simplification: eight model functions
+      (`inventoryModel.js` ×3, `jobOrderModel.js` ×4, `projectModel.js` ×1) logged an error and
+      then unconditionally rethrew it — always propagating to `errorHandler.js`, which now logs
+      every unexpected error centrally anyway. The log line was removed, not migrated, since a
+      second copy with neither structure nor a correlation id was strictly worse information than
+      the one `errorHandler.js` already produces. `profitModel.js`'s `getMonthlyProfit` is the one
+      real exception among the models (it swallows its error and returns `0` rather than
+      rethrowing, so nothing else will ever log that failure) and keeps logging, migrated to the
+      shared logger. Caught a real bug applying the same treatment to
+      `utils/photoStorage.js::removePhoto`: logging the filename under the key `photo` would have
+      been silently redacted by `config/logger.js`'s own redact list (which targets that literal
+      key — meaning something different there, the legacy base64 column) — renamed to `photoPath`
+      in the log call. `scripts/migrate.js`/`createAdmin.js` deliberately keep plain
+      `console.log`/`console.error` (one-shot CLI tools a human runs and reads directly;
+      `migrate.js` also wraps node-pg-migrate's own plain-text verbose output, so partially
+      structuring just its two wrapper lines would be inconsistent for no benefit) —
+      `scripts/backfillPhotos.js`, by contrast, moved to the shared logger, since unlike the other
+      two it runs unattended on every container boot and has no third-party plain-text output to
+      stay consistent with.
+    - **Load test.** A scratchpad-only (never committed) `autocannon` run against the real local
+      dev backend, seeded with a modest, clearly-tagged synthetic dataset (~60 workers, ~60
+      projects, ~120 assignments, 20 inventory items — the real dev DB was otherwise 11 users, 1
+      project, too sparse to say anything about pagination/join cost) and cleaned up
+      (verified byte-for-byte back to the pre-seed row counts) immediately after. Six
+      representative read endpoints at 10/30/60 concurrent connections: **zero errors, zero
+      timeouts, p99 under 130ms in every case** — comfortably inside the 500ms target. Pushed to
+      300 concurrent connections (far past the "50–300 users with an open tab, not 300
+      simultaneous requests" scenario PRD.md C.2 itself describes) against the single heaviest
+      endpoint: still zero errors, latency degraded gracefully to ~850ms p97.5 rather than hanging
+      or crashing — bounded queuing, not the indefinite kind the NFR warns against, though also
+      not a clean fail-fast rejection; recorded as a partial observation, not oversold as either.
+    - **Not representative, and not claimed as such:** this ran on an 8-core/~8GB local dev
+      machine, not the 1-vCPU/4GB target VPS — these numbers are a lower bound on real latency,
+      not a prediction of it. A real measurement against the actual deployed hardware, once it's
+      provisioned (still P1-10's own open item), is still open.
+    - **Verification.** Backend suite 273/273 throughout (read carefully before each console.*
+      removal to confirm no test asserted on it — none did). No new tests were added purely for
+      logging plumbing (there's no assertion-worthy behavior change a route/service test would
+      catch that the existing 273 don't already cover), but the structured-output and
+      correlation-id claims above were verified against a real running server, not inferred from
+      the test suite passing — see the serializer bug this caught, above. Frontend untouched by
+      this item. Backend `npm audit`: removing morgan actually dropped a vulnerability count (4 →
+      3); the remaining three (`body-parser`, `brace-expansion`, `qs` — all transitive, none from
+      `pino`/`pino-http`) are pre-existing and out of scope here.
+    - **Still open after this:** everything item 21 already left open, plus the real-VPS latency
+      measurement noted above, plus PRD C.2's own "50–300 concurrent users" distinction, which
+      still wants validating against real usage patterns once the app is live, not this pass's
+      synthetic one.

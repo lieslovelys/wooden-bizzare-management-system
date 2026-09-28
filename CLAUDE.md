@@ -47,7 +47,7 @@ backend/
                            # (and `pool`) unstarted, so tests can import it without binding a port.
     server.js              # process entrypoint: app.listen() + SIGTERM/SIGINT drain — nothing else
     Dockerfile, docker-entrypoint.sh, .dockerignore
-    config/db.js
+    config/db.js, logger.js   # logger.js: shared structured (pino) logger — see below
     migrations/           # node-pg-migrate; ALL schema changes land here, including the initial
                            # schema (a fresh DB is just `npm run migrate`, nothing else first)
     scripts/               createAdmin.js, migrate.js, backfillPhotos.js   # see below
@@ -151,7 +151,8 @@ for the Docker Compose path; not read by `npm start`/`npm run dev` at all.
 | `ALLOWED_ORIGINS` | Comma-separated CORS allowlist |
 | `COOKIE_SECURE` | `true` marks the session cookie HTTPS-only. Deliberately **not** tied to `NODE_ENV` (see P1-10) — leave `false` until the deployment actually terminates TLS somewhere, or the browser will never send the cookie back and every login will silently fail. |
 | `PORT` | Server port (default `8080`) |
-| `NODE_ENV` | `production` enables the verbose `morgan` log format. No longer affects the cookie flag — see `COOKIE_SECURE`. |
+| `NODE_ENV` | Production-mode toggle. No longer affects the cookie flag (see `COOKIE_SECURE`) or the log format (see `LOG_LEVEL` — `pino`'s output is always structured JSON regardless of environment). |
+| `LOG_LEVEL` | Optional — minimum level `config/logger.js`'s shared `pino` logger emits (default `'info'`). Forced to `'silent'` automatically under Vitest (`VITEST` is set by the test runner itself), regardless of this variable. |
 | `UPLOAD_DIR` | Optional locally — worker photo files (`utils/photoStorage.js`). Defaults to `backend/src/uploads/` (gitignored) when unset. The Docker deployment sets it to `/data/uploads`, the mountpoint of the `uploads` named volume (`docker-compose.yml`). |
 
 **`frontend/.env`** (untracked, required for local non-Docker dev)
@@ -273,8 +274,16 @@ the hook or the `<Pagination>` component.
   Express request and keeps every response body constructed in exactly one place (the route).
 - **Never log request bodies, full user rows, or financial payloads.** `userRoutes.js`'s login
   route used to log the bcrypt hash on every attempt (P0-7) — already fixed, but don't repeat
-  that shape. `console.log`/`console.error` should carry an event description and an ID, not a
-  raw object.
+  that shape. A log call should carry an event description and an id, not a raw object;
+  `config/logger.js`'s `redact` config is defense-in-depth on top of this, not a substitute for it.
+- **Logging goes through `req.log` (inside a route or `errorHandler.js`, where a request is in
+  scope — this is a structured, pre-correlated child logger, courtesy of `app.js`'s `pino-http`
+  middleware) or the shared `logger` from `backend/src/config/logger.js` (everywhere else:
+  services/models can't touch `req`, per the rule above; neither can `server.js`/`config/db.js`'s
+  startup/shutdown code, which runs outside any request). Never plain `console.log`/
+  `console.error` in application code — the two exceptions are `scripts/migrate.js` and
+  `scripts/createAdmin.js`, one-shot CLI tools a human runs and reads directly, documented in
+  their own header comments.
 - **Money is `numeric(12,2)`.** `net_profit` and `total_expenses` on `project_profit` are
   **generated stored columns** — computed by Postgres from the other columns. Never recompute
   profit in JS; read the generated column.
