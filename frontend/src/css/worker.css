@@ -8,14 +8,14 @@
     max-width: 1000px;
     margin: 40px auto;
     font-family: 'Inter', sans-serif;
-    color: #1A1612; /* Dark Espresso */
+    color: var(--color-text); /* Dark Espresso */
     padding: 20px;
     box-sizing: border-box;
 }
 
 /* --- HEADER --- */
 .wjo-header {
-    border-bottom: 2px solid #eaeaea; /* Manipis at malinis na linya */
+    border-bottom: 2px solid var(--color-border); /* Manipis at malinis na linya */
     padding-bottom: 12px;
     margin-bottom: 25px;
     width: 100%;
@@ -25,7 +25,7 @@
     font-family: 'Playfair Display', serif;
     font-size: 2.2rem;
     font-weight: 700;
-    color: #1A1612;
+    color: var(--color-text);
     margin: 0 0 6px 0;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -33,7 +33,7 @@
 
 .wjo-subtitle {
     font-size: 0.95rem;
-    color: #8b816a;
+    color: var(--color-text-muted);
     margin: 0;
     font-weight: 600;
 }
@@ -60,8 +60,8 @@
     font-family: 'Inter', sans-serif;
     font-size: 0.9rem;
     font-weight: 600;
-    color: #ffffff;
-    background-color: #1A1612; /* Dark Espresso */
+    color: var(--color-text-inverse);
+    background-color: var(--color-surface-dark); /* Dark Espresso */
     cursor: pointer;
     outline: none;
     transition: all 0.3s ease;
@@ -69,22 +69,22 @@
 }
 
 .wjo-btn-dark:hover {
-    background-color: #cca43b; /* Magiging Gold kapag hinover */
-    color: #ffffff;
+    background-color: var(--color-accent); /* Magiging Gold kapag hinover */
+    color: var(--color-text-inverse);
     transform: translateY(-1px);
-    box-shadow: 0 4px 10px rgba(204, 164, 59, 0.2);
+    box-shadow: 0 4px 10px rgba(var(--color-accent-rgb), 0.2);
 }
 
 .wjo-btn-dark:active {
-    background-color: #cca43b;
-    color: #ffffff;
+    background-color: var(--color-accent);
+    color: var(--color-text-inverse);
     transform: translateY(0) scale(0.98);
-    box-shadow: 0 2px 5px rgba(204, 164, 59, 0.2);
+    box-shadow: 0 2px 5px rgba(var(--color-accent-rgb), 0.2);
 }
 
 .wjo-filter-label {
     font-size: 0.9rem;
-    color: #8b816a;
+    color: var(--color-text-muted);
     font-weight: 600;
 }
 
@@ -92,12 +92,12 @@
 .wjo-btn-dark.dropdown {
     padding: 10px 40px 10px 20px;
     min-height: 44px; /* DESIGN.md §3.3 — was ~38px tall */
-    border: 1.5px solid #eaeaea;
+    border: 1.5px solid var(--color-border);
     font-size: 0.95rem;
     font-family: 'Inter', sans-serif;
     font-weight: 600;
-    color: #1A1612;
-    background-color: #ffffff;
+    color: var(--color-text);
+    background-color: var(--color-surface);
     cursor: pointer;
     border-radius: 25px; /* Pill Shape */
     outline: none;
@@ -117,8 +117,8 @@
 
 .wjo-btn-dark.dropdown:focus,
 .wjo-btn-dark.dropdown:hover {
-    border-color: #cca43b;
-    box-shadow: 0 0 0 3px rgba(204, 164, 59, 0.15);
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px rgba(var(--color-accent-rgb), 0.15);
 }
 
 /* Filter Buttons (Pill shaped din) */
@@ -140,13 +140,13 @@
 
 .wjo-filter-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
 .wjo-filter-btn:active { transform: translateY(0) scale(0.98); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-.wjo-filter-btn.assigned { background-color: #cca43b; } /* Gold */
-.wjo-filter-btn.repair { background-color: #1A1612; } /* Dark Espresso */
+.wjo-filter-btn.assigned { background-color: var(--color-accent); } /* Gold */
+.wjo-filter-btn.repair { background-color: var(--color-surface-dark); } /* Dark Espresso */
 /* FR-9 remainder: the two new lifecycle filters — matches wjo-status's for-qa/approved hues,
    solid instead of the pale badge background so an inactive vs. active filter stays legible. */
-.wjo-filter-btn.for-qa { background-color: #5c4a11; } /* Golden Brown */
-.wjo-filter-btn.approved { background-color: #2e6b3b; } /* Workshop Green */
-.wjo-filter-btn:not(.active) { opacity: 0.5; background-color: #b3b3b3; color: #ffffff; }
+.wjo-filter-btn.for-qa { background-color: var(--color-accent-text); } /* Golden Brown */
+.wjo-filter-btn.approved { background-color: var(--color-success); } /* Workshop Green */
+.wjo-filter-btn:not(.active) { opacity: 0.5; background-color: #b3b3b3; color: var(--color-text-inverse); }
 
 /* --- LIST ITEMS (MODERN CARDS) --- */
 .wjo-list {
@@ -164,12 +164,12 @@
     cursor: pointer;
     transition: all 0.3s ease;
     border-radius: 12px;
-    background-color: #ffffff;
-    color: #1A1612;
+    background-color: var(--color-surface);
+    color: var(--color-text);
     font-family: 'Inter', sans-serif;
     font-size: 0.95rem;
     font-weight: 500;
-    border: 1px solid #f0ede5;
+    border: 1px solid var(--color-border);
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.02);
 }
 
@@ -178,25 +178,25 @@
    leave the hover style stuck. Real pointers only, gated behind (hover: hover). */
 @media (hover: hover) {
     .wjo-item:hover {
-        background-color: #fcfaf5;
-        border-color: #cca43b;
+        background-color: var(--color-surface-cream);
+        border-color: var(--color-accent);
         transform: translateY(-2px);
-        box-shadow: 0 6px 15px rgba(204, 164, 59, 0.1);
+        box-shadow: 0 6px 15px rgba(var(--color-accent-rgb), 0.1);
     }
 }
 
 /* Pressed state works on both touch and pointer input. */
 .wjo-item:active {
-    background-color: #fbf5e8;
-    border-color: #cca43b;
+    background-color: var(--color-surface-cream);
+    border-color: var(--color-accent);
     transform: translateY(0) scale(0.99);
-    box-shadow: 0 2px 6px rgba(204, 164, 59, 0.12);
+    box-shadow: 0 2px 6px rgba(var(--color-accent-rgb), 0.12);
 }
 
 .wjo-item.active {
-    background-color: #fbf5e8;
-    border-color: #cca43b;
-    box-shadow: 0 4px 12px rgba(204, 164, 59, 0.15);
+    background-color: var(--color-surface-cream);
+    border-color: var(--color-accent);
+    box-shadow: 0 4px 12px rgba(var(--color-accent-rgb), 0.15);
 }
 
 .wjo-item-center { text-align: left; }
@@ -204,21 +204,21 @@
 .wjo-item-id {
     font-size: 0.95rem;
     font-weight: 700;
-    color: #8b816a;
+    color: var(--color-text-muted);
 }
 .wjo-item-name {
     font-weight: 700;
     font-size: 1rem;
-    color: #1A1612;
+    color: var(--color-text);
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
 /* Priority Text */
 .wjo-priority { font-weight: 700; }
-.wjo-priority.high { color: #d32f2f; }
+.wjo-priority.high { color: var(--color-danger); }
 .wjo-priority.medium { color: #f57c00; }
-.wjo-priority.low { color: #2e6b3b; }
+.wjo-priority.low { color: var(--color-success); }
 
 /* Status Badge */
 .wjo-badge-container {
@@ -231,16 +231,16 @@
     border-radius: 25px;
     font-size: 0.85rem;
     font-weight: 700;
-    color: #cca43b;
-    background-color: rgba(204, 164, 59, 0.1); /* Soft Gold Background */
+    color: var(--color-accent);
+    background-color: rgba(var(--color-accent-rgb), 0.1); /* Soft Gold Background */
     text-align: center;
     min-width: 80px;
     letter-spacing: 0.5px;
 }
 
 .wjo-badge.repair { 
-    color: #1A1612;
-    background-color: rgba(26, 22, 18, 0.1); /* Soft Espresso Background */
+    color: var(--color-text);
+    background-color: rgba(var(--color-surface-dark-rgb), 0.1); /* Soft Espresso Background */
 }
 
 /* Invert colors when row is active or pressed */
@@ -248,13 +248,13 @@
 .wjo-item.active .wjo-item-name,
 .wjo-item:active .wjo-item-id,
 .wjo-item:active .wjo-item-name {
-    color: #cca43b;
+    color: var(--color-accent);
 }
 
 @media (hover: hover) {
     .wjo-item:hover .wjo-item-id,
     .wjo-item:hover .wjo-item-name {
-        color: #cca43b;
+        color: var(--color-accent);
     }
 }
 
@@ -340,14 +340,14 @@
     /* Gawan ng pseudo-labels para alam ng user kung ano yung nasa card */
     .wjo-item-center:nth-child(3)::before {
         content: 'Date: ';
-        color: #8b816a;
+        color: var(--color-text-muted);
         font-weight: 400;
         font-size: 0.85rem;
     }
 
     .wjo-priority::before {
         content: 'Priority: ';
-        color: #8b816a;
+        color: var(--color-text-muted);
         font-weight: 400;
         font-size: 0.85rem;
     }
@@ -361,7 +361,7 @@
 .wjo-back-btn {
     background: transparent;
     border: none;
-    color: #8b816a;
+    color: var(--color-text-muted);
     font-size: 0.95rem;
     font-weight: 600;
     cursor: pointer;
@@ -375,13 +375,13 @@
 }
 
 .wjo-back-btn:hover { 
-    color: #cca43b; 
+    color: var(--color-accent); 
 }
 
 /* --- MAIN CONTAINER CARDS --- */
 .wjo-container {
-    background-color: #ffffff;
-    border: 1px solid #f0ede5;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
     border-radius: 16px;
     margin-bottom: 25px;
     overflow: hidden;
@@ -408,7 +408,7 @@
 .wjo-ov-id { 
     font-size: 0.95rem; 
     font-weight: 600; 
-    color: #8b816a; 
+    color: var(--color-text-muted); 
     margin: 0 0 5px 0; 
     letter-spacing: 1px; 
 }
@@ -417,7 +417,7 @@
     font-family: 'Playfair Display', serif;
     font-weight: 700;
     font-size: 2.2rem;
-    color: #1A1612; /* DARK ESPRESSO */
+    color: var(--color-text); /* DARK ESPRESSO */
     margin: 0; 
     letter-spacing: 0.5px;
     text-transform: uppercase;
@@ -432,9 +432,9 @@
 }
 
 .wjo-ov-info-block {
-    background-color: #fcfaf5;
-    border: 1px solid #eaeaea;
-    border-left: 5px solid #cca43b; /* Gold Accent */
+    background-color: var(--color-surface-cream);
+    border: 1px solid var(--color-border);
+    border-left: 5px solid var(--color-accent); /* Gold Accent */
     border-radius: 10px;
     padding: 12px 20px;
     flex: 1;
@@ -446,7 +446,7 @@
 .wjo-ov-label { 
     font-size: 0.75rem; 
     font-weight: 700; 
-    color: #888888; 
+    color: var(--color-text-muted); 
     text-transform: uppercase; 
     letter-spacing: 1px; 
     margin-bottom: 6px; 
@@ -455,15 +455,15 @@
 .wjo-ov-value { 
     font-size: 1.05rem; 
     font-weight: 700; 
-    color: #1A1612; /* DARK ESPRESSO */
+    color: var(--color-text); /* DARK ESPRESSO */
 }
 
-.due-date { color: #d32f2f; }
-.priority-high { color: #d32f2f; }
+.due-date { color: var(--color-danger); }
+.priority-high { color: var(--color-danger); }
 
 /* Details Box */
 .wjo-ov-details-box {
-    background-color: #fbf5e8; /* Soft Cream */
+    background-color: var(--color-surface-cream); /* Soft Cream */
     border-radius: 12px;
     padding: 20px;
     display: flex;
@@ -481,7 +481,7 @@
     font-size: 0.9rem; 
     text-transform: uppercase; 
     letter-spacing: 1px; 
-    color: #5c4a11; 
+    color: var(--color-accent-text); 
 }
 
 .wjo-ov-scroll-area { 
@@ -493,22 +493,22 @@
 /* Custom Scrollbar */
 .wjo-ov-scroll-area::-webkit-scrollbar { width: 6px; }
 .wjo-ov-scroll-area::-webkit-scrollbar-track { background: transparent; }
-.wjo-ov-scroll-area::-webkit-scrollbar-thumb { background-color: #cca43b; border-radius: 10px; }
+.wjo-ov-scroll-area::-webkit-scrollbar-thumb { background-color: var(--color-accent); border-radius: 10px; }
 
 .wjo-ov-detail-item {
-    background-color: #ffffff;
+    background-color: var(--color-surface);
     padding: 12px 15px;
     border-radius: 8px;
     margin-bottom: 10px;
     font-size: 0.95rem;
     box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-    border: 1px solid #eaeaea;
+    border: 1px solid var(--color-border);
 }
 
 .wjo-ov-detail-item strong { 
     display: block; 
     margin-bottom: 5px; 
-    color: #1A1612; 
+    color: var(--color-text); 
     font-size: 1rem; 
 }
 
@@ -526,22 +526,22 @@
     justify-content: space-between;
     align-items: center;
     padding: 20px 30px;
-    border-bottom: 1px solid #f0ede5;
+    border-bottom: 1px solid var(--color-border);
 }
 
 .wjo-container-title { 
     margin: 0; 
     font-family: 'Playfair Display', serif; 
     font-size: 1.5rem; 
-    color: #1A1612; 
+    color: var(--color-text); 
     font-weight: 700; 
 }
 
 /* Sleek Progress Bar */
 .wjo-progress-bar-wrapper { display: flex; align-items: center; gap: 15px; }
-.wjo-progress-bar { width: 250px; height: 10px; background-color: #eaeaea; border-radius: 20px; overflow: hidden; }
-.wjo-progress-fill { height: 100%; background: linear-gradient(to right, #b8a040, #d4c47a); border-radius: 20px; transition: width 0.5s ease; }
-.wjo-progress-text { font-size: 0.95rem; font-weight: 700; color: #5c4a11; }
+.wjo-progress-bar { width: 250px; height: 10px; background-color: var(--color-border); border-radius: 20px; overflow: hidden; }
+.wjo-progress-fill { height: 100%; background: linear-gradient(to right, var(--color-accent), var(--color-accent-light)); border-radius: 20px; transition: width 0.5s ease; }
+.wjo-progress-text { font-size: 0.95rem; font-weight: 700; color: var(--color-accent-text); }
 
 /* Modern Clean Table */
 .wjo-table {
@@ -553,24 +553,24 @@
 .wjo-table th {
     text-align: center;
     padding: 15px 20px;
-    color: #8b816a;
+    color: var(--color-text-muted);
     font-size: 0.85rem;
     text-transform: uppercase;
     letter-spacing: 1px;
-    border-bottom: 2px solid #eaeaea;
+    border-bottom: 2px solid var(--color-border);
     font-weight: 700;
 }
 
 .wjo-table td { 
     text-align: center;
     padding: 15px 20px; 
-    border-bottom: 1px solid #f4f4f4; 
-    color: #1A1612; 
+    border-bottom: 1px solid var(--color-border); 
+    color: var(--color-text); 
     font-weight: 500;
     vertical-align: middle;
 }
 
-.wjo-table tr:hover td { background-color: #faf7f0; }
+.wjo-table tr:hover td { background-color: var(--color-surface-cream); }
 
 /* Modern Pill Status Badges */
 .wjo-status {
@@ -584,17 +584,17 @@
     text-align: center;
 }
 
-.wjo-status.approved { background-color: rgba(46, 107, 59, 0.1); color: #2e6b3b; }
-.wjo-status.in-progress { background-color: rgba(43, 76, 126, 0.1); color: #2b4c7e; }
-.wjo-status.rework { background-color: rgba(211, 47, 47, 0.1); color: #d32f2f; }
-.wjo-status.assigned { background-color: rgba(204, 164, 59, 0.1); color: #cca43b; }
-.wjo-status.for-qa { background-color: #fbf5e8; color: #1A1612; }
+.wjo-status.approved { background-color: rgba(var(--color-success-rgb), 0.1); color: var(--color-success); }
+.wjo-status.in-progress { background-color: rgba(var(--color-info-rgb), 0.1); color: var(--color-info); }
+.wjo-status.rework { background-color: rgba(var(--color-danger-rgb), 0.1); color: var(--color-danger); }
+.wjo-status.assigned { background-color: rgba(var(--color-accent-rgb), 0.1); color: var(--color-accent); }
+.wjo-status.for-qa { background-color: var(--color-surface-cream); color: var(--color-text); }
 
 /* FR-6/FR-9: the rejection reason shown above the action button when this worker's own stage
    came back for repair (worker/WorkerJobOrderDetail.jsx). */
 .wjo-repair-reason {
-    background-color: rgba(211, 47, 47, 0.08);
-    border: 1px solid rgba(211, 47, 47, 0.25);
+    background-color: rgba(var(--color-danger-rgb), 0.08);
+    border: 1px solid rgba(var(--color-danger-rgb), 0.25);
     border-radius: 10px;
     padding: 14px 16px;
     margin: 0 0 16px;
@@ -641,23 +641,23 @@
 /* Deep Workshop Green */
 .wjo-action-btn.done,
 .wjo-action-btn.repair { 
-    background-color: #2e6b3b; 
+    background-color: var(--color-success); 
 } 
 .wjo-action-btn.done:hover,
 .wjo-action-btn.repair:hover { 
-    background-color: #1e5631; 
+    background-color: var(--color-success-dark); 
 }
 
 .wjo-action-btn.submitted {
-    background-color: #eaeaea;
-    color: #888888;
+    background-color: var(--color-border);
+    color: var(--color-text-muted);
     cursor: not-allowed;
 }
 
 /* FR-9 remainder: shown (disabled) once a reviewer has Approved this worker's own stage. */
 .wjo-action-btn.approved {
-    background-color: rgba(46, 107, 59, 0.15);
-    color: #2e6b3b;
+    background-color: rgba(var(--color-success-rgb), 0.15);
+    color: var(--color-success);
     cursor: not-allowed;
 }
 

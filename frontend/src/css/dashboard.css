@@ -42,7 +42,7 @@
   }
 
   .border-gold {
-    border-left: 10px solid #D4AF37;
+    border-left: 10px solid var(--color-accent);
   }
 
   .border-blue {
@@ -52,7 +52,7 @@
   /* Notifications */
   .notif-section h2 {
     font-family: 'serif';
-    color: #4B3600;
+    color: var(--color-accent-text);
     display: flex;
     align-items: center;
     gap: 10px;
@@ -61,7 +61,7 @@
 
   .notif-divider {
     height: 3px;
-    background: #D4AF37;
+    background: var(--color-accent);
     border: none;
     margin: 10px 0 25px;
   }
@@ -74,7 +74,7 @@
 
   .notif-item {
     background: #BC963B;
-    border-left: 15px solid #4B3600;
+    border-left: 15px solid var(--color-accent-text);
     padding: 12px 20px;
     color: white;
     display: flex;
@@ -103,7 +103,7 @@
   }
 
   .btn-pill {
-    background: #4B3600;
+    background: var(--color-accent-text);
     color: #E5C76B;
     border: none;
     padding: 10px 25px;

@@ -4,7 +4,7 @@
 
 .inventory-container {
     font-family: Arial, sans-serif;
-    color: #333;
+    color: var(--color-text);
     padding: 20px;
 }
 
@@ -29,15 +29,15 @@
     border: 1px solid #7d6b38;
     background: white;
     border-radius: 20px;
-    color: #4a3b00;
+    color: var(--color-accent-text);
     font-weight: bold;
     cursor: pointer;
 }
 
 .filter-btn.active {
-    background: #4a3b00; /* Dark brown na background */
+    background: var(--color-accent-text); /* Dark brown na background */
     color: white;        /* White na text para mabasa */
-    border: 1px solid #4a3b00; /* Para pantay ang kulay ng border */
+    border: 1px solid var(--color-accent-text); /* Para pantay ang kulay ng border */
 }
 
 /* Dagdag na rin natin ito para medyo mag-brown din kapag tinapatan lang ng mouse (hover) */
@@ -46,7 +46,7 @@
 }
 
 .add-btn {
-    background: #4a3b00;
+    background: var(--color-accent-text);
     color: white;
     padding: 10px 24px;
     border: none;
@@ -56,7 +56,7 @@
 }
 
 .table-wrapper {
-    border: 2px solid #bfa15f;
+    border: 2px solid var(--color-accent);
     border-radius: 8px;
     /* DESIGN.md §3.5 — was `hidden`, a second violation on top of item 10's raw <table>: it
        didn't just fail to let a too-wide table scroll, it made the excess unreachable outright. */
@@ -71,7 +71,7 @@
 
 .inventory-table th {
     padding: 20px;
-    color: #4a3b00;
+    color: var(--color-accent-text);
     font-size: 1.1rem;
     font-weight: bold;
 }
@@ -82,7 +82,7 @@
 }
 
 .main-row {
-    border-top: 1px solid #bfa15f;
+    border-top: 1px solid var(--color-accent);
     cursor: pointer;
     transition: background 0.2s;
 }
@@ -98,7 +98,7 @@
 
 /* Pills & Badges */
 .category-pill {
-    background: #4a3b00;
+    background: var(--color-accent-text);
     color: white;
     padding: 6px 14px;
     border-radius: 20px;
@@ -115,7 +115,7 @@
 
 .variant-pill {
     background: #d4b86a;
-    color: #4a3b00;
+    color: var(--color-accent-text);
     padding: 4px 10px;
     border-radius: 12px;
     font-size: 0.8rem;
@@ -131,7 +131,7 @@
 
 .status-pill.low {
     background: #ffb3b3;
-    color: #ff0000;
+    color: var(--color-danger);
 }
 
 .status-pill.good {
@@ -159,7 +159,7 @@
 
 .expanded-row td {
     padding: 0;
-    border-bottom: 2px solid #bfa15f;
+    border-bottom: 2px solid var(--color-accent);
 }
 
 .variants-details {
@@ -182,7 +182,7 @@
     width: 120px;
     font-weight: bold;
     font-size: 0.95rem;
-    color: #4a3b00;
+    color: var(--color-accent-text);
 }
 
 .progress-bar-container {
@@ -200,7 +200,7 @@
 }
 
 .progress-bar.low {
-    background: #ff0000;
+    background: var(--color-danger);
 }
 
 .progress-bar.good {
@@ -227,8 +227,8 @@
     padding: 4px 8px;
     border: 1px solid #6b5a2e;
     border-radius: 6px;
-    background: #fff;
-    color: #4a3b00;
+    background: var(--color-surface);
+    color: var(--color-accent-text);
     font-size: 0.85rem;
     font-weight: bold;
 }
@@ -239,8 +239,8 @@
     padding: 4px 8px;
     border: 1px solid #6b5a2e;
     border-radius: 6px;
-    background: #fff;
-    color: #4a3b00;
+    background: var(--color-surface);
+    color: var(--color-accent-text);
     font-size: 0.85rem;
     font-weight: bold;
     max-width: 220px;
@@ -277,7 +277,7 @@
        (an empty-state message) gets. */
     .inventory-table.wb-card-table .expanded-row td {
         padding: 0;
-        border-bottom: 2px solid #bfa15f;
+        border-bottom: 2px solid var(--color-accent);
     }
 
     .variants-details {
@@ -353,11 +353,11 @@
 }
 
 .modal-content::-webkit-scrollbar-thumb:hover {
-    background: #4a3b00; 
+    background: var(--color-accent-text); 
 }
 
 .modal-title {
-    color: #4a3b00;
+    color: var(--color-accent-text);
     margin-top: 0;
     margin-bottom: 25px;
     font-size: 1.8rem;
@@ -378,14 +378,14 @@
 }
 
 .form-group label {
-    color: #4a3b00;
+    color: var(--color-accent-text);
     font-weight: bold;
     font-size: 1rem;
 }
 
 .form-group label span {
     font-size: 0.8rem;
-    color: #888;
+    color: var(--color-text-muted);
     font-weight: normal;
 }
 
@@ -395,7 +395,7 @@
     border: 1px solid #a89c7c;
     border-radius: 8px;
     font-size: 1rem;
-    color: #4a3b00;
+    color: var(--color-accent-text);
     outline: none;
 }
 
@@ -424,7 +424,7 @@
     border: 1px solid #a89c7c;
     border-radius: 8px;
     font-size: 1rem;
-    color: #4a3b00;
+    color: var(--color-accent-text);
     outline: none;
 }
 
@@ -433,7 +433,7 @@
 }
 
 .remove-variant-btn {
-    background: #4a3b00;
+    background: var(--color-accent-text);
     color: white;
     border: none;
     border-radius: 6px;
@@ -445,7 +445,7 @@
 
 .add-variant-btn {
     align-self: flex-start;
-    background: #4a3b00;
+    background: var(--color-accent-text);
     color: white;
     border: none;
     border-radius: 6px;
@@ -472,12 +472,12 @@
 }
 
 .cancel-btn {
-    background: #4a3b00;
+    background: var(--color-accent-text);
     color: white;
 }
 
 .submit-btn {
-    background: #4a3b00;
+    background: var(--color-accent-text);
     color: white;
 }
 

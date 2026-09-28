@@ -14,8 +14,8 @@
 /* Lahat ng nasa ibaba ay gagana lang KUNG nasa loob sila ng .signup-wrapper */
 
 .signup-wrapper .signup-container {
-    background-color: #ffffff;
-    border: 2px solid #5b4614; 
+    background-color: var(--color-surface);
+    border: 2px solid var(--color-accent-text); 
     border-radius: 12px;
     padding: 30px 40px;
     width: 100%;
@@ -23,7 +23,7 @@
 }
 
 .signup-wrapper .form-title {
-    color: #b8a040;
+    color: var(--color-accent);
     font-family: 'Playfair Display', serif;
     font-size: 1.1rem;
     font-weight: 900;
@@ -72,12 +72,12 @@
 
 .signup-wrapper .input-group input:focus,
 .signup-wrapper .input-group select:focus {
-    border-color: #5b4614;
+    border-color: var(--color-accent-text);
 }
 
 .signup-wrapper .bold-brown-text {
     font-weight: bold;
-    color: #5b4614;
+    color: var(--color-accent-text);
 }
 
 .signup-wrapper .submit-group {
@@ -88,7 +88,7 @@
 }
 
 .signup-wrapper .submit-group button {
-    background-color: #5b4614;
+    background-color: var(--color-accent-text);
     color: white;
     border: none;
     border-radius: 6px; 
