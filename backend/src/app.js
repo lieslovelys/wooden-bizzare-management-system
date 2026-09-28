@@ -62,8 +62,13 @@ app.use(compression());
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
 // JSON Limit para sa profile picture
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ limit: '10mb', extended: true }));
+// PRD.md C.2 "Storage discipline": lowered from the original 10mb once photo uploads got their
+// own real cap (512KB, checked in utils/photoStorage.js after client-side resizing — see
+// globals/PhotoUpload.jsx) — nothing else in this app sends a body anywhere near even 1mb, so
+// the old limit was pure unused exposure. Must match frontend/nginx.conf's client_max_body_size,
+// or Nginx rejects an on-cap request before it ever reaches here.
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ limit: '1mb', extended: true }));
 
 // Session
 // P1-1: backed by a Postgres-resident session table (via connect-pg-simple) instead of the

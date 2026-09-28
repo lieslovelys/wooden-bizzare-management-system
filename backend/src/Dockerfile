@@ -19,6 +19,12 @@ RUN chmod +x ./docker-entrypoint.sh \
   && addgroup -S appgroup \
   && adduser -S appuser -G appgroup \
   && chown -R appuser:appgroup /app
+# PRD.md C.2 "Storage discipline": worker photos live on a Docker named volume mounted here (see
+# docker-compose.yml's `uploads` volume, and utils/photoStorage.js's UPLOAD_DIR). Created and
+# chowned as root, while still root, BEFORE the `USER appuser` switch below — a fresh named
+# volume's mountpoint is owned by root until something chowns it, and appuser has no permission
+# to do that itself, so this has to happen first.
+RUN mkdir -p /data/uploads && chown -R appuser:appgroup /data
 USER appuser
 
 EXPOSE 8080

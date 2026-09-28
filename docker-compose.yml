@@ -53,6 +53,13 @@ services:
       COOKIE_SECURE: ${COOKIE_SECURE:-false}
       PORT: "8080"
       NODE_ENV: production
+      # PRD.md C.2 "Storage discipline": worker photos live here instead of inline in Postgres
+      # (see backend/src/utils/photoStorage.js) — a named volume rather than a bind mount, so it
+      # isn't tied to a path on the host filesystem and backs up/restores the same way `pgdata`
+      # does (see deploy/backup.sh's second, uploads-tarball step).
+      UPLOAD_DIR: /data/uploads
+    volumes:
+      - uploads:/data/uploads
     depends_on:
       db:
         condition: service_healthy
@@ -80,3 +87,4 @@ services:
 
 volumes:
   pgdata:
+  uploads:

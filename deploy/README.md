@@ -18,9 +18,10 @@ docker compose up -d --build
 
 ## Backups
 
-`backup.sh` dumps the live database (via `docker compose exec db pg_dump`), gzips it into
-`deploy/backups/` (gitignored), and keeps the most recent 14. Wire it into host cron, e.g.
-nightly at 2am:
+`backup.sh` dumps the live database (via `docker compose exec db pg_dump`) and archives the
+`uploads` volume (worker photos — see `utils/photoStorage.js` and PRD.md C.2 "Storage
+discipline") into `deploy/backups/` (gitignored), each gzipped, each keeping the most recent 14.
+Wire it into host cron, e.g. nightly at 2am:
 
 ```
 0 2 * * * /path/to/repo/deploy/backup.sh >> /var/log/wbms-backup.log 2>&1
@@ -29,10 +30,13 @@ nightly at 2am:
 **This alone is not a real backup strategy** — `deploy/backups/` lives on the same disk as
 everything else on this VPS. Sync it off-box regularly (`rclone`/`rsync` to another host or
 object storage; not automated by this script — set up whichever the VPS account already has
-credentials for).
+credentials for). A restore needs BOTH artifacts to be complete: the database dump references
+photo filenames the uploads tarball actually has to contain.
 
-`restore.sh <path-to-dump.sql.gz>` reverses it, with an interactive confirmation prompt since
-it's destructive to whatever's currently in the live database.
+`restore.sh <path-to-dump.sql.gz> [path-to-uploads.tar.gz]` reverses it, with an interactive
+confirmation prompt since the database half is destructive to whatever's currently live. The
+uploads argument is optional and additive — it extracts on top of whatever's already on the
+volume rather than replacing it outright.
 
 ## TLS
 
