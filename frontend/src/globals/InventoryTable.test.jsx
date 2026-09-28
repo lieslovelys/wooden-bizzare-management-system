@@ -27,6 +27,16 @@ const SAMPLE_ITEM = {
   variants: [{ id: 5, name: '4x8', current: 4, min: 5 }],
 };
 
+const TOOL_ITEM = {
+  id: 2,
+  name: 'Hammer',
+  category: 'Tool',
+  unit: 'pcs',
+  total_stock: 10,
+  status: 'OK',
+  variants: [{ id: 6, name: 'Standard', current: 10, min: 2 }],
+};
+
 beforeEach(() => {
   vi.clearAllMocks();
 });
@@ -155,6 +165,124 @@ describe('InventoryTable', () => {
       expect(screen.getByText('+1')).toBeDisabled();
       fireEvent.change(screen.getByTitle('Project'), { target: { value: '3' } });
       expect(screen.getByText('+1')).not.toBeDisabled();
+    });
+  });
+
+  // Previously untested half of this screen (ARCHITECTURE_REVIEW.md item 19/23) — the
+  // adjuster/project-tagging half above was already covered from item 18.
+  describe('edit/delete/category filter', () => {
+    it('opens Edit prefilled from the row, and keeps an existing variant\'s numeric id on submit', async () => {
+      api.get.mockResolvedValue({ success: true, data: [SAMPLE_ITEM] });
+      api.put.mockResolvedValue({ success: true });
+
+      const { container } = render(<InventoryTable />);
+      await screen.findByText('Plywood');
+
+      fireEvent.click(container.querySelector('.edit-btn'));
+
+      expect(screen.getByText('Edit item')).toBeInTheDocument();
+      const textInputs = container.querySelectorAll('.modal-content input[type="text"]');
+      expect(textInputs[0]).toHaveValue('Plywood');
+      expect(textInputs[1]).toHaveValue('sheet');
+      expect(textInputs[2]).toHaveValue('4x8');
+
+      fireEvent.click(screen.getByText('Update'));
+
+      await waitFor(() => expect(api.put).toHaveBeenCalledWith('/api/inventory/1', {
+        name: 'Plywood',
+        category: 'Raw Material',
+        unit: 'sheet',
+        variants: [{ id: 5, name: '4x8', minStock: 5 }],
+      }));
+    });
+
+    it('gives a variant added during edit id: undefined, and drops blank-named variants', async () => {
+      api.get.mockResolvedValue({ success: true, data: [SAMPLE_ITEM] });
+      api.put.mockResolvedValue({ success: true });
+
+      const { container } = render(<InventoryTable />);
+      await screen.findByText('Plywood');
+      fireEvent.click(container.querySelector('.edit-btn'));
+
+      fireEvent.click(screen.getByText('+ Add variant'));
+      const textInputs = container.querySelectorAll('.modal-content input[type="text"]');
+      // [0]=name, [1]=unit, [2]=existing variant, [3]=new blank variant just added.
+      fireEvent.change(textInputs[3], { target: { value: '8x4' } });
+
+      fireEvent.click(screen.getByText('Update'));
+
+      await waitFor(() => expect(api.put).toHaveBeenCalledWith('/api/inventory/1', {
+        name: 'Plywood',
+        category: 'Raw Material',
+        unit: 'sheet',
+        variants: [
+          { id: 5, name: '4x8', minStock: 5 },
+          { id: undefined, name: '8x4', minStock: 5 },
+        ],
+      }));
+    });
+
+    it('strips digits typed into the unit field', async () => {
+      api.get.mockResolvedValue({ success: true, data: [] });
+      const { container } = render(<InventoryTable />);
+      await waitFor(() => expect(api.get).toHaveBeenCalled());
+
+      fireEvent.click(screen.getByText('+ Add Item'));
+      const textInputs = container.querySelectorAll('.modal-content input[type="text"]');
+      fireEvent.change(textInputs[1], { target: { value: 'kg123' } });
+
+      expect(textInputs[1]).toHaveValue('kg');
+    });
+
+    it('Cancel closes the modal without a request', async () => {
+      api.get.mockResolvedValue({ success: true, data: [SAMPLE_ITEM] });
+      render(<InventoryTable />);
+      await screen.findByText('Plywood');
+
+      fireEvent.click(screen.getByText('+ Add Item'));
+      fireEvent.click(screen.getByText('Cancel'));
+
+      expect(screen.queryByText('Add new item')).not.toBeInTheDocument();
+      expect(api.post).not.toHaveBeenCalled();
+    });
+
+    it('delete: does nothing when the confirm is dismissed', async () => {
+      api.get.mockResolvedValue({ success: true, data: [SAMPLE_ITEM] });
+      vi.spyOn(window, 'confirm').mockReturnValue(false);
+
+      const { container } = render(<InventoryTable />);
+      await screen.findByText('Plywood');
+      fireEvent.click(container.querySelector('.delete-btn'));
+
+      expect(api.delete).not.toHaveBeenCalled();
+    });
+
+    it('delete: removes the item and refetches when confirmed', async () => {
+      api.get.mockResolvedValue({ success: true, data: [SAMPLE_ITEM] });
+      api.delete.mockResolvedValue({ success: true });
+      vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+      const { container } = render(<InventoryTable />);
+      await screen.findByText('Plywood');
+      fireEvent.click(container.querySelector('.delete-btn'));
+
+      await waitFor(() => expect(api.delete).toHaveBeenCalledWith('/api/inventory/1'));
+      await waitFor(() => expect(api.get).toHaveBeenCalledTimes(2));
+    });
+
+    it('category filter narrows the list, and shows the empty message for a category with no items', async () => {
+      api.get.mockResolvedValue({ success: true, data: [SAMPLE_ITEM, TOOL_ITEM] });
+      render(<InventoryTable />);
+      await screen.findByText('Plywood');
+      expect(screen.getByText('Hammer')).toBeInTheDocument();
+
+      fireEvent.click(screen.getByText('Raw materials'));
+      expect(screen.getByText('Plywood')).toBeInTheDocument();
+      expect(screen.queryByText('Hammer')).not.toBeInTheDocument();
+
+      fireEvent.click(screen.getByText('Consumables'));
+      expect(screen.queryByText('Plywood')).not.toBeInTheDocument();
+      expect(screen.getByText(/No items found in this category/)).toBeInTheDocument();
     });
   });
 });
