@@ -1,21 +1,26 @@
 import React from 'react';
+import { useToast } from '../context/ToastContext';
+import { resizeImageToDataUrl } from '../utils/resizeImage';
 
 // The profile-picture preview + upload control, byte-identical between AddWorkerModal and
 // EditWorkerModal apart from the input id and button label. See ARCHITECTURE_REVIEW.md P2,
 // "Near-identical components maintained as separate copies."
 //
-// NOTE for later: PRD.md C.2's "storage discipline" NFR (worker/attendance photos stored as
-// unbounded base64 blobs in Postgres `text`, no size cap) should get its cap here, in one place,
-// once that NFR pass happens — not added now, this pass only moves code.
+// PRD.md C.2 "Storage discipline": the picked file is resized/re-encoded client-side (see
+// utils/resizeImage.js) before it ever becomes the data URL `onChange` receives, so the backend's
+// 512KB cap (backend/src/utils/photoStorage.js) is a formality in practice, not something a
+// worker's phone-camera photo routinely trips.
 const PhotoUpload = ({ previewUrl, onChange, inputId, label }) => {
-  const handleImageChange = (e) => {
+  const showToast = useToast();
+
+  const handleImageChange = async (e) => {
     const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        onChange(reader.result);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+    try {
+      const dataUrl = await resizeImageToDataUrl(file);
+      onChange(dataUrl);
+    } catch (error) {
+      showToast(error.message || 'Could not process that image.', 'error');
     }
   };
 

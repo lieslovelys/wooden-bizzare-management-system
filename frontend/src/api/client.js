@@ -69,3 +69,8 @@ export const api = {
   put: (path, body) => request(path, { method: 'PUT', body }),
   delete: (path, body) => request(path, { method: 'DELETE', body }),
 };
+
+// For a plain <img src>/<a href> — not a fetch() call — that still needs to reach the backend
+// through the same base-URL indirection as `api.*` (see BASE_URL above: empty in the Docker
+// deployment, a real cross-origin host in local dev). Used by utils/format.js's workerPhotoUrl().
+export const apiUrl = (path) => BASE_URL + path;

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import '../css/admin.css';
 import { useToast } from '../context/ToastContext';
 import { digitsOnly, isIncompleteContactNumber, CONTACT_NUMBER_ERROR } from '../utils/formValidators';
+import { workerPhotoUrl } from '../utils/format';
 import PhotoUpload from '../globals/PhotoUpload';
 import { RoleSelect, WorkerTypeSelect, ContactNumberField, DailyRateField } from './WorkerJobFields';
 
@@ -18,7 +19,18 @@ const EditWorkerModal = ({ isOpen, onClose, workerData, onUpdate }) => {
     dailyRate: workerData?.rate || ''
   });
 
-  const [previewUrl, setPreviewUrl] = useState(workerData?.photo || null);
+  // PRD.md C.2 "Storage discipline": the worker list no longer carries the photo itself (see
+  // workerPhotoUrl), just `photo_path` — the preview starts as a URL to fetch, not the photo
+  // bytes. `photoChanged` is what lets onUpdate omit `photo` entirely when the worker didn't
+  // touch it, so the backend's "absent = keep the current photo" rule (see
+  // backend/src/services/userService.js's updateWorker) actually has something to key off.
+  const [previewUrl, setPreviewUrl] = useState(workerPhotoUrl(workerData));
+  const [photoChanged, setPhotoChanged] = useState(false);
+
+  const handlePhotoChange = (dataUrl) => {
+    setPreviewUrl(dataUrl);
+    setPhotoChanged(true);
+  };
 
   const showToast = useToast();
 
@@ -49,7 +61,9 @@ const EditWorkerModal = ({ isOpen, onClose, workerData, onUpdate }) => {
         return;
     }
 
-    onUpdate({ ...formData, photo: previewUrl });
+    // `photo: undefined` is dropped entirely by JSON.stringify — that's exactly "absent" from
+    // the backend's point of view (see userService.updateWorker's three-state photo contract).
+    onUpdate({ ...formData, photo: photoChanged ? previewUrl : undefined });
   };
 
   // CHECKER KUNG PWEDENG PINDUTIN ANG UPDATE BUTTON
@@ -71,7 +85,7 @@ const EditWorkerModal = ({ isOpen, onClose, workerData, onUpdate }) => {
         <form className="modal-form-body" onSubmit={handleSubmit}>
           <div className="form-grid">
 
-            <PhotoUpload previewUrl={previewUrl} onChange={setPreviewUrl} inputId="edit-profile-upload" label="Change Photo" />
+            <PhotoUpload previewUrl={previewUrl} onChange={handlePhotoChange} inputId="edit-profile-upload" label="Change Photo" />
 
             <WorkerTypeSelect value={formData.workerType} onChange={handleInputChange} />
             <RoleSelect value={formData.role} onChange={handleInputChange} />

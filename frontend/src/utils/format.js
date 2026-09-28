@@ -2,6 +2,7 @@
 // used to live in individual components (see ARCHITECTURE_REVIEW.md P2, "Client-side derived
 // business logic duplicated with drift"). Plain functions, no React, so they're trivial to unit
 // test and safe to import from anywhere.
+import { apiUrl } from '../api/client';
 
 // ₱1,200.00 — two decimals, thousands separators. Replaces three prior implementations that
 // disagreed on both the symbol and the decimal places.
@@ -53,6 +54,18 @@ export const toDateInputValue = (dateString) => {
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
+};
+
+// PRD.md C.2 "Storage discipline": worker photos are served one at a time from
+// GET /api/workers/:id/photo, not inlined into list responses — `worker` is any object carrying
+// `user_id` and `photo_path` (getAllWorkers' own row shape; EditWorkerModal and Attendance.jsx's
+// worker-list fetch both use the same endpoint, so this is safe to reuse for both). Returns null
+// when there's nothing to show, so callers can fall back to an initials avatar. `?v=<photo_path>`
+// is a cache-buster — the filename itself changes on every replace (see photoStorage.savePhoto),
+// so this URL never needs revalidating against a stale browser cache.
+export const workerPhotoUrl = (worker) => {
+  if (!worker?.user_id || !worker?.photo_path) return null;
+  return apiUrl(`/api/workers/${worker.user_id}/photo?v=${encodeURIComponent(worker.photo_path)}`);
 };
 
 // 8:30 AM — expects a "HH:MM[:SS]" string (as returned by Postgres `time` columns).

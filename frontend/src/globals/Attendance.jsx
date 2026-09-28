@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../api/client';
 import { useToast } from '../context/ToastContext';
-import { formatTime12h, formatWorkerId } from '../utils/format';
+import { formatTime12h, formatWorkerId, workerPhotoUrl } from '../utils/format';
 import { usePaginatedList } from '../hooks/usePaginatedList';
 import Pagination from './Pagination';
 
@@ -16,12 +16,6 @@ const API = '/api';
 // form state on any unrelated parent state change (e.g. a toast firing after a delete). Hoisting
 // them to module scope with explicit props is the real fix, not a lint workaround — see
 // ARCHITECTURE_REVIEW.md P2.
-
-const getPhotoSrc = (worker) => {
-  if (!worker) return null;
-  if (worker.photo) return worker.photo;
-  return null;
-};
 
 const getInitials = (worker) => {
   if (!worker) return '?';
@@ -48,7 +42,7 @@ const statusClass = (row) => `att-status-badge ${(row.status || 'Absent').toLowe
 
 const WorkerAvatar = ({ worker, size = 64, className = '' }) => {
   const [imgError, setImgError] = useState(false);
-  const src = getPhotoSrc(worker);
+  const src = workerPhotoUrl(worker);
   const style = { width: size, height: size, borderRadius: '16px', objectFit: 'cover', flexShrink: 0, boxShadow: '0 4px 10px rgba(0,0,0,0.1)' };
   if (src && !imgError) {
     return <img src={src} alt="avatar" style={style} className={className} onError={() => setImgError(true)} />;

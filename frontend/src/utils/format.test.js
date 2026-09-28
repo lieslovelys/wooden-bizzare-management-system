@@ -1,4 +1,13 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+
+// workerPhotoUrl goes through api/client.js's apiUrl() for the base-URL indirection — mocked to
+// a fixed, deterministic prefix rather than relying on the real VITE_BACKEND_IP (unset in CI's
+// `npm test` step, unlike local dev's frontend/.env), matching how every component test in this
+// suite already mocks api/client.js.
+vi.mock('../api/client', () => ({
+  apiUrl: (path) => 'https://api.test' + path,
+}));
+
 import {
   formatCurrency,
   formatProjectId,
@@ -7,6 +16,7 @@ import {
   formatDateShort,
   formatTime12h,
   toDateInputValue,
+  workerPhotoUrl,
 } from './format';
 
 describe('formatCurrency', () => {
@@ -97,6 +107,24 @@ describe('toDateInputValue', () => {
     expect(toDateInputValue(null)).toBe('');
     expect(toDateInputValue('')).toBe('');
     expect(toDateInputValue('not a date')).toBe('');
+  });
+});
+
+describe('workerPhotoUrl', () => {
+  it('builds a cache-busting photo URL from user_id and photo_path', () => {
+    expect(workerPhotoUrl({ user_id: 7, photo_path: 'abc-123.jpg' }))
+      .toBe('https://api.test/api/workers/7/photo?v=abc-123.jpg');
+  });
+
+  it('returns null when there is no photo_path', () => {
+    expect(workerPhotoUrl({ user_id: 7, photo_path: null })).toBeNull();
+    expect(workerPhotoUrl({ user_id: 7 })).toBeNull();
+  });
+
+  it('returns null for a missing worker or missing id', () => {
+    expect(workerPhotoUrl(null)).toBeNull();
+    expect(workerPhotoUrl(undefined)).toBeNull();
+    expect(workerPhotoUrl({ photo_path: 'abc.jpg' })).toBeNull();
   });
 });
 
