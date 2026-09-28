@@ -40,24 +40,16 @@ const WorkerList = () => {
   }, []);
 
   // --- Handlers para sa Modals ---
+  // Deliberately no try/catch here (unlike handleUpdateWorker below): AddWorkerModal's own
+  // handleSubmit awaits onSave and toasts success only after it resolves. Catching and toasting
+  // here too meant a failed add (duplicate username, a validation 400) showed BOTH the error
+  // toast and AddWorkerModal's unconditional success toast, and still cleared the form — see
+  // ARCHITECTURE_REVIEW.md item 23. AddWorkerModal is the one place this error is handled now.
   const handleSaveNewWorker = async (newWorkerData) => {
-    try {
-      const result = await api.post('/api/workers', newWorkerData);
-
-      if (result.success) {
-        showToast("Worker successfully added to database! ", "success");
-        setIsAddModalOpen(false);
-        fetchWorkers();
-      } else {
-        // P2 (envelope unification): every route now either succeeds with {success:true} or
-        // throws (caught below) — this branch is effectively unreachable, but `result.message`
-        // was never a real field even before this pass, so it's a static string rather than a
-        // guaranteed "undefined" if it's ever hit.
-        showToast("Failed to add worker.", "error");
-      }
-    } catch (error) {
-      console.error('Error saving worker:', error.message);
-      showToast(error.message || "An error occurred while saving.", "error");
+    const result = await api.post('/api/workers', newWorkerData);
+    if (result.success) {
+      setIsAddModalOpen(false);
+      fetchWorkers();
     }
   };
 

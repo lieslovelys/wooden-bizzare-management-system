@@ -84,8 +84,12 @@ const AddWorkerModal = ({ isOpen, onClose, onSave }) => {
         }, 1500);
 
     } catch (error) {
+        // Surfaces the server's actual reason (e.g. a duplicate username) instead of a generic
+        // message, and — since this catch is now the only place a failed add is handled (see
+        // WorkerList.jsx's handleSaveNewWorker) — leaves the form exactly as typed rather than
+        // clearing it, so the admin doesn't have to redo the whole thing over one bad field.
         console.error(error);
-        showToast('Failed to add worker.', 'error');
+        showToast(error.message || 'Failed to add worker.', 'error');
     }
   };
 
