@@ -1,6 +1,7 @@
 import pg from 'pg';
 import fs from 'fs';
 import dotenv from 'dotenv';
+import { logger } from './logger.js';
 
 dotenv.config();
 
@@ -50,22 +51,20 @@ const testPoolConnection = async() => {
   let client;
   try {
     client = await pool.connect();
-    console.log('Database connection pool acquired a client successfully!');
 
     // Execute a test query
     const res = await client.query('SELECT 1 AS "result"');
-    console.log('Test query (SELECT 1) executed successfully. Result:', res.rows[0].result);
+    logger.info({ result: res.rows[0].result }, 'database connection pool: smoke test query succeeded');
 
     return true; // Connection successful
-  } 
+  }
   catch (err) {
-    console.error('Error connecting to the database or running the test query:', err.message);
+    logger.error({ err }, 'database connection pool: smoke test failed');
     return false; // Connection failed
-  } 
+  }
   finally {
     if (client) {
       client.release();
-      console.log('Client released back to the pool.');
     }
   }
 }

@@ -29,7 +29,7 @@ router.post('/signup', requireRole('Admin'), validate({ body: signupBody }), asy
 });
 
 router.post('/login', loginLimiter, async (req, res) => {
-    console.log('login attempt:', req.body.username);
+    req.log.info({ username: req.body.username }, 'login attempt');
     // No try/catch: an invalid username/password throws an AppError(401, ...) from userService,
     // which propagates to the centralized error handler and renders identically to the old
     // inline 401 below — see userService.login for why both failure modes share one message.
@@ -46,7 +46,7 @@ router.post('/login', loginLimiter, async (req, res) => {
 
     req.session.save(err => {
         if (err) {
-            console.error('Session save failed:', err.message);
+            req.log.error({ err }, 'session save failed');
             return res.status(500).json({ success: false, error: 'Failed to establish session' });
         }
         res.status(200).json(ok(null));
@@ -71,7 +71,7 @@ router.post('/logout', (req, res) => {
 
   req.session.destroy((err) => {
     if (err) {
-      console.error('Error destroying session:', err);
+      req.log.error({ err }, 'error destroying session');
 
       return res.status(500).json({ success: false, error: 'Error logging out' });
     } else {

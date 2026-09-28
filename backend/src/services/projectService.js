@@ -11,10 +11,13 @@ import {
 // --- IDINAGDAG NATIN ANG IMPORT NA ITO PARA SA NOTIFICATION ---
 import { createNotification } from '../models/adminNotifModel.js';
 import { AppError } from '../errors/AppError.js';
+// Services never touch `req` (see CLAUDE.md) so can't log through `req.log`'s per-request
+// correlation id — the shared base logger is the right layer for a business event like this one.
+import { logger } from '../config/logger.js';
 
 const createProject = async (body) => {
     const projectId = await createProjectWithVariables(body);
-    console.log("Project created:", projectId);
+    logger.info({ projectId }, 'project created');
 
     try {
         await createNotification(
@@ -25,7 +28,7 @@ const createProject = async (body) => {
             projectId
         );
     } catch (notifErr) {
-        console.warn("Notification creation failed (table may not exist):", notifErr.message);
+        logger.warn({ err: notifErr, projectId }, 'notification creation failed (table may not exist)');
     }
 
     return projectId;

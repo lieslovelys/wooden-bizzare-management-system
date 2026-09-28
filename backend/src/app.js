@@ -4,10 +4,12 @@ import connectPgSimple from 'connect-pg-simple';
 import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
-import morgan from 'morgan';
+import pinoHttp from 'pino-http';
+import { randomUUID } from 'crypto';
 import dotenv from 'dotenv';
 
 import { pool } from './config/db.js';
+import { logger } from './config/logger.js';
 
 dotenv.config();
 const app = express();
@@ -15,7 +17,7 @@ const app = express();
 // Fail fast rather than silently signing session cookies with a known, committed default —
 // see CLAUDE.md / ARCHITECTURE_REVIEW.md P0-4.
 if (!process.env.SECRET_KEY) {
-    console.error('FATAL: SECRET_KEY environment variable is required.');
+    logger.fatal('SECRET_KEY environment variable is required.');
     process.exit(1);
 }
 
@@ -57,9 +59,29 @@ app.use(cors({
 // pass — P1-3) — this is where the bandwidth actually is today.
 app.use(compression());
 
-// P1-8: method/path/status only, via morgan's standard formats — never request bodies, per the
-// CLAUDE.md logging rule.
-app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
+// PRD.md C.2 "Observability": structured (JSON) request logging with a per-request correlation
+// id, replacing morgan's plain-text access log — method/path/status/response-time only, via
+// pino-http's own standard log lines, never request bodies (per the CLAUDE.md logging rule; the
+// shared logger's `redact` config is a second line of defense on top of that). `genReqId` prefers
+// an incoming `X-Request-Id` (useful once something upstream, e.g. a future load balancer, sets
+// one) and otherwise mints a UUID, echoing it back on the response so a user-reported failure can
+// be grepped straight out of the container logs. `req.log` (this middleware's per-request child
+// logger, already bound with that id) is what routes and errorHandler.js log through — see
+// CLAUDE.md's logging rule for why services/models don't: they never touch `req`.
+const httpLogger = pinoHttp({
+    logger,
+    genReqId: (req, res) => {
+        const id = req.headers['x-request-id'] || randomUUID();
+        res.setHeader('X-Request-Id', id);
+        return id;
+    },
+    // /healthz and /readyz are polled by the Docker healthcheck every 10–15s (docker-compose.yml)
+    // — logging every poll would be pure noise, not a real request worth correlating anything to.
+    autoLogging: {
+        ignore: (req) => req.url === '/healthz' || req.url === '/readyz',
+    },
+});
+app.use(httpLogger);
 
 // JSON Limit para sa profile picture
 // PRD.md C.2 "Storage discipline": lowered from the original 10mb once photo uploads got their
@@ -85,8 +107,8 @@ app.use(session({
     proxy: true,
     cookie: {
         // P1-10: deliberately NOT tied to NODE_ENV. The compose deployment sets
-        // NODE_ENV=production (for morgan's log format and general production behavior) while
-        // running HTTP-only in the interim, before a domain/TLS exists — a `secure` cookie is
+        // NODE_ENV=production while running HTTP-only in the interim, before a domain/TLS
+        // exists — a `secure` cookie is
         // never sent by the browser over plain HTTP, so coupling this to NODE_ENV would have
         // silently broken every login the moment that image shipped. COOKIE_SECURE defaults to
         // false and should only be flipped to 'true' once TLS terminates in front of this app.
@@ -108,7 +130,7 @@ app.get('/readyz', async (req, res) => {
         await pool.query('SELECT 1');
         res.status(200).json({ status: 'ready' });
     } catch (error) {
-        console.error('[readyz] database check failed:', error.message);
+        req.log.error({ err: error }, '[readyz] database check failed');
         res.status(503).json({ status: 'not ready' });
     }
 });
