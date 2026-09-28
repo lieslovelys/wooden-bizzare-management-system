@@ -63,7 +63,7 @@ export const getJobOrderById = async (projectId) => {
 // this endpoint isn't expected to page past its default limit in practice.
 export const getWorkers = async ({ limit, offset }) => {
     const sql = `
-        SELECT u.user_id, u.first_name, u.last_name, w.job_role, w.photo, w.job_type,
+        SELECT u.user_id, u.first_name, u.last_name, w.job_role, w.job_type,
                COUNT(*) OVER() AS total_count
         FROM users u
         LEFT JOIN worker_details w ON u.user_id = w.user_id

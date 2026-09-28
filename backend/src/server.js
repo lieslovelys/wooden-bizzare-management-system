@@ -3,6 +3,18 @@
 // registration; this file owns only process-level concerns: starting the listener and draining
 // it on shutdown.
 import { app, pool } from './app.js';
+import photoStorage from './utils/photoStorage.js';
+
+// Fail fast if the upload directory (a Docker named volume in the deployed stack — see
+// docker-compose.yml) isn't writable, rather than surfacing as a mysterious 500 on the first
+// photo upload. Deliberately not in app.js: supertest-driven tests import `app` directly without
+// going through this file, and have no reason to touch the real filesystem.
+try {
+    await photoStorage.ensureUploadDir();
+} catch (error) {
+    console.error(`FATAL: upload directory ${photoStorage.UPLOAD_DIR} is not writable:`, error.message);
+    process.exit(1);
+}
 
 const port = process.env.PORT || 8080;
 const server = app.listen(port, () => {

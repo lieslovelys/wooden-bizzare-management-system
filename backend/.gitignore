@@ -1,2 +1,5 @@
 node_modules
 .env
+# Local (non-Docker) dev default for UPLOAD_DIR — see utils/photoStorage.js. The Docker
+# deployment uses a named volume instead (docker-compose.yml), never this path.
+src/uploads/

@@ -108,6 +108,23 @@ router.get('/workers', ADMIN_ONLY, async (req, res) => {
     res.status(200).json(ok(rows, buildMeta({ ...pagination, total })));
 });
 
+// PRD.md C.2 "Storage discipline": the worker list carries `photo_path` (a filename), not the
+// photo itself — the frontend requests it here one at a time via
+// utils/format.js's workerPhotoUrl(), rather than every list response inlining every worker's
+// full image. `Cross-Origin-Resource-Policy: same-site` (not helmet's default `same-origin`)
+// lets an <img> on the Vite dev server (a different origin from the API in local, non-Docker
+// dev) still load it; the Docker deployment is same-origin behind Nginx either way, so this only
+// relaxes the local-dev case, and only for this one route.
+router.get('/workers/:id/photo', ADMIN_ONLY, validate({ params: idParams() }), async (req, res) => {
+    const { fullPath, photoPath } = await User.getWorkerPhoto(req.params.id);
+    res.set({
+        'Cache-Control': 'private, max-age=31536000, immutable',
+        'Cross-Origin-Resource-Policy': 'same-site',
+        ETag: `"${photoPath}"`,
+    });
+    res.sendFile(fullPath);
+});
+
 router.post('/workers', ADMIN_ONLY, validate({ body: workerBody }), async (req, res) => {
     // Dinagdag natin ang middleName at suffix dito
     const { username, password, firstName, middleName, lastName, suffix, workerType, role, contactNumber, dailyRate, photo } = req.body;

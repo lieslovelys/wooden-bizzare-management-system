@@ -24,9 +24,20 @@ const getUserByUsername = async (username) => {
     }
 }
 
+// The CTE snapshots worker_details.photo_path BEFORE the DELETE fires the
+// worker_details_user_id_fkey ON DELETE CASCADE, so the caller (userService.deleteUser) still
+// gets the filename it needs to remove from disk even though the row that held it is already
+// gone by the time this statement returns.
 const deleteUserById = async (id) => {
     try {
-        const result = await query('DELETE FROM users WHERE user_id = $1 RETURNING *', [id]);
+        const result = await query(
+            `WITH deleted_photo AS (
+                SELECT photo_path FROM worker_details WHERE user_id = $1
+            )
+            DELETE FROM users WHERE user_id = $1
+            RETURNING *, (SELECT photo_path FROM deleted_photo) AS photo_path`,
+            [id]
+        );
         return result.rows;
     } catch (e) {
         throw e;
@@ -70,7 +81,7 @@ const getAllWorkers = async ({ limit, offset }) => {
                 u.last_name,
                 u.suffix,
                 w.detail_id,
-                w.photo,           /* <--- SIGURADUHING NANDITO ITO PARA SA PICTURE */
+                w.photo_path,      /* filename only now — served via GET /api/workers/:id/photo, see utils/photoStorage.js */
                 'W-' || LPAD(u.user_id::text, 2, '0') AS formatted_id,
                 TRIM(CONCAT_WS(' ', u.first_name, u.middle_name, u.last_name, NULLIF(u.suffix::text, 'None'))) AS full_name,
                 w.job_type,
@@ -86,6 +97,17 @@ const getAllWorkers = async ({ limit, offset }) => {
         `;
         const result = await query(text, [limit, offset]);
         return splitCountedRows(result.rows);
+    } catch (e) {
+        throw e;
+    }
+}
+
+// Looked up by the photo-serving route (GET /api/workers/:id/photo) so it can resolve a
+// filename from an id without trusting anything the client sent about the path itself.
+const getWorkerPhotoPath = async (user_id) => {
+    try {
+        const result = await query('SELECT photo_path FROM worker_details WHERE user_id = $1', [user_id]);
+        return result.rows[0]?.photo_path ?? null;
     } catch (e) {
         throw e;
     }
@@ -110,7 +132,7 @@ const createWorkerDetails = async (user_id, job_type, job_role, contact, rate, p
 // — a failure on the second left an orphaned login with no worker profile. Used by addWorker;
 // createUser/createWorkerDetails stay exported individually since other callers (bootstrap
 // admin script) only need the users-row half.
-const createWorkerWithDetails = async (username, password, first_name, middle_name, last_name, suffix, job_type, job_role, contact, rate, photo = null) => {
+const createWorkerWithDetails = async (username, password, first_name, middle_name, last_name, suffix, job_type, job_role, contact, rate, photoPath = null) => {
     const client = await getClient();
     try {
         await client.query('BEGIN');
@@ -124,10 +146,10 @@ const createWorkerWithDetails = async (username, password, first_name, middle_na
         const newUser = userResult.rows[0];
 
         const detailsResult = await client.query(
-            `INSERT INTO worker_details (user_id, job_type, job_role, contact, rate, photo)
+            `INSERT INTO worker_details (user_id, job_type, job_role, contact, rate, photo_path)
              VALUES ($1, $2, $3, $4, $5, $6)
              RETURNING *`,
-            [newUser.user_id, job_type, job_role, contact, rate, photo]
+            [newUser.user_id, job_type, job_role, contact, rate, photoPath]
         );
 
         await client.query('COMMIT');
@@ -140,27 +162,53 @@ const createWorkerWithDetails = async (username, password, first_name, middle_na
     }
 }
 
-// IDINAGDAG ANG 'photo' SA PARAMETERS
 // P1-7/P1-6: was a SELECT-then-INSERT-or-UPDATE across two round trips (a race, since two
-// concurrent requests could both see "no row" and both try to INSERT). Now a single upsert,
+// concurrent requests could both see "no row" and both try to INSERT). Still a single upsert,
 // made possible by the UNIQUE(user_id) constraint added on worker_details in the P1-7 migration.
-const updateWorkerDetails = async (user_id, job_type, job_role, contact, rate, photo = null) => {
+//
+// `photoOpt` is `{ photoChanged, photoPath }` rather than a bare value, because "the caller sent
+// no photo at all" (keep whatever's there) and "the caller explicitly cleared it" (photoPath:
+// null) need to be distinguishable — see userService.updateWorker. The transaction (rather than
+// a bare upsert) exists so the row is locked between reading the OLD photo_path and writing the
+// new one; the caller uses the returned `previousPhotoPath` to delete the now-orphaned file only
+// after the database write that replaces it has actually committed.
+const updateWorkerDetails = async (user_id, job_type, job_role, contact, rate, { photoChanged = false, photoPath = null } = {}) => {
+    const client = await getClient();
     try {
-        const upsertQuery = `
-            INSERT INTO worker_details (user_id, job_type, job_role, contact, rate, photo)
-            VALUES ($1, $2, $3, $4, $5, $6)
-            ON CONFLICT (user_id) DO UPDATE
+        await client.query('BEGIN');
+
+        const existing = await client.query(
+            'SELECT photo_path FROM worker_details WHERE user_id = $1 FOR UPDATE',
+            [user_id]
+        );
+        const previousPhotoPath = existing.rows[0]?.photo_path ?? null;
+        const nextPhotoPath = photoChanged ? photoPath : previousPhotoPath;
+
+        // photo (the legacy base64 column) is cleared whenever a NEW photo_path is written —
+        // otherwise a stale, pre-migration blob could keep rendering even after the worker's
+        // photo has moved to a real file. Left untouched when the photo isn't part of this edit
+        // at all, so an unrelated field edit doesn't race scripts/backfillPhotos.js.
+        const result = await client.query(
+            `INSERT INTO worker_details (user_id, job_type, job_role, contact, rate, photo_path)
+             VALUES ($1, $2, $3, $4, $5, $6)
+             ON CONFLICT (user_id) DO UPDATE
                 SET job_type = EXCLUDED.job_type,
                     job_role = EXCLUDED.job_role,
                     contact = EXCLUDED.contact,
                     rate = EXCLUDED.rate,
-                    photo = EXCLUDED.photo
-            RETURNING *;
-        `;
-        const result = await query(upsertQuery, [user_id, job_type, job_role, contact, rate, photo]);
-        return result.rows[0];
+                    photo_path = EXCLUDED.photo_path,
+                    photo = CASE WHEN $7 THEN NULL ELSE worker_details.photo END
+             RETURNING *`,
+            [user_id, job_type, job_role, contact, rate, nextPhotoPath, photoChanged]
+        );
+
+        await client.query('COMMIT');
+        return { details: result.rows[0], previousPhotoPath };
     } catch (e) {
+        await client.query('ROLLBACK');
         throw e;
+    } finally {
+        client.release();
     }
 }
 
@@ -170,6 +218,7 @@ export default {
     getAllUsers,
     deleteUserById,
     getAllWorkers,
+    getWorkerPhotoPath,
     createWorkerDetails,
     createWorkerWithDetails,
     updateWorkerDetails

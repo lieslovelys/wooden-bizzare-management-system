@@ -9,7 +9,8 @@
     "dev": "nodemon server.js",
     "migrate": "node scripts/migrate.js up",
     "migrate:down": "node scripts/migrate.js down",
-    "migrate:create": "node-pg-migrate create --migrations-dir migrations"
+    "migrate:create": "node-pg-migrate create --migrations-dir migrations",
+    "photos:backfill": "node scripts/backfillPhotos.js"
   },
   "keywords": [],
   "author": "",

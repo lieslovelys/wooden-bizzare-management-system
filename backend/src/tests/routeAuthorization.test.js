@@ -104,6 +104,7 @@ const ROUTES = [
   ['GET', '/api/workers', ['Admin']],
   ['POST', '/api/workers', ['Admin']],
   ['PUT', '/api/workers/:id', ['Admin']],
+  ['GET', '/api/workers/:id/photo', ['Admin']],
 
   // projectRoutes, mounted at /api/projects
   ['POST', '/api/projects', ['Admin']],
