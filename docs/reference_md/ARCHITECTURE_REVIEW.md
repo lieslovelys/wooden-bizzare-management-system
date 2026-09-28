@@ -927,9 +927,9 @@ Not urgent, but each of these increases the cost of every future change until ad
     - **Verification.** A scratchpad-only Playwright sweep (cached Chromium, fixture-mocked
       `/api/*`, never committed — no backend or database involved) drove every screen for every
       role at 360/768/1024px after each step: 25 overflow failures at baseline, 0 after item 8
-      landed, still 0 after every later step. Frontend suite 105/105 throughout (up from 96 at the
-      start of this item — the 8 `expectCardLabels` wirings plus 2 new test files), lint clean (3
-      pre-existing warnings), build clean at every step.
+      landed, still 0 after every later step. Frontend suite 105/105 throughout (up from 103 at
+      the start of this item — the 8 `expectCardLabels` wirings plus 2 new test files), lint
+      clean (3 pre-existing warnings), build clean at every step.
     - **Known residual gap, not touched:** several raw-table action buttons (inventory
       edit/delete, the profit delete icon, the inventory reason/adjust controls) stay under 44px
       specifically in the 769–1024px tablet range, since `.wb-card-table` is mobile-only
@@ -942,3 +942,71 @@ Not urgent, but each of these increases the cost of every future change until ad
       touch (scoped to `frontend/src/css/` — see DESIGN.md §4), and everything item 19 already
       left open (the remaining admin list/modal screens, `Navbar.jsx`, `App.jsx`'s session
       bootstrap, and the declined role-shell consolidation).
+
+21. **PRD.md C.2 "Storage discipline": worker photos moved off the database** — ✅ done, three
+    commits on `main`. This was the last C.2 NFR not blocked on the client or on VPS access — see
+    PRD.md C.2's own row for the resolved-state summary.
+    - **The problem.** `worker_details.photo` was an unbounded base64 `text` value, capped only
+      by the shared 10mb request-body limit; nothing capped it client-side either. `GET
+      /api/workers` (`userModel.getAllWorkers`) inlined every worker's full photo into every row
+      of the 200-worker cap — on a single vCPU, the most expensive response in the app to
+      serialize and gzip for no reason a viewer actually needed (the worker LIST screens never
+      rendered a photo at all; only `Attendance.jsx` and the edit modal ever showed one).
+    - **Storage.** New `backend/src/utils/photoStorage.js` is the one place that reads or writes
+      an actual photo file: `UPLOAD_DIR` (a Docker named volume, `/data/uploads`, in the deployed
+      stack; `backend/src/uploads/`, gitignored, in local dev), a random-UUID filename per photo,
+      magic-byte validation against the declared type (never trusting a client's MIME string
+      alone), and a 512KB cap on a NEW upload — generous, since `frontend/src/utils/resizeImage.js`
+      already shrinks whatever was picked to ~512px client-side first.
+    - **The "absent vs. cleared" trap.** `PUT /api/workers/:id` used to default a missing `photo`
+      to `null`, which was harmless only because `EditWorkerModal.jsx` always re-sent the current
+      photo from the (then photo-carrying) list row. Once the list stopped carrying it, that
+      default would have silently wiped every edit's photo. Fixed by making `photo` genuinely
+      three-state end to end — absent (keep), a string (replace), `null` (clear) — from
+      `EditWorkerModal.jsx`'s `photoChanged` flag through `userService.updateWorker` to
+      `userModel.updateWorkerDetails`'s `{ photoChanged, photoPath }` argument, inside a
+      transaction that `SELECT ... FOR UPDATE`s the row so the old file is only removed once the
+      replacing write has actually committed.
+    - **Serving.** New `GET /api/workers/:id/photo` (Admin-only, same as the rest of `/workers`)
+      resolves an id to a checked, on-disk path — never a client-supplied path — and answers with
+      long-cache headers plus `Cross-Origin-Resource-Policy: same-site` (helmet's default
+      `same-origin` would otherwise block the frontend's `<img>` in local, non-Docker dev, where
+      Vite and the API are different origins; the Docker deployment is same-origin behind Nginx
+      either way). `utils/format.js`'s new `workerPhotoUrl(worker)` builds the URL from
+      `{user_id, photo_path}`, with a `?v=<photo_path>` cache-buster (the filename itself changes
+      on every replace, so this never needs revalidating against a stale browser cache).
+    - **Backfill.** New `scripts/backfillPhotos.js` (`npm run photos:backfill`) is idempotent and
+      moves any remaining legacy `photo` value onto disk, deliberately without the new 512KB cap
+      (an existing value the app already accepted under the old limit shouldn't be silently
+      dropped for being over a cap introduced after the fact). Run automatically on every
+      container boot (`docker-entrypoint.sh`, right after `npm run migrate`), so an existing
+      deployment backfills itself on its next deploy with no manual step.
+    - **Deploy.** `docker-compose.yml` gains a named `uploads` volume; the Dockerfile creates and
+      chowns its mountpoint while still root, before the existing non-root `USER appuser` switch.
+      The shared body-size limit (`app.js`'s `express.json`/`urlencoded`, `frontend/nginx.conf`'s
+      `client_max_body_size`) drops from 10mb to 1mb now that photo uploads have a real cap of
+      their own and nothing else in the app sends anywhere near that much. `deploy/backup.sh`
+      tars the `uploads` volume right after its existing `pg_dump` (so every `photo_path` the
+      dump references already has a matching file), with the same 14-file retention;
+      `deploy/restore.sh` takes an optional matching tarball, extracted additively.
+    - **Verification.** Backend tests 235 → 273 (new `photoStorage.test.js`,
+      `workerPhotoRoutes.test.js` — real `app.js` via supertest, not a hand-built one —,
+      `backfillPhotos.test.js`, and new `userService.test.js` coverage for every photo-lifecycle
+      branch). Frontend tests 105 → 125 (new `resizeImage.test.js`, rewritten
+      `PhotoUpload.test.jsx`, new `format.test.js`/`Attendance.test.jsx` coverage, and new
+      `EditWorkerModal.test.jsx` — closing part of item 19's "remaining admin list/modal screens"
+      gap as a side effect). Lint clean (3 pre-existing warnings), both builds clean. The local
+      dev database's migration was verified with a real up → down → up round-trip.
+    - **Not independently re-verifiable here:** Docker isn't installed in this environment, so
+      the named-volume ownership behavior, the entrypoint's automatic backfill step, and the two
+      backup/restore scripts' `docker compose exec ... tar` paths are covered only by shell
+      syntax-checking and by reading them against `docker-compose.yml`'s real service names, not
+      by an actual running stack — the existing `docker-build` CI job remains the first place the
+      Dockerfile itself gets built.
+    - **Deferred, and recorded rather than silently dropped:** dropping the legacy
+      `worker_details.photo` column (needs a later migration, once every environment — including
+      whichever one this deploys to first — has actually run the backfill; the entrypoint runs
+      migrations *before* the backfill script, so doing the drop in this same pass would destroy
+      any not-yet-migrated photo); `attendance.photo` (unused — no route or service reads or
+      writes it, so there's nothing to migrate); off-box backup sync automation (already
+      P1-10's own open item, unchanged by this).

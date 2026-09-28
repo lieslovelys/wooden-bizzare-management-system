@@ -18,10 +18,11 @@ the current priority): [`docs/design/DESIGN.md`](docs/design/DESIGN.md).
 **Hosting target:** a single **Hostinger VPS, KVM 1 plan — 1 vCPU, 4 GB RAM, 50 GB NVMe**
 (self-managed, root access, no managed database or load balancer). `docker-compose.yml` (repo
 root) runs it as three containers — `db` (Postgres), `backend` (Express, migrates itself on
-boot), `proxy` (Nginx — serves the built frontend and reverse-proxies `/api` to `backend`); see
-`deploy/README.md` for first-time setup and `deploy/backup.sh`/`restore.sh` for the
-`pg_dump`-based backup story (a VPS snapshot alone is not a substitute — see that README for
-why). Currently **HTTP-only**: no domain is pointed at the VPS yet, so there's no TLS
+boot), `proxy` (Nginx — serves the built frontend and reverse-proxies `/api` to `backend`); a
+fourth named volume, `uploads`, holds worker photo files (`backend/src/utils/photoStorage.js`) —
+see `deploy/README.md` for first-time setup and `deploy/backup.sh`/`restore.sh` for the
+`pg_dump` + uploads-tarball backup story (a VPS snapshot alone is not a substitute — see that
+README for why). Currently **HTTP-only**: no domain is pointed at the VPS yet, so there's no TLS
 (Let's Encrypt can't certify a bare IP) — `COOKIE_SECURE` in `.env` must stay `false` until that
 changes, or sessions silently stop working. The single vCPU is the binding constraint, not RAM
 or disk: extra app containers don't add real parallelism on one core, so "scaling" here mostly
@@ -49,10 +50,12 @@ backend/
     config/db.js
     migrations/           # node-pg-migrate; ALL schema changes land here, including the initial
                            # schema (a fresh DB is just `npm run migrate`, nothing else first)
-    scripts/               createAdmin.js, migrate.js
+    scripts/               createAdmin.js, migrate.js, backfillPhotos.js   # see below
     middleware/            auth.js, errorHandler.js
     errors/                 AppError.js
     utils/                  pagination.js   # parsePagination/buildMeta/splitCountedRows — see below
+                            photoStorage.js  # worker-photo file storage — see below
+    uploads/                (untracked; local-dev default for UPLOAD_DIR — see below)
     routes/ services/ models/
     tests/                 # vitest; services mocked via vi.mock, routes via supertest
 frontend/
@@ -66,6 +69,7 @@ frontend/
     api/client.js                                                    # shared fetch wrapper
     context/    UserContext.js, ToastContext.js         # createContext() only — see below
     utils/      format.js                               # shared display formatters — see below
+                resizeImage.js                          # client-side photo resize — see below
     hooks/      usePaginatedList.js                     # server-paginated list fetching — see below
     css/
     tests/                 # vitest setup (jsdom + @testing-library/react); test files sit next
@@ -148,6 +152,7 @@ for the Docker Compose path; not read by `npm start`/`npm run dev` at all.
 | `COOKIE_SECURE` | `true` marks the session cookie HTTPS-only. Deliberately **not** tied to `NODE_ENV` (see P1-10) — leave `false` until the deployment actually terminates TLS somewhere, or the browser will never send the cookie back and every login will silently fail. |
 | `PORT` | Server port (default `8080`) |
 | `NODE_ENV` | `production` enables the verbose `morgan` log format. No longer affects the cookie flag — see `COOKIE_SECURE`. |
+| `UPLOAD_DIR` | Optional locally — worker photo files (`utils/photoStorage.js`). Defaults to `backend/src/uploads/` (gitignored) when unset. The Docker deployment sets it to `/data/uploads`, the mountpoint of the `uploads` named volume (`docker-compose.yml`). |
 
 **`frontend/.env`** (untracked, required for local non-Docker dev)
 | Variable | Purpose |
@@ -300,6 +305,11 @@ the hook or the `<Pagination>` component.
   and deleted. Create a migration with `npm run migrate:create -- <name>` from `backend/src`,
   give it a real `down`, and see the existing migrations for the project's conventions (e.g. a
   preflight check before adding a `UNIQUE` constraint on data that might already violate it).
+- **User-uploaded files go through `backend/src/utils/photoStorage.js`**, never into a database
+  column (see PRD.md C.2 "Storage discipline" and `worker_details.photo_path`) — decode/validate
+  with `decodePhotoDataUrl`, write with `savePhoto`, remove with `removePhoto`. A file is served
+  by resolving an id to a checked, on-disk path (`GET /api/workers/:id/photo`), never by trusting
+  a client-supplied filename or path directly.
 
 ## Known-broken / in-flight — don't mistake these for your own changes
 

@@ -140,14 +140,19 @@ makes an off-by-one confusion an easy, silent bug to introduce.
 
 **`worker_details`** — one row per Worker user. `detail_id` (PK), `user_id` (FK → users, CASCADE,
 not unique — a user can have more than one row), `job_type`, `job_role` (specialization:
-Carpenter/Carver/Liha/Painter/Delivery), `contact`, `rate` (`numeric(10,2)`, daily wage), `photo`
-(base64 `text`, no size cap).
+Carpenter/Carver/Liha/Painter/Delivery), `contact`, `rate` (`numeric(10,2)`, daily wage),
+`photo_path` (varchar(64), a filename on the `uploads` volume — **C.2 resolved**, see below).
+`photo` (base64 `text`) is legacy and no longer written to; it's read once, by
+`scripts/backfillPhotos.js`, to move any pre-existing value onto disk, and is dropped in a later
+migration once every environment has run that backfill (see ARCHITECTURE_REVIEW.md item 21).
 
 **`attendance`** — the best-constrained table. `id` (PK), `worker_id` (FK → worker_details,
 CASCADE, NOT NULL), `date` (NOT NULL), `day_of_week`, `time_in`/`time_out` (`time`, no date part
 — cannot represent an overnight shift), `status` (varchar, `CHECK` constrained to
 Present/Absent/Half-day/Late, default `'Absent'`), `late_minutes`/`overtime_minutes` (integer,
-default 0), `notes`, `photo`, `created_at`/`updated_at`. `UNIQUE(worker_id, date)`.
+default 0), `notes`, `photo` (varchar — unused: no route or service reads or writes it; not part
+of the C.2 photo-storage work, since there's no code path to migrate), `created_at`/`updated_at`.
+`UNIQUE(worker_id, date)`.
 
 **`projects`** — `id` (PK), `project_name` (NOT NULL), `client_name` (NOT NULL, no `clients`
 table — re-typed per project), `contact_number`, `date_ordered`, `client_payment`
@@ -504,7 +509,7 @@ rest of this table.
 | **Observability** | Structured, leveled logging (no raw `console.log` of request/response bodies); a health/readiness endpoint; basic request logging with correlation IDs. |
 | **Resilience** | Graceful shutdown (drains in-flight requests, closes the DB pool cleanly) on `SIGTERM`. |
 | **Backups** | Documented, tested database backup and restore procedure with a defined recovery point objective, shipped off-box rather than stored on the same 50 GB volume as the running app. A Hostinger VM-level snapshot is not a substitute for this — it backs up the whole disk on the provider's schedule, not an application-consistent, restorable Postgres dump. |
-| **Storage discipline** | Worker and attendance photos are currently stored as unbounded base64 blobs in Postgres `text` columns with no size cap. On a 50 GB disk shared with the OS, Docker images, and the database itself, this is a concrete capacity risk, not just a performance one — cap upload size and prefer file storage (a mounted volume or external object storage) over inlining images in the database. |
+| **Storage discipline** | **✅ Resolved for worker photos** (the only photo field actually in use — see B.2's `attendance.photo` note). Worker photos are real files on the `uploads` Docker named volume (`backend/src/utils/photoStorage.js`), resized client-side to ~512px before upload (`frontend/src/utils/resizeImage.js`) and capped server-side at 512KB after decoding — `worker_details` stores only a filename (`photo_path`). `GET /api/workers` no longer inlines the photo into every row; a viewer fetches one at a time via `GET /api/workers/:id/photo`. `scripts/backfillPhotos.js` (run automatically on every container boot, `docker-entrypoint.sh`) moves any pre-existing base64 value out of the database. |
 | **Time correctness** | All stored timestamps are timezone-aware (or explicitly and consistently normalized to Asia/Manila); attendance "day" boundaries match the shop's actual business day. Note the VM's OS clock defaults to UTC. |
 | **Schema evolution** | Schema changes are applied through a migration tool, are reviewable, and are re-applied automatically as part of deployment — not hand-run against production. |
 | **Deployment** | The app, database, and reverse proxy run as defined, versioned services (Docker Compose) that can be stood up identically in development and on the target Hostinger VPS. |
