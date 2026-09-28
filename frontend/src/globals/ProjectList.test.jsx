@@ -2,10 +2,13 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import ProjectList from './ProjectList';
+import { ToastContext } from '../context/ToastContext';
 
 // Previously untested (ARCHITECTURE_REVIEW.md item 25). Uses the real usePaginatedList hook
 // (only ../api/client is mocked), matching admin/ProjectHistory.test.jsx's approach, and renders
 // the real EditProjectForm/ProjectDetails on navigation since both get their own test files.
+// The delete flow (item 26) goes through the real ConfirmModal rather than window.confirm/alert —
+// see globals/ConfirmModal.test.jsx for that component's own coverage.
 vi.mock('../api/client', () => ({
   api: { get: vi.fn(), post: vi.fn(), put: vi.fn(), delete: vi.fn() },
 }));
@@ -20,14 +23,18 @@ const PAGE = {
 
 const paramsOf = (url) => new URL(`http://x${url}`).searchParams;
 
-const renderList = (route = '/project-list', state) =>
-  render(
-    <MemoryRouter initialEntries={[{ pathname: route, state }]}>
-      <Routes>
-        <Route path="/project-list" element={<ProjectList />} />
-      </Routes>
-    </MemoryRouter>
-  );
+const renderList = (route = '/project-list', state, showToast = vi.fn()) => ({
+  showToast,
+  ...render(
+    <ToastContext.Provider value={showToast}>
+      <MemoryRouter initialEntries={[{ pathname: route, state }]}>
+        <Routes>
+          <Route path="/project-list" element={<ProjectList />} />
+        </Routes>
+      </MemoryRouter>
+    </ToastContext.Provider>
+  ),
+});
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -77,30 +84,46 @@ describe('ProjectList', () => {
     });
   });
 
-  it('confirms, deletes, alerts, and refetches on Delete', async () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
-    vi.spyOn(window, 'alert').mockImplementation(() => {});
+  it('opens a confirm dialog naming the project, deletes, toasts, and refetches on confirm', async () => {
     api.delete.mockResolvedValue({ success: true });
-    renderList();
+    const { showToast } = renderList();
     await screen.findByText('Dining Set');
     api.get.mockClear();
 
     fireEvent.click(screen.getByText('Delete'));
 
-    expect(window.confirm).toHaveBeenCalledWith(expect.stringContaining('WB-04'));
+    const dialog = screen.getByRole('dialog');
+    expect(dialog).toHaveTextContent('WB-04');
+    expect(api.delete).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByText('Yes, Delete'));
+
     await waitFor(() => expect(api.delete).toHaveBeenCalledWith('/api/projects/4'));
-    expect(window.alert).toHaveBeenCalledWith('Project successfully deleted.');
+    expect(showToast).toHaveBeenCalledWith('Project successfully deleted.', 'success');
     await waitFor(() => expect(api.get).toHaveBeenCalled());
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
   it('does not delete when the confirm dialog is cancelled', async () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(false);
     renderList();
     await screen.findByText('Dining Set');
 
     fireEvent.click(screen.getByText('Delete'));
+    fireEvent.click(screen.getByText('Cancel'));
 
     expect(api.delete).not.toHaveBeenCalled();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('toasts the server error on a failed delete', async () => {
+    api.delete.mockRejectedValue(new Error('Cannot delete project with active job orders'));
+    const { showToast } = renderList();
+    await screen.findByText('Dining Set');
+
+    fireEvent.click(screen.getByText('Delete'));
+    fireEvent.click(screen.getByText('Yes, Delete'));
+
+    await waitFor(() => expect(showToast).toHaveBeenCalledWith('Cannot delete project with active job orders', 'error'));
   });
 
   it('switches to EditProjectForm on Edit', async () => {

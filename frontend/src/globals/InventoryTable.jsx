@@ -3,6 +3,7 @@ import '../css/inventory.css';
 import { api } from '../api/client';
 import { useToast } from '../context/ToastContext';
 import { formatProjectId } from '../utils/format';
+import ConfirmModal from './ConfirmModal';
 
 const ADJUST_REASONS = ['Received', 'Used', 'Damaged', 'Correction', 'Returned'];
 // FR-3: only these two reasons can be tagged to a project — see schemas/inventorySchemas.js.
@@ -27,6 +28,9 @@ const InventoryTable = () => {
     // Open projects for the tagging dropdown — fetched lazily, the first time a row's reason is
     // set to Used or Returned, so the screen's initial load stays at one request.
     const [openProjects, setOpenProjects] = useState(null);
+
+    // itemToDelete being non-null is what opens the delete-confirmation modal.
+    const [itemToDelete, setItemToDelete] = useState(null);
 
     // States for Modal
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -87,9 +91,15 @@ const InventoryTable = () => {
         setProjectByVariant(prev => ({ ...prev, [variantId]: projectId }));
     };
 
-    const handleDelete = async (e, id) => {
+    const handleDelete = (e, item) => {
         e.stopPropagation();
-        if (!window.confirm("Are you sure you want to delete this item?")) return;
+        setItemToDelete(item);
+    };
+
+    const executeDelete = async () => {
+        if (!itemToDelete) return;
+        const { id } = itemToDelete;
+        setItemToDelete(null);
         try {
             await api.delete(`/api/inventory/${id}`);
             showToast('Item deleted.', 'success');
@@ -277,7 +287,7 @@ const InventoryTable = () => {
                                                         <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                                                     </svg>
                                                 </button>
-                                                <button className="action-btn delete-btn" onClick={(e) => handleDelete(e, item.id)} title="Delete">
+                                                <button className="action-btn delete-btn" onClick={(e) => handleDelete(e, item)} title="Delete">
                                                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" style={{ stroke: 'var(--color-danger)' }} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                                         <polyline points="3 6 5 6 21 6"></polyline>
                                                         <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -369,6 +379,17 @@ const InventoryTable = () => {
                     </tbody>
                 </table>
             </div>
+            )}
+
+            {itemToDelete && (
+                <ConfirmModal
+                    danger
+                    title="Delete Item?"
+                    text={`Are you sure you want to delete "${itemToDelete.name}"?`}
+                    confirmLabel="Yes, Delete"
+                    onCancel={() => setItemToDelete(null)}
+                    onConfirm={executeDelete}
+                />
             )}
 
             {/* MODAL */}

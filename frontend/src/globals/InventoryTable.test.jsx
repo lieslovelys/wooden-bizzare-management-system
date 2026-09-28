@@ -246,25 +246,28 @@ describe('InventoryTable', () => {
       expect(api.post).not.toHaveBeenCalled();
     });
 
-    it('delete: does nothing when the confirm is dismissed', async () => {
+    it('delete: opens a confirm dialog naming the item, and Cancel does nothing', async () => {
       api.get.mockResolvedValue({ success: true, data: [SAMPLE_ITEM] });
-      vi.spyOn(window, 'confirm').mockReturnValue(false);
 
       const { container } = render(<InventoryTable />);
       await screen.findByText('Plywood');
       fireEvent.click(container.querySelector('.delete-btn'));
 
+      expect(screen.getByRole('dialog')).toHaveTextContent('Plywood');
+      fireEvent.click(screen.getByText('Cancel'));
+
       expect(api.delete).not.toHaveBeenCalled();
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
 
     it('delete: removes the item and refetches when confirmed', async () => {
       api.get.mockResolvedValue({ success: true, data: [SAMPLE_ITEM] });
       api.delete.mockResolvedValue({ success: true });
-      vi.spyOn(window, 'confirm').mockReturnValue(true);
 
       const { container } = render(<InventoryTable />);
       await screen.findByText('Plywood');
       fireEvent.click(container.querySelector('.delete-btn'));
+      fireEvent.click(screen.getByText('Yes, Delete'));
 
       await waitFor(() => expect(api.delete).toHaveBeenCalledWith('/api/inventory/1'));
       await waitFor(() => expect(api.get).toHaveBeenCalledTimes(2));

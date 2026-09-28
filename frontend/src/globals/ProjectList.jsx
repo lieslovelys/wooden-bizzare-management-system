@@ -4,9 +4,11 @@ import EditProjectForm from './EditProjectForm';
 import '../css/admin.css';
 import ProjectDetails from './ProjectDetails';
 import Pagination from './Pagination';
+import ConfirmModal from './ConfirmModal';
 import { api } from '../api/client';
 import { formatProjectId } from '../utils/format';
 import { usePaginatedList } from '../hooks/usePaginatedList';
+import { useToast } from '../context/ToastContext';
 
 const ProjectList = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -23,6 +25,11 @@ const ProjectList = () => {
   const [viewingProjectId, setViewingProjectId] = useState(() => location.state?.targetProjectId ?? null);
 
   const [activeRowId, setActiveRowId] = useState(null);
+
+  // projectToDelete being non-null is what opens the delete-confirmation modal.
+  const [projectToDelete, setProjectToDelete] = useState(null);
+
+  const showToast = useToast();
 
   useEffect(() => {
     if (location.state && location.state.targetProjectId) {
@@ -43,26 +50,30 @@ const ProjectList = () => {
   });
 
   // --- NEW DELETE HANDLER FUNCTION ---
-  const handleDelete = async (id, name) => {
-    const confirmDelete = window.confirm(`Are you sure you want to delete project "${formatProjectId(id)} - ${name}"? This action cannot be undone.`);
+  const handleDelete = (id, name) => {
+    setProjectToDelete({ id, name });
+  };
 
-    if (!confirmDelete) return;
+  const executeDelete = async () => {
+    if (!projectToDelete) return;
+    const { id } = projectToDelete;
+    setProjectToDelete(null);
 
     try {
       const result = await api.delete(`/api/projects/${id}`);
 
       if (result.success) {
-        alert('Project successfully deleted.');
+        showToast('Project successfully deleted.', 'success');
         refetch(); // Refresh the list without wiping page state
       } else {
         // P2 (envelope unification): every route now either succeeds with {success:true} or
         // throws (caught below) — effectively unreachable, so this is a static string rather
         // than a `result.message` field that was never actually populated.
-        alert('Failed to delete project.');
+        showToast('Failed to delete project.', 'error');
       }
     } catch (error) {
       console.error('Error deleting project:', error.message);
-      alert(error.message || 'An error occurred while connecting to the server.');
+      showToast(error.message || 'An error occurred while connecting to the server.', 'error');
     }
   };
 
@@ -90,7 +101,17 @@ const ProjectList = () => {
 
   return (
     <div className="project-list-container">
-      
+      {projectToDelete && (
+        <ConfirmModal
+          danger
+          title="Delete Project?"
+          text={`Are you sure you want to delete project "${formatProjectId(projectToDelete.id)} - ${projectToDelete.name}"? This action cannot be undone.`}
+          confirmLabel="Yes, Delete"
+          onCancel={() => setProjectToDelete(null)}
+          onConfirm={executeDelete}
+        />
+      )}
+
       {/* HEADER CONTROLS */}
       <div className="list-top-controls">
         <div className="search-container" style={{ margin: 0, flex: 1 }}>

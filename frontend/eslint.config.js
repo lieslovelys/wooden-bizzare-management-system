@@ -24,6 +24,10 @@ export default defineConfig([
     },
     rules: {
       'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
+      // ARCHITECTURE_REVIEW.md item 26: native dialogs are replaced app-wide by
+      // globals/ConfirmModal.jsx (confirm) and useToast() (alert) — this stops one from
+      // coming back.
+      'no-alert': 'error',
     },
   },
 ])

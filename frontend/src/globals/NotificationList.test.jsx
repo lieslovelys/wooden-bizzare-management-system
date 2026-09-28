@@ -41,7 +41,6 @@ const pageOf = (rows) => ({
 
 beforeEach(() => {
   vi.clearAllMocks();
-  vi.spyOn(window, 'confirm').mockReturnValue(true);
 });
 
 const renderList = (props) =>
@@ -92,24 +91,38 @@ describe('NotificationList', () => {
     expect(mockRefreshUnread).toHaveBeenCalled();
   });
 
-  it('"Clear All" with a type issues one scoped request, not one per row, and refreshes the unread count', async () => {
+  it('"Clear All" opens a confirm dialog, and Cancel issues no request', async () => {
+    api.get.mockResolvedValue(pageOf([PROJECT_NOTIF]));
+    renderList({});
+
+    fireEvent.click(await screen.findByText('Clear All'));
+    expect(screen.getByRole('dialog')).toHaveTextContent('Other users will still see them');
+    fireEvent.click(screen.getByText('Cancel'));
+
+    expect(api.delete).not.toHaveBeenCalled();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('"Clear All", once confirmed, with a type issues one scoped request, not one per row, and refreshes the unread count', async () => {
     api.get.mockResolvedValue(pageOf([PROJECT_NOTIF]));
     api.delete.mockResolvedValue({ message: 'ok' });
     renderList({ type: 'project' });
 
     fireEvent.click(await screen.findByText('Clear All'));
+    fireEvent.click(screen.getByText('Clear All', { selector: '.wb-btn-yes' }));
 
     await waitFor(() => expect(api.delete).toHaveBeenCalledTimes(1));
     expect(api.delete).toHaveBeenCalledWith('/api/notifications/clear/all?type=project');
     expect(mockRefreshUnread).toHaveBeenCalled();
   });
 
-  it('"Clear All" with no type issues one unscoped request (Admin behavior)', async () => {
+  it('"Clear All", once confirmed, with no type issues one unscoped request (Admin behavior)', async () => {
     api.get.mockResolvedValue(pageOf([PROJECT_NOTIF, VERIFICATION_NOTIF]));
     api.delete.mockResolvedValue({ message: 'ok' });
     renderList({});
 
     fireEvent.click(await screen.findByText('Clear All'));
+    fireEvent.click(screen.getByText('Clear All', { selector: '.wb-btn-yes' }));
 
     await waitFor(() => expect(api.delete).toHaveBeenCalledTimes(1));
     expect(api.delete).toHaveBeenCalledWith('/api/notifications/clear/all');

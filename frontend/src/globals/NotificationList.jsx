@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../css/admin.css';
 import { api } from '../api/client';
 import { usePaginatedList } from '../hooks/usePaginatedList';
 import { useNotifications } from '../context/NotificationContext';
 import Pagination from './Pagination';
+import ConfirmModal from './ConfirmModal';
 
 // Shared by admin/AdminNotification.jsx, product_manager/PMNotification.jsx, and
 // quality_checker/QualityCheckerNotification.jsx — those three were ~90% line-for-line
@@ -21,6 +22,9 @@ const NotificationList = ({ type, emptyMessage = 'No new notifications.', resolv
   // so this list picks up a new notification without a manual reload — see
   // globals/NotificationProvider.jsx and hooks/usePaginatedList.js's `refreshKey`.
   const { arrivals, refreshUnread } = useNotifications();
+
+  // Opens the "Clear All" confirmation modal in place of the old window.confirm.
+  const [confirmClearAll, setConfirmClearAll] = useState(false);
 
   // P1-3: server-paginated and server-filtered by `type` — this GET used to fetch every
   // notification and filter by type client-side, which would show an empty/short page for a
@@ -50,14 +54,8 @@ const NotificationList = ({ type, emptyMessage = 'No new notifications.', resolv
     if (page !== 1) setPage(1); else refetch();
   };
 
-  const handleClearAll = async () => {
-    // FR-4: Clear All only dismisses the caller's own copy — it no longer removes the
-    // notification for every other viewer with access to this list.
-    const confirmMsg = type
-      ? `Clear all ${type} notifications from your own list? Other users will still see them.`
-      : 'Clear all notifications from your own list? Other users will still see them.';
-    if (!window.confirm(confirmMsg)) return;
-
+  const executeClearAll = async () => {
+    setConfirmClearAll(false);
     try {
       const qs = type ? `?type=${encodeURIComponent(type)}` : '';
       await api.delete(`/api/notifications/clear/all${qs}`);
@@ -98,6 +96,22 @@ const NotificationList = ({ type, emptyMessage = 'No new notifications.', resolv
 
   return (
     <div className="notif-container">
+      {/* Not `danger`: Clear All only dismisses the caller's own copy, not a destructive
+          delete of anyone else's — see the confirmation text below. */}
+      {confirmClearAll && (
+        <ConfirmModal
+          title="Clear All Notifications?"
+          text={
+            type
+              ? `Clear all ${type} notifications from your own list? Other users will still see them.`
+              : 'Clear all notifications from your own list? Other users will still see them.'
+          }
+          confirmLabel="Clear All"
+          onCancel={() => setConfirmClearAll(false)}
+          onConfirm={executeClearAll}
+        />
+      )}
+
       <h1 className="notif-header">
         <span className="notif-bell"></span> Notifications
       </h1>
@@ -169,7 +183,7 @@ const NotificationList = ({ type, emptyMessage = 'No new notifications.', resolv
 
       {displayed.length > 0 && (
         <div className="notif-actions">
-          <button className="notif-btn-secondary" onClick={handleClearAll}>
+          <button className="notif-btn-secondary" onClick={() => setConfirmClearAll(true)}>
             Clear All
           </button>
           <button className="notif-btn-primary" onClick={handleMarkAllAsRead}>
