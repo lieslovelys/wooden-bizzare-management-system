@@ -307,7 +307,11 @@
 }
 
 /* --- Responsive Layout --- */
-@media (max-width: 900px) {
+/* DESIGN.md §3.2 — 900px was a stray third breakpoint; the codebase's other two (768/1024) cover
+   this range already (768-900px rendered with the two-column desktop layout, unlike every other
+   screen at that width). Widening to 1024 means every width this covered before still gets it,
+   plus 900-1024. */
+@media (max-width: 1024px) {
   .login-layout { flex-direction: column; }
   
   .login-layout .login-left {
