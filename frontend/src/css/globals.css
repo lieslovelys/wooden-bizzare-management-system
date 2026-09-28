@@ -727,16 +727,19 @@ html, body {
    2. RESPONSIVE DESIGN (TABLET)
 ========================================= */
 @media (max-width: 1024px) {
+    /* DESIGN.md §7#9 — was icon-only with every label hidden outright, leaving Worker's rail (one
+       tab plus Notifications, since FR-4) down to two unlabeled icons; every tab now keeps its
+       label, stacked under the icon instead of beside it, so the rail can stay narrow. 96px
+       rather than 90px: "Notifications" doesn't fit one line at 90px even at this smaller size. */
     .wooden-navbar {
-        width: 90px;
+        width: 96px;
         align-items: center;
     }
 
     /* Itago ang text, icons na lang ang matitira */
-    .title-group, 
-    .user-profile h2, 
-    .user-info,
-    .nav-item span { display: none; }
+    .title-group,
+    .user-profile h2,
+    .user-info { display: none; }
 
     .navbar-header { padding: 30px 0 20px 0; justify-content: center; }
     .navbar-header .logo { width: 45px; height: 45px; }
@@ -745,8 +748,24 @@ html, body {
     .avatar-circle { width: 45px; height: 45px; font-size: 1.2rem; }
 
     .nav-links { padding: 0 10px; width: 100%; align-items: center; }
-    .nav-item { justify-content: center; padding: 14px 0; width: 50px; border-radius: 50%; }
+    .nav-item {
+        flex-direction: column;
+        justify-content: center;
+        gap: 4px;
+        padding: 10px 4px;
+        width: 100%;
+        min-height: 44px; /* DESIGN.md §3.3 */
+        border-radius: 12px;
+        text-align: center;
+    }
     .nav-item i { margin: 0; }
+    /* .nav-label, not a bare `span` — .nav-icon-wrap (the icon+badge wrapper) is also a <span>,
+       and these font/wrap rules are only meant for the text label below it. */
+    .nav-item .nav-label {
+        font-size: 0.68rem;
+        line-height: 1.15;
+        white-space: normal; /* allows a two-word label ("For Repair"-length) to wrap to 2 lines */
+    }
 }
 
 
@@ -775,15 +794,35 @@ html, body {
     }
 
     /* Ibalik ang mga text na itinago nung Tablet View */
-    .title-group, 
-    .user-profile h2, 
-    .user-info,
-    .nav-item span { display: block; }
+    .title-group,
+    .user-profile h2,
+    .user-info { display: block; }
+    /* .nav-item .nav-label needs no restore here any more — DESIGN.md §7#9's labeled rail no
+       longer hides it at tablet width at all (it stays visible, just stacked below the icon). */
 
     .navbar-header { padding: 30px 25px 20px 25px; justify-content: flex-start; }
     .user-profile { padding: 0 25px 30px 25px; justify-content: flex-start; }
     .nav-links { padding: 0 15px 30px 15px; align-items: stretch; }
-    .nav-item { justify-content: flex-start; padding: 14px 20px; width: 100%; border-radius: 12px; }
+    /* Both this query and the tablet one above match at <=768px; since this one comes later in
+       the file it wins on shared properties, but flex-direction/gap/text-align aren't
+       re-declared by the pre-existing rule below, so without this reset the tablet rail's
+       stacked icon-above-label layout (DESIGN.md §7#9) would leak into the mobile drawer, where
+       the label belongs beside the icon like every other row here. */
+    .nav-item {
+        flex-direction: row;
+        justify-content: flex-start;
+        gap: 15px;
+        padding: 14px 20px;
+        width: 100%;
+        min-height: 0;
+        border-radius: 12px;
+        text-align: left;
+    }
+    .nav-item .nav-label {
+        font-size: 1rem;
+        line-height: normal;
+        white-space: normal;
+    }
 
     /* Palabasin ang mga Mobile Buttons */
     .close-mobile-btn { display: block !important; }

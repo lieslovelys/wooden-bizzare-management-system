@@ -100,27 +100,34 @@ const Navbar = ({ tabs, accountType }) => {
                                             <span className="nav-badge">{unreadCount > 99 ? '99+' : unreadCount}</span>
                                         )}
                                     </span>
-                                    <span>{tab.name}</span>
+                                    {/* Own class (not a bare <span>) so css/globals.css's tablet
+                                        rail CSS (DESIGN.md §7#9) can target just the label —
+                                        .nav-icon-wrap above is also a <span>. */}
+                                    <span className="nav-label">{tab.name}</span>
                                 </div>
                             </Link>
                         );
                     })}
 
                     {/* 2. ITO YUNG PERMANENT LOGOUT BUTTON SA ILALIM */}
-                    <div 
-                        className="nav-item logout-nav-item" 
-                        onClick={() => setShowLogoutModal(true)} 
-                        style={{ 
-                            marginTop: 'auto', 
-                            cursor: 'pointer', 
-                            color: '#d9534f', 
+                    <div
+                        className="nav-item logout-nav-item"
+                        onClick={() => setShowLogoutModal(true)}
+                        style={{
+                            marginTop: 'auto',
+                            cursor: 'pointer',
+                            color: '#d9534f',
                             fontWeight: 'bold',
                             borderTop: '1px solid rgba(255, 255, 255, 0.1)', // Ginawang lighter ang border para mas kita sa dark theme
                             paddingTop: '20px'
                         }}
                     >
-                        <i className="fa-solid fa-arrow-right-from-bracket" style={{marginRight: '15px'}}></i>
-                        <span>Logout</span>
+                        {/* marginRight dropped: .nav-item already has `gap: 15px` between
+                            children, and an inline style would win over any CSS override the
+                            tablet rail (DESIGN.md §7#9) needs to zero it out for the stacked
+                            icon-above-label layout. */}
+                        <i className="fa-solid fa-arrow-right-from-bracket"></i>
+                        <span className="nav-label">Logout</span>
                     </div>
                 </nav>
             </div>
