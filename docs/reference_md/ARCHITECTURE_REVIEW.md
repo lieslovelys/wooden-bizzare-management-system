@@ -938,9 +938,10 @@ Not urgent, but each of these increases the cost of every future change until ad
     - **Not verifiable in this environment, and not claimed:** how any of this feels on a real
       budget Android phone — touch responsiveness, on-screen keyboard behavior, legibility under
       shop-floor glare. The Playwright sweep confirms layout geometry, not feel.
-    - **Still open after this:** the 54 JSX inline-style hex literals the token migration didn't
-      touch (scoped to `frontend/src/css/` — see DESIGN.md §4), and the declined role-shell
-      consolidation. Item 19's remaining test-coverage gaps are closed — see item 23.
+    - **Still open after this:** ~~the 54 JSX inline-style hex literals the token migration didn't
+      touch (scoped to `frontend/src/css/` — see DESIGN.md §4)~~ — closed by item 24 — and the
+      declined role-shell consolidation. Item 19's remaining test-coverage gaps are closed — see
+      item 23.
 
 21. **PRD.md C.2 "Storage discipline": worker photos moved off the database** — ✅ done, three
     commits on `main`. This was the last C.2 NFR not blocked on the client or on VPS access — see
@@ -1088,7 +1089,8 @@ Not urgent, but each of these increases the cost of every future change until ad
 
 23. **Remaining frontend test coverage** — ✅ done, five commits on `main`. Closes item 19's and
     item 20's "still open" lists in full except the declined role-shell consolidation and the 54
-    JSX inline-hex literals (both still open, unrelated to test coverage).
+    ~~JSX inline-hex literals~~ (both still open, unrelated to test coverage — the hex literals
+    are closed by item 24 below).
     - **A real bug, found while scoping this item.**
       `admin/WorkerList.jsx`'s `handleSaveNewWorker` caught its own errors and toasted them, but
       `admin/AddWorkerModal.jsx`'s `handleSubmit` unconditionally showed a success toast and
@@ -1128,5 +1130,54 @@ Not urgent, but each of these increases the cost of every future change until ad
     - **Verification.** Frontend tests 125 → 177 across the five commits; lint clean throughout
       (the same 3 pre-existing `JobOrderDetails.jsx` warnings, unrelated to this item); both
       builds clean. Backend untouched by this item — its suite still 273/273.
-    - **Still open after this:** the declined role-shell consolidation, and the 54 JSX inline-hex
-      literals (item 20's own "still open" note) — neither is a test-coverage gap.
+    - **Still open after this:** the declined role-shell consolidation — see item 24 for the JSX
+      inline-hex literals, item 20's own "still open" note (neither was a test-coverage gap).
+
+24. **JSX inline-hex literals migrated onto the `:root` tokens** — ✅ done, one commit on `main`
+    plus this doc pass. Closes the last item on item 20's/item 23's "still open" lists — the 54
+    inline `style={{ color: '#...' }}` hex literals in `.jsx` files that the CSS-scoped token
+    migration (item 7 in DESIGN.md §7, i.e. the pass behind items 19/20) left untouched, per
+    DESIGN.md §4's own note that this was simply out of scope for a pass scoped to
+    `frontend/src/css/`, not a technical limitation.
+    - **Scope.** A fresh count found 55 hex occurrences across `frontend/src/**/*.{js,jsx}`, two
+      of them out of scope on inspection: `utils/resizeImage.js`'s canvas `ctx.fillStyle` (a
+      `<canvas>` 2D context can't resolve a CSS custom property, so `var()` there would just
+      silently paint nothing) and one hex value that only exists inside a pre-existing Tagalog
+      comment in `admin/WorkerList.jsx` (left as-is per the CLAUDE.md rule against touching
+      existing Tagalog comments). That left 53 across 18 `.jsx` files.
+    - **Rule applied — identical to the CSS pass's own, not a new one.** A literal moved to a
+      token only when it was either the token's exact value or a drift variant of the same
+      visual role, exactly matching DESIGN.md §4's existing consolidation map. 45 of the 53
+      migrated this way — `--color-text-muted`, `--color-danger`, `--color-accent`,
+      `--color-accent-text`, `--color-text`, `--color-border`, `--color-surface`,
+      `--color-surface-cream`, and `--color-text-inverse` all picked up one or more sites. Four
+      SVG `stroke="#..."` presentation attributes (`InventoryTable.jsx` ×2, `WorkerList.jsx`,
+      `NotificationList.jsx` ×3) moved into `style={{ stroke: 'var(--color-...)' }}` rather than
+      staying a bare attribute, since `var()` inside a raw SVG presentation attribute isn't
+      guaranteed to resolve but an inline `style` always does.
+    - **Four JSX-only drift values, folded into DESIGN.md §4's map for the first time.** None of
+      these appeared anywhere in `css/`, but each is the same drift pattern the map already folds
+      elsewhere: `#cc0000` (`WorkerJobOrder.jsx`'s session-error text), `#ff4d4d`
+      (`InventoryTable.jsx`'s delete icon), and `#dc3545` (`ProjectList.jsx`'s delete button) all
+      fold onto `--color-danger`, joining the `#ff0000`/`#c62828`/etc. variants the map already
+      lists there; `#8B7E5C` (`WorkerProductivity.jsx`'s empty-category message) folds onto
+      `--color-text-muted`. These are small, deliberate visual shifts of the same kind the CSS
+      pass itself already accepted when it folded, e.g., `#ff0000` onto `#d32f2f`.
+    - **Kept as a literal tail (8), matching the CSS pass's own precedent for what stays literal:**
+      `#666` (`Navbar.jsx`, `EditWorkerModal.jsx`), `#000000` and `#5C4033` (`EditWorkerModal.jsx`
+      — the worker-name heading's two-tone styling), `#5b5035` (`ProjectVerification.jsx`), `#999`
+      (`PhotoUpload.jsx`), and `#ddd` (`AddWorkerModal.jsx` ×2) — neutral greys and a brown
+      distinct from the muted-text family, each used once or twice, which is exactly what
+      DESIGN.md §4's literal-tail paragraph already describes for the CSS side.
+    - **No behavior change.** Every substitution is either the token's exact existing value or one
+      of the drift folds above — nothing here is a new color decision beyond the four drift
+      folds, which are named explicitly rather than silently absorbed.
+    - **Verification.** A grep confirmed every `var(--color-...)` name introduced actually exists
+      on `:root` in `css/globals.css` (the one failure mode that fails silently — a typo'd
+      variable name resolves to nothing, not an error). A re-grep for hex literals across
+      `frontend/src/**/*.{js,jsx}` after the change returned exactly the 8 kept literals plus the
+      2 out-of-scope exclusions above, confirming nothing was missed or double-counted. Frontend
+      suite 177/177 (unchanged — no test asserts on any of these values), lint clean (the same 3
+      pre-existing `JobOrderDetails.jsx` warnings), build clean. Backend untouched.
+    - **Still open after this:** the declined role-shell consolidation is the one item left on
+      this backlog's "still open" lists.

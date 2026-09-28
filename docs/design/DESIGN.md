@@ -92,7 +92,9 @@ this was done and verified):
 - `--color-border`: `#f0ede5`, `#f4f4f4`.
 - `--color-text`: `#1a1a1a`, `#333`.
 - `--color-text-muted`: `#888888`, `#888`.
-- `--color-danger`: `#c62828`, `#cc3300`, `#ff0000`, `#d9534f`.
+- `--color-danger`: `#c62828`, `#cc3300`, `#ff0000`, `#d9534f`. Folded from `.jsx` inline styles
+  too (item 24, ARCHITECTURE_REVIEW.md): `#cc0000`, `#ff4d4d`, `#dc3545`.
+- `--color-text-muted`: also folded from a `.jsx` inline style (item 24): `#8B7E5C`.
 
 **The literal tail.** ~92 distinct one-off colors (badge/status accents, the warning oranges
 `#f57c00`/`#e67e22`, rank bronze/silver, a handful of generic greys distinct from the muted-text
@@ -101,12 +103,19 @@ color onto an ill-fitting token isn't the goal; undoing the gold/brown/cream/bor
 above was. If the redesign changes the palette, `:root`'s definitions are the one place that
 needs updating for the change to propagate.
 
-**Not migrated, and recorded here as a follow-up rather than silently dropped:** 54 inline
-`style={{ color: '#...' }}`-style hex literals in `.jsx` files (JobOrderDetails, InventoryTable,
-Navbar, ProjectVerification, etc.). A JSX inline style can reference a token exactly like any
-other CSS value (`style={{ color: 'var(--color-accent)' }}` works, since `:root`'s custom
-properties are visible everywhere) — this was simply out of scope for a pass scoped to
-`frontend/src/css/`, not a technical limitation, and is a small, mechanical follow-up.
+**JSX inline styles — migrated (item 24, ARCHITECTURE_REVIEW.md).** The `.jsx`-file hex literals
+the CSS-scoped token pass above didn't touch (54 at the time item 20 first recorded them, 53 once
+one out-of-scope canvas `fillStyle` and one hex-inside-a-comment were excluded from the count) are
+now on the same tokens, using the identical consolidation rule: a literal moves to a token only
+when it's the token's exact value or a drift variant of the same role (`style={{ color:
+'var(--color-accent)' }}` works in JSX exactly like it does in CSS, since `:root`'s custom
+properties are visible everywhere; a raw SVG `stroke="#..."` attribute moved into `style={{
+stroke: 'var(--color-...)' }}` instead, since `var()` support isn't guaranteed on a bare
+presentation attribute). Four JSX-only drift values not previously in the map above got folded in
+alongside this. A small literal tail stays, matching this section's own precedent for the CSS
+pass: `#666`, `#000000`, `#5C4033`, `#5b5035`, `#999`, `#ddd` — each a single- or few-use neutral
+grey or brown distinct from the muted-text family. `utils/resizeImage.js`'s canvas `fillStyle`
+stays a literal too — a `<canvas>` context can't resolve a CSS custom property at all.
 
 ## 5. Design tokens
 
