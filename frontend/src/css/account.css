@@ -13,7 +13,7 @@
   color: #4B3600;
   border: none;
   background: none;
-  font-size: 18px;
+  font-size: 1.125rem;
   transition: all 0.2s;
 }
 
@@ -58,7 +58,7 @@
   font-weight: bold;
   margin-bottom: 12px;
   color: #000;
-  font-size: 18px;
+  font-size: 1.125rem;
 }
 
 .account-creation .input-group input,
@@ -66,7 +66,7 @@
   border: 1.5px solid #4B3600;
   border-radius: 20px;
   padding: 16px 24px;
-  font-size: 16px;
+  font-size: 1rem;
   outline: none;
   background: white;
   width: 100%;
@@ -113,7 +113,7 @@
   border: none;
   font-weight: bold;
   cursor: pointer;
-  font-size: 16px;
+  font-size: 1rem;
   color: white;
   background-color: #4B3600;
   transition: background 0.2s;
@@ -147,7 +147,7 @@
   border: 1.5px solid #D4AF37;
   padding: 20px;
   text-align: center;
-  font-size: 16px;
+  font-size: 1rem;
 }
 
 .account-creation .account-table th {
@@ -179,7 +179,7 @@
   padding: 6px 18px;
   border-radius: 6px;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: bold;
   transition: background 0.2s;
 }
