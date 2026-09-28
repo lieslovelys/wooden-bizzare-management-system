@@ -1234,5 +1234,45 @@ Not urgent, but each of these increases the cost of every future change until ad
     - **Verification.** Frontend tests 177 → 221 across the three commits; lint clean throughout
       (the same 3 pre-existing `JobOrderDetails.jsx` warnings); both builds clean. Backend
       untouched — its suite still 273/273.
+    - **Still open after this:** the declined role-shell consolidation, plus DESIGN.md §8's
+      deferred native-dialog replacement — closed by item 26 below.
+
+26. **Replace the remaining native `window.confirm`/`alert` dialogs** — ✅ done, three commits on
+    `main`. Closes DESIGN.md §8's "Replacing `window.alert`/`window.confirm` with in-app UI"
+    deferral. The Worker path (`worker/WorkerJobOrderDetail.jsx`) had already been migrated to
+    `ConfirmModal`/toasts by the time this item started; three call sites hadn't been:
+    `globals/ProjectList.jsx`'s delete (`window.confirm` + three `alert()`s for
+    success/failure/error), `globals/InventoryTable.jsx`'s delete (`window.confirm`), and
+    `globals/NotificationList.jsx`'s "Clear All" (`window.confirm`).
+    - **`ConfirmModal.jsx` gains a `danger` prop** (red title/confirm button, via new
+      `.wb-modal-title.danger`/`.wb-btn-yes.danger` rules in `globals.css`) rather than each
+      caller hardcoding `style={{color: 'var(--color-danger)'}}` — the reason two screens,
+      `admin/AccountList.jsx` and `globals/Attendance.jsx`, had their own bespoke copy of the same
+      `wb-modal-overlay`/`wb-modal-box` markup in the first place. Both now render `ConfirmModal
+      danger` instead, dropping their redundant `showConfirmModal` boolean —
+      `accountToDelete`/`recordToDelete` being non-null already means the modal is open. Same
+      pass adds dialog semantics (`role="dialog"`, `aria-modal`, `aria-labelledby` via `useId`);
+      focus trapping and Escape handling are explicitly out of scope, left for the separately
+      deferred accessibility pass (DESIGN.md §8).
+    - **The three remaining native dialogs** now render `ConfirmModal`: `ProjectList`'s delete
+      (`danger`, plus its three `alert()`s replaced with `showToast()` calls via `useToast()`, so
+      they're no longer inconsistent with the rest of the app's feedback); `InventoryTable`'s
+      delete (`danger`, and its confirmation text now names the item); `NotificationList`'s Clear
+      All (not `danger` — it only dismisses the caller's own copy, not a destructive delete of
+      anyone else's, matching the existing "Other users will still see them" wording).
+    - **Guard against regression.** `eslint.config.js` adds `'no-alert': 'error'` (ESLint core's
+      rule for `alert`/`confirm`/`prompt`), so a reintroduced native dialog fails the existing
+      `npm run lint` CI gate rather than depending on review to catch it.
+    - **Tests.** Every `vi.spyOn(window, 'confirm'|'alert')` in the three affected files' test
+      suites is replaced with real clicks through the rendered dialog (`getByRole('dialog')`);
+      `ProjectList.test.jsx` also gained an error-path toast test, and
+      `NotificationList.test.jsx` gained an explicit Cancel-issues-no-request test.
+      `ConfirmModal.test.jsx` gained cases for the `danger` class and the dialog role.
+    - **Verification.** Frontend tests 221 → 226; a repo-wide grep for `window.confirm`,
+      `window.alert`, bare `alert(`, and bare `confirm(` outside test files and comments returned
+      zero hits; lint clean (same 3 pre-existing `JobOrderDetails.jsx` warnings, plus the new
+      `no-alert` rule found nothing else to flag); both builds clean. Backend untouched — its
+      suite still 273/273.
     - **Still open after this:** only the declined role-shell consolidation remains on this
-      backlog's "still open" lists.
+      backlog's "still open" lists. DESIGN.md §8's remaining deferrals (a formal accessibility
+      standard, self-hosted fonts, PWA) are separate, larger efforts, not implied by this item.

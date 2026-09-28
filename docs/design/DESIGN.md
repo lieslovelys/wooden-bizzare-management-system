@@ -216,8 +216,11 @@ the current backlog — not overlooked:
   layout one.
 - **Installable / offline (PWA).** Significant scope on its own; not implied by "mobile
   responsive."
-- **Replacing `window.alert`/`window.confirm`** with in-app UI (used in several screens,
-  including the Worker path). A UX inconsistency, not a responsiveness defect.
+- ~~**Replacing `window.alert`/`window.confirm`** with in-app UI (used in several screens,
+  including the Worker path). A UX inconsistency, not a responsiveness defect.~~ **Resolved**
+  (ARCHITECTURE_REVIEW.md item 26): every remaining call site now uses the shared
+  `globals/ConfirmModal.jsx` (with a new `danger` variant) and `useToast()`; `eslint.config.js`'s
+  `no-alert` rule stops a native dialog from coming back.
 
 If any of these become priorities, they belong in a revision of this document, not folded
 silently into a responsiveness pass.
