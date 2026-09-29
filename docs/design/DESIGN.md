@@ -211,9 +211,12 @@ the current backlog — not overlooked:
 - **A formal accessibility standard** (WCAG AA contrast audit, real `<label for>` associations —
   none exist today, visible keyboard-focus states). Worth doing, but a distinct effort from mobile
   responsiveness and not gated on it.
-- **Self-hosted fonts.** `index.html` loads Google Fonts and Font Awesome from CDNs. On an
+- ~~**Self-hosted fonts.** `index.html` loads Google Fonts and Font Awesome from CDNs. On an
   unreliable shop-floor connection this is a real cost, but it's a build/asset change, not a
-  layout one.
+  layout one.~~ **Resolved** (ARCHITECTURE_REVIEW.md item 27): Inter, Playfair Display, and the
+  Font Awesome solid font now ship inside the Vite build via `@fontsource/*` and
+  `@fortawesome/fontawesome-free`, imported from `main.jsx`; `index.html` has no CDN `<link>`
+  left, enforced by `tests/indexHtml.test.js`.
 - **Installable / offline (PWA).** Significant scope on its own; not implied by "mobile
   responsive."
 - ~~**Replacing `window.alert`/`window.confirm`** with in-app UI (used in several screens,

@@ -1273,6 +1273,52 @@ Not urgent, but each of these increases the cost of every future change until ad
       zero hits; lint clean (same 3 pre-existing `JobOrderDetails.jsx` warnings, plus the new
       `no-alert` rule found nothing else to flag); both builds clean. Backend untouched — its
       suite still 273/273.
+    - **Still open after this:** the declined role-shell consolidation, plus DESIGN.md §8's
+      deferred self-hosted fonts — closed by item 27 below. The remaining §8 deferrals (a formal
+      accessibility standard, PWA) are separate, larger efforts, not implied by this item.
+
+27. **Self-host fonts and icons** — ✅ done, two commits on `main`. Closes DESIGN.md §8's
+    "Self-hosted fonts" deferral. `index.html` loaded Inter and Playfair Display from Google Fonts
+    and Font Awesome 6.4.0 from cdnjs — extra third-party DNS/TLS round-trips before the page could
+    render any text or icon, and a real cost on an unreliable shop-floor connection.
+    - **Scope.** A repo-wide check of every `<i className="fa-...">` and CSS `content:` icon glyph
+      (Navbar's hamburger/logout, every role shell's `tab.icon`, `account.css`'s `\f0d7` caret)
+      found the app uses only the Font Awesome **solid** style — no `fa-regular`/`far` or
+      `fa-brands`/`fab` anywhere — so only the solid webfont needed bundling, not the full
+      `all.min.css`.
+    - **Packages.** `@fontsource/inter`, `@fontsource/playfair-display`, and
+      `@fortawesome/fontawesome-free` as runtime `dependencies`, imported from `main.jsx` ahead of
+      `globals.css` so the `@font-face` rules exist before anything references the families.
+      Font Awesome is pinned `^6.4.0` deliberately — v7 renames the CSS font family to
+      "Font Awesome 7 Free", which would silently break `account.css`'s hand-written
+      `font-family: "Font Awesome 6 Free"` glyph rule.
+    - **Same weights, so no visual change.** Only the weights already loaded (Inter 400/500/600,
+      Playfair Display 500/600/700) were bundled. Several rules ask for weights never loaded today
+      (Inter 700, Playfair Display 900 in `TempSignup.css`) — the browser was already synthesizing
+      those from the heaviest loaded weight, and still does, so nothing renders differently.
+      Loading a real Inter 700/Playfair 900 would be a visible change and is a separate, un-started
+      follow-up, not folded in here.
+    - **`index.html`** loses both `preconnect`s and both CDN `<link>` tags; nothing else in it
+      changes. `nginx.conf`'s existing `location ~* \.(?:…|woff2?|…)$` immutable 1-year cache rule
+      already covers the new hashed asset files, so it's unchanged.
+    - **Guard against regression.** New `tests/indexHtml.test.js` reads `index.html` off disk and
+      asserts no `<link>`/`<script>` has an `http(s)://` (or protocol-relative `//`) URL — the
+      counterpart to item 26's `no-alert` eslint rule, so a CDN reference can't creep back in
+      unnoticed. (Had to resolve the file path via `fileURLToPath(import.meta.url)` +
+      `path.join`, not `new URL('../../index.html', import.meta.url)` — jsdom, this suite's test
+      environment, replaces the global `URL` constructor with one that resolves relative URLs
+      against `window.location` instead of a file base, so the latter silently produced an
+      `http://localhost:3000/...` URL instead of a file path.)
+    - **Verification.** Frontend tests 226 → 227; lint clean (same 3 pre-existing
+      `JobOrderDetails.jsx` warnings); build clean, with the `dist/assets/` listing showing hashed
+      Inter/Playfair/`fa-solid-900` files and no `fa-regular`/`fa-brands` files; a grep of the
+      built `dist/index.html` for `googleapis`/`gstatic`/`cdnjs` returned zero hits. A
+      `vite preview` request confirmed the served `index.html` carries no CDN link and the built
+      CSS references the self-hosted `fa-solid-900` files. `npm audit`'s 12 pre-existing
+      vulnerabilities (react-router-dom, undici, vite) were confirmed unchanged by diffing against
+      a stash of this item's `package.json` changes — none of the three new packages added a new
+      one. Backend untouched — its suite still 273/273.
     - **Still open after this:** only the declined role-shell consolidation remains on this
       backlog's "still open" lists. DESIGN.md §8's remaining deferrals (a formal accessibility
-      standard, self-hosted fonts, PWA) are separate, larger efforts, not implied by this item.
+      standard, PWA) are separate, larger efforts, not implied by this item. The Inter 700/Playfair
+      900 real-weight follow-up noted above is a new, small, un-started candidate.

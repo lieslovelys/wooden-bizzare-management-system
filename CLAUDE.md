@@ -224,7 +224,11 @@ Toast notifications go through `useToast()` (`frontend/src/context/ToastContext.
 (P2; that pattern used to be copy-pasted into 12 components, none of which cleared its timer).
 Confirmations go through the shared `globals/ConfirmModal.jsx` (pass `danger` for a destructive
 action, e.g. a delete) — never `window.confirm`/`window.alert`, which `eslint.config.js`'s
-`no-alert` rule fails CI on (ARCHITECTURE_REVIEW.md item 26). Display formatting (currency, project/worker IDs, dates, times) goes through the shared functions
+`no-alert` rule fails CI on (ARCHITECTURE_REVIEW.md item 26). Fonts (Inter, Playfair Display) and
+icons (Font Awesome, solid style only) are self-hosted npm packages imported from
+`frontend/src/main.jsx`, not CDN `<link>` tags in `index.html` —
+`frontend/src/tests/indexHtml.test.js` fails if one comes back (ARCHITECTURE_REVIEW.md item 27).
+Display formatting (currency, project/worker IDs, dates, times) goes through the shared functions
 in `frontend/src/utils/format.js` rather than a local inline formatter, so the same value renders
 identically everywhere (P2; before this, the same project id rendered as `WB7`, `WB-7`, or
 `WB-07` depending on the screen).
