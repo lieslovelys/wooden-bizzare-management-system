@@ -1409,3 +1409,172 @@ Not urgent, but each of these increases the cost of every future change until ad
     - **Still open after this:** only the declined role-shell consolidation remains on this
       backlog's own list. DESIGN.md §8's accessibility and PWA deferrals are separate,
       un-started efforts — the accessibility pass is next, item 30.
+
+30. **Accessibility pass** — ✅ done, seven commits on `main`. Closes DESIGN.md §8's "a formal
+    accessibility standard" deferral. Scoped during planning to: real label associations, visible
+    keyboard focus, keyboard-operable clickable rows, dialog behavior (Escape/focus trap/focus
+    return), and — per an explicit decision — fixing the two concrete contrast failures found
+    (muted text, gold-as-text) rather than only documenting them. A WCAG AA contrast *audit* of
+    the full palette beyond those two was not re-litigated; §4's locked palette and the ~92-color
+    literal tail stand as before, outside the two specific failures this item fixed.
+    - **Labels and accessible names (commit 1).** Of 69 form controls app-wide, only 10 had a
+      `<label>` actually tied to their control via `htmlFor`/`id`; the rest were a visually
+      adjacent-but-unlinked `<label>`, placeholder-only, or a filter `<select>` using its first
+      option as its only label. Linked every one via `useId()` (the pattern `ConfirmModal.jsx`
+      already used), starting with the shared components that cover the most call sites —
+      `ProjectFormFields` (used by both Create/EditProjectForm), `WorkerJobFields`' four exports
+      (used by both Add/EditWorkerModal) — then `AddWorkerModal`, both `Attendance` modals,
+      `InventoryTable`'s add/edit modal, `JobOrderDetails`' assign-worker form, and
+      `ProjectMaterials`' record-usage form. Every placeholder-only input and first-option-as-label
+      filter `<select>` got an `aria-label` instead, since there's no visible label to link; the
+      two inventory `<select>`s that already had `title=` got `aria-label` too, since `title` isn't
+      reliably announced by screen readers. Every icon-only button (Navbar's hamburger/close,
+      Login's show/hide password, InventoryTable's edit/delete, AccountList's delete,
+      NotificationList's dismiss, Profit's spinner +/-) got an `aria-label`; every purely decorative
+      `<i>`/`<svg>` next to a control that already has one got `aria-hidden`. Weak alt text fixed
+      along the way: Login/Navbar's generic "Gavel"/"logo", Logout's misspelled "Wooden Bizzare
+      Logo", Attendance's static "avatar" (now the worker's own name).
+    - **Keyboard operability (commit 2).** 10 clickable `<div>`/`<tr>` list rows across the app had
+      an `onClick` and nothing else — no tab stop, no role, no keyboard activation. New
+      `frontend/src/utils/a11y.js` exports `clickableProps(onActivate)`:
+      `role="button"` + `tabIndex={0}` + `onClick` + an `onKeyDown` that activates on Enter/Space
+      (`preventDefault` on Space so the page doesn't scroll, matching a real `<button>`'s own
+      behavior). A row containing its own interactive children (a notification's delete button, an
+      inventory row's edit/delete) is handled by checking `e.target === e.currentTarget` before
+      activating, so a keydown bubbling up from the inner control doesn't double-fire the row's own
+      handler on top of the inner control's — verified with a real dispatched-and-bubbled DOM event
+      in `NotificationList.test.jsx`, not a hand-constructed one. Applied to `AccountList`'s
+      `.al-item`, `ProjectHistory`'s `.ph-item`, `JobOrder`'s `.jol-item`, `ProjectList`'s
+      `.pl-item`, `ProjectVerification`'s `.qc-pv-row`, `WorkerJobOrder`'s `.wjo-item`,
+      `NotificationList`'s `.notif-item`, and `Attendance`'s `.att-item`.
+      `InventoryTable`'s expandable `<tr className="main-row">` got the same Enter/Space handling
+      by hand instead of `clickableProps` — overriding a `<tr>`'s implicit role to `"button"` would
+      strip its table-row semantics, so it keeps `role="row"` and gains
+      `tabIndex`/`onKeyDown`/`aria-expanded` directly. `Navbar`'s Logout `<div>` became a real
+      `<button type="button">`, with a small inline-style reset (background/border, not the
+      existing `borderTop` divider — the `border` shorthand would have reset that too) since
+      `.nav-item`'s CSS class covers layout/color but not a real button's UA defaults. The active
+      sidebar `<Link>` also gained `aria-current="page"`.
+    - **Visible focus (commit 3).** Zero `:focus-visible` rules existed, and 27 `outline: none`
+      declarations across the CSS removed the browser's default focus indicator with nothing put
+      back. New `--color-focus` token (aliased to `--color-info`, #2b4c7e, >3:1 against both white
+      and cream) plus one global `:focus-visible { outline: 3px solid var(--color-focus);
+      outline-offset: 2px; }` rule — `:focus-visible` rather than bare `:focus`, so a mouse click
+      doesn't show a ring the way Tab does. Overridden to `--color-accent` (gold) inside
+      `.wooden-navbar`/`.mobile-topbar`, since blue doesn't read against the dark sidebar and gold
+      already means "active/focused" there. All 27 `outline: none` declarations removed and checked
+      individually: about two-thirds sat in a component's own `:focus` rule that already supplies a
+      border-color/box-shadow glow (that glow stays as a second cue layered on top of the new
+      outline, not a replacement for it); the rest had no existing replacement and now rely on the
+      global rule alone. Two sites needed the removal inside their own `:focus`-scoped rule
+      specifically, not just the base rule, since a selector like `.foo:focus { outline: none; }`
+      has higher specificity than the bare `:focus-visible` rule and would have kept winning
+      otherwise. Verified with a Playwright screenshot against the real built preview (not just
+      `getComputedStyle`, which gave an inconsistent read on one focused element despite the rule,
+      token, and `:focus-visible` match all checking out correctly by every other means tried) —
+      the blue ring renders correctly, layered outside the existing gold glow. New DESIGN.md §3
+      rule 9 codifies this.
+    - **Dialog behavior (commit 4).** None of the app's 7 modals/drawers handled Escape or managed
+      focus — opening one left focus wherever it already was, Tab could walk out of the dialog into
+      page content behind the overlay, and closing one never returned focus anywhere. New
+      `frontend/src/hooks/useDialog.js`: `useDialog({ open, onClose, initialFocusRef })` returns a
+      ref for the dialog's box element; while open it focuses `initialFocusRef` (or the first
+      focusable element) on open, traps Tab/Shift+Tab within the dialog, closes on Escape, and
+      restores focus to whatever was focused before — only if that element is still in the document
+      (the control that opened a dialog can itself have been removed by the time it closes, e.g. a
+      deleted row's own delete button). Applied to all 7: `ConfirmModal`/`Logout` (both mounted
+      conditionally by their callers, so `open: true` for their whole lifetime — cleanup fires on
+      unmount, exactly when the caller stops rendering them); `AddWorkerModal`/`EditWorkerModal`
+      (stay mounted with a real `isOpen` prop); `Attendance`'s Add/Edit modals (conditionally
+      mounted, same as `ConfirmModal`); `InventoryTable`'s add/edit modal; and `Navbar`'s mobile nav
+      drawer — the one structurally different case, since `.wooden-navbar` is also the permanent
+      desktop sidebar, not a transient overlay. `role="dialog"` and the dialog behavior there are
+      conditional on `isMobileOpen`, which can only become true via the hamburger button that's
+      itself only visible on mobile widths, so the trap/Escape/focus-return never engage while this
+      element is acting as the plain sidebar. `ConfirmModal` gained an optional `initialFocusRef`
+      prop (defaults to its Cancel button — the safer default for a destructive confirmation);
+      `ProjectVerificationDetail`'s repair-reason textarea now reaches it through that prop instead
+      of its own `autoFocus`, which only ever handled open-time focus and did nothing for Escape or
+      Tab-trapping.
+    - **Contrast (commit 5), per the confirmed decision to fix rather than only document.** Two
+      systemic failures:
+      - `--color-text-muted` (#8b816a) measured ~3.9:1 on white and ~3.6:1 on cream — both under
+        AA's 4.5:1 floor — and is used in ~65 places. Darkened to #756d5a (~5.1:1/~4.7:1), a
+        hue-preserving darkening computed with a scratchpad WCAG relative-luminance script (not
+        committed).
+      - `--color-accent` (gold) measures ~2.4:1 on white and ~2.2:1 on cream as text — it fails
+        outright, not even clearing the 3:1 bar large text gets. ~50 sites used it as text color on
+        a light surface: page titles, active tabs, badges, links, buttons, icon fills. Gold stays
+        unchanged everywhere it's a fill, a border, or text on the dark sidebar/dark buttons (about
+        4 sites — `.prod-tab.active`, the login page's dark-panel subtitle and "mastered." text,
+        `.mobile-menu-btn`) — none of those were ever the failure. Everywhere else, each site was
+        checked individually for its actual rendered size: large text (≥24px, or ≥18.66px bold —
+        WCAG's own large-text exemption, only needs 3:1) moved to `--color-accent-dark`; everything
+        else, including icon fills (treated at the stricter bar since an icon's fill color is this
+        same token and the two are easy to conflate), moved to `--color-accent-text`. Neither token
+        is new — both already existed for other purposes. One stray non-token literal (`#c9a445`,
+        `InventoryTable`'s `.min-text`) folded onto `--color-accent-text` alongside the rest. New
+        DESIGN.md §3 rule 10 and a "Gold is a fill, not body text" usage note in §4.
+    - **Regression guard (commit 6).** `eslint-plugin-jsx-a11y`'s recommended config added to
+      `eslint.config.js`, the same role `no-alert` (item 26) plays for native dialogs — a missing
+      label, an unlabeled icon button, or a removed-with-nothing-put-back focus outline now fails
+      `npm run lint` in CI. Zero new `npm audit` vulnerabilities (confirmed via `git stash` diff).
+      Running it surfaced a few real gaps the earlier commits had missed: `WorkerList.jsx`'s
+      edit-icon button had no `aria-label` at all; a `WorkerList` search-icon's gold stroke was
+      never updated in the contrast commit (missed because that commit's own grep only matched
+      `color:`, not `stroke:`); Login's `href="#"` footer link (not a real link — no destination
+      exists for this yet) became a plain `<span>`, since an `<a>` claims to navigate and this one
+      can't; two group-heading `<label>`s (`ProjectFormFields`' "Project Details",
+      `InventoryTable`'s "Variants") weren't associated with any single control — they head a
+      *group* of fields, referenced via `aria-labelledby` on each row's `role="group"` instead, so
+      they became plain elements with the same look (`.dynamic-section-label`/
+      `.variants-group-label`) rather than a `<label>` with nothing to associate to. The four
+      click-outside-to-close overlays (`Attendance`'s two custom modals, `Logout`, `Navbar`'s
+      mobile drawer) got `role="presentation"` — they're backdrops, not semantic controls;
+      `useDialog`'s Escape handling is the real keyboard equivalent. Each dialog's own content
+      wrapper kept an `eslint-disable` comment (with a reason) for its `stopPropagation`-only
+      `onClick`, since `role="dialog"` is already the correct semantic role there. Four test files
+      (`CreateProjectForm`, `EditProjectForm`, `AddWorkerModal`, `InventoryTable`) switched field
+      queries from `name`-attribute selectors to `getByLabelText`, removing now-stale "no label
+      association exists" comments — that's also the test proving each link actually works.
+    - **A real regression, found by verification, fixed (commit 7).** An axe-core sweep (below)
+      against a mocked authenticated Admin screen caught one the test suite structurally
+      couldn't: `Navbar.jsx`'s user-name subtitle used `--color-text-muted`, and the darkening
+      commit 5 applied for legibility on light surfaces actually broke it here — the *original*
+      value (#8b816a) passed 4.5:1 against this dark sidebar background (4.67:1); the darkened one
+      fails (3.5:1). Confirmed by grepping every other `--color-text-muted` site in both `css/` and
+      every `.jsx` inline style — this was the only one on a dark background. Fixed with `#A09A8E`
+      instead of the token — not a new color, but the value `.nav-item`'s own CSS already uses for
+      its default label text on this same sidebar, so it was already established as the right
+      color for this role; passes at 6.4:1.
+    - **Verification.** `eslint-plugin-jsx-a11y` clean (0 errors); frontend tests 237 → 245 across
+      the pass (new `utils/a11y.test.js`, `hooks/useDialog.test.jsx`, plus cases added to
+      `ConfirmModal`/`NotificationList`/`WorkerJobOrder`/`Attendance` tests) — the one
+      `JobOrderDetails.test.jsx` failure throughout is the pre-existing, unrelated case noted in
+      item 28; lint and both builds clean throughout; backend untouched (273/273). Beyond the test
+      suite: a Playwright keyboard-tab sweep against a mocked, authenticated Admin screen confirmed
+      every sidebar tab and the Logout button are reachable in logical order with a visible focus
+      ring at each stop. An axe-core sweep (`wcag2a`/`wcag2aa` rule sets) ran against the Login page
+      (0 violations, 18 checks passed) and three mocked authenticated Admin screens (Dashboard,
+      Account List, Worker List) via Playwright route-mocking every `/api/*` call — this is what
+      found and confirmed the fix for the regression above.
+    - **Found by the axe sweep, confirmed real, deliberately left for a separate pass — not
+      silently fixed, since both are pre-existing and outside this item's scoped two contrast
+      fixes:**
+      - `.nav-item.active .nav-label` — white text (`--color-text-inverse`) on the gold active-tab
+        fill (`--color-accent`) measures 2.34:1. This is white-on-gold-*fill*, not gold-as-text,
+        so it's a different failure mode than either of this item's two scoped fixes; the gold fill
+        itself is correct and unchanged per this item's own rule.
+      - `.logout-nav-item .nav-label` — `--color-danger` red on the dark sidebar background
+        measures 3.61:1. Not a muted-text or gold-as-text case either.
+    - **Not independently verifiable in this environment, and not claimed:** real screen-reader
+      behavior (TalkBack/NVDA/VoiceOver) — everything above is markup/ARIA/contrast correctness,
+      not a live assistive-technology pass. The axe sweep covered the Login page fully and three
+      representative Admin screens via route-mocking; it did not cover every screen/role
+      combination in the app.
+    - **Still open after this:** only the declined role-shell consolidation remains on this
+      backlog's own list. DESIGN.md §8's PWA deferral is blocked on TLS (service workers only
+      register on HTTPS or `localhost`, and the deployment is HTTP-only on a bare IP until a domain
+      exists — the same dependency `COOKIE_SECURE` already has). The two new findings directly
+      above, and the font-family fragmentation DESIGN.md records for the planned redesign, are
+      small, separate, un-started candidates.

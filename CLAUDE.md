@@ -233,6 +233,14 @@ Display formatting (currency, project/worker IDs, dates, times) goes through the
 in `frontend/src/utils/format.js` rather than a local inline formatter, so the same value renders
 identically everywhere (P2; before this, the same project id rendered as `WB7`, `WB-7`, or
 `WB-07` depending on the screen).
+A form field's `<label>` is linked to its control via `htmlFor`/`id` generated with React's
+`useId()`, not left as a visually-adjacent-but-unassociated sibling; a non-`<button>` element that
+needs an `onClick` (a clickable list row) uses `frontend/src/utils/a11y.js`'s `clickableProps()`
+rather than a bare `onClick` with no keyboard path; any modal or drawer uses
+`frontend/src/hooks/useDialog.js` for Escape-to-close, Tab-trapping, and returning focus on close,
+the same way every dialog in the app already does. `eslint-plugin-jsx-a11y`'s recommended config is
+a real CI gate (ARCHITECTURE_REVIEW.md item 30), the same role `no-alert` plays for native dialogs
+above.
 
 Colors come from the `:root` custom properties defined at the top of `frontend/src/css/globals.css`
 (`--color-accent`, `--color-text`, `--color-danger`, etc. — see `docs/design/DESIGN.md` §4 for the

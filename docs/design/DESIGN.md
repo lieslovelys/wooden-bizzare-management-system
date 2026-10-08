@@ -239,9 +239,26 @@ decision this note always said it was, left untouched.
 Considered during scoping and intentionally left out of both this document's binding rules and
 the current backlog — not overlooked:
 
-- **A formal accessibility standard** (WCAG AA contrast audit, real `<label for>` associations —
+- ~~**A formal accessibility standard** (WCAG AA contrast audit, real `<label for>` associations —
   none exist today, visible keyboard-focus states). Worth doing, but a distinct effort from mobile
-  responsiveness and not gated on it.
+  responsiveness and not gated on it.~~ **Resolved** (ARCHITECTURE_REVIEW.md item 30): every form
+  control now has a real label (`htmlFor`/`id` or `aria-label`); every icon-only button has an
+  accessible name; the 10 clickable list rows that were `<div onClick>` with no keyboard path are
+  reachable and activatable via Tab/Enter/Space; a global `:focus-visible` outline (with a
+  gold-on-dark override for the sidebar) replaces the 27 `outline: none` declarations that removed
+  the browser's default with nothing put back; all 7 modals/drawers close on Escape, trap Tab, and
+  return focus on close; the two concrete contrast failures found (`--color-text-muted`,
+  `--color-accent` used as text on a light surface) are fixed, not just documented — see DESIGN.md
+  §4's "Gold is a fill, not body text" note. `eslint-plugin-jsx-a11y`'s recommended config is a real
+  CI gate now, the same role `no-alert` plays for native dialogs. Not independently verified: real
+  screen-reader behavior (TalkBack/NVDA/VoiceOver) — see item 30 for exactly what was and wasn't
+  checked, and for two new, smaller contrast findings (white-on-gold active tab, red-on-dark
+  Logout label) the axe-core sweep surfaced and left for a separate pass, being pre-existing and
+  outside this item's two scoped fixes. Also recorded there as a finding for the planned redesign,
+  not something this pass touched: `html`/`body` sets no `font-family`, so several screens
+  (Inventory, WorkerList, the notification/job-order/pv-\* blocks, `.details-main-wrapper`) render
+  in Arial, Georgia, or the browser's default serif rather than the Inter/Playfair Display pair
+  item 27/28 self-hosted.
 - ~~**Self-hosted fonts.** `index.html` loads Google Fonts and Font Awesome from CDNs. On an
   unreliable shop-floor connection this is a real cost, but it's a build/asset change, not a
   layout one.~~ **Resolved** (ARCHITECTURE_REVIEW.md items 27-28): Inter, Playfair Display, and the
@@ -252,7 +269,12 @@ the current backlog — not overlooked:
   `@import` left (item 27 landed the former but missed the latter — item 28 caught it), enforced
   by `tests/thirdPartyAssets.test.js`.
 - **Installable / offline (PWA).** Significant scope on its own; not implied by "mobile
-  responsive."
+  responsive." Also genuinely blocked right now, not just deferred: a service worker (the piece
+  that makes offline caching and a real install prompt possible) only registers over HTTPS or
+  `localhost`, and the deployment is HTTP-only on a bare IP until a domain exists and
+  `COOKIE_SECURE` can flip to `true` (see CLAUDE.md "Hosting target") — the same dependency, not a
+  separate one. A manifest alone (no service worker) could still ship before that and give a
+  home-screen shortcut on some browsers, but wasn't pursued separately from the full feature.
 - ~~**Replacing `window.alert`/`window.confirm`** with in-app UI (used in several screens,
   including the Worker path). A UX inconsistency, not a responsiveness defect.~~ **Resolved**
   (ARCHITECTURE_REVIEW.md item 26): every remaining call site now uses the shared
