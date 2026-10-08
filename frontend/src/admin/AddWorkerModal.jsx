@@ -4,6 +4,7 @@ import { useToast } from '../context/ToastContext';
 import { withoutDigits, digitsOnly, isIncompleteContactNumber, CONTACT_NUMBER_ERROR } from '../utils/formValidators';
 import PhotoUpload from '../globals/PhotoUpload';
 import { RoleSelect, WorkerTypeSelect, ContactNumberField, DailyRateField } from './WorkerJobFields';
+import { useDialog } from '../hooks/useDialog';
 
 const EMPTY_FORM = {
   firstName: '',
@@ -24,6 +25,7 @@ const AddWorkerModal = ({ isOpen, onClose, onSave }) => {
   const [previewUrl, setPreviewUrl] = useState(null);
 
   const showToast = useToast();
+  const dialogRef = useDialog({ open: isOpen, onClose });
 
   // Post-submit close is delayed so the success toast is visible; the delay is cancelled on
   // unmount so it can't call onClose() after this modal is already gone.
@@ -96,9 +98,9 @@ const AddWorkerModal = ({ isOpen, onClose, onSave }) => {
 
   return (
     <div className="modal-overlay" style={{ fontFamily: 'Arial, sans-serif' }}>
-      <div className="add-worker-modal" style={{ maxWidth: '700px' }}>
+      <div ref={dialogRef} className="add-worker-modal" style={{ maxWidth: '700px' }} role="dialog" aria-modal="true" aria-labelledby={`${id}-title`}>
         <div className="modal-header">
-          <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 'bold' }}>Add Worker Account & Details</h3>
+          <h3 id={`${id}-title`} style={{ margin: 0, fontSize: '1.1rem', fontWeight: 'bold' }}>Add Worker Account & Details</h3>
         </div>
 
         <form onSubmit={handleSubmit} className="modal-form-body">

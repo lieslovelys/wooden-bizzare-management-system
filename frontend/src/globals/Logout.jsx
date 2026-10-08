@@ -1,8 +1,13 @@
-import React from 'react';
+import React, { useId } from 'react';
 import ReactDOM from 'react-dom'; // FIX 1: Kailangan nating i-import ito para sa Portal
 import { api } from '../api/client';
+import { useDialog } from '../hooks/useDialog';
 
 const Logout = ({ onCancel }) => {
+    const titleId = useId();
+    // Mounted conditionally by Navbar.jsx ({showLogoutModal && <Logout .../>}), same as
+    // ConfirmModal — see that component's own useDialog call for why `open: true` is correct here.
+    const dialogRef = useDialog({ open: true, onClose: onCancel });
 
     const handleLogout = async () => {
         try {
@@ -15,12 +20,12 @@ const Logout = ({ onCancel }) => {
     }
 
     // FIX 2: Binalot natin ang buong return sa ReactDOM.createPortal
-    return ReactDOM.createPortal( 
+    return ReactDOM.createPortal(
         <div className="wb-logout-page" onClick={onCancel}>
-            <div className="wb-logout-card" onClick={(e) => e.stopPropagation()}>
-                
+            <div ref={dialogRef} className="wb-logout-card" role="dialog" aria-modal="true" aria-labelledby={titleId} onClick={(e) => e.stopPropagation()}>
+
                 <div className="wb-logout-header">
-                    <h2>Confirm Logout</h2>
+                    <h2 id={titleId}>Confirm Logout</h2>
                 </div>
 
                 <div className="wb-logout-content">

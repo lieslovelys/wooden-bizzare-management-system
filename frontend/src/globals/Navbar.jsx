@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { UserContext } from '../context/UserContext';
 import { useNotifications } from '../context/NotificationContext';
 import Logout from './Logout';
+import { useDialog } from '../hooks/useDialog';
 
 const Navbar = ({ tabs, accountType }) => {
     const location = useLocation();
@@ -12,7 +13,12 @@ const Navbar = ({ tabs, accountType }) => {
     
     // State para sa Mobile Menu
     const [isMobileOpen, setIsMobileOpen] = useState(false);
-    
+    // This same element is the permanent desktop sidebar outside mobile widths — the mobile
+    // hamburger that sets isMobileOpen is itself only ever visible/clickable on mobile (mobile-
+    // topbar's own media query), so useDialog's Escape/focus-trap/focus-return only ever actually
+    // engage while this is genuinely acting as an off-canvas drawer, not the permanent sidebar.
+    const navDialogRef = useDialog({ open: isMobileOpen, onClose: () => setIsMobileOpen(false) });
+
     const { userRole, firstName, lastName } = useContext(UserContext);
     // FR-4/FR-9: a tab opts into the badge with `showUnreadBadge: true` — without a
     // NotificationProvider mounted above (Inventory Staff is the only role left with no
@@ -47,7 +53,14 @@ const Navbar = ({ tabs, accountType }) => {
             </header>
 
             {/* NAVBAR CONTAINER */}
-            <div className={`wooden-navbar ${isMobileOpen ? 'mobile-active' : ''}`} style={{ position: 'relative' }}>
+            <div
+                ref={navDialogRef}
+                className={`wooden-navbar ${isMobileOpen ? 'mobile-active' : ''}`}
+                style={{ position: 'relative' }}
+                role={isMobileOpen ? 'dialog' : undefined}
+                aria-modal={isMobileOpen ? 'true' : undefined}
+                aria-label={isMobileOpen ? 'Navigation menu' : undefined}
+            >
                 
                 {/* CLOSE BUTTON PARA SA MOBILE MENU */}
                 {/* CLOSE BUTTON PARA SA MOBILE MENU */}

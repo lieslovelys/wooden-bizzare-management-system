@@ -1,4 +1,5 @@
 import React, { useId } from 'react';
+import { useDialog } from '../hooks/useDialog';
 
 // Shared by globals/JobOrderDetails.jsx's "Mark as Completed" confirmation,
 // worker/WorkerJobOrderDetail.jsx's "Submit Work?" confirmation,
@@ -22,11 +23,17 @@ const ConfirmModal = ({
   onCancel,
   confirmDisabled = false,
   danger = false,
+  initialFocusRef,
 }) => {
   const titleId = useId();
+  // Callers render this conditionally (`{x && <ConfirmModal .../>}`), so it only ever exists
+  // mounted-and-open — `open: true` is correct for the whole of this component's lifetime, and
+  // useDialog's cleanup (Escape listener removed, focus restored) runs on unmount, which is
+  // exactly when the caller stops rendering it.
+  const dialogRef = useDialog({ open: true, onClose: onCancel, initialFocusRef });
   return (
     <div className="wb-modal-overlay">
-      <div className="wb-modal-box" role="dialog" aria-modal="true" aria-labelledby={titleId}>
+      <div ref={dialogRef} className="wb-modal-box" role="dialog" aria-modal="true" aria-labelledby={titleId}>
         <h3 id={titleId} className={`wb-modal-title${danger ? ' danger' : ''}`}>{title}</h3>
         {text && <p className="wb-modal-text">{text}</p>}
         {children}

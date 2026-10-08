@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import '../css/admin.css';
 import { api } from '../api/client';
 import { useToast } from '../context/ToastContext';
@@ -15,6 +15,7 @@ const ProjectVerificationDetail = ({ projectId, onBack }) => {
     // currently open for, `null` when closed.
     const [repairTarget, setRepairTarget] = useState(null);
     const [repairReason, setRepairReason] = useState('');
+    const repairReasonRef = useRef(null);
 
     const showToast = useToast();
 
@@ -206,14 +207,15 @@ const ProjectVerificationDetail = ({ projectId, onBack }) => {
                     confirmDisabled={!repairReason.trim()}
                     onCancel={() => setRepairTarget(null)}
                     onConfirm={executeRepair}
+                    initialFocusRef={repairReasonRef}
                 >
                     <textarea
+                        ref={repairReasonRef}
                         className="wb-modal-textarea"
                         aria-label="Repair reason"
                         value={repairReason}
                         onChange={(e) => setRepairReason(e.target.value)}
                         placeholder="e.g. Joints are loose, redo the frame."
-                        autoFocus
                     />
                 </ConfirmModal>
             )}

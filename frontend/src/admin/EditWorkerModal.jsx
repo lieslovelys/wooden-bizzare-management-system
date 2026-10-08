@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useId, useState } from 'react';
 import '../css/admin.css';
 import { useToast } from '../context/ToastContext';
 import { digitsOnly, isIncompleteContactNumber, CONTACT_NUMBER_ERROR } from '../utils/formValidators';
 import { workerPhotoUrl } from '../utils/format';
 import PhotoUpload from '../globals/PhotoUpload';
 import { RoleSelect, WorkerTypeSelect, ContactNumberField, DailyRateField } from './WorkerJobFields';
+import { useDialog } from '../hooks/useDialog';
 
 // `formData`/`previewUrl` initialize directly from `workerData` props instead of syncing via a
 // setState-in-effect (the P2 lint fix — see ARCHITECTURE_REVIEW.md). Re-deriving on every open
@@ -12,6 +13,8 @@ import { RoleSelect, WorkerTypeSelect, ContactNumberField, DailyRateField } from
 // (WorkerList.jsx) keying this component so it remounts each time it opens — see the `key` prop
 // at the call site.
 const EditWorkerModal = ({ isOpen, onClose, workerData, onUpdate }) => {
+  const id = useId();
+  const dialogRef = useDialog({ open: isOpen, onClose });
   const [formData, setFormData] = useState({
     workerType: workerData?.job_type || 'Regular',
     role: workerData?.job_role || 'Carpenter',
@@ -72,9 +75,9 @@ const EditWorkerModal = ({ isOpen, onClose, workerData, onUpdate }) => {
 
   return (
     <div className="modal-overlay" style={{ fontFamily: 'Arial, sans-serif' }}>
-      <div className="add-worker-modal" style={{ maxWidth: '500px' }}>
+      <div ref={dialogRef} className="add-worker-modal" style={{ maxWidth: '500px' }} role="dialog" aria-modal="true" aria-labelledby={`${id}-title`}>
         <div className="modal-header">
-          <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 'bold' }}>
+          <h3 id={`${id}-title`} style={{ margin: 0, fontSize: '1.1rem', fontWeight: 'bold' }}>
             <span style={{ color: '#000000' }}>Edit Worker: </span>
             <span style={{ color: '#5C4033' }}>{workerData?.full_name}</span>
           </h3>

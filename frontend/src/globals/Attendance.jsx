@@ -6,6 +6,7 @@ import { usePaginatedList } from '../hooks/usePaginatedList';
 import Pagination from './Pagination';
 import ConfirmModal from './ConfirmModal';
 import { clickableProps } from '../utils/a11y';
+import { useDialog } from '../hooks/useDialog';
 
 const API = '/api';
 
@@ -200,6 +201,8 @@ const AttendanceLogView = ({ worker, logLoading, attendanceLog, logMeta, logPage
 
 const AddAttendanceModal = ({ worker, onClose, onSaved, showToast }) => {
   const id = useId();
+  const titleId = useId();
+  const dialogRef = useDialog({ open: true, onClose });
   const [formData, setFormData] = useState({ date: '', time_in: '08:30', time_out: '17:00', day_of_week: '—' });
   const [saving, setSaving] = useState(false);
 
@@ -229,8 +232,8 @@ const AddAttendanceModal = ({ worker, onClose, onSaved, showToast }) => {
 
   return (
     <div className="custom-modal-overlay" onClick={onClose}>
-      <div className="custom-modal-content" onClick={e => e.stopPropagation()}>
-        <h3 className="custom-modal-title">Add Attendance</h3>
+      <div ref={dialogRef} className="custom-modal-content" role="dialog" aria-modal="true" aria-labelledby={titleId} onClick={e => e.stopPropagation()}>
+        <h3 id={titleId} className="custom-modal-title">Add Attendance</h3>
 
         <div className="custom-modal-grid">
           <div className="custom-form-group">
@@ -262,6 +265,8 @@ const AddAttendanceModal = ({ worker, onClose, onSaved, showToast }) => {
 
 const EditAttendanceModal = ({ record, onClose, onSaved, showToast }) => {
   const id = useId();
+  const titleId = useId();
+  const dialogRef = useDialog({ open: true, onClose });
   const [formData, setFormData] = useState({
     date: record?.date?.slice(0, 10) ?? '',
     day_of_week: record?.day_of_week?.trim() ?? '—',
@@ -295,8 +300,8 @@ const EditAttendanceModal = ({ record, onClose, onSaved, showToast }) => {
 
   return (
     <div className="custom-modal-overlay" onClick={onClose}>
-      <div className="custom-modal-content" onClick={e => e.stopPropagation()}>
-        <h3 className="custom-modal-title">Edit Attendance</h3>
+      <div ref={dialogRef} className="custom-modal-content" role="dialog" aria-modal="true" aria-labelledby={titleId} onClick={e => e.stopPropagation()}>
+        <h3 id={titleId} className="custom-modal-title">Edit Attendance</h3>
 
         <div className="custom-modal-grid">
           <div className="custom-form-group">

@@ -4,6 +4,7 @@ import { api } from '../api/client';
 import { useToast } from '../context/ToastContext';
 import { formatProjectId } from '../utils/format';
 import ConfirmModal from './ConfirmModal';
+import { useDialog } from '../hooks/useDialog';
 
 const ADJUST_REASONS = ['Received', 'Used', 'Damaged', 'Correction', 'Returned'];
 // FR-3: only these two reasons can be tagged to a project — see schemas/inventorySchemas.js.
@@ -155,6 +156,9 @@ const InventoryTable = () => {
         setIsModalOpen(false);
         setEditingItem(null);
     };
+
+    const modalTitleId = useId();
+    const modalDialogRef = useDialog({ open: isModalOpen, onClose: closeModal });
 
     const handleVariantChange = (id, newName) => {
         setFormData(prev => ({
@@ -410,8 +414,8 @@ const InventoryTable = () => {
             {/* MODAL */}
             {isModalOpen && (
                 <div className="modal-overlay">
-                    <div className="modal-content">
-                        <h2 className="modal-title">{modalMode === 'add' ? 'Add new item' : 'Edit item'}</h2>
+                    <div ref={modalDialogRef} className="modal-content" role="dialog" aria-modal="true" aria-labelledby={modalTitleId}>
+                        <h2 id={modalTitleId} className="modal-title">{modalMode === 'add' ? 'Add new item' : 'Edit item'}</h2>
 
                         <form onSubmit={handleSubmit} className="modal-form">
                             <div className="form-group">
