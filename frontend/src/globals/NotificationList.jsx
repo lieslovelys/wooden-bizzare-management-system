@@ -6,6 +6,7 @@ import { usePaginatedList } from '../hooks/usePaginatedList';
 import { useNotifications } from '../context/NotificationContext';
 import Pagination from './Pagination';
 import ConfirmModal from './ConfirmModal';
+import { clickableProps } from '../utils/a11y';
 
 // Shared by admin/AdminNotification.jsx, product_manager/PMNotification.jsx, and
 // quality_checker/QualityCheckerNotification.jsx — those three were ~90% line-for-line
@@ -122,7 +123,7 @@ const NotificationList = ({ type, emptyMessage = 'No new notifications.', resolv
             <div
                 key={notif.id}
                 className={`notif-item ${notif.is_read ? 'read' : 'unread'}`}
-                onClick={() => handleNotifClick(notif)}
+                {...clickableProps(() => handleNotifClick(notif))}
                 style={{ cursor: 'pointer' }}
             >
                 <div className="notif-icon-wrapper">

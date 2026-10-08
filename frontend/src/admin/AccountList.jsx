@@ -3,6 +3,7 @@ import '../css/admin.css';
 import { api } from '../api/client';
 import { useToast } from '../context/ToastContext';
 import ConfirmModal from '../globals/ConfirmModal';
+import { clickableProps } from '../utils/a11y';
 
 const AccountList = () => {
   const [accounts, setAccounts] = useState([]);
@@ -95,9 +96,9 @@ const AccountList = () => {
             <div className="al-list">
               {accounts.length > 0 ? (
                 accounts.map((account) => (
-                  <div 
+                  <div
                     key={account.user_id}
-                    onClick={() => setActiveRowId(account.user_id)}
+                    {...clickableProps(() => setActiveRowId(account.user_id))}
                     className={`al-item ${activeRowId === account.user_id ? 'active' : ''}`}
                   >
                     <div className="al-col id-col">{account.formatted_id}</div>

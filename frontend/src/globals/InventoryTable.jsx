@@ -270,7 +270,19 @@ const InventoryTable = () => {
                                 const isExpanded = expandedRow === item.id;
                                 return (
                                     <React.Fragment key={item.id}>
-                                        <tr className={`main-row ${isExpanded ? 'active' : ''}`} onClick={() => toggleRow(item.id)}>
+                                        <tr
+                                            className={`main-row ${isExpanded ? 'active' : ''}`}
+                                            onClick={() => toggleRow(item.id)}
+                                            tabIndex={0}
+                                            aria-expanded={isExpanded}
+                                            onKeyDown={(e) => {
+                                                if (e.target !== e.currentTarget) return;
+                                                if (e.key === 'Enter' || e.key === ' ') {
+                                                    e.preventDefault();
+                                                    toggleRow(item.id);
+                                                }
+                                            }}
+                                        >
                                             <td data-label="Item" className="item-name">{item.name}</td>
                                             <td data-label="Category"><span className="category-pill">{item.category}</span></td>
                                             <td data-label="Variants" className="variants-cell">

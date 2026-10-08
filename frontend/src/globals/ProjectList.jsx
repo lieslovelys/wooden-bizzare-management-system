@@ -9,6 +9,7 @@ import { api } from '../api/client';
 import { formatProjectId } from '../utils/format';
 import { usePaginatedList } from '../hooks/usePaginatedList';
 import { useToast } from '../context/ToastContext';
+import { clickableProps } from '../utils/a11y';
 
 const ProjectList = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -163,7 +164,7 @@ const ProjectList = () => {
                 <div 
                   key={proj.id}
                   className={`pl-item ${activeRowId === proj.id ? 'active' : ''}`}
-                  onClick={() => setActiveRowId(proj.id)}
+                  {...clickableProps(() => setActiveRowId(proj.id))}
                 >
                   <div className="pl-col id-col">{formatProjectId(proj.id)}</div>
                   <div className="pl-col name-col">{proj.project_name}</div>

@@ -7,6 +7,7 @@ import { api } from '../api/client';
 import { UserContext } from '../context/UserContext';
 import { formatDateShort, formatProjectId } from '../utils/format';
 import { usePaginatedList } from '../hooks/usePaginatedList';
+import { clickableProps } from '../utils/a11y';
 
 const FILTERS = ['Assigned', 'Repair', 'For QA', 'Approved'];
 
@@ -130,7 +131,7 @@ const WorkerJobOrder = () => {
                         <div
                             key={task.assignmentId}
                             className="wjo-item"
-                            onClick={() => setSelectedTask({ projectId: task.projectId, assignmentId: task.assignmentId, status: task.status })}
+                            {...clickableProps(() => setSelectedTask({ projectId: task.projectId, assignmentId: task.assignmentId, status: task.status }))}
                         >
                             <div className="wjo-item-id">{task.id}</div>
                             <div className="wjo-item-name">{task.name}</div>

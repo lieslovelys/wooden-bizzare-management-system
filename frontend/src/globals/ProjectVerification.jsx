@@ -5,6 +5,7 @@ import Pagination from './Pagination';
 import { api } from '../api/client';
 import { formatProjectId } from '../utils/format';
 import { usePaginatedList } from '../hooks/usePaginatedList';
+import { clickableProps } from '../utils/a11y';
 
 const ProjectVerification = () => {
     const [stageFilter, setStageFilter] = useState('All');
@@ -99,7 +100,7 @@ const ProjectVerification = () => {
                         <div 
                             key={index} 
                             className="qc-pv-row qc-pv-item"
-                            onClick={() => setSelectedProjectId(task.rawProjectId)}
+                            {...clickableProps(() => setSelectedProjectId(task.rawProjectId))}
                         >
                             <div>{task.id}</div>
                             <div>{task.projectName}</div>

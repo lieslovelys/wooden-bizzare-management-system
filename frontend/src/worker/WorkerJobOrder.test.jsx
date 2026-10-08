@@ -78,6 +78,16 @@ describe('WorkerJobOrder', () => {
     );
   });
 
+  it('pressing Enter on a task row opens its detail, same as a click (DESIGN.md §8 keyboard operability)', async () => {
+    api.get.mockResolvedValue(pageOf([TASK]));
+    renderPage();
+    const row = (await screen.findByText('Dining Set')).closest('.wjo-item');
+
+    fireEvent.keyDown(row, { key: 'Enter' });
+
+    await waitFor(() => expect(screen.queryByText('JOB ORDER LIST')).not.toBeInTheDocument());
+  });
+
   it('a task-notification deep-link resolves the assignment and opens its detail directly', async () => {
     api.get.mockImplementation((url) => {
       if (url.startsWith('/api/assignments/')) {

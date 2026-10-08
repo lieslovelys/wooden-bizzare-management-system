@@ -94,7 +94,7 @@ const Navbar = ({ tabs, accountType }) => {
                             ((location.pathname === `/${accountType.toLowerCase()}` || location.pathname === `/${accountType.toLowerCase()}/`) && tab.url.toLowerCase() === 'dashboard');
 
                         return (
-                            <Link key={tab.key} to={tabPath} style={{ textDecoration: 'none' }} onClick={() => setIsMobileOpen(false)}>
+                            <Link key={tab.key} to={tabPath} style={{ textDecoration: 'none' }} onClick={() => setIsMobileOpen(false)} aria-current={isActive ? 'page' : undefined}>
                                 <div className={`nav-item ${isActive ? 'active' : ''}`}>
                                     <span className="nav-icon-wrap">
                                         <i className={tab.icon} aria-hidden="true"></i>
@@ -112,7 +112,8 @@ const Navbar = ({ tabs, accountType }) => {
                     })}
 
                     {/* 2. ITO YUNG PERMANENT LOGOUT BUTTON SA ILALIM */}
-                    <div
+                    <button
+                        type="button"
                         className="nav-item logout-nav-item"
                         onClick={() => setShowLogoutModal(true)}
                         style={{
@@ -121,7 +122,18 @@ const Navbar = ({ tabs, accountType }) => {
                             color: 'var(--color-danger)',
                             fontWeight: 'bold',
                             borderTop: '1px solid rgba(255, 255, 255, 0.1)', // Ginawang lighter ang border para mas kita sa dark theme
-                            paddingTop: '20px'
+                            paddingTop: '20px',
+                            // Button-reset: .nav-item's class CSS covers layout/color/padding, but
+                            // not background/border, which a real <button> gets from the UA
+                            // stylesheet — these undo that without touching the borderTop above
+                            // (the `border` shorthand would have reset it too).
+                            background: 'none',
+                            borderLeft: 'none',
+                            borderRight: 'none',
+                            borderBottom: 'none',
+                            width: '100%',
+                            textAlign: 'left',
+                            font: 'inherit',
                         }}
                     >
                         {/* marginRight dropped: .nav-item already has `gap: 15px` between
@@ -130,7 +142,7 @@ const Navbar = ({ tabs, accountType }) => {
                             icon-above-label layout. */}
                         <i className="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i>
                         <span className="nav-label">Logout</span>
-                    </div>
+                    </button>
                 </nav>
             </div>
 

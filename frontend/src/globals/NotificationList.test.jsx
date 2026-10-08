@@ -78,6 +78,31 @@ describe('NotificationList', () => {
     expect(mockRefreshUnread).toHaveBeenCalled();
   });
 
+  it('pressing Enter on a notification row marks it read, same as a click (DESIGN.md §8 keyboard operability)', async () => {
+    api.get.mockResolvedValue(pageOf([PROJECT_NOTIF]));
+    api.put.mockResolvedValue({ message: 'ok' });
+    renderList({});
+
+    const row = (await screen.findByText('Project A')).closest('.notif-item');
+    fireEvent.keyDown(row, { key: 'Enter' });
+
+    await waitFor(() => expect(api.put).toHaveBeenCalledWith('/api/notifications/1/read'));
+  });
+
+  it('a keydown that bubbles up from the delete button does not also mark the row read', async () => {
+    api.get.mockResolvedValue(pageOf([PROJECT_NOTIF]));
+    api.put.mockResolvedValue({ message: 'ok' });
+    renderList({});
+
+    // Dispatched directly on the inner button (not the row) so it bubbles up with
+    // event.target === the button and event.currentTarget === the row, exactly the case
+    // clickableProps' `e.target !== e.currentTarget` guard exists for.
+    const deleteBtn = await screen.findByTitle('Delete Notification');
+    fireEvent.keyDown(deleteBtn, { key: 'Enter' });
+
+    expect(api.put).not.toHaveBeenCalled();
+  });
+
   it('clicking a notification marks it read, navigates via resolveTarget, and refreshes the unread count', async () => {
     api.get.mockResolvedValue(pageOf([PROJECT_NOTIF, VERIFICATION_NOTIF]));
     api.put.mockResolvedValue({ message: 'ok' });

@@ -5,6 +5,7 @@ import { formatTime12h, formatWorkerId, workerPhotoUrl } from '../utils/format';
 import { usePaginatedList } from '../hooks/usePaginatedList';
 import Pagination from './Pagination';
 import ConfirmModal from './ConfirmModal';
+import { clickableProps } from '../utils/a11y';
 
 const API = '/api';
 
@@ -110,7 +111,7 @@ const EmployeeListView = ({ searchQuery, setSearchQuery, typeFilter, setTypeFilt
           <div style={{ textAlign: 'center', opacity: 0.5, padding: '2rem' }}>No workers found.</div>
         ) : (
           filteredEmployees.map(emp => (
-            <div className="att-item" key={emp.user_id} onClick={() => onSelectWorker(emp)}>
+            <div className="att-item" key={emp.user_id} {...clickableProps(() => onSelectWorker(emp))}>
               <div>{formatWorkerId(emp.user_id)}</div>
               <div>{`${emp.last_name}, ${emp.first_name} ${emp.middle_name && emp.middle_name !== 'None' ? emp.middle_name : ''}`.toUpperCase()}</div>
               <div>{emp.job_role}</div>

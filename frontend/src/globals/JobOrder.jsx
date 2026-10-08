@@ -4,6 +4,7 @@ import JobOrderDetails from './JobOrderDetails';
 import Pagination from './Pagination';
 import { formatDateShort, formatProjectId } from '../utils/format';
 import { usePaginatedList } from '../hooks/usePaginatedList';
+import { clickableProps } from '../utils/a11y';
 
 const ALL_PRIORITIES = ['High', 'Medium', 'Low'];
 
@@ -92,7 +93,7 @@ const JobOrderList = () => {
                         <div
                             key={job.id}
                             className="jol-item"
-                            onClick={() => setViewingJobId(job.id)} // Dito tina-trigger yung pag-switch ng view
+                            {...clickableProps(() => setViewingJobId(job.id))} // Dito tina-trigger yung pag-switch ng view
                         >
                             <div className="jol-name">{formatProjectId(job.id)} {job.project_name}</div>
                             <div className="jol-date">{formatDateShort(job.due_date)}</div>

@@ -4,6 +4,7 @@ import { api } from '../api/client';
 import { formatDate, formatProjectId } from '../utils/format';
 import { usePaginatedList } from '../hooks/usePaginatedList';
 import Pagination from '../globals/Pagination';
+import { clickableProps } from '../utils/a11y';
 
 const ProjectHistory = () => {
   const [remarksFilter, setRemarksFilter] = useState('All');
@@ -225,10 +226,10 @@ const ProjectHistory = () => {
             <div className="ph-list">
                 {displayedHistory.length > 0 ? (
                     displayedHistory.map((proj) => (
-                        <div 
-                            key={proj.id} 
-                            className="ph-item clickable-row" 
-                            onClick={() => handleRowClick(proj.id)}
+                        <div
+                            key={proj.id}
+                            className="ph-item clickable-row"
+                            {...clickableProps(() => handleRowClick(proj.id))}
                             title="Click to view details"
                         >
                             <div className="ph-col" style={{color: 'var(--color-text-muted)', fontWeight: 600}}>{formatProjectId(proj.id)}</div>
