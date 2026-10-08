@@ -484,3 +484,17 @@
 .cancel-btn:hover, .submit-btn:hover, .add-variant-btn:hover, .remove-variant-btn:hover {
     background: #332800;
 }
+
+/* DESIGN.md §7 "known residual gap" — .filter-btn/.add-btn (~38px) and .add-variant-btn (~38px)
+   sat under the 44px tap minimum from 769-1024px; the table-cell controls (.action-btn,
+   .reason-select, .project-select, .adjust-btn) are already covered by globals.css's
+   .wb-card-table rule, since all four sit inside a <td> regardless of nesting depth. Scoped to
+   tablet-and-below, not applied at every width — see DESIGN.md §7's own note on why that's a
+   design decision, not a bug fix. */
+@media (max-width: 1024px) {
+    .filter-btn,
+    .add-btn,
+    .add-variant-btn {
+        min-height: 44px;
+    }
+}

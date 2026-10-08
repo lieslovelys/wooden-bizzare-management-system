@@ -3112,6 +3112,17 @@ html, body {
     color: var(--color-accent); /* Gold hover */
 }
 
+/* DESIGN.md §7 "known residual gap" — was padding:0 with no explicit height, well under the 44px
+   tap minimum through 1024px; left scoped to tablet-and-below deliberately, matching that note's
+   own reasoning that resizing a control at every width including desktop is a design decision,
+   not a responsiveness fix. */
+@media (max-width: 1024px) {
+    .jod-back-btn {
+        padding: 10px 0;
+        min-height: 44px;
+    }
+}
+
 /* --- MAIN CONTAINERS (Premium Cards) --- */
 .jod-container {
     background-color: var(--color-surface);
@@ -3419,6 +3430,16 @@ html, body {
 }
 
 .jod-form-group select::-ms-expand { display: none; }
+
+/* DESIGN.md §7 "known residual gap" — ~43-44px at the default size, borderline rather than a
+   clear failure; a guaranteed min-height closes the gap through the tablet range without
+   affecting desktop, same scoping as the back-button fixes above. */
+@media (max-width: 1024px) {
+    .jod-form-group input,
+    .jod-form-group select {
+        min-height: 44px;
+    }
+}
 
 .jod-form-actions {
     display: flex;
@@ -3814,8 +3835,16 @@ html, body {
     transition: color 0.2s ease;
 }
 
-.qc-pvd-back-btn:hover { 
+.qc-pvd-back-btn:hover {
     color: var(--color-accent); /* Gold hover */
+}
+
+/* DESIGN.md §7 "known residual gap" — same fix as .jod-back-btn above, same reasoning. */
+@media (max-width: 1024px) {
+    .qc-pvd-back-btn {
+        padding: 10px 0;
+        min-height: 44px;
+    }
 }
 
 /* --- MAIN CONTAINERS (Premium Cards) --- */
@@ -4213,10 +4242,17 @@ html, body {
         display: block;
         text-align: left;
     }
+}
 
-    /* DESIGN.md §3.3 — every interactive element inside a converted card, not just the row
-       itself, needs a real tap target. min-width covers icon-only buttons (e.g. the inventory
-       edit/delete actions), whose width would otherwise be their icon's, not their height's. */
+/* DESIGN.md §3.3/§7 "known residual gap" — every interactive element inside a .wb-card-table
+   needs a real tap target through the whole 0–1024px range the codebase's breakpoints cover, not
+   just the ≤768px card-layout range above. At 769–1024px the table is still a real <table> (the
+   card conversion is deliberately mobile-only), so these controls — inventory edit/delete,
+   reason/project selects, the profit delete icon, QA approve/repair buttons, etc. — used to stay
+   at their raw, often-sub-24px size on a tablet. min-width covers icon-only buttons (e.g. the
+   inventory edit/delete actions), whose width would otherwise be their icon's, not their
+   height's. */
+@media (max-width: 1024px) {
     .wb-card-table td button,
     .wb-card-table td select,
     .wb-card-table td input {

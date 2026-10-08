@@ -382,6 +382,15 @@
   border-top: 1.5px solid var(--color-border);
 }
 
+/* DESIGN.md §7 "known residual gap" — each half of the increment/decrement pair was ~23px tall,
+   under the 44px tap minimum through 1024px; scoped to tablet-and-below, not every width, same
+   reasoning as the other fixes in this pass. */
+@media (max-width: 1024px) {
+  .profit-spinner-buttons button {
+    min-height: 44px;
+  }
+}
+
 /* --- ADD BREAKDOWN ITEMS --- */
 .profit-breakdown-section {
   margin-bottom: 30px;
@@ -440,6 +449,13 @@
 .profit-add-btn:hover {
   background: var(--color-surface-cream);
   border-style: solid;
+}
+
+/* DESIGN.md §7 "known residual gap" — ~41px, under the 44px tap minimum through 1024px. */
+@media (max-width: 1024px) {
+  .profit-add-btn {
+    min-height: 44px;
+  }
 }
 
 /* DESIGN.md §3.1/§7#8 — sweep-discovered: `.profit-input-grid`'s two fixed `1fr` CSS Grid
@@ -1043,8 +1059,15 @@
   background-repeat: no-repeat;
   
   /* Inurong natin ng 15px papasok mula sa kanan para hindi lumabas sa oval */
-  background-position: right 15px center; 
+  background-position: right 15px center;
   background-size: 12px auto;
+}
+
+/* DESIGN.md §7 "known residual gap" — ~40px, under the 44px tap minimum through 1024px. */
+@media (max-width: 1024px) {
+  .filter-dropdown {
+    min-height: 44px;
+  }
 }
 
 /* DESIGN.md §3.1/§7#8 — sweep-discovered: this header had no mobile rule at all, so its two
@@ -1176,6 +1199,15 @@
 
 .btn-add-worker:hover {
   opacity: 0.9;
+}
+
+/* DESIGN.md §7 "known residual gap" — ~40px, under the 44px tap minimum through 1024px. Both
+   .btn-add-worker declarations above (pre-existing duplication, not introduced by this pass) land
+   on the same class, so one rule here covers whichever wins the cascade. */
+@media (max-width: 1024px) {
+  .btn-add-worker {
+    min-height: 44px;
+  }
 }
 
 /* --- ADD WORKER MODAL STYLES --- */

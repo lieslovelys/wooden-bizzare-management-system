@@ -116,7 +116,7 @@ const JobOrderDetail = ({ jobId, onBack }) => {
     const getStatusClass = (status) => status ? status.toLowerCase().replace(' ', '-') : '';
 
     if (loading) return <div className="jod-wrapper"><p style={{ textAlign: 'center' }}>Loading project data...</p></div>;
-    if (!projectDetails) return <div className="jod-wrapper"><button onClick={onBack}>Back</button><p>Project not found.</p></div>;
+    if (!projectDetails) return <div className="jod-wrapper"><button className="jod-back-btn" onClick={onBack}>Back</button><p>Project not found.</p></div>;
 
     const totalAssigned = assignments.length; 
     const completedStages = assignments.filter(a => a.status === 'Approved').length;
