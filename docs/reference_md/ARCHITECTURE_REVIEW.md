@@ -1318,7 +1318,59 @@ Not urgent, but each of these increases the cost of every future change until ad
       vulnerabilities (react-router-dom, undici, vite) were confirmed unchanged by diffing against
       a stash of this item's `package.json` changes — none of the three new packages added a new
       one. Backend untouched — its suite still 273/273.
+    - **Correction (made during item 28):** this verification missed a live CDN reference.
+      `globals.css:1` carried its own `@import url('https://fonts.googleapis.com/...')` —
+      presumably a leftover from before the `main.jsx` imports were added — that the grep above
+      never caught, since it only checked `dist/index.html`, not the built CSS. The production app
+      kept fetching fonts from Google at runtime despite this item's own text and verification
+      saying otherwise. See item 28 for the fix and the widened guard.
     - **Still open after this:** only the declined role-shell consolidation remains on this
       backlog's "still open" lists. DESIGN.md §8's remaining deferrals (a formal accessibility
       standard, PWA) are separate, larger efforts, not implied by this item. The Inter 700/Playfair
-      900 real-weight follow-up noted above is a new, small, un-started candidate.
+      900 real-weight follow-up noted above is a new, small, un-started candidate — closed by item
+      28, which also caught the `globals.css` regression above.
+
+28. **Finish self-hosting fonts: remove the leftover CDN `@import`, load the real weights** — ✅
+    done, two commits on `main`. Closes the gap item 27 left open.
+    - **The regression.** `globals.css:1` still read
+      `@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600&display=swap')`
+      after item 27 landed — a CDN font-loading reference item 27's own verification missed
+      because it only grepped `dist/index.html` for `googleapis`/`gstatic`/`cdnjs`, never the
+      built CSS. Deleted outright; `main.jsx`'s `@fontsource/*` imports already supplied the same
+      families and weights.
+    - **The guard, widened.** `tests/indexHtml.test.js` is renamed `tests/thirdPartyAssets.test.js`
+      and gains a second test that walks every `src/css/*.css` file for a remote `@import`/`url()`
+      — the same class of regression this item just fixed can't land silently again, in either
+      `index.html` or a stylesheet.
+    - **The real weights.** A repo-wide pass found 177 CSS rules asking for a weight `main.jsx`
+      never loaded — the browser was synthesizing all of them from the nearest loaded weight:
+      - ~80 rules for Inter 700/`bold` (table headers, item labels, the active nav item, several
+        buttons)
+      - 4 rules for Inter 800 (`.attendance-log-name`, `.profit-net-label`,
+        `.rank-badge-container`, `.stat-pill`)
+      - 3 rules for Playfair Display 800 (`.profit-net-value`, `.info-card-value`,
+        `.prod-header-title`)
+
+      The rest of the 177 sit on screens that render in Arial, Georgia, or the browser's default
+      serif (`html`/`body` sets no `font-family`, so Inter only applies inside containers that set
+      it themselves) — those don't need a Playfair/Inter weight at all, and are a separate,
+      un-started typography-consistency question for the planned redesign (DESIGN.md §1), not this
+      item's concern. `main.jsx` gains `@fontsource/inter/700.css`, `@fontsource/inter/800.css`,
+      and `@fontsource/playfair-display/800.css` — no new dependency, since both `@fontsource`
+      packages already ship every weight; this just imports three more files already on disk.
+    - **Backend cleanup, found alongside this.** `backend/src/app.js`'s helmet CSP still allowed
+      `fonts.googleapis.com`/`fonts.gstatic.com`/`cdnjs.cloudflare.com` in `styleSrc`/`fontSrc`/
+      `scriptSrc` — harmless (that policy only governs API responses; Nginx serves the frontend
+      directly) but stale now that nothing self-hosted needs them. Removed.
+    - **Verification.** `grep -r "googleapis\|gstatic\|cdnjs" frontend/dist` returns zero hits —
+      this time covering `dist/assets/*.css`, which is what item 27's check missed. The `dist/`
+      listing shows Inter 700/800 and Playfair Display 800 woff/woff2 files alongside the existing
+      ones. Frontend tests 227 → 228 (the new stylesheet-scan test); lint clean (same 3
+      pre-existing `JobOrderDetails.jsx` warnings); both builds clean. Backend tests still 273/273.
+      One pre-existing frontend test failure was found during this pass and is unrelated to it:
+      `JobOrderDetails.test.jsx`'s auto-select-the-only-worker case fails identically on a clean
+      checkout of `main` from before this item (confirmed via `git stash`), so it's a pre-existing
+      issue, not something this item introduced or is responsible for fixing.
+    - **Still open after this:** only the declined role-shell consolidation remains. DESIGN.md §8's
+      remaining deferrals (accessibility, PWA) and the tablet tap-target gap are separate,
+      un-started candidates.
