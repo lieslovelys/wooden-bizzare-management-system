@@ -27,7 +27,7 @@ const Logout = ({ onCancel }) => {
                     <div className="wb-logout-row">
                         <img 
                             src="/wblogo.png" 
-                            alt="Wooden Bizzare Logo" 
+                            alt="The Wooden Bizarre logo"
                             className="wb-logout-img" 
                         />
                         <div className="wb-logout-text">

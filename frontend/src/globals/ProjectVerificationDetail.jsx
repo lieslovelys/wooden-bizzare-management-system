@@ -209,6 +209,7 @@ const ProjectVerificationDetail = ({ projectId, onBack }) => {
                 >
                     <textarea
                         className="wb-modal-textarea"
+                        aria-label="Repair reason"
                         value={repairReason}
                         onChange={(e) => setRepairReason(e.target.value)}
                         placeholder="e.g. Joints are loose, redo the frame."

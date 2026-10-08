@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useId, useState } from 'react';
 import { api } from '../api/client';
 import { useToast } from '../context/ToastContext';
 
@@ -7,6 +7,7 @@ import { useToast } from '../context/ToastContext';
 // a separate write path, so stock changes still only ever happen through
 // inventoryModel.js's adjustVariantStock transaction — see ARCHITECTURE_REVIEW.md item 18.
 const ProjectMaterials = ({ projectId }) => {
+    const id = useId();
     const [materials, setMaterials] = useState([]);
     const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -123,8 +124,8 @@ const ProjectMaterials = ({ projectId }) => {
             <form className="jod-form" onSubmit={handleSubmit}>
                 <div className="jod-form-grid">
                     <div className="jod-form-group">
-                        <label>Variant</label>
-                        <select value={variantId} onChange={(e) => setVariantId(e.target.value)}>
+                        <label htmlFor={`${id}-variant`}>Variant</label>
+                        <select id={`${id}-variant`} value={variantId} onChange={(e) => setVariantId(e.target.value)}>
                             <option value="">-- Select a variant --</option>
                             {variantOptions.map((option) => (
                                 <option key={option.id} value={option.id}>{option.label}</option>
@@ -132,8 +133,9 @@ const ProjectMaterials = ({ projectId }) => {
                         </select>
                     </div>
                     <div className="jod-form-group">
-                        <label>Quantity</label>
+                        <label htmlFor={`${id}-quantity`}>Quantity</label>
                         <input
+                            id={`${id}-quantity`}
                             type="number"
                             min="1"
                             step="1"
@@ -142,8 +144,8 @@ const ProjectMaterials = ({ projectId }) => {
                         />
                     </div>
                     <div className="jod-form-group">
-                        <label>Action</label>
-                        <select value={mode} onChange={(e) => setMode(e.target.value)}>
+                        <label htmlFor={`${id}-action`}>Action</label>
+                        <select id={`${id}-action`} value={mode} onChange={(e) => setMode(e.target.value)}>
                             <option value="Used">Used</option>
                             <option value="Returned">Returned</option>
                         </select>

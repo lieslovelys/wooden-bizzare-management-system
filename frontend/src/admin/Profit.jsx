@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useId } from "react";
 import "../css/admin.css";
 import { api, ApiError } from "../api/client";
 import { formatCurrency } from "../utils/format";
@@ -40,10 +40,11 @@ async function saveProfit(projectId, payload) {
   return result.data;
 }
 
-function SpinnerInput({ value, onChange }) {
+function SpinnerInput({ id, label, value, onChange }) {
   return (
     <div className="profit-spinner">
       <input
+        id={id}
         type="number"
         value={value}
         placeholder="0"
@@ -55,14 +56,15 @@ function SpinnerInput({ value, onChange }) {
       />
       <div className="profit-spinner-buttons">
         {/* Sinisiguro natin na mako-convert sa number ang blank ("") bago mag-add */}
-        <button type="button" onClick={() => onChange((Number(value) || 0) + 500)}>▲</button>
-        <button type="button" onClick={() => onChange(Math.max(0, (Number(value) || 0) - 500))}>▼</button>
+        <button type="button" aria-label={`Increase ${label} by 500`} onClick={() => onChange((Number(value) || 0) + 500)}>▲</button>
+        <button type="button" aria-label={`Decrease ${label} by 500`} onClick={() => onChange(Math.max(0, (Number(value) || 0) - 500))}>▼</button>
       </div>
     </div>
   );
 }
 
 export default function Profit() {
+  const spinnerIdPrefix = useId();
   const [projects, setProjects] = useState([]);
   const [selectedProjectId, setSelectedProjectId] = useState("");
   const [projectName, setProjectName] = useState("");
@@ -240,13 +242,14 @@ export default function Profit() {
         </h2>
 
         <div className="profit-project-select">
-          <label className="profit-input-label">Select Project</label>
+          <label className="profit-input-label" htmlFor={`${spinnerIdPrefix}-project`}>Select Project</label>
           {loadingProjects ? (
             <p style={{ textAlign: "center", padding: "1rem", opacity: 0.5 }}>Loading projects...</p>
           ) : projects.length === 0 ? (
             <p style={{ textAlign: "center", padding: "1rem", opacity: 0.5 }}>No projects found</p>
           ) : (
             <select
+              id={`${spinnerIdPrefix}-project`}
               className="profit-form-select"
               value={selectedProjectId}
               onChange={handleProjectChange}
@@ -286,8 +289,8 @@ export default function Profit() {
                     { label: "Other Expenses (₱)", value: otherExpenses, setter: setOtherExpenses },
                   ].map(({ label, value, setter }) => (
                     <div key={label}>
-                      <label className="profit-input-label">{label}</label>
-                      <SpinnerInput value={value} onChange={setter} />
+                      <label className="profit-input-label" htmlFor={`${spinnerIdPrefix}-${label}`}>{label}</label>
+                      <SpinnerInput id={`${spinnerIdPrefix}-${label}`} label={label} value={value} onChange={setter} />
                     </div>
                   ))}
                 </div>
@@ -310,6 +313,7 @@ export default function Profit() {
                   <div className="profit-add-item">
                     <input
                       type="text"
+                      aria-label="New expense description"
                       placeholder="Expense description"
                       value={newItemDesc}
                       onChange={(e) => setNewItemDesc(e.target.value)}
@@ -317,6 +321,7 @@ export default function Profit() {
                     />
                     <input
                       type="number"
+                      aria-label="New expense amount"
                       placeholder="Amount"
                       value={newItemAmount}
                       onChange={(e) => setNewItemAmount(e.target.value)}
@@ -348,6 +353,7 @@ export default function Profit() {
                             <td data-label="Expense Item">
                               <input
                                 type="text"
+                                aria-label={`Expense ${i + 1} description`}
                                 value={row.description}
                                 onChange={(e) => updateExpenseItem(i, "description", e.target.value)}
                                 className="profit-table-input"
@@ -356,6 +362,7 @@ export default function Profit() {
                             <td data-label="Amount">
                               <input
                                 type="number"
+                                aria-label={`Expense ${i + 1} amount`}
                                 value={row.amount === 0 && row.amount !== "" ? "" : row.amount}
                                 placeholder="0"
                                 onChange={(e) => updateExpenseItem(i, "amount", e.target.value)}
@@ -367,6 +374,7 @@ export default function Profit() {
                                 type="button"
                                 onClick={() => removeExpenseItem(i)}
                                 className="profit-delete-btn"
+                                aria-label={`Delete expense: ${row.description || 'untitled'}`}
                                 title="Delete"
                               >
                                 🗑

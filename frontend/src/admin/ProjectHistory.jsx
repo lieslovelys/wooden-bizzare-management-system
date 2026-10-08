@@ -194,8 +194,9 @@ const ProjectHistory = () => {
       <h1 className="ph-title">PROJECT HISTORY</h1>
 
       <div className="ph-controls">
-        <select 
+        <select
           className="ph-filter-select"
+          aria-label="Filter by remark"
           value={remarksFilter}
           onChange={(e) => setRemarksFilter(e.target.value)}
         >

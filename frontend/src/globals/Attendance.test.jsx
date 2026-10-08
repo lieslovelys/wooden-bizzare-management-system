@@ -56,7 +56,7 @@ describe('Attendance worker avatar', () => {
     const workerRow = await screen.findByText(/DELA CRUZ, JUAN/i);
     fireEvent.click(workerRow.closest('.att-item'));
 
-    const avatar = await screen.findByAltText('avatar');
+    const avatar = await screen.findByAltText("Juan Dela Cruz's photo");
     expect(avatar).toHaveAttribute('src', 'https://api.test/api/workers/7/photo?v=w7.jpg');
   });
 });

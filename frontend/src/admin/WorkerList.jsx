@@ -92,17 +92,19 @@ const WorkerList = () => {
             {/* PINALITAN ANG stroke="white" NG stroke="#D1AA3A" DITO */}
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" style={{ stroke: 'var(--color-accent)' }} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
           </span>
-          <input 
-            type="text" 
-            placeholder="Search worker's name" 
+          <input
+            type="text"
+            aria-label="Search worker's name"
+            placeholder="Search worker's name"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        
-        <select 
-          className="filter-dropdown" 
-          value={selectedRole} 
+
+        <select
+          className="filter-dropdown"
+          aria-label="Filter by role"
+          value={selectedRole}
           onChange={(e) => setSelectedRole(e.target.value)}
         >
           <option value="Role">Role</option>
@@ -113,9 +115,10 @@ const WorkerList = () => {
           <option value="Painter">Painter</option>
         </select>
         
-        <select 
-          className="filter-dropdown" 
-          value={selectedType} 
+        <select
+          className="filter-dropdown"
+          aria-label="Filter by worker type"
+          value={selectedType}
           onChange={(e) => setSelectedType(e.target.value)}
         >
           <option value="Type">Type</option>

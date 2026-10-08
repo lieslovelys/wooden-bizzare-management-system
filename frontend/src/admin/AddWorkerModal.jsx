@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useId, useRef, useState } from 'react';
 import '../css/admin.css';
 import { useToast } from '../context/ToastContext';
 import { withoutDigits, digitsOnly, isIncompleteContactNumber, CONTACT_NUMBER_ERROR } from '../utils/formValidators';
@@ -19,6 +19,7 @@ const EMPTY_FORM = {
 };
 
 const AddWorkerModal = ({ isOpen, onClose, onSave }) => {
+  const id = useId();
   const [formData, setFormData] = useState(EMPTY_FORM);
   const [previewUrl, setPreviewUrl] = useState(null);
 
@@ -111,22 +112,22 @@ const AddWorkerModal = ({ isOpen, onClose, onSave }) => {
             </div>
 
             <div className="form-group">
-              <label>First Name</label>
-              <input type="text" name="firstName" value={formData.firstName} onChange={handleChange} required />
+              <label htmlFor={`${id}-firstName`}>First Name</label>
+              <input id={`${id}-firstName`} type="text" name="firstName" value={formData.firstName} onChange={handleChange} required />
             </div>
             <div className="form-group">
-              <label>Middle Name</label>
-              <input type="text" name="middleName" value={formData.middleName} onChange={handleChange} placeholder="Leave blank if none" />
-            </div>
-
-            <div className="form-group">
-              <label>Last Name</label>
-              <input type="text" name="lastName" value={formData.lastName} onChange={handleChange} required />
+              <label htmlFor={`${id}-middleName`}>Middle Name</label>
+              <input id={`${id}-middleName`} type="text" name="middleName" value={formData.middleName} onChange={handleChange} placeholder="Leave blank if none" />
             </div>
 
             <div className="form-group">
-              <label>Suffix</label>
-              <select name="suffix" value={formData.suffix} onChange={handleChange}>
+              <label htmlFor={`${id}-lastName`}>Last Name</label>
+              <input id={`${id}-lastName`} type="text" name="lastName" value={formData.lastName} onChange={handleChange} required />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor={`${id}-suffix`}>Suffix</label>
+              <select id={`${id}-suffix`} name="suffix" value={formData.suffix} onChange={handleChange}>
                 <option value="None">None</option>
                 <option value="Sr.">Sr.</option>
                 <option value="Jr.">Jr.</option>
@@ -138,12 +139,12 @@ const AddWorkerModal = ({ isOpen, onClose, onSave }) => {
             </div>
 
             <div className="form-group">
-              <label>Username</label>
-              <input type="text" name="username" value={formData.username} onChange={handleChange} required />
+              <label htmlFor={`${id}-username`}>Username</label>
+              <input id={`${id}-username`} type="text" name="username" value={formData.username} onChange={handleChange} required />
             </div>
             <div className="form-group">
-              <label>Password</label>
-              <input type="password" name="password" value={formData.password} onChange={handleChange} required />
+              <label htmlFor={`${id}-password`}>Password</label>
+              <input id={`${id}-password`} type="password" name="password" value={formData.password} onChange={handleChange} required />
             </div>
 
             {/* --- Job Information --- */}

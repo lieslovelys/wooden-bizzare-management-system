@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useId, useState } from 'react';
 import { api } from '../api/client';
 import { useToast } from '../context/ToastContext';
 import { formatTime12h, formatWorkerId, workerPhotoUrl } from '../utils/format';
@@ -46,7 +46,8 @@ const WorkerAvatar = ({ worker, size = 64, className = '' }) => {
   const src = workerPhotoUrl(worker);
   const style = { width: size, height: size, borderRadius: '16px', objectFit: 'cover', flexShrink: 0, boxShadow: '0 4px 10px rgba(0,0,0,0.1)' };
   if (src && !imgError) {
-    return <img src={src} alt="avatar" style={style} className={className} onError={() => setImgError(true)} />;
+    const name = worker ? `${worker.first_name ?? ''} ${worker.last_name ?? ''}`.trim() : '';
+    return <img src={src} alt={name ? `${name}'s photo` : 'Worker photo'} style={style} className={className} onError={() => setImgError(true)} />;
   }
   return (
     <div className={className} style={{ ...style, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-surface-cream)', color: 'var(--color-accent)', fontWeight: 700, fontSize: size * 0.35 }}>
@@ -69,6 +70,7 @@ const EmployeeListView = ({ searchQuery, setSearchQuery, typeFilter, setTypeFilt
         </svg>
         <input
           type="text"
+          aria-label="Search worker's ID or name"
           placeholder="Search worker's ID or name..."
           className="list-search-input"
           value={searchQuery}
@@ -77,6 +79,7 @@ const EmployeeListView = ({ searchQuery, setSearchQuery, typeFilter, setTypeFilt
       </div>
 
       <select
+        aria-label="Filter by worker type"
         className="list-type-select"
         value={typeFilter}
         onChange={e => setTypeFilter(e.target.value)}
@@ -178,8 +181,8 @@ const AttendanceLogView = ({ worker, logLoading, attendanceLog, logMeta, logPage
                       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
                       Edit
                     </button>
-                    <button className="attendance-log-delete-btn" onClick={() => onDeleteClick(row.id)}>
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    <button className="attendance-log-delete-btn" aria-label="Delete this attendance record" onClick={() => onDeleteClick(row.id)}>
+                      <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                     </button>
                   </div>
                 </div>
@@ -195,6 +198,7 @@ const AttendanceLogView = ({ worker, logLoading, attendanceLog, logMeta, logPage
 };
 
 const AddAttendanceModal = ({ worker, onClose, onSaved, showToast }) => {
+  const id = useId();
   const [formData, setFormData] = useState({ date: '', time_in: '08:30', time_out: '17:00', day_of_week: '—' });
   const [saving, setSaving] = useState(false);
 
@@ -229,20 +233,20 @@ const AddAttendanceModal = ({ worker, onClose, onSaved, showToast }) => {
 
         <div className="custom-modal-grid">
           <div className="custom-form-group">
-            <label>Date</label>
-            <input type="date" value={formData.date} onChange={handleDateChange} />
+            <label htmlFor={`${id}-date`}>Date</label>
+            <input id={`${id}-date`} type="date" value={formData.date} onChange={handleDateChange} />
           </div>
           <div className="custom-form-group">
-            <label>Day</label>
-            <input type="text" value={formData.day_of_week} readOnly className="read-only-input" />
+            <label htmlFor={`${id}-day`}>Day</label>
+            <input id={`${id}-day`} type="text" value={formData.day_of_week} readOnly className="read-only-input" />
           </div>
           <div className="custom-form-group">
-            <label>Time In</label>
-            <input type="time" value={formData.time_in} onChange={e => setFormData({ ...formData, time_in: e.target.value })} />
+            <label htmlFor={`${id}-timeIn`}>Time In</label>
+            <input id={`${id}-timeIn`} type="time" value={formData.time_in} onChange={e => setFormData({ ...formData, time_in: e.target.value })} />
           </div>
           <div className="custom-form-group">
-            <label>Time Out</label>
-            <input type="time" value={formData.time_out} onChange={e => setFormData({ ...formData, time_out: e.target.value })} />
+            <label htmlFor={`${id}-timeOut`}>Time Out</label>
+            <input id={`${id}-timeOut`} type="time" value={formData.time_out} onChange={e => setFormData({ ...formData, time_out: e.target.value })} />
           </div>
         </div>
 
@@ -256,6 +260,7 @@ const AddAttendanceModal = ({ worker, onClose, onSaved, showToast }) => {
 };
 
 const EditAttendanceModal = ({ record, onClose, onSaved, showToast }) => {
+  const id = useId();
   const [formData, setFormData] = useState({
     date: record?.date?.slice(0, 10) ?? '',
     day_of_week: record?.day_of_week?.trim() ?? '—',
@@ -294,20 +299,20 @@ const EditAttendanceModal = ({ record, onClose, onSaved, showToast }) => {
 
         <div className="custom-modal-grid">
           <div className="custom-form-group">
-            <label>Date</label>
-            <input type="date" value={formData.date} onChange={handleDateChange} />
+            <label htmlFor={`${id}-date`}>Date</label>
+            <input id={`${id}-date`} type="date" value={formData.date} onChange={handleDateChange} />
           </div>
           <div className="custom-form-group">
-            <label>Day</label>
-            <input type="text" value={formData.day_of_week} readOnly className="read-only-input" />
+            <label htmlFor={`${id}-day`}>Day</label>
+            <input id={`${id}-day`} type="text" value={formData.day_of_week} readOnly className="read-only-input" />
           </div>
           <div className="custom-form-group">
-            <label>Time In</label>
-            <input type="time" value={formData.time_in} onChange={e => setFormData({ ...formData, time_in: e.target.value })} />
+            <label htmlFor={`${id}-timeIn`}>Time In</label>
+            <input id={`${id}-timeIn`} type="time" value={formData.time_in} onChange={e => setFormData({ ...formData, time_in: e.target.value })} />
           </div>
           <div className="custom-form-group">
-            <label>Time Out</label>
-            <input type="time" value={formData.time_out} onChange={e => setFormData({ ...formData, time_out: e.target.value })} />
+            <label htmlFor={`${id}-timeOut`}>Time Out</label>
+            <input id={`${id}-timeOut`} type="time" value={formData.time_out} onChange={e => setFormData({ ...formData, time_out: e.target.value })} />
           </div>
         </div>
 

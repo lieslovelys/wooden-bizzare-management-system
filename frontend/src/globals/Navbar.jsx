@@ -39,9 +39,10 @@ const Navbar = ({ tabs, accountType }) => {
             <header className="mobile-topbar">
                 <button
                     className="mobile-menu-btn"
+                    aria-label="Open menu"
                     onClick={() => setIsMobileOpen(true)}
                 >
-                    <i className="fa-solid fa-bars"></i>
+                    <i className="fa-solid fa-bars" aria-hidden="true"></i>
                 </button>
             </header>
 
@@ -50,8 +51,9 @@ const Navbar = ({ tabs, accountType }) => {
                 
                 {/* CLOSE BUTTON PARA SA MOBILE MENU */}
                 {/* CLOSE BUTTON PARA SA MOBILE MENU */}
-                <button 
-                className="close-mobile-btn" 
+                <button
+                className="close-mobile-btn"
+                aria-label="Close menu"
                 onClick={() => setIsMobileOpen(false)}
                 >
                 &times;
@@ -63,7 +65,7 @@ const Navbar = ({ tabs, accountType }) => {
                 )}
 
                 <div className="navbar-header">
-                    <img src="/wblogo.png" alt="logo" className="logo" />
+                    <img src="/wblogo.png" alt="The Wooden Bizarre logo" className="logo" />
                     <div className="title-group">
                         <h3>The Wooden Bizarre</h3>
                         <p>Management System</p>
@@ -95,7 +97,7 @@ const Navbar = ({ tabs, accountType }) => {
                             <Link key={tab.key} to={tabPath} style={{ textDecoration: 'none' }} onClick={() => setIsMobileOpen(false)}>
                                 <div className={`nav-item ${isActive ? 'active' : ''}`}>
                                     <span className="nav-icon-wrap">
-                                        <i className={tab.icon}></i>
+                                        <i className={tab.icon} aria-hidden="true"></i>
                                         {tab.showUnreadBadge && unreadCount > 0 && (
                                             <span className="nav-badge">{unreadCount > 99 ? '99+' : unreadCount}</span>
                                         )}
@@ -126,7 +128,7 @@ const Navbar = ({ tabs, accountType }) => {
                             children, and an inline style would win over any CSS override the
                             tablet rail (DESIGN.md §7#9) needs to zero it out for the stacked
                             icon-above-label layout. */}
-                        <i className="fa-solid fa-arrow-right-from-bracket"></i>
+                        <i className="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i>
                         <span className="nav-label">Logout</span>
                     </div>
                 </nav>

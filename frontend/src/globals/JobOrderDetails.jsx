@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useId, useRef, useState } from 'react';
 import { api } from '../api/client';
 import { useToast } from '../context/ToastContext';
 import { formatDate, formatProjectId } from '../utils/format';
@@ -6,6 +6,7 @@ import ConfirmModal from './ConfirmModal';
 import ProjectMaterials from './ProjectMaterials';
 
 const JobOrderDetail = ({ jobId, onBack }) => {
+    const id = useId();
     const [projectDetails, setProjectDetails] = useState(null);
     const [workers, setWorkers] = useState([]);
     const [assignments, setAssignments] = useState([]);
@@ -250,8 +251,8 @@ const JobOrderDetail = ({ jobId, onBack }) => {
                 <form className="jod-form" onSubmit={handleAssign}>
                     <div className="jod-form-grid">
                         <div className="jod-form-group">
-                            <label>Stage</label>
-                            <select name="stage" value={formData.stage} onChange={handleChange}>
+                            <label htmlFor={`${id}-stage`}>Stage</label>
+                            <select id={`${id}-stage`} name="stage" value={formData.stage} onChange={handleChange}>
                                 {allStages.map(stageName => (
                                     <option key={stageName} value={stageName} disabled={assignedStages.includes(stageName)}>
                                         {stageName} {assignedStages.includes(stageName) ? '(Assigned)' : ''}
@@ -259,10 +260,10 @@ const JobOrderDetail = ({ jobId, onBack }) => {
                                 ))}
                             </select>
                         </div>
-                        
+
                         <div className="jod-form-group">
-                            <label>Worker</label>
-                            <select name="workerId" value={formData.workerId} onChange={handleChange}>
+                            <label htmlFor={`${id}-workerId`}>Worker</label>
+                            <select id={`${id}-workerId`} name="workerId" value={formData.workerId} onChange={handleChange}>
                                 {filteredWorkers.length > 0 ? (
                                     filteredWorkers.map(worker => (
                                         <option key={worker.user_id} value={worker.user_id}>
@@ -276,12 +277,12 @@ const JobOrderDetail = ({ jobId, onBack }) => {
                         </div>
 
                         <div className="jod-form-group">
-                            <label>Start Date</label>
-                            <input type="date" name="startDate" value={formData.startDate} onChange={handleChange} required min={today} />
+                            <label htmlFor={`${id}-startDate`}>Start Date</label>
+                            <input id={`${id}-startDate`} type="date" name="startDate" value={formData.startDate} onChange={handleChange} required min={today} />
                         </div>
                         <div className="jod-form-group">
-                            <label>Due Date</label>
-                            <input type="date" name="dueDate" value={formData.dueDate} onChange={handleChange} required min={formData.startDate || today} />
+                            <label htmlFor={`${id}-dueDate`}>Due Date</label>
+                            <input id={`${id}-dueDate`} type="date" name="dueDate" value={formData.dueDate} onChange={handleChange} required min={formData.startDate || today} />
                         </div>
                     </div>
                     <div className="jod-form-actions">

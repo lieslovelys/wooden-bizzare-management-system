@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useId } from 'react';
 import '../css/inventory.css';
 import { api } from '../api/client';
 import { useToast } from '../context/ToastContext';
@@ -13,6 +13,7 @@ const InventoryTable = () => {
     // P1-11: inventory now persists server-side via /api/inventory instead of localStorage —
     // see ARCHITECTURE_REVIEW.md P1-11. All three roles that mount this screen (Admin,
     // Production Manager, Inventory Staff) now see the same data.
+    const formId = useId();
     const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -281,14 +282,14 @@ const InventoryTable = () => {
                                             <td data-label="Status"><span className={`status-pill ${item.status?.toLowerCase()}`}>{item.status}</span></td>
 
                                             <td data-label="Actions" className="actions-cell">
-                                                <button className="action-btn edit-btn" onClick={(e) => openEditModal(e, item)} title="Edit">
-                                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" style={{ stroke: 'var(--color-accent)' }} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                <button className="action-btn edit-btn" onClick={(e) => openEditModal(e, item)} title="Edit" aria-label={`Edit ${item.name}`}>
+                                                    <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" style={{ stroke: 'var(--color-accent)' }} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                                         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                                                         <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                                                     </svg>
                                                 </button>
-                                                <button className="action-btn delete-btn" onClick={(e) => handleDelete(e, item)} title="Delete">
-                                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" style={{ stroke: 'var(--color-danger)' }} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                <button className="action-btn delete-btn" onClick={(e) => handleDelete(e, item)} title="Delete" aria-label={`Delete ${item.name}`}>
+                                                    <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" style={{ stroke: 'var(--color-danger)' }} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                                         <polyline points="3 6 5 6 21 6"></polyline>
                                                         <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                                                         <line x1="10" y1="11" x2="10" y2="17"></line>
@@ -331,6 +332,7 @@ const InventoryTable = () => {
                                                                             value={getReason(variant.id)}
                                                                             onChange={(e) => handleReasonChange(variant.id, e.target.value)}
                                                                             title="Reason for adjustment"
+                                                                            aria-label={`Reason for adjusting ${variant.name}`}
                                                                         >
                                                                             {ADJUST_REASONS.map(r => (
                                                                                 <option key={r} value={r}>{r}</option>
@@ -346,6 +348,7 @@ const InventoryTable = () => {
                                                                                 value={getProjectId(variant.id)}
                                                                                 onChange={(e) => handleProjectChange(variant.id, e.target.value)}
                                                                                 title="Project"
+                                                                                aria-label={`Project for this ${getReason(variant.id).toLowerCase()} adjustment`}
                                                                             >
                                                                                 {getReason(variant.id) === 'Used' && <option value="">— No project —</option>}
                                                                                 {getReason(variant.id) === 'Returned' && <option value="">— Select a project —</option>}
@@ -400,13 +403,13 @@ const InventoryTable = () => {
 
                         <form onSubmit={handleSubmit} className="modal-form">
                             <div className="form-group">
-                                <label>Item name</label>
-                                <input type="text" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} required />
+                                <label htmlFor={`${formId}-name`}>Item name</label>
+                                <input id={`${formId}-name`} type="text" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} required />
                             </div>
 
                             <div className="form-group">
-                                <label>Category</label>
-                                <select value={formData.category} onChange={(e) => setFormData({...formData, category: e.target.value})}>
+                                <label htmlFor={`${formId}-category`}>Category</label>
+                                <select id={`${formId}-category`} value={formData.category} onChange={(e) => setFormData({...formData, category: e.target.value})}>
                                     <option value="Raw Material">Raw Material</option>
                                     <option value="Tool">Tool</option>
                                     <option value="Consumable">Consumable</option>
@@ -414,8 +417,9 @@ const InventoryTable = () => {
                             </div>
 
                             <div className="form-group">
-                                <label>Unit of measurement</label>
+                                <label htmlFor={`${formId}-unit`}>Unit of measurement</label>
                                 <input
+                                    id={`${formId}-unit`}
                                     type="text"
                                     placeholder="e.g. pcs, liters, kg"
                                     value={formData.unit}
@@ -428,19 +432,20 @@ const InventoryTable = () => {
                             </div>
 
                             <div className="form-group variants-group">
-                                <label>Variants <span>(size, color, grade, etc.)</span></label>
-                                {formData.variants.map((variant) => (
-                                    <div className="variant-input-row" key={variant.id}>
-                                        <input type="text" placeholder="Label (e.g. 2x4)" value={variant.name} onChange={(e) => handleVariantChange(variant.id, e.target.value)} required />
+                                <label id={`${formId}-variants-label`}>Variants <span>(size, color, grade, etc.)</span></label>
+                                {formData.variants.map((variant, index) => (
+                                    <div className="variant-input-row" key={variant.id} role="group" aria-labelledby={`${formId}-variants-label`}>
+                                        <input type="text" aria-label={`Variant ${index + 1} label`} placeholder="Label (e.g. 2x4)" value={variant.name} onChange={(e) => handleVariantChange(variant.id, e.target.value)} required />
                                         <input
                                             type="number"
                                             min="0"
+                                            aria-label={`Variant ${index + 1} minimum stock`}
                                             placeholder="Min stock"
                                             className="variant-min-input"
                                             value={variant.minStock}
                                             onChange={(e) => handleVariantMinStockChange(variant.id, e.target.value)}
                                         />
-                                        <button type="button" className="remove-variant-btn" onClick={() => removeVariantField(variant.id)}>X</button>
+                                        <button type="button" className="remove-variant-btn" aria-label={`Remove variant ${index + 1}`} onClick={() => removeVariantField(variant.id)}>X</button>
                                     </div>
                                 ))}
                                 <button type="button" className="add-variant-btn" onClick={addVariantField}>+ Add variant</button>

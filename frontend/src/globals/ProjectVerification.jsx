@@ -67,9 +67,10 @@ const ProjectVerification = () => {
             </div>
 
             <div className="qc-pv-controls">
-                <select 
-                    className="qc-pv-dropdown" 
-                    value={stageFilter} 
+                <select
+                    className="qc-pv-dropdown"
+                    aria-label="Filter by stage"
+                    value={stageFilter}
                     onChange={(e) => setStageFilter(e.target.value)}
                 >
                     <option value="All">Stage</option>

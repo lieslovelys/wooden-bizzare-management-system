@@ -121,17 +121,19 @@ const ProjectList = () => {
               <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
           </span>
-          <input 
-            type="text" 
+          <input
+            type="text"
             className="search-input"
+            aria-label="Search project ID or name"
             placeholder="Search project ID or name...."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
 
-        <select 
+        <select
             className="status-filter"
+            aria-label="Filter by status"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
         >

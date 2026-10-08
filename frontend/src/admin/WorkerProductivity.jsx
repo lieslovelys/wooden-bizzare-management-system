@@ -53,9 +53,10 @@ const WorkerProductivity = () => {
             </div>
 
             <div className="prod-filter-container">
-                <select 
-                    className="prod-dropdown" 
-                    value={roleFilter} 
+                <select
+                    className="prod-dropdown"
+                    aria-label="Filter by role"
+                    value={roleFilter}
                     onChange={(e) => setRoleFilter(e.target.value)}
                 >
                     <option value="All">All Roles</option>

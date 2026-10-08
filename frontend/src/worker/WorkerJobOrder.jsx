@@ -103,7 +103,7 @@ const WorkerJobOrder = () => {
                 <button className="wjo-btn-dark" onClick={() => setSortDesc(prev => !prev)}>
                     Due {sortDesc ? '▼' : '▲'}
                 </button>
-                <select className="wjo-btn-dark dropdown" value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value)}>
+                <select className="wjo-btn-dark dropdown" aria-label="Filter by priority" value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value)}>
                     <option value="All">Priority</option>
                     <option value="High">High</option>
                     <option value="Medium">Medium</option>
