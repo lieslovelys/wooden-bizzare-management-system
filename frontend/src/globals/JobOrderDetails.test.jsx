@@ -28,6 +28,19 @@ const WORKERS = [
     { user_id: 11, first_name: 'Maria', last_name: 'Santos', job_role: 'Carver' },
 ];
 
+// The real startDate/dueDate inputs carry a `min` (today, per JobOrderDetails.jsx), which jsdom
+// enforces as a real constraint on submit — a literal past-dated string would silently block the
+// submit once that date passed (ARCHITECTURE_REVIEW.md item 32). Build dates relative to "now"
+// instead, so this test keeps working no matter when it runs.
+function isoDateFromToday(days) {
+    const d = new Date();
+    d.setDate(d.getDate() + days);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
 function mockGets({ assignments = [], workers = WORKERS } = {}) {
     api.get.mockImplementation((url) => {
         if (url === '/api/job-orders/7') return Promise.resolve({ success: true, data: PROJECT });
@@ -52,17 +65,19 @@ describe('JobOrderDetails — assign worker', () => {
         // (the worker auto-select effect enabling Assign) rather than just the first re-render.
         await waitFor(() => expect(screen.getByText('Assign')).not.toBeDisabled());
 
+        const startDate = isoDateFromToday(3);
+        const dueDate = isoDateFromToday(8);
         const [startInput, dueInput] = container.querySelectorAll('input[type="date"]');
-        fireEvent.change(startInput, { target: { value: '2026-10-05' } });
-        fireEvent.change(dueInput, { target: { value: '2026-10-10' } });
+        fireEvent.change(startInput, { target: { value: startDate } });
+        fireEvent.change(dueInput, { target: { value: dueDate } });
 
         fireEvent.click(screen.getByText('Assign'));
 
         await waitFor(() => expect(api.post).toHaveBeenCalledWith('/api/job-orders/7/assign', {
             stage: 'Carpenter',
             workerId: 10, // auto-selected: the only worker whose job_role matches the default stage
-            startDate: '2026-10-05',
-            dueDate: '2026-10-10',
+            startDate,
+            dueDate,
         }));
     });
 });
