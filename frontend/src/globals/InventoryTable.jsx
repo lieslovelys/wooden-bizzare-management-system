@@ -449,7 +449,11 @@ const InventoryTable = () => {
                             </div>
 
                             <div className="form-group variants-group">
-                                <label id={`${formId}-variants-label`}>Variants <span>(size, color, grade, etc.)</span></label>
+                                {/* A <label> is for a single associated control — this heads a repeated
+                                    group of fields instead, referenced via aria-labelledby on each row's
+                                    role="group" below, so it's a plain element with the same look rather
+                                    than a <label> with nothing to associate to. */}
+                                <span className="variants-group-label" id={`${formId}-variants-label`}>Variants <span>(size, color, grade, etc.)</span></span>
                                 {formData.variants.map((variant, index) => (
                                     <div className="variant-input-row" key={variant.id} role="group" aria-labelledby={`${formId}-variants-label`}>
                                         <input type="text" aria-label={`Variant ${index + 1} label`} placeholder="Label (e.g. 2x4)" value={variant.name} onChange={(e) => handleVariantChange(variant.id, e.target.value)} required />

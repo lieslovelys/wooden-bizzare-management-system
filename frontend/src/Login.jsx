@@ -104,7 +104,10 @@ const Login = ({ login }) => {
                     </form>
 
                     <div className="form-footer">
-                        <p>Don't have an account? <a href="#">Contact your administration</a></p>
+                        {/* Not a real link — no destination exists for this yet. An <a> (with or
+                            without href) claims to be a link; a <span> styled the same way doesn't
+                            make that claim it can't back up. */}
+                        <p>Don't have an account? <span className="form-footer-link">Contact your administration</span></p>
                     </div>
                 </div>
             </div>

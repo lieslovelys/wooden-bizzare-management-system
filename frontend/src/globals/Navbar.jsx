@@ -160,8 +160,12 @@ const Navbar = ({ tabs, accountType }) => {
             </div>
 
             {/* OVERLAY PARA SA MOBILE MENU */}
-            <div 
-                className={`mobile-overlay ${isMobileOpen ? 'active' : ''}`} 
+            {/* role="presentation": click-outside-to-close backdrop, not a semantic control —
+                useDialog's Escape handling (wired on .wooden-navbar above) is the real keyboard
+                equivalent, not a listener here. */}
+            <div
+                className={`mobile-overlay ${isMobileOpen ? 'active' : ''}`}
+                role="presentation"
                 onClick={() => setIsMobileOpen(false)}
             ></div>
         </>

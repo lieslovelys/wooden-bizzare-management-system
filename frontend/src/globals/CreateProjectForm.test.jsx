@@ -3,9 +3,9 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import CreateProjectForm from './CreateProjectForm';
 import { ToastContext } from '../context/ToastContext';
 
-// Previously untested (ARCHITECTURE_REVIEW.md item 25). No <label htmlFor> association exists
-// on ProjectFormFields (same pre-existing gap AddWorkerModal.test.jsx notes), so fields are
-// queried by their `name` attribute.
+// Previously untested (ARCHITECTURE_REVIEW.md item 25). ProjectFormFields' labels are now
+// properly <label htmlFor> associated (item 30) — queried by label text, which is also the test
+// that proves the association actually works, not just by `name` attribute.
 vi.mock('../api/client', () => ({
   api: { get: vi.fn(), post: vi.fn(), put: vi.fn(), delete: vi.fn() },
 }));
@@ -22,8 +22,6 @@ function renderForm(showToast = vi.fn()) {
     ),
   };
 }
-
-const field = (container, name) => container.querySelector(`[name="${name}"]`);
 
 // fireEvent.submit(form) is used instead of clicking the submit button, because jsdom (like a
 // real browser) runs native constraint validation on a button-driven submission — the
@@ -42,9 +40,9 @@ describe('CreateProjectForm', () => {
     api.post.mockResolvedValue({ success: true });
     const { container } = renderForm();
 
-    fireEvent.change(field(container, 'projectName'), { target: { value: 'Cabinet Set' } });
-    fireEvent.change(field(container, 'clientName'), { target: { value: 'Juan Dela Cruz' } });
-    fireEvent.change(field(container, 'dueDate'), { target: { value: '2026-03-01' } });
+    fireEvent.change(screen.getByLabelText('Project Name'), { target: { value: 'Cabinet Set' } });
+    fireEvent.change(screen.getByLabelText('Client Name'), { target: { value: 'Juan Dela Cruz' } });
+    fireEvent.change(screen.getByLabelText('Due Date'), { target: { value: '2026-03-01' } });
     submitForm(container);
 
     expect(api.post).toHaveBeenCalledWith('/api/projects', expect.objectContaining({
@@ -58,8 +56,8 @@ describe('CreateProjectForm', () => {
   it('blocks submission and toasts when due date is before date ordered', () => {
     const { showToast, container } = renderForm();
 
-    fireEvent.change(field(container, 'dateOrdered'), { target: { value: '2026-03-10' } });
-    fireEvent.change(field(container, 'dueDate'), { target: { value: '2026-03-01' } });
+    fireEvent.change(screen.getByLabelText('Date Ordered'), { target: { value: '2026-03-10' } });
+    fireEvent.change(screen.getByLabelText('Due Date'), { target: { value: '2026-03-01' } });
     submitForm(container);
 
     expect(showToast).toHaveBeenCalledWith('Due date cannot be earlier than Date Ordered.', 'error');
@@ -70,11 +68,11 @@ describe('CreateProjectForm', () => {
     api.post.mockResolvedValue({ success: true });
     const { showToast, container } = renderForm();
 
-    fireEvent.change(field(container, 'projectName'), { target: { value: 'Cabinet Set' } });
+    fireEvent.change(screen.getByLabelText('Project Name'), { target: { value: 'Cabinet Set' } });
     submitForm(container);
 
     await waitFor(() => expect(showToast).toHaveBeenCalledWith('Project successfully created!', 'success'));
-    expect(field(container, 'projectName').value).toBe('');
+    expect(screen.getByLabelText('Project Name').value).toBe('');
   });
 
   it('toasts the server error on failure', async () => {

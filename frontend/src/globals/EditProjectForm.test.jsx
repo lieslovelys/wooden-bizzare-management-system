@@ -27,8 +27,6 @@ const PROJECT = {
   },
 };
 
-const field = (container, name) => container.querySelector(`[name="${name}"]`);
-
 // fireEvent.submit(form) is used instead of clicking the submit button — see
 // CreateProjectForm.test.jsx's identical comment for why a button-driven submission runs jsdom's
 // native constraint validation and silently swallows the click before validateDates() runs.
@@ -56,12 +54,12 @@ afterEach(() => {
 describe('EditProjectForm', () => {
   it('prefills fields from the fetched project, including dates as input values', async () => {
     api.get.mockResolvedValue(PROJECT);
-    const { container } = renderForm();
+    renderForm();
 
-    await waitFor(() => expect(field(container, 'projectName').value).toBe('Bookshelf'));
-    expect(field(container, 'clientName').value).toBe('Maria Santos');
-    expect(field(container, 'dateOrdered').value).toBe('2026-01-05');
-    expect(field(container, 'dueDate').value).toBe('2026-02-05');
+    await waitFor(() => expect(screen.getByLabelText('Project Name').value).toBe('Bookshelf'));
+    expect(screen.getByLabelText('Client Name').value).toBe('Maria Santos');
+    expect(screen.getByLabelText('Date Ordered').value).toBe('2026-01-05');
+    expect(screen.getByLabelText('Due Date').value).toBe('2026-02-05');
     expect(screen.getByDisplayValue('Wood')).toBeInTheDocument();
     expect(screen.getByDisplayValue('Mahogany')).toBeInTheDocument();
   });
@@ -70,7 +68,7 @@ describe('EditProjectForm', () => {
     api.get.mockResolvedValue({ success: true, data: { ...PROJECT.data, variables: [] } });
     const { container } = renderForm();
 
-    await waitFor(() => expect(field(container, 'projectName').value).toBe('Bookshelf'));
+    await waitFor(() => expect(screen.getByLabelText('Project Name').value).toBe('Bookshelf'));
     expect(container.querySelectorAll('.dynamic-row')).toHaveLength(1);
   });
 
@@ -79,8 +77,8 @@ describe('EditProjectForm', () => {
     api.put.mockResolvedValue({ success: true });
     const { container } = renderForm();
 
-    await waitFor(() => expect(field(container, 'projectName').value).toBe('Bookshelf'));
-    fireEvent.change(field(container, 'projectName'), { target: { value: 'Bookshelf V2' } });
+    await waitFor(() => expect(screen.getByLabelText('Project Name').value).toBe('Bookshelf'));
+    fireEvent.change(screen.getByLabelText('Project Name'), { target: { value: 'Bookshelf V2' } });
     submitForm(container);
 
     await waitFor(() => expect(api.put).toHaveBeenCalledWith('/api/projects/9', expect.objectContaining({
@@ -93,8 +91,8 @@ describe('EditProjectForm', () => {
     api.get.mockResolvedValue(PROJECT);
     const { showToast, container } = renderForm();
 
-    await waitFor(() => expect(field(container, 'projectName').value).toBe('Bookshelf'));
-    fireEvent.change(field(container, 'dueDate'), { target: { value: '2026-01-01' } });
+    await waitFor(() => expect(screen.getByLabelText('Project Name').value).toBe('Bookshelf'));
+    fireEvent.change(screen.getByLabelText('Due Date'), { target: { value: '2026-01-01' } });
     submitForm(container);
 
     expect(showToast).toHaveBeenCalledWith('Due date cannot be earlier than Date Ordered.', 'error');
@@ -113,7 +111,7 @@ describe('EditProjectForm', () => {
       </ToastContext.Provider>
     );
 
-    await waitFor(() => expect(field(container, 'projectName').value).toBe('Bookshelf'));
+    await waitFor(() => expect(screen.getByLabelText('Project Name').value).toBe('Bookshelf'));
     submitForm(container);
     await waitFor(() => expect(showToast).toHaveBeenCalledWith('Project successfully updated!', 'success'));
 
@@ -127,7 +125,7 @@ describe('EditProjectForm', () => {
     api.put.mockRejectedValue(new Error('Update failed'));
     const { showToast, container } = renderForm();
 
-    await waitFor(() => expect(field(container, 'projectName').value).toBe('Bookshelf'));
+    await waitFor(() => expect(screen.getByLabelText('Project Name').value).toBe('Bookshelf'));
     submitForm(container);
 
     await waitFor(() => expect(showToast).toHaveBeenCalledWith('Update failed', 'error'));
@@ -136,9 +134,9 @@ describe('EditProjectForm', () => {
   it('calls onCancel when Cancel is clicked', async () => {
     api.get.mockResolvedValue(PROJECT);
     const onCancel = vi.fn();
-    const { container } = renderForm({ onCancel });
+    renderForm({ onCancel });
 
-    await waitFor(() => expect(field(container, 'projectName').value).toBe('Bookshelf'));
+    await waitFor(() => expect(screen.getByLabelText('Project Name').value).toBe('Bookshelf'));
     fireEvent.click(screen.getByText('Cancel'));
 
     expect(onCancel).toHaveBeenCalled();

@@ -355,15 +355,11 @@
   color: var(--color-text-muted);
 }
 
-.login-layout .form-footer a {
+.login-layout .form-footer-link {
+  /* Not an <a> (nothing to navigate to yet — see Login.jsx) and not interactive, so no
+     text-decoration/:hover state either; those would imply a link that isn't there. */
   color: var(--color-accent-text); /* DESIGN.md §3 rule 10 — normal-size text needs 4.5:1 */
-  text-decoration: none;
   font-weight: 700;
-  transition: color 0.2s;
-}
-
-.login-layout .form-footer a:hover {
-  color: var(--color-text);
 }
 
 .login-layout input[type="password"]::-ms-reveal,
@@ -2439,8 +2435,8 @@ html, body {
   gap: 25px;
 }
 
-.project-form-container .form-group label, 
-.project-form-container .dynamic-section label {
+.project-form-container .form-group label,
+.project-form-container .dynamic-section-label {
   font-weight: 600;
   font-size: 0.9rem;
   color: var(--color-accent-text); /* Dark brown labels */

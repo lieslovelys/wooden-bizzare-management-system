@@ -63,7 +63,10 @@ const ProjectFormFields = ({
       </div>
 
       <div className="dynamic-section">
-        <label id={`${id}-details-label`}>Project Details</label>
+        {/* A <label> is for a single associated control — this heads a repeated group of fields
+            instead, referenced via aria-labelledby on each row's role="group" below, so it's a
+            plain element with the same look rather than a <label> with nothing to associate to. */}
+        <span className="dynamic-section-label" id={`${id}-details-label`}>Project Details</span>
         {projectDetails.map((variable, index) => (
           <div key={index} className="dynamic-row" role="group" aria-labelledby={`${id}-details-label`}>
             <input type="text" aria-label={`Variable ${index + 1} name`} placeholder={`Variable ${index + 1}`} value={variable.name} onChange={(e) => onVariableChange(index, 'name', e.target.value)} />

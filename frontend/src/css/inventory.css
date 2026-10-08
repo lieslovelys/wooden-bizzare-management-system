@@ -379,13 +379,16 @@
     gap: 8px;
 }
 
-.form-group label {
+.form-group label,
+.variants-group-label {
     color: var(--color-accent-text);
     font-weight: bold;
     font-size: 1rem;
+    display: block;
 }
 
-.form-group label span {
+.form-group label span,
+.variants-group-label span {
     font-size: 0.8rem;
     color: var(--color-text-muted);
     font-weight: normal;

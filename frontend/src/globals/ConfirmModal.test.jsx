@@ -57,6 +57,18 @@ describe('ConfirmModal', () => {
     expect(dialog).toBeInTheDocument();
   });
 
+  it('calls onCancel on Escape (useDialog)', () => {
+    const onCancel = vi.fn();
+    render(<ConfirmModal title="Delete Account?" onCancel={onCancel} onConfirm={vi.fn()} />);
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(onCancel).toHaveBeenCalledTimes(1);
+  });
+
+  it('focuses Cancel (the first focusable element) by default', () => {
+    render(<ConfirmModal title="Delete Account?" onCancel={vi.fn()} onConfirm={vi.fn()} />);
+    expect(screen.getByText('Cancel')).toHaveFocus();
+  });
+
   it('applies the danger class to the title and confirm button when danger is set', () => {
     render(<ConfirmModal danger title="Delete Account?" confirmLabel="Yes, Delete" onCancel={vi.fn()} onConfirm={vi.fn()} />);
     expect(screen.getByText('Delete Account?')).toHaveClass('danger');

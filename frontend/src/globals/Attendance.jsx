@@ -233,7 +233,12 @@ const AddAttendanceModal = ({ worker, onClose, onSaved, showToast }) => {
   };
 
   return (
-    <div className="custom-modal-overlay" onClick={onClose}>
+    // role="presentation": this is a click-outside-to-close backdrop, not a semantic control —
+    // useDialog's Escape handling is the real keyboard equivalent, not a listener here.
+    <div className="custom-modal-overlay" role="presentation" onClick={onClose}>
+      {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/click-events-have-key-events --
+          onClick here is only stopPropagation, so a click inside the dialog doesn't bubble to the
+          overlay above and close it; role="dialog" above is the real, correct semantic role. */}
       <div ref={dialogRef} className="custom-modal-content" role="dialog" aria-modal="true" aria-labelledby={titleId} onClick={e => e.stopPropagation()}>
         <h3 id={titleId} className="custom-modal-title">Add Attendance</h3>
 
@@ -301,7 +306,12 @@ const EditAttendanceModal = ({ record, onClose, onSaved, showToast }) => {
   };
 
   return (
-    <div className="custom-modal-overlay" onClick={onClose}>
+    // role="presentation": this is a click-outside-to-close backdrop, not a semantic control —
+    // useDialog's Escape handling is the real keyboard equivalent, not a listener here.
+    <div className="custom-modal-overlay" role="presentation" onClick={onClose}>
+      {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/click-events-have-key-events --
+          onClick here is only stopPropagation, so a click inside the dialog doesn't bubble to the
+          overlay above and close it; role="dialog" above is the real, correct semantic role. */}
       <div ref={dialogRef} className="custom-modal-content" role="dialog" aria-modal="true" aria-labelledby={titleId} onClick={e => e.stopPropagation()}>
         <h3 id={titleId} className="custom-modal-title">Edit Attendance</h3>
 

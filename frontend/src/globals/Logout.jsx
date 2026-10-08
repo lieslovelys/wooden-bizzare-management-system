@@ -21,7 +21,12 @@ const Logout = ({ onCancel }) => {
 
     // FIX 2: Binalot natin ang buong return sa ReactDOM.createPortal
     return ReactDOM.createPortal(
-        <div className="wb-logout-page" onClick={onCancel}>
+        // role="presentation": click-outside-to-close backdrop, not a semantic control —
+        // useDialog's Escape handling is the real keyboard equivalent, not a listener here.
+        <div className="wb-logout-page" role="presentation" onClick={onCancel}>
+            {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/click-events-have-key-events --
+                onClick here is only stopPropagation, so a click inside the card doesn't bubble to
+                the overlay above and close it; role="dialog" above is the real, correct semantic role. */}
             <div ref={dialogRef} className="wb-logout-card" role="dialog" aria-modal="true" aria-labelledby={titleId} onClick={(e) => e.stopPropagation()}>
 
                 <div className="wb-logout-header">

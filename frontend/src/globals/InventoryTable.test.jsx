@@ -59,18 +59,16 @@ describe('InventoryTable', () => {
     api.get.mockResolvedValue({ success: true, data: [] });
     api.post.mockResolvedValue({ success: true, itemId: 2 });
 
-    const { container } = render(<InventoryTable />);
+    render(<InventoryTable />);
     await waitFor(() => expect(api.get).toHaveBeenCalled());
 
     fireEvent.click(screen.getByText('+ Add Item'));
 
-    // No <label htmlFor> association exists on this form (pre-existing across the app, not
-    // something this pass touches) — inputs are queried positionally instead:
-    // [item name, unit, first variant name], in DOM order.
-    const textInputs = container.querySelectorAll('.modal-content input[type="text"]');
-    fireEvent.change(textInputs[0], { target: { value: 'Screws' } });
-    fireEvent.change(textInputs[1], { target: { value: 'box' } });
-    fireEvent.change(textInputs[2], { target: { value: '1-inch' } });
+    // item 30 linked/labelled every field here — queried by label text (a <label htmlFor> for the
+    // first two, an aria-label for the per-variant row, which getByLabelText matches too).
+    fireEvent.change(screen.getByLabelText('Item name'), { target: { value: 'Screws' } });
+    fireEvent.change(screen.getByLabelText('Unit of measurement'), { target: { value: 'box' } });
+    fireEvent.change(screen.getByLabelText('Variant 1 label'), { target: { value: '1-inch' } });
 
     fireEvent.click(screen.getByText('Add Item'));
 

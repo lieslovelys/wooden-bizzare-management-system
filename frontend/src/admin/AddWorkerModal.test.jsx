@@ -5,9 +5,8 @@ import { ToastContext } from '../context/ToastContext';
 
 // Previously untested (ARCHITECTURE_REVIEW.md item 19/23). Mirrors EditWorkerModal.test.jsx's
 // setup (../utils/resizeImage mocked) plus a ToastContext wrapper to assert on showToast calls —
-// no existing test did that before this file. No <label htmlFor> association exists on this form
-// (same pre-existing gap InventoryTable.test.jsx notes), so fields are queried by their `name`
-// attribute rather than getByLabelText.
+// no existing test did that before this file. Fields are queried by label text (item 30 linked
+// every <label> here via htmlFor) — that's also the test proving the association works.
 vi.mock('../utils/resizeImage', () => ({
   resizeImageToDataUrl: vi.fn(),
 }));
@@ -24,16 +23,14 @@ function renderModal(props, showToast = vi.fn()) {
   };
 }
 
-const field = (container, name) => container.querySelector(`[name="${name}"]`);
-
-async function fillRequiredFields(container) {
+async function fillRequiredFields() {
   resizeImageToDataUrl.mockResolvedValue('data:image/jpeg;base64,NEWPHOTO');
-  fireEvent.change(field(container, 'firstName'), { target: { value: 'Juan' } });
-  fireEvent.change(field(container, 'lastName'), { target: { value: 'Dela Cruz' } });
-  fireEvent.change(field(container, 'username'), { target: { value: 'juan.delacruz' } });
-  fireEvent.change(field(container, 'password'), { target: { value: 'hunter2' } });
-  fireEvent.change(field(container, 'contactNumber'), { target: { value: '09171234567' } });
-  fireEvent.change(field(container, 'dailyRate'), { target: { value: '650' } });
+  fireEvent.change(screen.getByLabelText('First Name'), { target: { value: 'Juan' } });
+  fireEvent.change(screen.getByLabelText('Last Name'), { target: { value: 'Dela Cruz' } });
+  fireEvent.change(screen.getByLabelText('Username'), { target: { value: 'juan.delacruz' } });
+  fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'hunter2' } });
+  fireEvent.change(screen.getByLabelText('Contact Number'), { target: { value: '09171234567' } });
+  fireEvent.change(screen.getByLabelText('Daily Rate (₱)'), { target: { value: '650' } });
 
   const file = new File(['x'], 'photo.jpg', { type: 'image/jpeg' });
   const fileInput = document.getElementById('profile-upload');
@@ -67,17 +64,17 @@ describe('AddWorkerModal', () => {
   });
 
   it('strips digits typed into the name fields', () => {
-    const { container } = renderModal({});
-    fireEvent.change(field(container, 'firstName'), { target: { value: 'Juan123' } });
-    expect(field(container, 'firstName')).toHaveValue('Juan');
+    renderModal({});
+    fireEvent.change(screen.getByLabelText('First Name'), { target: { value: 'Juan123' } });
+    expect(screen.getByLabelText('First Name')).toHaveValue('Juan');
   });
 
   it('blocks submission on an incomplete contact number', async () => {
     const onSave = vi.fn();
-    const { container } = renderModal({ onSave });
-    await fillRequiredFields(container);
+    renderModal({ onSave });
+    await fillRequiredFields();
 
-    fireEvent.change(field(container, 'contactNumber'), { target: { value: '0917' } });
+    fireEvent.change(screen.getByLabelText('Contact Number'), { target: { value: '0917' } });
     fireEvent.click(screen.getByRole('button', { name: /add worker/i }));
 
     expect(onSave).not.toHaveBeenCalled();
@@ -85,8 +82,8 @@ describe('AddWorkerModal', () => {
 
   it('calls onSave with the form data and photo, and shows only the success toast', async () => {
     const onSave = vi.fn().mockResolvedValue();
-    const { container, showToast } = renderModal({ onSave });
-    await fillRequiredFields(container);
+    const { showToast } = renderModal({ onSave });
+    await fillRequiredFields();
 
     fireEvent.click(screen.getByRole('button', { name: /add worker/i }));
 
@@ -107,16 +104,16 @@ describe('AddWorkerModal', () => {
   // clear the form — see WorkerList.jsx's handleSaveNewWorker and ARCHITECTURE_REVIEW.md item 23.
   it('on a rejected onSave, shows only the error toast and keeps the typed values', async () => {
     const onSave = vi.fn().mockRejectedValue(new Error('Username already taken'));
-    const { container, showToast } = renderModal({ onSave });
-    await fillRequiredFields(container);
+    const { showToast } = renderModal({ onSave });
+    await fillRequiredFields();
 
     fireEvent.click(screen.getByRole('button', { name: /add worker/i }));
 
     await waitFor(() => expect(onSave).toHaveBeenCalled());
     expect(showToast).toHaveBeenCalledTimes(1);
     expect(showToast).toHaveBeenCalledWith('Username already taken', 'error');
-    expect(field(container, 'firstName')).toHaveValue('Juan');
-    expect(field(container, 'username')).toHaveValue('juan.delacruz');
+    expect(screen.getByLabelText('First Name')).toHaveValue('Juan');
+    expect(screen.getByLabelText('Username')).toHaveValue('juan.delacruz');
   });
 
   it('calls onClose when Cancel is clicked', () => {
