@@ -23,7 +23,9 @@
 }
 
 .signup-wrapper .form-title {
-    color: var(--color-accent);
+    /* DESIGN.md §3 rule 10 — 1.1rem/900 doesn't clear the large-text contrast exemption
+       (needs >=18.66px bold; this is 17.6px), so it needs the 4.5:1 normal-text bar. */
+    color: var(--color-accent-text);
     font-family: 'Playfair Display', serif;
     font-size: 1.1rem;
     font-weight: 900;

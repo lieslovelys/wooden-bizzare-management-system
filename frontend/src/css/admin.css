@@ -35,7 +35,7 @@
 /* Active Tab (Soft Gold Background) */
 .create-account .tab-button.active {
   background-color: var(--color-surface-cream);
-  color: var(--color-accent);
+  color: var(--color-accent-text); /* DESIGN.md §3 rule 10 — 0.95rem/600 needs the 4.5:1 bar */
   box-shadow: 0 4px 10px rgba(var(--color-accent-rgb), 0.1);
 }
 
@@ -158,7 +158,7 @@
 }
 
 .account-list .al-item.active .name-col {
-    color: var(--color-accent);
+    color: var(--color-accent-text); /* DESIGN.md §3 rule 10 — normal-size text needs 4.5:1 */
 }
 
 /* Typography styles sa loob ng card */
@@ -183,7 +183,7 @@
     border-radius: 8px;
     letter-spacing: 0.5px;
     background-color: rgba(var(--color-accent-rgb), 0.1); /* Soft Gold Background */
-    color: var(--color-accent); /* Gold Text */
+    color: var(--color-accent-text); /* DESIGN.md §3 rule 10 — was Gold Text, failed 4.5:1 */
 }
 
 /* Kung gusto mong ibahin ang kulay ng Admin vs User */
@@ -272,7 +272,9 @@
   margin: 0 0 30px;
   font-size: 2.2rem;
   font-weight: 700;
-  color: var(--color-accent); /* DARK ESPRESSO */
+  /* DESIGN.md §3 rule 10 — large text (>=24px) only needs the 3:1 bar, which --color-accent-dark
+     clears; plain --color-accent (gold) doesn't even clear that. */
+  color: var(--color-accent-dark);
   font-family: 'Playfair Display', serif;
   letter-spacing: 0.5px;
 }
@@ -432,7 +434,7 @@
 
 .profit-add-btn {
   background: transparent;
-  color: var(--color-accent);
+  color: var(--color-accent-text); /* DESIGN.md §3 rule 10 — normal-size text needs 4.5:1 */
   border: 1.5px dashed var(--color-accent);
   border-radius: 12px;
   padding: 10px 20px;
@@ -637,7 +639,7 @@
 .profit-btn-cancel:hover {
   background: var(--color-surface-cream);
   border-color: var(--color-accent);
-  color: var(--color-accent);
+  color: var(--color-accent-text); /* DESIGN.md §3 rule 10 — normal-size text needs 4.5:1 */
 }
 
 .profit-btn-save {
@@ -1386,7 +1388,8 @@
 }
 
 .ph-title {
-    color: var(--color-accent); /* DARK ESPRESSO */
+    /* DESIGN.md §3 rule 10 — large text (>=24px) only needs the 3:1 bar. */
+    color: var(--color-accent-dark);
     font-family: 'Playfair Display', serif;
     font-size: 2.2rem;
     font-weight: 700;
@@ -1491,7 +1494,7 @@
     background-color: var(--color-surface-cream);
     border-color: var(--color-accent);
     box-shadow: 0 4px 12px rgba(var(--color-accent-rgb), 0.15);
-    color: var(--color-accent);
+    color: var(--color-accent-text); /* DESIGN.md §3 rule 10 — normal-size text needs 4.5:1 */
 }
 
 .ph-project-name {
@@ -1530,7 +1533,7 @@
 }
 
 .ph-back-btn:hover {
-    color: var(--color-accent);
+    color: var(--color-accent-text); /* DESIGN.md §3 rule 10 — normal-size text needs 4.5:1 */
 }
 
 /* TOP & BOTTOM CARDS */
@@ -1718,7 +1721,7 @@
     font-weight: 700;
     display: inline-block;
     background-color: var(--color-surface-cream);
-    color: var(--color-accent);
+    color: var(--color-accent-text); /* DESIGN.md §3 rule 10 — normal-size text needs 4.5:1 */
     text-align: center;
     min-width: 80px;
 }
@@ -1740,7 +1743,8 @@
     font-family: 'Playfair Display', serif; /* Consistent serif header */
     font-size: 2.5rem;
     font-weight: 700;
-    color: var(--color-accent); 
+    /* DESIGN.md §3 rule 10 — large text (>=24px) only needs the 3:1 bar. */
+    color: var(--color-accent-dark);
     margin-bottom: 35px;
     display: flex;
     align-items: center; 
@@ -1788,7 +1792,8 @@
 /* Icon Wrapper */
 .notif-icon-wrapper {
     background: var(--color-surface-cream); /* Soft Cream */
-    color: var(--color-accent); /* Gold Icon */
+    /* DESIGN.md §3 rule 10 — a non-text icon fill needs only the 3:1 bar. */
+    color: var(--color-accent-dark);
     width: 48px;
     height: 48px;
     border-radius: 12px;
@@ -1908,7 +1913,7 @@
 .notif-btn-secondary:hover {
     background-color: var(--color-surface-cream);
     border-color: var(--color-accent);
-    color: var(--color-accent);
+    color: var(--color-accent-text); /* DESIGN.md §3 rule 10 — normal-size text needs 4.5:1 */
 }
 
 /* --- EMPTY STATE --- */
@@ -1939,7 +1944,8 @@
 /* --- HEADER TITLE (Glowing & Elegant) --- */
 .prod-header-title {
     font-family: 'Playfair Display', serif;
-    color: var(--color-accent); /* Dark Espresso */
+    /* DESIGN.md §3 rule 10 — large text (>=24px) only needs the 3:1 bar. */
+    color: var(--color-accent-dark);
     font-size: 2.0rem;
     font-weight: 800;
     margin-bottom: 35px;

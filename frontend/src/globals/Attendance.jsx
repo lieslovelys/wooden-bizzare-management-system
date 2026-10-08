@@ -52,7 +52,9 @@ const WorkerAvatar = ({ worker, size = 64, className = '' }) => {
     return <img src={src} alt={name ? `${name}'s photo` : 'Worker photo'} style={style} className={className} onError={() => setImgError(true)} />;
   }
   return (
-    <div className={className} style={{ ...style, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-surface-cream)', color: 'var(--color-accent)', fontWeight: 700, fontSize: size * 0.35 }}>
+    // DESIGN.md §3 rule 10 — at the one size this is actually used (150), fontSize*0.35 clears the
+    // large-text bold threshold (>=18.66px); --color-accent-dark is the 3:1 bar that applies there.
+    <div className={className} style={{ ...style, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-surface-cream)', color: 'var(--color-accent-dark)', fontWeight: 700, fontSize: size * 0.35 }}>
       {getInitials(worker)}
     </div>
   );

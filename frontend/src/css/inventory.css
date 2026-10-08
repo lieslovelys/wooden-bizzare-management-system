@@ -213,7 +213,9 @@
 }
 
 .min-text {
-    color: #c9a445;
+    /* DESIGN.md §3 rule 10 — was a light-gold literal (#c9a445, never a token), normal-size text
+       needing the 4.5:1 bar; folds onto --color-accent-text like the rest of this family. */
+    color: var(--color-accent-text);
     font-weight: bold;
 }
 

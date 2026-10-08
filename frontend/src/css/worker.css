@@ -229,7 +229,7 @@
     border-radius: 25px;
     font-size: 0.85rem;
     font-weight: 700;
-    color: var(--color-accent);
+    color: var(--color-accent-text); /* DESIGN.md §3 rule 10 — normal-size text needs 4.5:1 */
     background-color: rgba(var(--color-accent-rgb), 0.1); /* Soft Gold Background */
     text-align: center;
     min-width: 80px;
@@ -246,13 +246,13 @@
 .wjo-item.active .wjo-item-name,
 .wjo-item:active .wjo-item-id,
 .wjo-item:active .wjo-item-name {
-    color: var(--color-accent);
+    color: var(--color-accent-text); /* DESIGN.md §3 rule 10 — normal-size text needs 4.5:1 */
 }
 
 @media (hover: hover) {
     .wjo-item:hover .wjo-item-id,
     .wjo-item:hover .wjo-item-name {
-        color: var(--color-accent);
+        color: var(--color-accent-text); /* DESIGN.md §3 rule 10 — normal-size text needs 4.5:1 */
     }
 }
 
@@ -372,8 +372,8 @@
     transition: color 0.2s ease;
 }
 
-.wjo-back-btn:hover { 
-    color: var(--color-accent); 
+.wjo-back-btn:hover {
+    color: var(--color-accent-text); /* DESIGN.md §3 rule 10 — normal-size text needs 4.5:1 */
 }
 
 /* --- MAIN CONTAINER CARDS --- */
@@ -585,7 +585,7 @@
 .wjo-status.approved { background-color: rgba(var(--color-success-rgb), 0.1); color: var(--color-success); }
 .wjo-status.in-progress { background-color: rgba(var(--color-info-rgb), 0.1); color: var(--color-info); }
 .wjo-status.rework { background-color: rgba(var(--color-danger-rgb), 0.1); color: var(--color-danger); }
-.wjo-status.assigned { background-color: rgba(var(--color-accent-rgb), 0.1); color: var(--color-accent); }
+.wjo-status.assigned { background-color: rgba(var(--color-accent-rgb), 0.1); color: var(--color-accent-text); } /* DESIGN.md §3 rule 10 — normal-size text needs 4.5:1 */
 .wjo-status.for-qa { background-color: var(--color-surface-cream); color: var(--color-text); }
 
 /* FR-6/FR-9: the rejection reason shown above the action button when this worker's own stage

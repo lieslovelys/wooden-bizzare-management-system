@@ -63,6 +63,10 @@ Numbered so a review comment can cite one directly.
    this. The shared `:focus-visible` rule in `css/globals.css` (`--color-focus`, overridden to
    `--color-accent` on the dark sidebar) is the default; a component's own `:focus`/`:focus-within`
    glow layers on top of it rather than replacing it.
+10. **Body text needs ≥4.5:1 contrast; large text (≥24px, or ≥18.66px bold) and UI-element
+    boundaries need ≥3:1.** See §4's "Gold is a fill, not body text" note — the accent gold fails
+    4.5:1 against both white and cream outright (~2.4:1/2.2:1), which is why it's never a *text*
+    color on a light surface, only a fill/border/dark-background color.
 
 ## 4. Palette (locked)
 
@@ -80,7 +84,7 @@ imports it first. New UI work references the token, not the literal — §3 rule
 | Surface (cream) | `#fbf5e8` | `--color-surface-cream` | Soft accent panels (e.g. worker detail box). |
 | Border / divider | `#eaeaea` | `--color-border` | |
 | Text | `#1a1612` | `--color-text` | Same hex as surface-dark — see above. |
-| Text (muted) | `#8b816a` | `--color-text-muted` | |
+| Text (muted) | `#756d5a` | `--color-text-muted` | Darkened from the original `#8b816a` (ARCHITECTURE_REVIEW.md item 30/§3 rule 10) — that value measured ~3.9:1 on white and ~3.6:1 on cream, both under AA's 4.5:1 floor for normal-size text. This value measures ~5.1:1/~4.7:1. |
 | Text (inverse) | `#ffffff` | `--color-text-inverse` | Same hex as surface — see above. |
 | Semantic: danger | `#d32f2f` | `--color-danger` (+ `-rgb`) | Overdue dates, rework/reject states. |
 | Semantic: success | `#2e6b3b` | `--color-success` (+ `-rgb`) | Approved states. |
@@ -101,6 +105,8 @@ this was done and verified):
 - `--color-danger`: `#c62828`, `#cc3300`, `#ff0000`, `#d9534f`. Folded from `.jsx` inline styles
   too (item 24, ARCHITECTURE_REVIEW.md): `#cc0000`, `#ff4d4d`, `#dc3545`.
 - `--color-text-muted`: also folded from a `.jsx` inline style (item 24): `#8B7E5C`.
+- `--color-accent-text`: also folded, item 30: `#c9a445` (`InventoryTable.jsx`'s `.min-text`, a
+  gold literal that was never a token in the first place).
 
 **The literal tail.** ~92 distinct one-off colors (badge/status accents, the warning oranges
 `#f57c00`/`#e67e22`, rank bronze/silver, a handful of generic greys distinct from the muted-text
@@ -108,6 +114,20 @@ family, etc.), each used a handful of times or fewer, stay as literals — forci
 color onto an ill-fitting token isn't the goal; undoing the gold/brown/cream/border/text drift
 above was. If the redesign changes the palette, `:root`'s definitions are the one place that
 needs updating for the change to propagate.
+
+**Gold is a fill, not body text (ARCHITECTURE_REVIEW.md item 30 / §3 rule 10).**
+`--color-accent` measures ~2.4:1 on white and ~2.2:1 on cream — it fails AA's 4.5:1 floor by a wide
+margin and doesn't even clear the 3:1 bar large text gets. It's still correct as a *fill* (button
+backgrounds, badge backgrounds, progress bars), a *border*, or *text on the dark sidebar/dark
+buttons* (`--color-surface-dark` is dark enough that gold reads fine there) — none of those are
+the failure this item fixed. What changed is gold used as **text color on a light surface**:
+- Text ≥24px, or ≥18.66px bold (WCAG's "large text" exemption, only needs 3:1) → `--color-accent-dark`.
+- Everything else, including icon fills, which this pass treats at the stricter bar since an
+  icon's fill color is this same token and the two are easy to conflate → `--color-accent-text`.
+
+  Every site this item moved — page titles, active tabs, badges, links, buttons, icons — used one
+  of these two tokens on exactly that basis; neither is a new color decision, both already existed
+  for other purposes before this pass.
 
 **JSX inline styles — migrated (item 24, ARCHITECTURE_REVIEW.md).** The `.jsx`-file hex literals
 the CSS-scoped token pass above didn't touch (54 at the time item 20 first recorded them, 53 once

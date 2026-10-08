@@ -26,7 +26,10 @@
 
   /* Text */
   --color-text: #1a1612;
-  --color-text-muted: #8b816a;
+  /* DESIGN.md §3 rule 10 / §4 — darkened from the original #8b816a, which measured ~3.9:1 on
+     white and ~3.6:1 on cream (both fail WCAG AA's 4.5:1 for normal-size text). This value
+     measures ~5.1:1 on white and ~4.7:1 on cream. */
+  --color-text-muted: #756d5a;
   --color-text-inverse: #ffffff;
 
   /* Semantic */
@@ -289,7 +292,7 @@
   transition: color 0.3s ease;
 }
 
-.login-layout .eye-btn:hover { color: var(--color-accent); }
+.login-layout .eye-btn:hover { color: var(--color-accent-dark); } /* DESIGN.md §3 rule 10 — icon fill, 3:1 bar */
 
 /* --- Submit Button (With Sweep Animation) --- */
 .login-layout .submit-container {
@@ -353,7 +356,7 @@
 }
 
 .login-layout .form-footer a {
-  color: var(--color-accent);
+  color: var(--color-accent-text); /* DESIGN.md §3 rule 10 — normal-size text needs 4.5:1 */
   text-decoration: none;
   font-weight: 700;
   transition: color 0.2s;
@@ -489,8 +492,8 @@
     line-height: 1.2;
     
     background-color: transparent;
-    border: 1.5px solid var(--color-accent); 
-    color: var(--color-accent); 
+    border: 1.5px solid var(--color-accent);
+    color: var(--color-accent-text); /* DESIGN.md §3 rule 10 — normal-size text needs 4.5:1 */
 }
 
 .wb-logout-buttons button:hover {
@@ -758,7 +761,7 @@ html, body {
     height: 100vh; /* fallback */
     height: 100dvh; /* DESIGN.md §3.6 */
     font-family: 'Inter', sans-serif; font-size: 1.1rem;
-    font-weight: 600; color: var(--color-accent);
+    font-weight: 600; color: var(--color-accent-text); /* DESIGN.md §3 rule 10 — normal-size text needs 4.5:1 */
 }
 
 .close-mobile-btn {
@@ -1932,7 +1935,8 @@ html, body {
 
 /* --- TITLES & DIVIDERS --- */
 .attendance-title {
-  color: var(--color-accent);
+  /* DESIGN.md §3 rule 10 — large text (>=24px) only needs the 3:1 bar. */
+  color: var(--color-accent-dark);
   font-family: 'Playfair Display', serif;
   font-size: 1.9rem;
   font-weight: 700;
@@ -1961,7 +1965,7 @@ html, body {
   flex-grow: 1;
   position: relative;
   max-width: 900px;
-  color: var(--color-accent);
+  color: var(--color-accent-dark); /* DESIGN.md §3 rule 10 — icon fill, 3:1 bar */
 }
 
 .list-search-icon {
@@ -1969,7 +1973,7 @@ html, body {
   left: 20px;
   top: 50%;
   transform: translateY(-50%);
-  color: var(--color-accent); /* Gold Icon */
+  color: var(--color-accent-dark); /* DESIGN.md §3 rule 10 — icon fill, 3:1 bar */
 }
 
 .list-search-input {
@@ -2207,7 +2211,7 @@ html, body {
 
 .attendance-log-edit-btn {
   background-color: transparent;
-  color: var(--color-accent);
+  color: var(--color-accent-text); /* DESIGN.md §3 rule 10 — normal-size text needs 4.5:1 */
   border: 1px solid var(--color-accent);
   padding: 6px 14px;
   border-radius: 15px; 
@@ -2346,7 +2350,8 @@ html, body {
 }
 
 .project-form-container .edit-banner h2 {
-  color: var(--color-accent);
+  /* DESIGN.md §3 rule 10 — large text (>=24px) only needs the 3:1 bar. */
+  color: var(--color-accent-dark);
   font-family: 'Playfair Display', serif;
   font-size: 1.8rem;
   font-weight: 700;
@@ -2355,7 +2360,8 @@ html, body {
 }
 
 .project-form-container .form-title {
-  color: var(--color-accent);
+  /* DESIGN.md §3 rule 10 — large text (>=24px) only needs the 3:1 bar. */
+  color: var(--color-accent-dark);
   font-family: 'Playfair Display', serif;
   font-size: 1.5rem;
   font-weight: 700;
@@ -2388,7 +2394,7 @@ html, body {
 /* Active Tab (Soft Gold Background) */
 .project-form-container .tab.active {
   background-color: var(--color-surface-cream);
-  color: var(--color-accent);
+  color: var(--color-accent-text); /* DESIGN.md §3 rule 10 — normal-size text needs 4.5:1 */
   box-shadow: 0 4px 10px rgba(var(--color-accent-rgb), 0.1);
 }
 
@@ -2511,7 +2517,7 @@ html, body {
 
 .project-form-container .btn-add-variable {
   background-color: transparent;
-  color: var(--color-accent);
+  color: var(--color-accent-text); /* DESIGN.md §3 rule 10 — normal-size text needs 4.5:1 */
   border: 1.5px dashed var(--color-accent);
   border-radius: 12px;
   padding: 12px;
@@ -2562,7 +2568,7 @@ html, body {
 .project-form-container .btn-cancel:hover {
   background-color: var(--color-surface-cream);
   border-color: var(--color-accent);
-  color: var(--color-accent);
+  color: var(--color-accent-text); /* DESIGN.md §3 rule 10 — normal-size text needs 4.5:1 */
 }
 
 .project-form-container .btn-submit {
@@ -2633,7 +2639,7 @@ html, body {
 
 .project-list-container .search-icon {
   margin-right: 10px;
-  color: var(--color-accent);
+  color: var(--color-accent-dark); /* DESIGN.md §3 rule 10 — icon fill, 3:1 bar */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2800,7 +2806,7 @@ html, body {
 
 .project-list-container .btn-action.edit {
   background-color: transparent;
-  color: var(--color-accent);
+  color: var(--color-accent-text); /* DESIGN.md §3 rule 10 — normal-size text needs 4.5:1 */
   border-color: var(--color-accent);
 }
 
@@ -2968,7 +2974,8 @@ html, body {
     font-family: 'Playfair Display', serif; /* Premium serif font */
     font-size: 1.75rem;
     font-weight: 700;
-    color: var(--color-accent);
+    /* DESIGN.md §3 rule 10 — large text (>=24px) only needs the 3:1 bar. */
+    color: var(--color-accent-dark);
     margin: 0 0 6px 0;
     text-transform: uppercase;
     letter-spacing: 1px;
@@ -3126,7 +3133,7 @@ html, body {
 }
 
 .jod-back-btn:hover {
-    color: var(--color-accent); /* Gold hover */
+    color: var(--color-accent-text); /* DESIGN.md §3 rule 10 — normal-size text needs 4.5:1 */
 }
 
 /* DESIGN.md §7 "known residual gap" — was padding:0 with no explicit height, well under the 44px
@@ -3248,7 +3255,7 @@ html, body {
 
 .jod-ov-scroll-icons {
     font-size: 0.85rem;
-    color: var(--color-accent);
+    color: var(--color-accent-dark); /* DESIGN.md §3 rule 10 — icon fill, 3:1 bar */
 }
 
 .jod-ov-scroll-area {
@@ -3370,9 +3377,9 @@ html, body {
     color: var(--color-success); 
 }
 
-.jod-status.in-progress { 
-    background-color: rgba(var(--color-accent-rgb), 0.1); 
-    color: var(--color-accent); 
+.jod-status.in-progress {
+    background-color: rgba(var(--color-accent-rgb), 0.1);
+    color: var(--color-accent-text); /* DESIGN.md §3 rule 10 — normal-size text needs 4.5:1 */
 }
 
 /* =========================================
@@ -3698,7 +3705,8 @@ html, body {
     font-family: 'Playfair Display', serif; /* Premium serif font */
     font-size: 1.75rem;
     font-weight: 700;
-    color: var(--color-accent);
+    /* DESIGN.md §3 rule 10 — large text (>=24px) only needs the 3:1 bar. */
+    color: var(--color-accent-dark);
     margin: 0 0 6px 0;
     text-transform: uppercase;
     letter-spacing: 1px;
@@ -3851,7 +3859,7 @@ html, body {
 }
 
 .qc-pvd-back-btn:hover {
-    color: var(--color-accent); /* Gold hover */
+    color: var(--color-accent-text); /* DESIGN.md §3 rule 10 — normal-size text needs 4.5:1 */
 }
 
 /* DESIGN.md §7 "known residual gap" — same fix as .jod-back-btn above, same reasoning. */
