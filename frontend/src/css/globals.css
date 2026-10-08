@@ -35,6 +35,11 @@
   /* Semantic */
   --color-danger: #d32f2f;
   --color-danger-rgb: 211, 47, 47;
+  /* DESIGN.md §3 rule 10 / item 31 — --color-danger measures only 3.61:1 on the dark sidebar
+     (--color-surface-dark), below the 4.5:1 normal-text bar; this lighter red is for text/icons
+     on a dark surface specifically (currently just the sidebar's Logout button) and measures
+     ~5.2:1 there. --color-danger itself is unchanged and stays the color for light surfaces. */
+  --color-danger-on-dark: #ef5350;
   --color-success: #2e6b3b;
   --color-success-rgb: 46, 107, 59;
   --color-success-dark: #1e5631;

@@ -137,7 +137,10 @@ const Navbar = ({ tabs, accountType }) => {
                         style={{
                             marginTop: 'auto',
                             cursor: 'pointer',
-                            color: 'var(--color-danger)',
+                            // --color-danger-on-dark, not --color-danger: this sits on the dark
+                            // sidebar background, where the plain danger red only measures 3.61:1
+                            // (item 31) — the lighter token clears the 4.5:1 normal-text bar.
+                            color: 'var(--color-danger-on-dark)',
                             fontWeight: 'bold',
                             borderTop: '1px solid rgba(255, 255, 255, 0.1)', // Ginawang lighter ang border para mas kita sa dark theme
                             paddingTop: '20px',
