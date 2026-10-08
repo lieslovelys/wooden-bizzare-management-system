@@ -1560,7 +1560,7 @@ Not urgent, but each of these increases the cost of every future change until ad
       found and confirmed the fix for the regression above.
     - **Found by the axe sweep, confirmed real, deliberately left for a separate pass — not
       silently fixed, since both are pre-existing and outside this item's scoped two contrast
-      fixes:**
+      fixes. Both closed by item 31 below:**
       - `.nav-item.active .nav-label` — white text (`--color-text-inverse`) on the gold active-tab
         fill (`--color-accent`) measures 2.34:1. This is white-on-gold-*fill*, not gold-as-text,
         so it's a different failure mode than either of this item's two scoped fixes; the gold fill
@@ -1572,9 +1572,62 @@ Not urgent, but each of these increases the cost of every future change until ad
       not a live assistive-technology pass. The axe sweep covered the Login page fully and three
       representative Admin screens via route-mocking; it did not cover every screen/role
       combination in the app.
+    - **Still open after this:** the two findings above (closed by item 31), plus the declined
+      role-shell consolidation, which remains open on this backlog's own list. DESIGN.md §8's PWA
+      deferral is blocked on TLS (service workers only register on HTTPS or `localhost`, and the
+      deployment is HTTP-only on a bare IP until a domain exists — the same dependency
+      `COOKIE_SECURE` already has). The font-family fragmentation DESIGN.md records for the
+      planned redesign is a separate, un-started candidate.
+
+31. **Finish AA contrast: text on gold fills, and the sidebar Logout red** — ✅ done, three commits
+    on `main` plus this doc pass. Closes the two findings item 30's axe sweep left open above.
+    - **The sidebar Logout label.** `--color-danger` on `--color-surface-dark` measured 3.61:1,
+      under AA's 4.5:1 floor. Rather than retarget `--color-danger` itself (every other use of it
+      is on a light surface and already passes), a new `--color-danger-on-dark` token (`#ef5350`,
+      ~5.2:1 on the sidebar) covers text/icons on a dark surface specifically; `Navbar.jsx`'s
+      Logout button is the only site that needed it — confirmed by grepping every `--color-danger`
+      use in the codebase for another one on a dark background, and found none.
+    - **Text on gold fills.** The axe sweep's other finding — white text on the active sidebar
+      tab's gold fill, 2.34:1 — turned out to be one of about 20 sites with the same problem the
+      sweep never reached, since it only covered Login and three Admin screens. A new
+      `--color-text-on-accent` token (aliases `--color-text`, ~7.7:1 on `--color-accent`, same
+      alias pattern as `--color-focus`) replaced white/`--color-text-inverse` wherever text or an
+      icon sits on a solid gold fill: `.nav-item.active`, the sidebar avatar circle, the login
+      submit button's hover state, `ConfirmModal`'s primary `.wb-btn-yes` button (used throughout
+      the app) and its duplicate declaration in `admin.css`, `.btn-add-worker` (also duplicated,
+      one declaration under a literal `#CBA135` rather than the token), `.worker-banner`, the
+      profile-photo upload button, the rank-1 leaderboard badge, `JobOrder`'s hover state,
+      `ProjectVerification`'s selected-row text, `JobOrderDetails`'s selected-item state,
+      `Attendance`'s edit-button hover, `ProjectList`'s edit-button hover, `Profit`'s save-button
+      hover, the account-creation tab bar's active state, the Worker job-order "assigned" filter
+      pill, and `WorkerJobOrderDetail`'s dark-button hover/active states. One more turned up under
+      a literal near-accent gold hex rather than the token: `dashboard.css`'s `.notif-item`
+      (`#BC963B`, 2.78:1). The gold fill itself is unchanged at every site, per item 30's "gold is
+      a fill, not body text" rule — only the text/icon color on top of it moved. Two sites needed
+      an explicit color added back rather than just a value swap, since they'd otherwise have
+      inherited the new dark default meant for a different selector at the same specificity:
+      `.wb-btn-yes.danger` (red fill, needs its white text back) and the second, cascade-winning
+      `.btn-add-worker` declaration.
+    - **Checked and deliberately left alone, a different failure mode than either fix above:**
+      `account.css`'s `.btn-delete` — white text on a light red fill (`#FF8A8A`), 2.27:1. Found
+      while sweeping for white-on-gold sites; it's white-on-*red*, not gold, so it's outside this
+      item's two scoped fixes and is recorded here rather than fixed silently.
+      `.wjo-filter-btn:not(.active)` (white on a 50%-opacity grey fill) and every `:disabled` state
+      (`.wb-btn-yes:disabled`, etc.) were also checked and left: WCAG doesn't require disabled
+      controls to meet contrast, and the grey-fill case is a different problem than either of this
+      item's two fixes.
+    - **Regression guard.** New `frontend/src/tests/contrast.test.js` parses `globals.css`'s
+      `:root` tokens (resolving one-level `var()` aliases), computes the real WCAG contrast ratio,
+      and checks it against every pair DESIGN.md §3 rule 10 promises — both new tokens, plus the
+      four pairs item 30 already relied on (muted text, gold-as-text, gold icon fills, the focus
+      ring) that nothing had been checking directly. Item 30's own regression (found only because
+      a manual axe sweep happened to touch the one screen it broke) would have failed this test
+      outright had it existed then.
+    - **Verification.** The new test's 9 cases pass; frontend tests 245 → 254 across the three
+      commits; lint and both builds clean throughout; the one `JobOrderDetails.test.jsx` failure
+      noted in item 28 is the only pre-existing gap, unrelated to this item. Contrast ratios for
+      every changed pair were computed directly with the WCAG relative-luminance formula (the
+      same approach item 30 used) rather than estimated.
     - **Still open after this:** only the declined role-shell consolidation remains on this
-      backlog's own list. DESIGN.md §8's PWA deferral is blocked on TLS (service workers only
-      register on HTTPS or `localhost`, and the deployment is HTTP-only on a bare IP until a domain
-      exists — the same dependency `COOKIE_SECURE` already has). The two new findings directly
-      above, and the font-family fragmentation DESIGN.md records for the planned redesign, are
-      small, separate, un-started candidates.
+      backlog's own list. The `.btn-delete` finding above, and DESIGN.md's font-family
+      fragmentation note for the planned redesign, are separate, un-started candidates.

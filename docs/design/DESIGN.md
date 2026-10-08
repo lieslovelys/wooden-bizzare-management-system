@@ -66,7 +66,11 @@ Numbered so a review comment can cite one directly.
 10. **Body text needs ≥4.5:1 contrast; large text (≥24px, or ≥18.66px bold) and UI-element
     boundaries need ≥3:1.** See §4's "Gold is a fill, not body text" note — the accent gold fails
     4.5:1 against both white and cream outright (~2.4:1/2.2:1), which is why it's never a *text*
-    color on a light surface, only a fill/border/dark-background color.
+    color on a light surface, only a fill/border/dark-background color. The same rule applies in
+    the other direction too: text or an icon *on top of* a gold fill uses `--color-text-on-accent`
+    (ARCHITECTURE_REVIEW.md item 31), never `--color-text-inverse`/white — white-on-gold-fill
+    measures only ~2.3–2.8:1 depending on the exact gold shade, nowhere near 4.5:1 or even the
+    3:1 large-text floor.
 
 ## 4. Palette (locked)
 
@@ -79,6 +83,7 @@ imports it first. New UI work references the token, not the literal — §3 rule
 | Accent (primary) | `#cca43b` | `--color-accent` (+ `--color-accent-rgb`) | The brand gold. |
 | Accent (light) | `#d4c47a` | `--color-accent-light` | Light tint. |
 | Accent (dark) | `#8b7a2a` | `--color-accent-dark` | Hover/press shade — kept as its own token rather than folded into `--color-accent`, since it's a genuinely distinct shade, not drift. |
+| Accent, text-on | aliases `--color-text` | `--color-text-on-accent` | ARCHITECTURE_REVIEW.md item 31 — what goes *on top of* a gold fill (buttons, badges, the active sidebar tab, selected list rows). An alias, not a new literal, so a redesign can retarget it in one place the way `--color-focus` already does. ~7.7:1 on `--color-accent`. |
 | Surface (dark) | `#1a1612` | `--color-surface-dark` (+ `-rgb`) | "Dark espresso" — sidebar, dark buttons. Doubles as `--color-text` in a `color:` property — see the consolidation note below. |
 | Surface (light) | `#ffffff` | `--color-surface` (+ `-rgb`) | Page background. Doubles as `--color-text-inverse` in a `color:` property. |
 | Surface (cream) | `#fbf5e8` | `--color-surface-cream` | Soft accent panels (e.g. worker detail box). |
@@ -87,6 +92,7 @@ imports it first. New UI work references the token, not the literal — §3 rule
 | Text (muted) | `#756d5a` | `--color-text-muted` | Darkened from the original `#8b816a` (ARCHITECTURE_REVIEW.md item 30/§3 rule 10) — that value measured ~3.9:1 on white and ~3.6:1 on cream, both under AA's 4.5:1 floor for normal-size text. This value measures ~5.1:1/~4.7:1. |
 | Text (inverse) | `#ffffff` | `--color-text-inverse` | Same hex as surface — see above. |
 | Semantic: danger | `#d32f2f` | `--color-danger` (+ `-rgb`) | Overdue dates, rework/reject states. |
+| Semantic: danger, on dark | `#ef5350` | `--color-danger-on-dark` | ARCHITECTURE_REVIEW.md item 31 — `--color-danger` itself measures only 3.61:1 on `--color-surface-dark` (the sidebar); this lighter red is for danger text/icons on a dark surface specifically (currently just the sidebar's Logout button), ~5.2:1 there. `--color-danger` is unchanged for light surfaces. |
 | Semantic: success | `#2e6b3b` | `--color-success` (+ `-rgb`) | Approved states. |
 | Semantic: success (dark) | `#1e5631` | `--color-success-dark` | Hover shade. |
 | Semantic: info | `#2b4c7e` | `--color-info` (+ `-rgb`) | In-progress states. |
@@ -128,6 +134,15 @@ the failure this item fixed. What changed is gold used as **text color on a ligh
   Every site this item moved — page titles, active tabs, badges, links, buttons, icons — used one
   of these two tokens on exactly that basis; neither is a new color decision, both already existed
   for other purposes before this pass.
+
+**The other side of the same rule (ARCHITECTURE_REVIEW.md item 31).** Gold-as-*fill* is still
+correct, but text or an icon sitting *on top of* that fill needs `--color-text-on-accent`
+(~7.7:1), not `--color-text-inverse`/white — white-on-gold-fill measures only ~2.3–2.8:1
+depending on the exact shade (`--color-accent`, its `#b8962e` hover, or a handful of still-literal
+near-accent golds such as `#CBA135`/`#BC963B`), nowhere near AA even at the 3:1 large-text floor.
+This covers buttons, badges, the sidebar avatar circle and active nav tab, and selected list rows.
+A gold fill with no text on it at all (dividers, progress bars, the scrollbar thumb, the unread
+dot) is untouched by either rule.
 
 **JSX inline styles — migrated (item 24, ARCHITECTURE_REVIEW.md).** The `.jsx`-file hex literals
 the CSS-scoped token pass above didn't touch (54 at the time item 20 first recorded them, 53 once
