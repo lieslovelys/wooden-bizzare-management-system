@@ -1,9 +1,13 @@
-import React, { useEffect, useId, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { api } from '../api/client';
 import { useToast } from '../context/ToastContext';
 import { formatDate, formatProjectId } from '../utils/format';
 import ConfirmModal from './ConfirmModal';
 import ProjectMaterials from './ProjectMaterials';
+
+// Fixed list of production stages — doesn't depend on any component state, so it's hoisted out
+// rather than recreated (and re-triggering effects that depend on it) on every render.
+const ALL_STAGES = ['Carpenter', 'Carver', 'Liha', 'Painter', 'Delivery'];
 
 const JobOrderDetail = ({ jobId, onBack }) => {
     const id = useId();
@@ -30,11 +34,16 @@ const JobOrderDetail = ({ jobId, onBack }) => {
 
     const [formData, setFormData] = useState({ stage: 'Carpenter', workerId: '', startDate: '', dueDate: '' });
 
+    // Tracks whether assignable-workers has been fetched at least once, so fetchAllData can skip
+    // refetching it on a re-assign without needing `workers` itself in its own dependency list
+    // (ARCHITECTURE_REVIEW.md item 32 — reading `workers.length` there used to force that).
+    const workersLoadedRef = useRef(false);
+
     // P1-3: both /job-orders/:id/assignments and /assignable-workers now answer
     // {success, data, meta} instead of a bare array — see ARCHITECTURE_REVIEW.md P1-3.
     // P2: /job-orders/:id now answers {success, data} instead of the bare project object — see
     // ARCHITECTURE_REVIEW.md P2.
-    const fetchAllData = async () => {
+    const fetchAllData = useCallback(async () => {
         setLoading(true);
         try {
             const detailsResult = await api.get(`/api/job-orders/${jobId}`);
@@ -42,38 +51,41 @@ const JobOrderDetail = ({ jobId, onBack }) => {
             const assignmentsResult = await api.get(`/api/job-orders/${jobId}/assignments`);
             setAssignments(assignmentsResult.data || []);
 
-            if (workers.length === 0) {
+            if (!workersLoadedRef.current) {
                 const workersResult = await api.get(`/api/assignable-workers`);
                 setWorkers(workersResult.data || []);
+                workersLoadedRef.current = true;
             }
         } catch (error) {
             console.error("Error fetching data:", error.message);
         } finally {
             setLoading(false);
         }
-    };
+    }, [jobId]);
 
-    useEffect(() => { if (jobId) fetchAllData(); }, [jobId]);
+    useEffect(() => { if (jobId) fetchAllData(); }, [jobId, fetchAllData]);
 
-    const allStages = ['Carpenter', 'Carver', 'Liha', 'Painter', 'Delivery'];
-    const assignedStages = assignments.map(a => a.stage_name);
+    const assignedStages = useMemo(() => assignments.map(a => a.stage_name), [assignments]);
 
     useEffect(() => {
         if (assignedStages.includes(formData.stage)) {
-            const firstAvailable = allStages.find(s => !assignedStages.includes(s));
+            const firstAvailable = ALL_STAGES.find(s => !assignedStages.includes(s));
             if (firstAvailable) setFormData(prev => ({ ...prev, stage: firstAvailable }));
         }
-    }, [assignments, formData.stage]);
+    }, [assignedStages, formData.stage]);
 
     const now = new Date();
     const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
-    const filteredWorkers = workers.filter(w => w.job_role && w.job_role.toLowerCase() === formData.stage.toLowerCase());
+    const filteredWorkers = useMemo(
+        () => workers.filter(w => w.job_role && w.job_role.toLowerCase() === formData.stage.toLowerCase()),
+        [workers, formData.stage]
+    );
 
     useEffect(() => {
         if (filteredWorkers.length > 0) setFormData(prev => ({ ...prev, workerId: filteredWorkers[0].user_id }));
-        else setFormData(prev => ({ ...prev, workerId: '' })); 
-    }, [formData.stage, workers]); 
+        else setFormData(prev => ({ ...prev, workerId: '' }));
+    }, [filteredWorkers]);
 
     const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
@@ -253,7 +265,7 @@ const JobOrderDetail = ({ jobId, onBack }) => {
                         <div className="jod-form-group">
                             <label htmlFor={`${id}-stage`}>Stage</label>
                             <select id={`${id}-stage`} name="stage" value={formData.stage} onChange={handleChange}>
-                                {allStages.map(stageName => (
+                                {ALL_STAGES.map(stageName => (
                                     <option key={stageName} value={stageName} disabled={assignedStages.includes(stageName)}>
                                         {stageName} {assignedStages.includes(stageName) ? '(Assigned)' : ''}
                                     </option>
