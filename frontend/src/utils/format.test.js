@@ -83,8 +83,11 @@ describe('formatDateShort', () => {
 
 describe('toDateInputValue', () => {
   // PRD B.6: the regression these guard is EditProjectForm.jsx's old
-  // `new Date(x).toISOString().split('T')[0]` — this test suite runs in Asia/Manila (UTC+8, the
-  // shop's own timezone), the exact zone the bug report names.
+  // `new Date(x).toISOString().split('T')[0]` — this test needs to run in Asia/Manila (UTC+8, the
+  // shop's own timezone and the exact zone the bug report names), which vite.config.js's
+  // `test.env.TZ` pins regardless of the host/CI runner's own zone (ARCHITECTURE_REVIEW.md item
+  // 32 — this failed on every UTC CI runner until that was added, despite passing locally on a
+  // UTC+8 machine).
 
   it('does not shift a date backward the way toISOString() did in UTC+8', () => {
     // Postgres's `date` type gets parsed by the backend as LOCAL midnight (postgres-date's
