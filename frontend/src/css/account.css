@@ -19,7 +19,7 @@
 
 .account-creation .tab-btn.active {
   background-color: var(--color-accent);
-  color: white;
+  color: var(--color-text-on-accent); /* item 31 — white on this gold fill measured ~2.3:1 */
 }
 
 .account-creation .tab-btn:hover:not(.active) {

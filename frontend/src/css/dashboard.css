@@ -76,7 +76,7 @@
     background: #BC963B;
     border-left: 15px solid var(--color-accent-text);
     padding: 12px 20px;
-    color: white;
+    color: var(--color-text-on-accent); /* item 31 — white on this gold fill measured ~2.8:1 */
     display: flex;
     justify-content: space-between;
     align-items: center;

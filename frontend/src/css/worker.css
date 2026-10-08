@@ -69,14 +69,14 @@
 
 .wjo-btn-dark:hover {
     background-color: var(--color-accent); /* Magiging Gold kapag hinover */
-    color: var(--color-text-inverse);
+    color: var(--color-text-on-accent); /* item 31 — white on this gold fill measured ~2.3:1 */
     transform: translateY(-1px);
     box-shadow: 0 4px 10px rgba(var(--color-accent-rgb), 0.2);
 }
 
 .wjo-btn-dark:active {
     background-color: var(--color-accent);
-    color: var(--color-text-inverse);
+    color: var(--color-text-on-accent); /* item 31 — same gold-fill fix as :hover above */
     transform: translateY(0) scale(0.98);
     box-shadow: 0 2px 5px rgba(var(--color-accent-rgb), 0.2);
 }
@@ -138,7 +138,8 @@
 
 .wjo-filter-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
 .wjo-filter-btn:active { transform: translateY(0) scale(0.98); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-.wjo-filter-btn.assigned { background-color: var(--color-accent); } /* Gold */
+/* item 31 — overrides the base rule's white text; white on this gold fill measured ~2.3:1 */
+.wjo-filter-btn.assigned { background-color: var(--color-accent); color: var(--color-text-on-accent); } /* Gold */
 .wjo-filter-btn.repair { background-color: var(--color-surface-dark); } /* Dark Espresso */
 /* FR-9 remainder: the two new lifecycle filters — matches wjo-status's for-qa/approved hues,
    solid instead of the pale badge background so an inactive vs. active filter stays legible. */

@@ -15,6 +15,11 @@
   --color-accent-dark: #8b7a2a;
   --color-accent-text: #5c4a11;
   --color-accent-text-rgb: 92, 74, 17;
+  /* DESIGN.md §3 rule 10 / item 31 — white text/icons on a solid gold fill (--color-accent or its
+     #b8962e hover shade) measure only ~2.3-2.8:1, nowhere near AA. An alias (not a literal) so a
+     redesign can retarget "what goes on top of a gold fill" in one place, the same way
+     --color-focus aliases --color-info. Currently --color-text, ~7.7:1 on --color-accent. */
+  --color-text-on-accent: var(--color-text);
 
   /* Surfaces */
   --color-surface: #ffffff;
@@ -340,7 +345,10 @@
 
 .login-layout .submit-btn:hover {
   background-color: var(--color-accent); /* Turns gold on hover */
-  transform: translateY(-3px); 
+  /* item 31 — the base rule's white text (for the dark-espresso resting state) only measures
+     2.35:1 on this gold hover fill; --color-text-on-accent is the dark-text pair for gold fills. */
+  color: var(--color-text-on-accent);
+  transform: translateY(-3px);
   box-shadow: 0 8px 25px rgba(var(--color-accent-rgb), 0.4);
 }
 
@@ -719,9 +727,12 @@ html, body {
 }
 .avatar-circle {
     width: 50px; height: 50px; border-radius: 50%;
-    background: linear-gradient(135deg, var(--color-accent), var(--color-accent)); 
-    color: white; display: flex; justify-content: center; align-items: center;
-    font-size: 1.4rem; font-weight: 700; box-shadow: 0 4px 12px rgba(var(--color-accent-rgb), 0.15); 
+    background: linear-gradient(135deg, var(--color-accent), var(--color-accent));
+    /* item 31 — white on this solid gold fill measures ~2.3:1; the 22.4px/700 size doesn't clear
+       the large-text bold threshold (>=18.66px bold does, so this is borderline, but white still
+       fails even 3:1 here) — --color-text-on-accent is the dark-text pair for gold fills. */
+    color: var(--color-text-on-accent); display: flex; justify-content: center; align-items: center;
+    font-size: 1.4rem; font-weight: 700; box-shadow: 0 4px 12px rgba(var(--color-accent-rgb), 0.15);
 }
 .user-profile h2 { margin: 0; font-size: 1.15rem; font-weight: 700; color: var(--color-text-inverse); }
 
@@ -751,10 +762,12 @@ html, body {
 }
 
 .nav-item.active {
-    background-color: var(--color-accent); color: var(--color-text-inverse); font-weight: 700;
-    box-shadow: 0 4px 12px rgba(var(--color-accent-rgb), 0.2); 
+    /* item 31 (originally flagged by item 30's axe sweep) — white on this gold fill measured
+       ~2.34:1; --color-text-on-accent is the dark-text pair for gold fills. */
+    background-color: var(--color-accent); color: var(--color-text-on-accent); font-weight: 700;
+    box-shadow: 0 4px 12px rgba(var(--color-accent-rgb), 0.2);
 }
-.nav-item.active i { color: var(--color-text-inverse); }
+.nav-item.active i { color: var(--color-text-on-accent); }
 
 /* UI Elements (Nakatago sa Desktop) */
 .loading {
@@ -969,7 +982,7 @@ html, body {
 
 .job-order-item-selected {
   background: var(--color-accent);
-  color: var(--color-text-inverse);
+  color: var(--color-text-on-accent); /* item 31 — white on this gold fill measured ~2.3:1 */
 }
 
 .job-order-item-hover {
@@ -1318,7 +1331,7 @@ html, body {
 }
 
 .pv-list-item-selected .pv-list-item-id {
-  color: var(--color-text-inverse);
+  color: var(--color-text-on-accent); /* item 31 — white on the gold fill above measured ~2.3:1 */
 }
 
 .pv-list-item-name {
@@ -1329,7 +1342,7 @@ html, body {
 }
 
 .pv-list-item-selected .pv-list-item-name {
-  color: var(--color-text-inverse);
+  color: var(--color-text-on-accent); /* item 31 — same gold-fill fix as pv-list-item-id above */
 }
 
 .pv-detail-card {
@@ -2224,7 +2237,8 @@ html, body {
   gap: 6px;
   transition: all 0.2s;
 }
-.attendance-log-edit-btn:hover { background-color: var(--color-accent); color: white; }
+/* item 31 — white on this gold fill measured ~2.3:1 */
+.attendance-log-edit-btn:hover { background-color: var(--color-accent); color: var(--color-text-on-accent); }
 
 .attendance-log-delete-btn {
   background-color: transparent;
@@ -2813,7 +2827,7 @@ html, body {
 
 .project-list-container .btn-action.edit:hover {
   background-color: var(--color-accent);
-  color: var(--color-text-inverse);
+  color: var(--color-text-on-accent); /* item 31 — white on this gold fill measured ~2.3:1 */
 }
 
 .project-list-container .btn-action.details {
@@ -3034,7 +3048,7 @@ html, body {
 .jol-btn:hover {
     background: linear-gradient(to right, var(--color-accent), var(--color-accent-light), var(--color-accent));
     border-color: transparent;
-    color: var(--color-text-inverse);
+    color: var(--color-text-on-accent); /* item 31 — white on this gold fill measured ~2.3:1 */
     box-shadow: 0 4px 10px rgba(var(--color-accent-rgb), 0.2);
 }
 
@@ -3624,7 +3638,7 @@ html, body {
 
 .wb-btn-yes {
     background: var(--color-accent);
-    color: white;
+    color: var(--color-text-on-accent); /* item 31 — white on this gold fill measured ~2.3:1 */
     border: none;
     padding: 10px 25px;
     border-radius: 5px;
@@ -3633,7 +3647,7 @@ html, body {
     transition: background 0.2s;
 }
 
-.wb-btn-yes:hover { background: #b8962e; }
+.wb-btn-yes:hover { background: #b8962e; } /* item 31 — dark text above still reads fine here, ~6.4:1 */
 .wb-btn-yes:disabled {
     background: #d9cba0;
     cursor: not-allowed;
@@ -3643,8 +3657,10 @@ html, body {
    `:hover` are also defined in css/admin.css at the same (0,3,0) specificity, so this explicit
    `:hover` rule is needed to win regardless of which stylesheet loads last; `filter` avoids
    adding a new hex literal (DESIGN.md §3 rule 7) for the darker hover shade. */
-.wb-btn-yes.danger { background: var(--color-danger); }
-.wb-btn-yes.danger:hover { background: var(--color-danger); filter: brightness(0.9); }
+/* item 31 — .wb-btn-yes's base rule now sets dark text for the gold fill; this variant's own
+   fill is red, not gold, so it needs its own white text back (still ~5:1, unaffected by item 31). */
+.wb-btn-yes.danger { background: var(--color-danger); color: var(--color-text-inverse); }
+.wb-btn-yes.danger:hover { background: var(--color-danger); color: var(--color-text-inverse); filter: brightness(0.9); }
 
 /* FR-6: the repair-reason textarea in globals/ProjectVerificationDetail.jsx's ConfirmModal */
 .wb-modal-textarea {
