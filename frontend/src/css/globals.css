@@ -37,6 +37,30 @@
   --color-success-dark: #1e5631;
   --color-info: #2b4c7e;
   --color-info-rgb: 43, 76, 126;
+
+  /* DESIGN.md §8: a dedicated focus token rather than reusing --color-info directly, so a
+     redesign can retarget "what a keyboard focus ring looks like" without also retargeting every
+     in-progress-status use of --color-info. Currently the same value — >3:1 against both white
+     and cream surfaces. */
+  --color-focus: var(--color-info);
+}
+
+/* DESIGN.md §8 rule 9 (§3): every `outline: none` in this codebase removed a visible keyboard
+   focus indicator with nothing put back — this is the replacement, applied once, globally,
+   instead of per-component. `:focus-visible` (not bare `:focus`) so a mouse click doesn't show a
+   ring the way Tab does; every browser this app targets supports it. Component stylesheets load
+   after this one, so a component's own `:focus`/`:focus-within` ring (the gold glow several
+   already have) layers on top of this rather than replacing it. */
+:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* The dark sidebar is the one place --color-focus (blue) doesn't read against the background —
+   gold already means "focused/active" there (.nav-item.active) and passes contrast easily. */
+.wooden-navbar :focus-visible,
+.mobile-topbar :focus-visible {
+  outline-color: var(--color-accent);
 }
 
 .signup {
@@ -230,11 +254,10 @@
   border-radius: 12px;
   font-family: 'Inter', sans-serif;
   font-size: 1rem;
-  outline: none;
   box-sizing: border-box;
-  background: #fafafa; 
+  background: #fafafa;
   color: var(--color-text);
-  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); 
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
 .login-layout .input-group input::placeholder { color: #b3b3b3; }
@@ -1964,7 +1987,6 @@ html, body {
 
 .list-search-input::placeholder { color: #a0a0a0; }
 .list-search-input:focus {
-  outline: none;
   border-color: var(--color-accent);
   box-shadow: 0 0 0 3px rgba(var(--color-accent-rgb), 0.15);
 }
@@ -1991,7 +2013,6 @@ html, body {
 
 .list-type-select:hover, .list-type-select:focus {
   border-color: var(--color-accent);
-  outline: none;
 }
 
 /* ============================================================
@@ -2262,7 +2283,6 @@ html, body {
   font-weight: 500;          
   font-family: inherit;
   background-color: transparent;
-  outline: none;
   transition: all 0.3s ease;
 }
 
@@ -2427,7 +2447,6 @@ html, body {
   padding: 14px 20px;
   border: 1.5px solid var(--color-border);
   border-radius: 12px; /* Sleek rounded corners, hindi sagad na pill */
-  outline: none;
   font-family: 'Inter', sans-serif;
   font-size: 0.95rem;
   color: var(--color-text);
@@ -2628,7 +2647,6 @@ html, body {
 .project-list-container .search-input {
   background-color: transparent;
   border: none;
-  outline: none;
   width: 100%;
   font-size: 0.95rem;
   font-family: inherit;
@@ -2650,7 +2668,6 @@ html, body {
   background-color: var(--color-surface);
   cursor: pointer;
   border-radius: 25px;
-  outline: none;
   min-width: 140px;
   transition: all 0.3s ease;
   box-shadow: 0 2px 5px rgba(0,0,0,0.02);
@@ -3408,7 +3425,6 @@ html, body {
     font-family: 'Inter', sans-serif;
     color: var(--color-text);
     background-color: var(--color-surface);
-    outline: none;
     transition: all 0.3s ease;
 }
 
@@ -3713,10 +3729,9 @@ html, body {
     background-color: var(--color-surface);
     cursor: pointer;
     border-radius: 25px; /* Pill Shape */
-    outline: none;
     min-width: 140px;
     transition: all 0.3s ease;
-    
+
     /* Tinanggal ang default browser arrow */
     appearance: none;
     -webkit-appearance: none;

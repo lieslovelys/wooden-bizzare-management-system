@@ -63,7 +63,6 @@
     color: var(--color-text-inverse);
     background-color: var(--color-surface-dark); /* Dark Espresso */
     cursor: pointer;
-    outline: none;
     transition: all 0.3s ease;
     box-shadow: 0 2px 5px rgba(0,0,0,0.05);
 }
@@ -100,11 +99,10 @@
     background-color: var(--color-surface);
     cursor: pointer;
     border-radius: 25px; /* Pill Shape */
-    outline: none;
     min-width: 140px;
     transition: all 0.3s ease;
     box-shadow: 0 2px 5px rgba(0,0,0,0.02);
-    
+
     appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;

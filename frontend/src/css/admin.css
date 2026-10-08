@@ -311,7 +311,6 @@
   color: var(--color-text);
   background: var(--color-surface);
   cursor: pointer;
-  outline: none;
   transition: all 0.3s ease;
   appearance: none;
   -webkit-appearance: none;
@@ -347,7 +346,6 @@
 .profit-spinner input {
   flex: 1;
   border: none;
-  outline: none;
   padding: 14px 16px;
   font-size: 0.95rem;
   font-family: 'Inter', sans-serif;
@@ -420,7 +418,6 @@
   font-family: 'Inter', sans-serif;
   color: var(--color-text);
   background: var(--color-surface);
-  outline: none;
   transition: all 0.3s ease;
 }
 
@@ -527,7 +524,6 @@
   font-family: 'Inter', sans-serif;
   color: var(--color-text);
   padding: 8px 10px;
-  outline: none;
   border-radius: 8px;
   transition: all 0.2s ease;
 }
@@ -731,7 +727,6 @@
   font-family: inherit;
   background: var(--color-surface);
   box-sizing: border-box;
-  outline: none;
 }
 
 .worker-form-select {
@@ -744,7 +739,6 @@
   background: var(--color-surface);
   appearance: none;
   cursor: pointer;
-  outline: none;
 }
 
 .worker-select-arrow {
@@ -1029,7 +1023,6 @@
   color: var(--color-text);
   padding: 10px;
   font-size: 1rem;
-  outline: none;
   font-family: Arial, sans-serif;
 }
 
@@ -1044,7 +1037,6 @@
   border-radius: 25px; 
   color: #666;
   font-size: 1rem;
-  outline: none;
   font-family: Arial, sans-serif;
   background-color: white;
   cursor: pointer;
@@ -1273,7 +1265,6 @@
   border-radius: 8px !important; /* Nilagyan natin ng !important para hindi ma-override ng ibang CSS */
   font-family: Arial, sans-serif;
   font-size: 0.95rem;
-  outline: none;
   background-color: white;
   width: 100%;
   box-sizing: border-box;
@@ -1290,7 +1281,6 @@
   border-radius: 25px !important; /* !important para laging maging oval */
   font-family: Arial, sans-serif;
   font-size: 0.95rem;
-  outline: none;
   background-color: white;
   width: 100%;
   box-sizing: border-box;
@@ -1421,12 +1411,11 @@
     font-family: 'Inter', sans-serif;
     font-size: 0.95rem;
     font-weight: 600;
-    outline: none;
     cursor: pointer;
     background-color: var(--color-surface);
     box-shadow: 0 2px 5px rgba(0,0,0,0.02);
     transition: all 0.3s ease;
-    
+
     appearance: none;
     -webkit-appearance: none;
     /* Dark Espresso Arrow */
@@ -2010,7 +1999,6 @@
     font-weight: 600;
     font-size: 0.95rem;
     font-family: 'Inter', sans-serif;
-    outline: none;
     cursor: pointer;
     box-shadow: 0 2px 10px rgba(0,0,0,0.02);
     transition: all 0.3s ease;

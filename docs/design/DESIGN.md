@@ -57,6 +57,12 @@ Numbered so a review comment can cite one directly.
 8. **No fixed pixel widths on layout containers** (wrappers, page sections, sidebars). Use
    `max-width` with fluid sizing, or `%`/`flex`/`grid`, so the container can actually shrink on a
    360px screen instead of forcing horizontal scroll.
+9. **Never remove the keyboard focus outline without a replacement that passes 3:1 contrast.**
+   `outline: none` with nothing put back is how a keyboard-only user loses track of where they are
+   on the page entirely — see ARCHITECTURE_REVIEW.md item 30, which found 27 instances of exactly
+   this. The shared `:focus-visible` rule in `css/globals.css` (`--color-focus`, overridden to
+   `--color-accent` on the dark sidebar) is the default; a component's own `:focus`/`:focus-within`
+   glow layers on top of it rather than replacing it.
 
 ## 4. Palette (locked)
 

@@ -63,9 +63,8 @@
 .signup-wrapper .input-group select {
     padding: 10px 15px;
     border: 1px solid #777; 
-    border-radius: 15px; 
+    border-radius: 15px;
     font-size: 1rem;
-    outline: none;
     font-family: Arial, sans-serif;
     background-color: white;
 }
