@@ -31,15 +31,18 @@ app.set('trust proxy', 1);
 // deliberately, not by oversight: the frontend uses inline `style={{...}}` throughout and
 // injects at least one literal `<style>` block (admin/Profit.jsx), so removing it breaks real
 // screens. Removing that dependency is a frontend refactor tracked separately (P2).
+// The Google Fonts / cdnjs origins that used to sit here are gone too (ARCHITECTURE_REVIEW.md
+// item 27/28) — fonts and icons are self-hosted npm packages now, and this CSP only governs API
+// responses anyway (Nginx serves the built frontend directly), so there's nothing left to allow.
 app.use(helmet({
     contentSecurityPolicy: {
         directives: {
             defaultSrc: ["'self'"],
             connectSrc: ["'self'"],
-            styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com', 'https://cdnjs.cloudflare.com'],
-            fontSrc: ["'self'", 'https://fonts.gstatic.com', 'https://cdnjs.cloudflare.com'],
+            styleSrc: ["'self'", "'unsafe-inline'"],
+            fontSrc: ["'self'"],
             imgSrc: ["'self'", 'data:', 'https:'],
-            scriptSrc: ["'self'", 'https://cdnjs.cloudflare.com'],
+            scriptSrc: ["'self'"],
         },
     },
 }));
