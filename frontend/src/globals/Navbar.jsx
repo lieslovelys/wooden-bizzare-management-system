@@ -92,7 +92,12 @@ const Navbar = ({ tabs, accountType }) => {
                     
                     <div className="user-info" style={{ marginLeft: '10px' }}>
                         <h2 style={{ margin: '0', fontSize: '1.2rem' }}>{userRole}</h2>
-                        <p style={{ margin: '0', fontSize: '0.9rem', color: 'var(--color-text-muted)' }}>
+                        {/* Not --color-text-muted: that token is calibrated for light surfaces
+                            (DESIGN.md §3 rule 10 / item 30) and its darkened value actually fails
+                            here (3.5:1 on this dark sidebar, found by an axe-core sweep run as
+                            part of that same item) — #A09A8E is the sidebar's own existing muted
+                            text color (used by .nav-item's default label), which passes at 6.4:1. */}
+                        <p style={{ margin: '0', fontSize: '0.9rem', color: '#A09A8E' }}>
                             {firstName} {lastName}
                         </p>
                     </div>
