@@ -1630,4 +1630,44 @@ Not urgent, but each of these increases the cost of every future change until ad
       same approach item 30 used) rather than estimated.
     - **Still open after this:** only the declined role-shell consolidation remains on this
       backlog's own list. The `.btn-delete` finding above, and DESIGN.md's font-family
-      fragmentation note for the planned redesign, are separate, un-started candidates.
+      fragmentation note for the planned redesign, are separate, un-started candidates. The
+      `JobOrderDetails.test.jsx` failure this item's verification (and every phase's since item
+      28) reported as a pre-existing, unrelated gap is closed by item 32 below — which also found
+      a second, independent reason CI itself had been red the whole time.
+
+32. **Make the frontend suite (and CI) green** — ✅ done, three commits on `main` plus this doc
+    pass.
+    - **CI had been red on `main` since at least 2026-09-28** (`gh run list` showed every run
+      since then failing at the frontend job's `npm test` step), which meant `npm run build` and
+      the whole `docker-build` job — the only place the Dockerfiles are actually built, per
+      CLAUDE.md — had been silently **skipped** on every push across items 28 through 31. Every
+      one of those items' own "tests pass, one pre-existing failure" reports were accurate about
+      what ran *locally*, on a UTC+8 dev machine; none of them ran in, or reproduced, the CI
+      runner's own UTC zone, which is what hid the second failure below.
+    - **Root cause 1 — `utils/format.test.js`'s `toDateInputValue` "UTC+8" case only failed in
+      CI.** The test's own comment already said it needs to run in Asia/Manila, but nothing
+      enforced that; it passed on every UTC+8 local machine and failed on the UTC GitHub Actions
+      runner, which is the opposite of what every prior phase's local run could see. Fixed by
+      pinning `TZ: 'Asia/Manila'` on `vite.config.js`'s `test.env` — Vitest's test workers inherit
+      it regardless of the host's own zone. Reproduced before (`TZ=UTC npx vitest run
+      src/utils/format.test.js` failed identically to CI) and after (same command passes) the fix.
+    - **Root cause 2 — `JobOrderDetails.test.jsx`'s assign-worker case was a time bomb, not a
+      logic bug.** It typed the literal start date `2026-10-05` into an input whose `min` is
+      `today` (a real constraint JobOrderDetails.jsx sets and jsdom enforces on submit). It passed
+      in CI on 2026-09-28 and failed from the moment the real date passed Oct 5 — exactly the
+      single failure every subsequent phase reported as "pre-existing, unrelated." Fixed by
+      building the test's dates relative to "now" (a small `isoDateFromToday(days)` helper) instead
+      of a literal string, the same way the component itself computes `today`.
+    - **Lint.** `JobOrderDetails.jsx` carried 3 `react-hooks/exhaustive-deps` warnings since item
+      28 (on the `fetchAllData`, stage-reset, and worker-filter effects) — harmless to CI only
+      because `npm run lint` didn't fail on warnings, which is also why they stayed "pre-existing"
+      across four phases. Fixed with `useCallback`/`useMemo` and a `workersLoadedRef` in place of
+      reading `workers.length` directly (behavior unchanged); `package.json`'s `lint` script is now
+      `eslint . --max-warnings 0`, so a new warning can't sit uncounted the same way again.
+    - **Verification.** `npm test` 254/254, including a `TZ=UTC npm test` run reproducing the CI
+      zone exactly; `npm run lint` clean under the new `--max-warnings 0`; `npm run build` clean.
+      Pushed and watched the resulting GitHub Actions run go green across all three jobs —
+      `backend`, `frontend`, and `docker-build` — the first fully green run since at least
+      2026-09-28, confirming the Dockerfiles still build.
+    - **Still open after this:** only the declined role-shell consolidation remains on this
+      backlog's own list.

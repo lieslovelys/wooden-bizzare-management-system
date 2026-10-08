@@ -119,7 +119,10 @@ exported `app` with a stubbed `req.session` — no database or listening port ne
 (mocking only `config/db.js`/`express-session`/`connect-pg-simple` and automocking every service)
 and drives every route with a real `supertest` request, checking 401/403 across all five roles —
 see ARCHITECTURE_REVIEW.md item 19 and the "Route auth" rule below. Frontend tests mock
-`api/client.js` and render with `@testing-library/react` (jsdom). Items 23 and 25 closed out
+`api/client.js` and render with `@testing-library/react` (jsdom), pinned to run in Asia/Manila via
+`vite.config.js`'s `test.env.TZ` — a date-math regression test only reproduced on a UTC CI runner,
+not on a UTC+8 dev machine, until that was pinned (ARCHITECTURE_REVIEW.md item 32). Items 23 and
+25 closed out
 every screen with real logic that used to have no coverage. What's left untested is a short,
 deliberate list, not a gap: the five role-shell files (routing only, tied to the declined
 role-shell consolidation), the three one-line `*Notification.jsx` wrappers over the
