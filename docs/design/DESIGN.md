@@ -195,13 +195,18 @@ item 9's "Worker — one tab" was stale since FR-4 added a Notifications tab.
 | 11 | ~~Font-size unit drift: 92 `px` declarations vs. 218 `rem`.~~ | repo-wide | **Resolved**: all 92 converted (`N/16` rem, pixel-identical at the default root size). |
 | — | *Not originally listed*: two `@media (max-width: 900px)` rules (login, account list) violated rule 2 (§3) — a stray third breakpoint. | `globals.css` (login), `admin.css` (account list) | **Resolved**: both widened to the existing 1024px breakpoint. |
 
-**Known residual gap, not touched by this pass.** Several raw-table action buttons (inventory
+~~**Known residual gap, not touched by this pass.** Several raw-table action buttons (inventory
 edit/delete, the profit-table delete icon, the inventory reason/adjust controls) are still under
 44px specifically in the 769–1024px tablet range: `.wb-card-table`'s conversion, like the
 Worker-path original it generalizes, is deliberately mobile-only (`max-width: 768px`), matching
 the codebase's existing breakpoint convention. Fixing this would mean resizing these controls at
 every width, including desktop, which is a design decision, not a responsiveness bug fix — left
-for a future pass rather than folded in silently here.
+for a future pass rather than folded in silently here.~~ **Resolved** (ARCHITECTURE_REVIEW.md item
+29): a separate `max-width: 1024px` rule now covers every `.wb-card-table` interactive control
+through the tablet range, plus the handful of standalone controls (back buttons, filter/add
+buttons, the profit spinner) that sat outside any table. Still deliberately scoped to
+tablet-and-below, not every width — resizing these at desktop size too remains the design
+decision this note always said it was, left untouched.
 
 ## 8. Deliberately deferred
 

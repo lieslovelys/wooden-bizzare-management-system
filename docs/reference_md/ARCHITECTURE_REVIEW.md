@@ -1373,4 +1373,39 @@ Not urgent, but each of these increases the cost of every future change until ad
       issue, not something this item introduced or is responsible for fixing.
     - **Still open after this:** only the declined role-shell consolidation remains. DESIGN.md §8's
       remaining deferrals (accessibility, PWA) and the tablet tap-target gap are separate,
-      un-started candidates.
+      un-started candidates — the tap-target gap is closed next, by item 29.
+
+29. **Tablet tap targets: 44px through 769-1024px, not just mobile** — ✅ done, one commit on
+    `main`. Closes DESIGN.md §7's "known residual gap" note left by item 20.
+    - **The gap.** `.wb-card-table`'s tap-target rule (`td button/select/input { min-height: 44px
+      }`) only applied inside its `max-width: 768px` card-conversion block. At 769-1024px the
+      table is still a real `<table>`, so about 20 controls stayed at their raw size — inventory's
+      action/reason-select/project-select/adjust controls (~24-25px), the profit table's delete
+      icon and expense inputs, WorkerList's edit button, the QA approve/repair buttons, several
+      back buttons with `padding: 0`, and a handful of filter/add buttons (38-41px).
+    - **Most of the table-cell controls needed no new selector.** Moving the existing rule into
+      its own `max-width: 1024px` block (the card-layout conversion itself stays at
+      `max-width: 768px`) was enough on its own — `.wb-card-table td button/select/input` is a
+      descendant combinator, so it already reaches every control nested inside a converted
+      table's `<td>` regardless of depth. That covers inventory's expanded-variants-row controls,
+      the profit table, WorkerList's edit button, and `ProjectVerificationDetail`'s approve/repair
+      buttons without touching any of those files.
+    - **What did need its own rule, because it lives outside any table:** inventory's
+      `.filter-btn`/`.add-btn`/`.add-variant-btn`; `admin.css`'s `.profit-spinner-buttons button`/
+      `.profit-add-btn`/`.filter-dropdown`/`.btn-add-worker`; `globals.css`'s `.jod-back-btn`/
+      `.qc-pvd-back-btn`/`.jod-form-group input`+`select`. Each got its own `max-width: 1024px`
+      rule — not applied unconditionally — since DESIGN.md §7's own note was explicit that
+      resizing a control at every width, including desktop, is a design decision this pass
+      shouldn't make silently. `globals/JobOrderDetails.jsx`'s unstyled "Project not found"
+      fallback back button (a bare `<button>` with no class at all) picked up the `jod-back-btn`
+      class along the way, gaining both the existing styling and this fix.
+    - **Verification.** A scratchpad-only Playwright script (not committed) injected each fixed
+      selector's real markup against the built CSS and measured it at 360/768/900/1024/1280px:
+      every control is ≥44px in its smaller dimension from 360 through 1024px, and reverts to its
+      original compact size at 1280px — confirming the fix doesn't touch desktop, as intended.
+      Frontend tests still 227/228 passing (lint clean, same 3 pre-existing
+      `JobOrderDetails.jsx` warnings; build clean) — the one failure is the pre-existing,
+      unrelated `JobOrderDetails.test.jsx` case noted in item 28. Backend untouched.
+    - **Still open after this:** only the declined role-shell consolidation remains on this
+      backlog's own list. DESIGN.md §8's accessibility and PWA deferrals are separate,
+      un-started efforts — the accessibility pass is next, item 30.
