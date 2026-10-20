@@ -674,8 +674,8 @@ html, body {
 
     .page-content {
         /* THE GOLDEN FIX:
-           Ginawa nating 80px ang "Top Padding" para hindi matakpan 
-           ng lumulutang na Hamburger Menu button ang mga title at content mo! 
+           Ginawa nating 80px ang "Top Padding" para hindi matakpan
+           ng lumulutang na Hamburger Menu button ang mga title at content mo!
         */
         padding: 72px 15px 20px 15px;
 
@@ -965,49 +965,33 @@ html, body {
   margin-bottom: 64px;
 }
 
-.admin-stat-card {
-  background: var(--color-surface-cream);
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-  height: 160px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
+/* ARCHITECTURE_REVIEW.md item 37 — .admin-dashboard's own 40px padding used to stack on top of
+   .page-content's 15px side padding (globals.css's shared mobile RESPONSIVE DESIGN block,
+   above), leaving ~250px for the 3-column stat grid at 360px wide and clipping every card. This
+   must come after the unconditional rules above, not inside that earlier shared block — at
+   equal specificity, CSS resolves by source order, and an unconditional rule defined later
+   would otherwise win over an earlier media-query override, regardless of viewport. */
+@media (max-width: 768px) {
+  .admin-dashboard {
+    padding: 0; /* .page-content's own padding is the only gutter needed here */
+  }
+
+  /* The 3-column grid is the other half of the clip — stack to one column so each card gets
+     the full content width instead of ~1/3 of it. PM_dashboard.jsx/QCDashboard.jsx override
+     this with their own inline `style={{ display: 'flex', ... }}`, which wins regardless of
+     this media query, so they're unaffected either way. */
+  .admin-stats-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin-bottom: 32px;
+  }
 }
 
-.admin-stat-card-green {
-  border-left: 12px solid #2a7a2a;
-}
-
-.admin-stat-card-gold {
-  border-left: 12px solid var(--color-accent);
-}
-
-.admin-stat-card-blue {
-  border-left: 12px solid #2a5a8a;
-}
-
-.admin-stat-label {
-  color: var(--color-accent-text);
-  font-weight: bold;
-  font-size: 1.125rem;
-  text-align: center;
-  margin-bottom: 8px;
-}
-
-.admin-stat-value {
-  font-size: 3rem;
-  font-weight: 900;
-  color: #000;
-}
-
-.admin-stat-sub {
-  font-size: 0.625rem;
-  color: #666;
-  margin-top: 4px;
-}
+/* ARCHITECTURE_REVIEW.md item 37 — .admin-stat-card/-label/-value/-sub used to live here. They
+   had no JSX reference anywhere (the live card is globals/InfoCard.jsx's .info-card family,
+   below); deleted as dead code, same confirmation method as item 34. Their names are what led
+   the item-36 writeup to misdiagnose which rules controlled the 360px stat-card clipping on this
+   screen — that's fixed below, on .info-card. */
 
 .admin-divider {
   height: 6px;
@@ -1111,7 +1095,10 @@ html, body {
   border-radius: 16px;
   padding: 30px 25px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); /* Medyo nilakasan ang shadow para umangat */
-  height: 160px;
+  /* ARCHITECTURE_REVIEW.md item 37 — was a fixed height with overflow:hidden below, which cut
+     off a wrapped label/value instead of letting the card grow. min-height keeps the usual look
+     when nothing wraps. */
+  min-height: 160px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -1119,6 +1106,10 @@ html, body {
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
+  /* item 37 — container-type lets .info-card-value's font-size respond to this card's own
+     width (cqi units below) rather than the viewport, since the three dashboards give this
+     card very different widths (a 1fr grid column, or a flex item with a 250–400px min/max). */
+  container-type: inline-size;
   border: 1px solid rgba(var(--color-surface-rgb), 0.4); /* Subtle white glow sa border */
 }
 
@@ -1157,12 +1148,23 @@ html, body {
 
 .info-card-value {
   color: #1a1500; /* Almost Black-Brown */
-  font-family: 'Playfair Display', serif; 
-  font-size: 3rem; 
-  font-weight: 800; 
+  font-family: 'Playfair Display', serif;
+  font-size: 3rem; /* fallback for browsers without container query units */
+  font-size: min(3rem, 23cqi); /* item 37 — shrinks only once the card itself narrows (tablet
+    widths), so a short count (5, 12) still renders at the full 3rem on both desktop and phone */
+  font-weight: 800;
   margin: 0;
   line-height: 1;
   text-shadow: 1px 1px 2px rgba(var(--color-surface-rgb), 0.3); /* Subtle white shadow para umumbok yung text */
+}
+
+/* ARCHITECTURE_REVIEW.md item 37 — a currency value like ₱48,230.50 (or a real 7-figure
+   monthly profit) is far longer than a worker/project count and was clipping at the fixed
+   3rem even on desktop (the ₱ ran off the card's left edge). InfoCard.jsx adds this modifier
+   once the formatted value passes 7 characters; sized so a 13-character value fits the card's
+   content box at any width this app renders it at. */
+.info-card-value--long {
+  font-size: min(3rem, 14cqi);
 }
 
 .info-card-sub {
