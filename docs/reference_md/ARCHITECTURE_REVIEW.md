@@ -1965,7 +1965,79 @@ Not urgent, but each of these increases the cost of every future change until ad
       a font swap doesn't touch color contrast, and this confirms it didn't). Took a handful of
       Playwright screenshots of the screens with the most text-density risk from the metric
       change (Admin dashboard, WorkerList, Attendance, Inventory) at 1280px and 360px and checked
-      by eye for new overflow or clipping. Pushed and watched CI go green.
+      by eye for new overflow or clipping — this is where a pre-existing `.admin-stats-grid`
+      clip at 360px was first noticed and confirmed unrelated to this change (git-stash A/B
+      screenshot comparison against the pre-fix Georgia rendering, pixel-identical either way).
+      That clip is a real, separate bug — fixed below, in item 37, not here. The `3e0cf77` commit
+      message says this document records it; it didn't, until this correction.
     - **Still open after this:** only the declined role-shell consolidation, and the ~150
       possibly-dead selectors item 34 recorded, remain on this backlog's own list. This closes
-      out the full four-part request (items 34–36).
+      out the full four-part request (items 34–36). The `.admin-stats-grid` clip noticed along the
+      way became item 37, a separate, later-approved item.
+
+37. **UI: stop the dashboard stat cards clipping on phones and with long values.** A real bug
+    noticed (but correctly left unfixed, as out of scope) while verifying item 36; picked up next
+    once the user chose it from the post-item-36 backlog discussion.
+    - **A corrected diagnosis.** The clip was first attributed to `.admin-stat-card`/
+      `-label`/`-value`/`-sub` (`globals.css`, the `ADMIN DASHBOARD STYLES` section). Those rules
+      have no JSX reference anywhere — dead code, confirmed the same way item 34 confirmed its
+      own dead selectors. The live card is `globals/InfoCard.jsx`'s `.info-card`/`-label`/
+      `-value`/`-sub` family, which the three dashboard screens (`admin/A_Dashboard.jsx`,
+      `product_manager/PM_dashboard.jsx`, `quality_checker/QCDashboard.jsx`) all render through.
+      Item 36's "pre-existing, not a font regression" conclusion still holds either way —
+      `.info-card-label`/`-value` set their own `font-family` explicitly, so item 36 never touched
+      them.
+    - **Three independent causes, not one.**
+      - `.admin-dashboard`'s own `padding: 40px` stacked on top of `.page-content`'s mobile
+        `15px` side padding, leaving roughly 250px of width for a 3-column grid at 360px.
+      - `.admin-stats-grid` kept `grid-template-columns: repeat(3, 1fr)` at every width, with no
+        mobile override — about 62px per card once the double padding above is included.
+      - `.info-card-value` was a fixed `3rem` regardless of card width or content length —
+        clipping `₱48,230.50`'s leading `₱` even at 1280px desktop width, and badly for a
+        realistic 7-figure value (`₱1,234,567.89`).
+    - **Fix, each cause addressed separately.**
+      - A `@media (max-width: 768px)` block (the codebase's existing breakpoint — DESIGN.md §3
+        rule 2) zeroes `.admin-dashboard`'s own padding and stacks `.admin-stats-grid` to one
+        column. `product_manager/PM_dashboard.jsx` and `quality_checker/QCDashboard.jsx` keep
+        their own inline `style={{ display: 'flex', ... }}` override regardless, so they're
+        unaffected either way — the width they now have is just wider, which is what let their
+        cards stop needing to shrink below their own `minWidth`.
+      - `.info-card`'s fixed `height: 160px` became `min-height: 160px` (a wrapped label/sub now
+        grows the card instead of being cut off by `overflow: hidden`), plus `container-type:
+        inline-size` so `.info-card-value`'s size can respond to the *card's* width, not the
+        viewport — the three dashboards give this same component very different widths (a grid
+        column vs. a 250–400px flex item).
+      - `.info-card-value` gained a `min(3rem, 23cqi)` ceiling (shrinks only once the card itself
+        narrows — short counts like `5`/`12` still render at the full `3rem` on every width this
+        app uses) and a new `.info-card-value--long` modifier (`min(3rem, 14cqi)`) that
+        `InfoCard.jsx` applies once the formatted value passes 7 characters — sized so a
+        13-character value (a realistic 7-figure ₱ amount) fits the card at any width.
+      - A real cascade-order bug caught before it shipped: the mobile override was first written
+        inside `globals.css`'s earlier, shared `RESPONSIVE DESIGN` block (around the file's
+        `.page-content` mobile rules). At equal specificity CSS resolves ties by source order,
+        and the unconditional `.admin-stats-grid`/`.admin-dashboard` rules sit *later* in the
+        file (the `ADMIN DASHBOARD STYLES` section) — so the later, unconditional rule was
+        silently winning over the earlier media-query override at every width, and the first
+        screenshot pass still showed the exact pre-fix clip. Moved the override to directly
+        after the unconditional rules it's meant to override, confirmed by rebuilding and
+        re-screenshotting.
+    - **Tests.** New `globals/InfoCard.test.jsx` — label/value/sub rendering, each variant's
+      border class, and that only a value over 7 characters (checked against
+      `utils/format.js`'s `formatCurrency`) gets `--long`. `InfoCard.jsx` was previously untested
+      directly (CLAUDE.md listed it as exercised only indirectly via each dashboard's own test) —
+      that line is updated.
+    - **Verification.** `npm test` 283/283 (277 → 283); `npm run lint` clean at
+      `--max-warnings 0`; `npm run build` clean. A scratchpad Playwright script screenshotted all
+      three dashboards at 360/800/1280px, with both the fixture's normal profit value and a
+      temporary 7-figure override, and asserted `document.documentElement.scrollWidth <=
+      clientWidth` at every combination (DESIGN.md §3 rule 1) — 18 combinations, zero overflow,
+      confirmed visually too (one column at 360px, no clipped text at any width or value length,
+      the shrink-to-fit only visibly engaging on the long value at 800px/360px). Re-ran the
+      item-33 axe harness against the rebuilt `dist`: 0 violations, 51 `incomplete` (down 1 from
+      item 36's 52 — the new `.info-card-value--long` selector is the same gradient-background
+      card axe already couldn't auto-resolve pre-fix, just renamed; the one-entry drop is axe's
+      own selector/dedup heuristics shifting, not a fix or a regression — `contrast.test.js`'s
+      hand-computed math, unchanged by this item, is what actually confirms the `.info-card-*`
+      family passes). Pushed and watched CI go green.
+    - **Still open after this:** the declined role-shell consolidation, and the ~150 possibly-dead
+      selectors item 34 recorded.

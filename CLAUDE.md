@@ -126,10 +126,10 @@ not on a UTC+8 dev machine, until that was pinned (ARCHITECTURE_REVIEW.md item 3
 every screen with real logic that used to have no coverage. What's left untested is a short,
 deliberate list, not a gap: the five role-shell files (routing only, tied to the declined
 role-shell consolidation), the three one-line `*Notification.jsx` wrappers over the
-already-tested `NotificationList.jsx`, `globals/InfoCard.jsx` (exercised indirectly by every
-dashboard test), and `auth-components/ProtectedRoute.jsx` (covered by
+already-tested `NotificationList.jsx`, and `auth-components/ProtectedRoute.jsx` (covered by
 `RoleBasedRedirect.test.jsx`) — see `ARCHITECTURE_REVIEW.md` items 23/25 and its P2 "No tests,
-anywhere" item for the fuller history.
+anywhere" item for the fuller history. `globals/InfoCard.jsx` gained its own direct tests in
+item 37.
 
 **Trap if you're migrating a pre-existing local database created before the initial-schema
 migration existed** (i.e. one originally bootstrapped by hand from the now-deleted
