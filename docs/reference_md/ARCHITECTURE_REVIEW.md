@@ -1084,7 +1084,8 @@ Not urgent, but each of these increases the cost of every future change until ad
       the test suite passing — see the serializer bug this caught, above. Frontend untouched by
       this item. Backend `npm audit`: removing morgan actually dropped a vulnerability count (4 →
       3); the remaining three (`body-parser`, `brace-expansion`, `qs` — all transitive, none from
-      `pino`/`pino-http`) are pre-existing and out of scope here.
+      `pino`/`pino-http`) were pre-existing and out of scope here. (They were actually triaged and
+      patched later, in item 38.)
     - **Still open after this:** everything item 21 already left open, plus the real-VPS latency
       measurement noted above, plus PRD C.2's own "50–300 concurrent users" distinction, which
       still wants validating against real usage patterns once the app is live, not this pass's
@@ -2041,3 +2042,85 @@ Not urgent, but each of these increases the cost of every future change until ad
       family passes). Pushed and watched CI go green.
     - **Still open after this:** the declined role-shell consolidation, and the ~150 possibly-dead
       selectors item 34 recorded.
+
+38. **Triage and fix the `npm audit` warnings.** Both halves had accumulated findings nobody had
+    actually triaged — earlier items only ever checked they hadn't *added* new ones (item 21's
+    own backend count, item 28's frontend count, item 33's lint-gate commit). Picked up from the
+    post-item-37 backlog discussion.
+    - **Fresh counts going in:** backend 9 (1 critical, 6 high, 1 moderate, 1 low); frontend 13
+      (10 high, 2 moderate, 1 low). My own earlier backlog summary guessed the frontend ones were
+      "probably build/test tools that never ship" — true for frontend, **wrong for backend**: 5
+      of the backend's 9 ship in the Docker image (`backend/src/Dockerfile` runs `npm ci
+      --omit=dev`), confirmed by diffing `npm audit` against `npm audit --omit=dev`.
+    - **Triaged, not just patched** — reachability checked against the real code, not assumed
+      from the advisory text alone:
+      - `proxy-addr` (critical, ships): the IPv4-mapped-IPv6 subnet-matching bug only fires when
+        `trust proxy` is configured with a *list* of trusted subnets. `app.js` sets it to the
+        number `1` (`app.set('trust proxy', 1)`), which Express's own `compileTrust` turns into
+        `(a, i) => i < 1` — a hop-count check that never touches the vulnerable subnet-matching
+        code path at all. Not reachable here. Fixed anyway (no-op version bump).
+      - `compression` (high, ships): `app.use(compression())` at `app.js:63` is real and
+        unconditional. The memory-leak-on-premature-close bug is a genuine DoS risk on the
+        1-vCPU/4GB target VPS. Reachable, fixed.
+      - `qs` (moderate, ships): `express.urlencoded({ extended: true })` at `app.js:107` parses
+        with `qs`. Reachable, fixed.
+      - `body-parser` (low, ships): the bug needs an *invalid* `limit` value to silently disable
+        size enforcement; `app.js` passes the valid literal `'1mb'`. Not reachable. Fixed anyway.
+      - `react-router`/`react-router-dom` (high, ships in the bundle): grepped every `navigate()`
+        call and every `<Navigate>` in the frontend. Every target is either a hardcoded literal
+        (`'../job-order'`, `'../project-verification'`, the `*Notification.jsx` resolvers) or a
+        fixed `redirectPath` prop (`auth-components/ProtectedRoute.jsx`) — never
+        user-controlled input. Most of the advisories are SSR/RSC/framework-mode bugs
+        (`__manifest`, vendored turbo-stream deserialization, `deserializeErrors` SSR hydration)
+        this client-only SPA with no server-rendering doesn't use at all. The one that's at all
+        client-side-reachable, the `<Link>`/`useNavigate` open redirect, needs a
+        user-controlled navigation target to exploit. Not reachable. Fixed anyway (no source
+        changes needed — a version-range bump only).
+      - `braces` (high, dev-only via `nodemon` → `chokidar`): **no fixed version exists yet** —
+        npm's only offer is `npm audit fix --force`, which downgrades `nodemon` to `1.14.10`, a
+        real breaking change to accept for a dev-only file watcher. Declined; accepted as open.
+        It never ships (confirmed via `npm audit --omit=dev`), and it would only matter if
+        `nodemon`'s file-glob matching ever ran against attacker-controlled input, which it
+        doesn't in local dev.
+      - Everything else on both sides (`brace-expansion`, `source-map-js`, and, frontend-only,
+        `vite`, `postcss`, `nanoid`, `undici`, `js-yaml`, `browserslist`, `@babel/core`,
+        `@humanfs/node`, `baseline-browser-mapping`) is build/lint/test tooling — `vitest`,
+        `vite`, `eslint`, `nodemon`'s own transitive tree — never part of the shipped image or
+        bundle. Fixed anyway; all were plain in-range version bumps.
+    - **Fix:** `npm audit fix` (no `--force`) in each half. Every change landed inside the
+      existing `package.json` version ranges — `package.json` itself is untouched in both halves,
+      only the two lockfiles changed. Backend: `proxy-addr` 2.0.7→2.0.8, `compression`
+      1.8.1→1.8.2, `qs` 6.15.0→6.16.1, `body-parser` 2.2.2→2.3.0, `brace-expansion` 5.0.5→5.0.12,
+      `source-map-js` 1.2.1→1.2.2. Frontend: `react-router`/`react-router-dom` 7.14.0→7.18.4,
+      `vite` 8.0.3→8.3.4, `postcss` 8.5.8→8.5.31, `undici` 8.10.0→8.12.3, plus the transitive
+      bundler (`rolldown` 1.0.0-rc.12→1.2.14) and CSS minifier (`lightningcss` 1.32→1.33) vite
+      pulls in — the minifier matters here since it's what processes item 37's new container
+      queries.
+    - **A real local-environment snag, unrelated to the project, caught and fixed along the
+      way:** two `vite preview` processes orphaned from earlier sessions' verification scripts
+      (the same Windows `spawn(..., {shell:true})` orphaning pattern documented in items 33/37 —
+      `.kill()` only terminates the shell wrapper, not the real grandchild server) were holding
+      the old `rolldown` native binding file locked on disk. That caused `npm install` to
+      silently leave `node_modules` in a half-upgraded state (the package manifest said 1.2.14,
+      the actual `.node` binary on disk was still the old build), which broke `vitest` outright
+      (`Cannot convert undefined or null to object` inside rolldown's error path) until
+      diagnosed and the stale processes killed.
+    - **Decided, not just left alone:** no CI audit gate (e.g. `npm audit --audit-level=high`) is
+      being added. The user's call — advisories get published on their own schedule, unrelated to
+      any given push, so a hard gate would turn CI red on commits that changed nothing; a
+      periodic manual re-check (like this item) does the same job without that noise.
+    - **Verification.** Backend: `npm test` 273/273; `npm audit` now shows only the accepted
+      `braces` chain (3 entries, all transitive through dev-only `nodemon`); `npm audit
+      --omit=dev` shows **0**. Frontend: `npm test` 283/283; `npm run lint` clean; `npm run
+      build` clean, output byte-identical in size to the pre-fix build (`index-*.js` 399.62 kB,
+      `index-*.css` 183.04 kB, same file count); `npm audit` shows **0**. Because of the
+      bundler/minifier bump specifically: re-ran item 37's 18-combination Playwright screenshot
+      sweep against the rebuilt `dist` (still zero horizontal overflow at every width/value
+      combination) and the item-33 axe harness (still 0 violations, 51 `incomplete` — identical
+      to item 37's post-fix count, confirming the dependency bump changed nothing behaviorally).
+      Pushed both halves as separate commits (so a regression in one bisects independently) and
+      watched CI go green, including `docker-build` — the real check that `rolldown`'s and
+      `lightningcss`'s Linux-only optional native binaries still resolve correctly from a
+      lockfile written on Windows.
+    - **Still open after this:** the declined role-shell consolidation, the `braces` advisory
+      (no fix exists upstream yet), and the ~150 possibly-dead selectors item 34 recorded.
