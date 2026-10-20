@@ -12,6 +12,11 @@ import path from 'node:path';
 // is the regression guard, the same role thirdPartyAssets.test.js plays for CDN references —
 // reuses its listCssFiles walk so a new stray declaration fails CI instead of silently drifting
 // back in.
+//
+// ARCHITECTURE_REVIEW.md item 39: account.css — the only file with a "Font Awesome 6 Free"
+// font-family declaration — turned out to be dead (never imported anywhere) and was deleted
+// along with it, so that allowlist entry went too; the icon font itself (main.jsx's
+// @fortawesome/fontawesome-free import) is unaffected.
 const thisFile = fileURLToPath(import.meta.url);
 const frontendRoot = path.join(path.dirname(thisFile), '..', '..');
 const cssDir = path.join(frontendRoot, 'src', 'css');
@@ -32,12 +37,11 @@ const ALLOWED_VALUES = new Set([
   "'Inter', sans-serif",
   "'Playfair Display', serif",
   'inherit',
-  '"Font Awesome 6 Free"',
   "'Inter', Arial, sans-serif",
 ]);
 
 describe('font-family consistency (ARCHITECTURE_REVIEW.md item 36)', () => {
-  it('every font-family declaration in src/css is one of the app\'s two typefaces, inherit, or Font Awesome', () => {
+  it('every font-family declaration in src/css is one of the app\'s two typefaces, or inherit', () => {
     const offenders = listCssFiles(cssDir).flatMap((filePath) => {
       const css = readFileSync(filePath, 'utf-8');
       const relPath = path.relative(frontendRoot, filePath);
