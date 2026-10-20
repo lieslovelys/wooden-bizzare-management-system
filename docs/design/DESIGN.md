@@ -134,7 +134,11 @@ oranges named in this paragraph until item 33 — see `--color-warning` above �
 one-off badge fills fixed in place without a new token; see that item for the full list). The
 count dropped from ~85 after item 34 deleted the dead `.status-done`/`.status-progress`/`.pv-*`
 CSS family item 33 had already flagged as unreachable, taking 10 of those literals with it rather
-than fixing them in place. If the redesign changes the palette, `:root`'s definitions are the one
+than fixing them in place. Items 35–37 since added a handful of their own (new badge-pill tints,
+`InfoCard.jsx`'s dark-on-gold border/text shades), and item 39's dead-CSS sweep took another 14
+out along with the rest of that CSS — recounted with a plain `grep -ohE '#[0-9a-fA-F]{3,8}'`
+distinct-literal count across `src/css/*.css` rather than estimated, it went from 95 before that
+item to 81 after. If the redesign changes the palette, `:root`'s definitions are the one
 place that needs updating for the change to propagate.
 
 **Gold is a fill, not body text (ARCHITECTURE_REVIEW.md item 30 / §3 rule 10).**

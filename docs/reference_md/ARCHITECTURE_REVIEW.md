@@ -1851,8 +1851,9 @@ Not urgent, but each of these increases the cost of every future change until ad
       fixed by rewording before this ever reached a commit). Pushed and watched the GitHub Actions
       run go green with the Node 20 deprecation annotation gone.
     - **Still open after this:** the declined role-shell consolidation, the ~150 other
-      possibly-dead selectors noted above (not started), and item 35 (status-badge colors) and
-      item 36 (font consistency) — both approved as later phases of this same multi-part request.
+      possibly-dead selectors noted above (not started — later finished in item 39), and item 35
+      (status-badge colors) and item 36 (font consistency) — both approved as later phases of
+      this same multi-part request.
 
 35. **UI: give every `task_status` value one shared colour.** Closes the distinguishability gap
     item 33 recorded (`.jod-status`, `.wjo-badge`, `.ph-badge-pending` conflating several distinct
@@ -2124,3 +2125,76 @@ Not urgent, but each of these increases the cost of every future change until ad
       lockfile written on Windows.
     - **Still open after this:** the declined role-shell consolidation, the `braces` advisory
       (no fix exists upstream yet), and the ~150 possibly-dead selectors item 34 recorded.
+
+39. **Cleanup: delete the dead CSS item 34 recorded.** Item 34 flagged "~150 possibly dead
+    selectors" as a real, separate candidate and deliberately left them alone. Items 35 and 37
+    already removed a few along the way; this closes out what was left.
+    - **Method.** Re-ran item 34's scratchpad class-name scan (every `.css` class that never
+      appears as a literal token in any non-test `.js`/`.jsx`) — it reported 106 this time. Every
+      hit was checked by hand, not deleted on the scan's say-so alone.
+    - **Two things changed the picture from a simple class-by-class trim:**
+      - **Four stylesheets are never imported anywhere**, so every rule in them was dead whatever
+        its class names said: `account.css` (191 lines, everything scoped under
+        `.account-creation`, a class nothing renders), `dashboard.css` (123 lines — its own header
+        comment already said it was dead), and the two empty `pm.css`/`qualitychecker.css`.
+        Confirmed by grepping every `import`/`@import` across `frontend/src`. Deleted outright.
+      - **About 40 of the 106 hits were false positives**, kept: classes built at runtime
+        (`.wb-status--*` via `taskStatusClass`, `.att-status-badge.late`/`.half-day`
+        (`Attendance.jsx`), `.priority-high`/`.priority-text-high` via `priority-${...}`), and
+        names that only ever occur inside a comment (`.details-`, `.job-order-`, `.progress-`,
+        `.pv-`, `.jod-`, `.qc-pv-`, `.admin-stat-card`, `.rework`, and the item-34/37 tombstone
+        text itself).
+    - **What came out of the three live files**, each left as a one-line tombstone comment
+      naming what was there and why (same convention as items 34/37 — and checked every one for a
+      stray `*/` this time, since writing exactly that bug into one of these comments is how item
+      34 broke its own build): `globals.css`'s old `.admin-notifications-*`/
+      `.admin-notification-*`/`.admin-btn` block and the whole "NOTIFICATION SECTION (GLOBAL)"
+      `.notification-*` family (both superseded by `NotificationList.jsx`'s `.notif-*` classes),
+      plus `.jod-ov-scroll-icons` and `.qc-pv-col-left`; `admin.css`'s
+      `.create-account .placeholder-box`, the old `.worker-modal*`/`.worker-form-*`/
+      `.worker-select-*`/`.worker-view-*` family (superseded by the live `.add-worker-modal`),
+      `.ph-item.active-row` (`ProjectHistory.jsx` only ever renders `"ph-item clickable-row"`),
+      and `.notif-title-group`/`.notif-time` (their live `.notif-*` siblings stay); `worker.css`'s
+      `.wjo-progress-bar-wrapper`/`-bar`/`-fill`/`-text` and their mobile overrides
+      (`.wjo-progress-header` is live and stays), and the mobile `.dropdown-menu`/
+      `.dropdown-options-container` rule, whose own Tagalog comment already said to replace it
+      with the real class name and nothing ever did.
+    - **Left alone on purpose:** the `@keyframes fadeIn` defined identically in both `admin.css`
+      and `globals.css` — a real duplicate, not dead code, since both copies are referenced by a
+      live rule in their own file. Element and ID selectors were out of scope (the scan is
+      class-based only, and there are no ID selectors in this codebase anyway).
+    - **New guard: `frontend/src/tests/stylesheetImports.test.js`.** A class-name scan can't catch
+      "a whole file nobody imports" — nothing inside `account.css`/`dashboard.css` was the bug,
+      the missing import was. This test walks `src/css`, collects every `import '...css'`
+      specifier from non-test `.js`/`.jsx` under `src`, and asserts every file under `src/css` is
+      imported somewhere. `fontConsistency.test.js`'s allowlist lost its `"Font Awesome 6 Free"`
+      entry, since `account.css` was the only file that declared it and `account.css` is gone —
+      the real icon font (`main.jsx`'s `@fortawesome/fontawesome-free` import) is unaffected.
+    - **Verification.** `npm test`: 284/284 (283 + the new guard). `npm run lint --max-warnings 0`:
+      clean. `npm run build`: clean; built CSS dropped from 183.04 kB to 175.38 kB, JS unchanged
+      at 399.62 kB (no `.jsx` touched). Distinct hex-color literals across `src/css` (same
+      grep-based count as DESIGN.md §4's "literal tail") dropped from 95 to 81, 14 gone with the
+      dead rules.
+      - **Computed-style diff, not just a visual spot-check.** Built the pre-item-39 tree and the
+        post-item-39 tree to two scratchpad output directories (outside `frontend/`, so ESLint
+        never sees them — item 38's lesson), served both with a tiny static file server (`vite
+        preview` won't serve an arbitrary external directory), and for every role/route in the
+        item-33 harness's route list, at 1280px and 360px, dumped every element's
+        `getComputedStyle` keyed by a DOM path and diffed the two JSON dumps. First pass showed 41
+        differences, all `opacity`/`height`/`boxShadow` noise from in-flight CSS animations
+        (`fadeInUp`/`orbFloat`/`goldPulse`) and a font-load race affecting native `<select>`
+        height by 1–2px. Re-ran with `prefers-reduced-motion: reduce` emulated and an explicit
+        `document.fonts.ready` wait: down to 23 diffs, all still the same `<select>`-height/
+        `boxShadow` shape. To rule out the CSS change itself, swept the **same** post-item-39
+        build against itself twice — the identical shape of diff reappeared comparing a build to
+        itself, which is conclusive: it's rendering non-determinism (native control metrics,
+        sub-pixel animation sampling), not anything this item changed. **Zero diffs are
+        attributable to the CSS deletions.**
+      - Re-ran the item-33 axe harness against the rebuilt `dist`: 0 violations, 51 `incomplete`
+        — identical to item 38's post-fix count, confirming no behavioral regression.
+    - `git diff --stat` across both code commits showed only the expected CSS/test files — no
+      `package.json`/lockfile changes, since this item touched no dependency.
+    - Pushed both commits plus docs, watched CI go green.
+    - **Still open after this:** the declined role-shell consolidation, the `braces` advisory (no
+      fix exists upstream yet), and the legacy `worker_details.photo` column drop (item 21),
+      which needs the user to say which real environments exist before it's safe.
