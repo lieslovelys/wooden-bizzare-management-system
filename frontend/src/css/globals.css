@@ -1000,93 +1000,10 @@ html, body {
   margin-bottom: 32px;
 }
 
-.admin-notifications-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 24px;
-}
-
-.admin-notifications-icon {
-  font-size: 1.75rem;
-  color: var(--color-accent-text);
-}
-
-.admin-notifications-title {
-  color: var(--color-accent-text);
-  font-size: 1.5rem;
-  font-weight: bold;
-}
-
-.admin-notifications-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  margin-bottom: 32px;
-}
-
-.admin-notification-item {
-  display: flex;
-  align-items: center;
-  background: #c29236;
-  color: var(--color-text-inverse);
-  border-radius: 6px;
-  overflow: hidden;
-}
-
-.admin-notification-accent {
-  width: 12px;
-  align-self: stretch;
-  background: var(--color-accent-text);
-}
-
-.admin-notification-content {
-  flex: 1;
-  padding: 12px 20px;
-}
-
-.admin-notification-title {
-  font-weight: bold;
-  font-size: 1.125rem;
-}
-
-.admin-notification-desc {
-  font-size: 0.875rem;
-  opacity: 0.9;
-}
-
-.admin-notification-delete {
-  padding: 0 24px;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  color: var(--color-text-inverse);
-  font-size: 1.5rem;
-  opacity: 0.85;
-  transition: opacity 0.15s;
-}
-
-.admin-notification-delete:hover {
-  opacity: 1;
-}
-
-.admin-notification-buttons {
-  display: flex;
-  justify-content: flex-end;
-  gap: 16px;
-}
-
-.admin-btn {
-  background: var(--color-accent-text);
-  color: var(--color-text-inverse);
-  padding: "10px 32px";
-  border-radius: 24px;
-  font-weight: bold;
-  font-size: 0.875rem;
-  cursor: pointer;
-  border: none;
-  font-family: inherit; /* ARCHITECTURE_REVIEW.md item 36 — a button, doesn't inherit by default */
-}
+/* ARCHITECTURE_REVIEW.md item 39 — the old .admin-notifications- / .admin-notification- /
+   .admin-btn block used to live here. No JSX reference anywhere (the live notification UI is
+   NotificationList.jsx's .notif- family, below); deleted as dead code, same confirmation
+   method as item 34. */
 /* =========================================
    INFO CARD STYLES (GOLD GRADIENT THEME)
 ========================================= */
@@ -1175,138 +1092,11 @@ html, body {
   margin-top: 10px;
 }
 
-/* =========================================
-   NOTIFICATION SECTION (GLOBAL)
-========================================= */
-.notification-section {
-  padding: 40px;
-  flex: 1;
-  min-height: 100vh; /* fallback */
-  min-height: 100dvh; /* DESIGN.md §3.6 */
-  background: var(--color-surface);
-}
-
-.notification-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 28px;
-}
-
-.notification-icon {
-  font-size: 1.625rem;
-  color: var(--color-accent-text);
-}
-
-.notification-title {
-  margin: 0;
-  font-size: 1.75rem;
-  font-weight: 900;
-  color: var(--color-accent-text);
-  font-family: 'Playfair Display', serif; /* ARCHITECTURE_REVIEW.md item 36 — a section title */
-}
-
-.notification-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-bottom: 32px;
-}
-
-.notification-item {
-  display: flex;
-  align-items: center;
-  background: #a08020;
-  border-radius: 6px;
-  overflow: hidden;
-}
-
-.notification-item-read {
-  background: var(--color-surface);
-  border: 1.5px solid var(--color-accent-dark);
-}
-
-.notification-accent {
-  width: 12px;
-  align-self: stretch;
-  background: var(--color-accent-text);
-}
-
-.notification-item-read .notification-accent {
-  background: var(--color-accent-text);
-}
-
-.notification-content {
-  flex: 1;
-  padding: 14px 20px;
-}
-
-.notification-item-title {
-  font-weight: 900;
-  font-size: 0.9375rem;
-  color: var(--color-text-inverse);
-  margin-bottom: 3px;
-}
-
-.notification-item-read .notification-item-title {
-  color: var(--color-accent-text);
-}
-
-.notification-item-desc {
-  font-size: 0.875rem;
-  color: #f0e8c8;
-}
-
-.notification-item-read .notification-item-desc {
-  color: var(--color-accent-text);
-}
-
-.notification-delete-btn {
-  padding: 0 24px;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  color: var(--color-text-inverse);
-  font-size: 1.25rem;
-  opacity: 0.85;
-  transition: opacity 0.15s;
-}
-
-.notification-item-read .notification-delete-btn {
-  color: var(--color-accent-dark);
-}
-
-.notification-delete-btn:hover {
-  opacity: 1;
-}
-
-.notification-empty {
-  font-size: 0.9375rem;
-  color: var(--color-accent-dark);
-  padding: 20px 0;
-}
-
-.notification-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 14px;
-}
-
-.notification-btn {
-  background: var(--color-accent-text);
-  color: var(--color-text-inverse);
-  border: none;
-  border-radius: 8px;
-  padding: 12px 28px;
-  font-size: 15;
-  cursor: pointer;
-  font-family: inherit; /* ARCHITECTURE_REVIEW.md item 36 — a button, doesn't inherit by default */
-  font-weight: 700;
-}
-
-.notification-btn:hover {
-  background: var(--color-accent-text);
-}
+/* ARCHITECTURE_REVIEW.md item 39 — the whole "NOTIFICATION SECTION (GLOBAL)" .notification-
+   family used to live here (.notification-section/-header/-icon/-title/-list/-item/-accent/
+   -content/-delete-btn/-empty/-actions/-btn). No JSX reference anywhere; the live notification
+   UI is NotificationList.jsx's .notif- family. Deleted as dead code, same confirmation method
+   as item 34. */
 
 /* ============================================================
    ATTENDANCE MODULE (PREMIUM MODERN GRID & CARDS)
@@ -2666,10 +2456,7 @@ html, body {
     color: var(--color-accent-text); /* Dark Brown */
 }
 
-.jod-ov-scroll-icons {
-    font-size: 0.85rem;
-    color: var(--color-accent-dark); /* DESIGN.md §3 rule 10 — icon fill, 3:1 bar */
-}
+/* ARCHITECTURE_REVIEW.md item 39 — .jod-ov-scroll-icons was dead, no JSX reference. */
 
 .jod-ov-scroll-area {
     max-height: 150px;
@@ -3218,10 +3005,7 @@ html, body {
     box-shadow: 0 6px 15px rgba(var(--color-accent-rgb), 0.1); /* Soft gold shadow */
 }
 
-/* Column Alignments (Kung kailangan mong i-left align ang specific columns) */
-.qc-pv-col-left {
-    text-align: left;
-}
+/* ARCHITECTURE_REVIEW.md item 39 — .qc-pv-col-left was dead, no JSX reference. */
 
 /* Responsive adjustment */
 @media (max-width: 768px) {

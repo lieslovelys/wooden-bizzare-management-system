@@ -66,17 +66,8 @@
   box-sizing: border-box;
 }
 
-/* --- EMPTY / PLACEHOLDER BOX --- */
-.create-account .placeholder-box {
-  padding: 60px 40px;
-  text-align: center;
-  color: var(--color-text-muted);
-  background-color: #fafafa; /* Very light gray background */
-  border: 2px dashed var(--color-border); /* Modern subtle dashed line */
-  border-radius: 12px;
-  font-weight: 500;
-  font-size: 1rem;
-}
+/* ARCHITECTURE_REVIEW.md item 39 — .create-account .placeholder-box was dead, no JSX
+   reference. */
 
 
 /* =========================================
@@ -687,237 +678,10 @@
 }
 
 
-/* Modals */
-.worker-modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-}
-
-.worker-modal {
-  background: var(--color-surface-cream);
-  border-radius: 16px;
-  padding: 36px 40px;
-  width: 560px;
-  box-shadow: 0 8px 40px rgba(0,0,0,0.18);
-  border: 1.5px solid var(--color-accent);
-}
-
-.worker-modal-title {
-  margin: 0 0 28px;
-  font-size: 1.25rem;
-  color: var(--color-accent-text);
-  font-family: inherit;
-}
-
-.worker-form-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 18px 24px;
-}
-
-.worker-form-label {
-  font-size: 0.8125rem;
-  color: var(--color-accent-text);
-  font-weight: 600;
-  display: block;
-  margin-bottom: 6px;
-}
-
-.worker-form-input {
-  width: 100%;
-  border-radius: 24px;
-  border: 1.5px solid var(--color-accent-dark);
-  padding: 10px 16px;
-  font-size: 0.875rem;
-  font-family: inherit;
-  background: var(--color-surface);
-  box-sizing: border-box;
-}
-
-.worker-form-select {
-  width: 100%;
-  border-radius: 24px;
-  border: 1.5px solid var(--color-accent-dark);
-  padding: 10px 16px;
-  font-size: 0.875rem;
-  font-family: inherit;
-  background: var(--color-surface);
-  appearance: none;
-  cursor: pointer;
-}
-
-.worker-select-arrow {
-  position: absolute;
-  right: 14px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--color-accent-dark);
-  pointer-events: none;
-}
-
-.worker-select-wrapper {
-  position: relative;
-}
-
-.worker-form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 14px;
-  margin-top: 28px;
-}
-
-.worker-form-cancel-btn {
-  background: var(--color-accent-text);
-  color: var(--color-text-inverse);
-  border: none;
-  border-radius: 24px;
-  padding: 10px 28px;
-  font-size: 0.875rem;
-  cursor: pointer;
-  font-family: inherit;
-  font-weight: 600;
-}
-
-.worker-form-submit-btn {
-  background: var(--color-accent-text);
-  color: var(--color-text-inverse);
-  border: none;
-  border-radius: 24px;
-  padding: 10px 28px;
-  font-size: 0.875rem;
-  cursor: pointer;
-  font-family: inherit;
-  font-weight: 600;
-}
-
-/* View Worker Modal */
-.worker-view-modal {
-  background: var(--color-surface-cream);
-  border-radius: 16px;
-  padding: 36px 40px;
-  width: 580px;
-  box-shadow: 0 8px 40px rgba(0,0,0,0.18);
-  border: 1.5px solid var(--color-accent);
-}
-
-.worker-view-header {
-  display: flex;
-  gap: 20px;
-  align-items: stretch;
-  margin-bottom: 28px;
-}
-
-.worker-view-avatar {
-  width: 100px;
-  height: 100px;
-  border-radius: 8;
-  background: var(--color-accent);
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 2.25rem;
-  /* item 31 — 36px/bold clears the large-text bar (3:1), but white on this gold fill only
-     measures ~2.3:1 even against that lower bar; --color-text-on-accent is the dark-text pair. */
-  color: var(--color-text-on-accent);
-  font-weight: bold;
-}
-
-.worker-view-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.worker-view-info-box {
-  background: var(--color-accent-text);
-  color: var(--color-text-inverse);
-  border-radius: 8px;
-  padding: 10px 18px;
-}
-
-.worker-view-name {
-  font-weight: bold;
-  font-size: 1.0625rem;
-  letter-spacing: 0.5;
-}
-
-.worker-view-id {
-  font-size: 0.8125rem;
-  opacity: 0.8;
-  margin-top: 2;
-}
-
-.worker-view-role {
-  font-weight: bold;
-  font-size: 0.9375rem;
-}
-
-.worker-view-type {
-  font-size: 0.8125rem;
-  opacity: 0.85;
-}
-
-.worker-view-projects-title {
-  font-size: 0.9375rem;
-  color: var(--color-accent-text);
-  font-weight: bold;
-  margin-bottom: 12px;
-}
-
-.worker-view-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.worker-view-table th {
-  padding: 8px 16px;
-  text-align: center;
-  color: var(--color-accent-dark);
-  font-size: 0.8125rem;
-  border-bottom: 1.5px solid var(--color-accent);
-  font-weight: 600;
-}
-
-.worker-view-table td {
-  padding: 12px 16px;
-  text-align: center;
-  font-weight: bold;
-  font-size: 0.875rem;
-  color: var(--color-accent-text);
-  border-bottom: 1px solid var(--color-accent-light);
-}
-
-.worker-view-empty {
-  padding: 16px;
-  text-align: center;
-  color: var(--color-accent-dark);
-  font-size: 0.8125rem;
-}
-
-.worker-view-cancel {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 24px;
-}
-
-.worker-view-cancel button {
-  background: var(--color-accent-dark);
-  color: var(--color-text-inverse);
-  border: none;
-  border-radius: 24px;
-  padding: 10px 32px;
-  font-size: 0.875rem;
-  cursor: pointer;
-  font-family: inherit;
-  font-weight: 600;
-}
+/* ARCHITECTURE_REVIEW.md item 39 — the old .worker-modal- / .worker-form- / .worker-select- /
+   .worker-view- family (an Add Worker / View Worker modal pair) used to live here. No JSX
+   reference anywhere; superseded by .add-worker-modal below, which is live and stays. Deleted
+   as dead code, same confirmation method as item 34. */
 
 /* =========================================
    CUSTOM MODAL POP-UPS
@@ -1499,13 +1263,8 @@
     box-shadow: 0 6px 15px rgba(var(--color-accent-rgb), 0.1);
 }
 
-/* Active State */
-.ph-item.active-row {
-    background-color: var(--color-surface-cream);
-    border-color: var(--color-accent);
-    box-shadow: 0 4px 12px rgba(var(--color-accent-rgb), 0.15);
-    color: var(--color-accent-text); /* DESIGN.md §3 rule 10 — normal-size text needs 4.5:1 */
-}
+/* ARCHITECTURE_REVIEW.md item 39 — .ph-item.active-row was dead; ProjectHistory.jsx only ever
+   renders "ph-item clickable-row". */
 
 .ph-project-name {
     font-weight: 700;
@@ -1829,11 +1588,8 @@
     gap: 10px;
 }
 
-.notif-title-group {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
+/* ARCHITECTURE_REVIEW.md item 39 — .notif-title-group was dead, no JSX reference (the live
+   .notif-title-row/.notif-title siblings stay). */
 
 .notif-title {
     font-size: 1.1rem;
@@ -1841,12 +1597,7 @@
     color: var(--color-text);
 }
 
-/* Timestamp (Optional: Kung idadagdag mo sa React mo) */
-.notif-time {
-    font-size: 0.85rem;
-    color: #a0a0a0;
-    font-weight: 500;
-}
+/* ARCHITECTURE_REVIEW.md item 39 — .notif-time was dead, no JSX reference. */
 
 /* The Gold Dot */
 .unread-dot {

@@ -542,11 +542,8 @@
     font-weight: 700; 
 }
 
-/* Sleek Progress Bar */
-.wjo-progress-bar-wrapper { display: flex; align-items: center; gap: 15px; }
-.wjo-progress-bar { width: 250px; height: 10px; background-color: var(--color-border); border-radius: 20px; overflow: hidden; }
-.wjo-progress-fill { height: 100%; background: linear-gradient(to right, var(--color-accent), var(--color-accent-light)); border-radius: 20px; transition: width 0.5s ease; }
-.wjo-progress-text { font-size: 0.95rem; font-weight: 700; color: var(--color-accent-text); }
+/* ARCHITECTURE_REVIEW.md item 39 — .wjo-progress-bar-wrapper/-bar/-fill/-text were dead, no JSX
+   reference (.wjo-progress-header above is live and stays). */
 
 /* Modern Clean Table */
 .wjo-table {
@@ -698,13 +695,8 @@
         padding: 20px 15px;
     }
 
-    .wjo-progress-bar-wrapper {
-        width: 100%;
-    }
-
-    .wjo-progress-bar {
-        width: 100%;
-    }
+    /* ARCHITECTURE_REVIEW.md item 39 — the .wjo-progress-bar-wrapper/-bar mobile overrides were
+       dead along with the base rules above. */
 
     /* Table → mobile cards: now the shared `.wb-card-table` utility (DESIGN.md §7#10,
        css/globals.css) instead of a one-off `.wjo-table`-only version — WorkerJobOrderDetail.jsx
@@ -726,13 +718,7 @@
         overflow: hidden;
     }
 
-    /* KUNG CUSTOM DROPDOWN ITO (Gumagamit ng absolute positioning) */
-    .dropdown-menu, 
-    .dropdown-options-container { /* Palitan mo ng tamang class name kung custom 'to */
-        width: 100%;
-        max-width: 100vw;
-        box-sizing: border-box;
-        left: 0;
-        right: 0;
-    }
+    /* ARCHITECTURE_REVIEW.md item 39 — .dropdown-menu/.dropdown-options-container was dead, no
+       JSX reference anywhere (its own Tagalog comment already said "replace with the right
+       class name if this is custom", and nothing ever did). */
 }
