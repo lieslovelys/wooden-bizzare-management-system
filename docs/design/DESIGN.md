@@ -98,6 +98,16 @@ imports it first. New UI work references the token, not the literal — §3 rule
 | Semantic: info | `#2b4c7e` | `--color-info` (+ `-rgb`) | In-progress states. |
 | Semantic: warning | `#9a4b00` | `--color-warning` (+ `-rgb`) | ARCHITECTURE_REVIEW.md item 33 — "medium"/"high" priority oranges. Not a literal-to-token rename: the two literals folding onto it (`#f57c00`, `#e67e22`) both failed AA as foreground text (~2.4-2.8:1 depending on site), so this is a new, deliberately darker shade of the same hue rather than either original value — ~6.2:1 on white, ~5.4:1 inside a 10%-tint badge. |
 
+**Task-status palette** (ARCHITECTURE_REVIEW.md item 35) — one shared colour per `task_status`
+value, via `utils/status.js`'s `taskStatusClass()` and `globals.css`'s `.wb-status--*` family,
+replacing three independent, gapped per-component mappings for the same enum:
+Assigned → gold tint (10%), In Progress → info tint (10%), For QA → `--color-warning` tint (10%),
+Approved → success tint (12%), Repair/Rework → danger tint (6%), anything unmapped → a solid
+`--color-border` neutral. Each tint is layered over an explicitly opaque `--color-surface`
+rather than a plain translucent fill, so the badge's real contrast doesn't depend on which row
+background (including the cream hover/active state several tables have) happens to sit behind
+it — see that item for the ~4.20:1 cream-hover failure this caught before it shipped.
+
 **Consolidation map** — the drift each token's migration folded onto it (see item 7 in §7 for how
 this was done and verified):
 - `--color-accent`: `#D1AA3A`, `#d4af37`, `#d4b54e`, `#c8b060`, `#c8b840`, `#bfa15f`, `#b8a040`,

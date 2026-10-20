@@ -1852,3 +1852,71 @@ Not urgent, but each of these increases the cost of every future change until ad
     - **Still open after this:** the declined role-shell consolidation, the ~150 other
       possibly-dead selectors noted above (not started), and item 35 (status-badge colors) and
       item 36 (font consistency) — both approved as later phases of this same multi-part request.
+
+35. **UI: give every `task_status` value one shared colour.** Closes the distinguishability gap
+    item 33 recorded (`.jod-status`, `.wjo-badge`, `.ph-badge-pending` conflating several distinct
+    statuses into one undifferentiated look) rather than leaving it as a "design decision for
+    later" — the second phase of the same multi-part request item 34 opened.
+    - **Three independent, gapped mappings for one enum.** `task_status` is
+      `Assigned, In Progress, For QA, Rework, Approved, Repair`
+      (`backend/src/schemas/common.js`). `worker/WorkerJobOrderDetail.jsx`'s `.wjo-status` had no
+      colour at all for `Repair` (only the dead `.rework` class did, since the live status string
+      is `Repair`, not `Rework`); `worker/WorkerJobOrder.jsx`'s `.wjo-badge` gave `Assigned`,
+      `In Progress`, `For QA`, and `Approved` the identical gold tint and only singled out
+      `Repair`; `globals/JobOrderDetails.jsx`'s `.jod-status` only ever coloured `In Progress`
+      (`.done` was dead — no live status is ever `"done"`). `admin/ProjectHistory.jsx`'s
+      "not finished yet" badge (`ph-badge-pending`) gave every one of those four statuses the same
+      flat cream look instead of distinguishing them at all. All three components also built their
+      class name with `status.toLowerCase().replace(' ', '-')`, which only replaces the *first*
+      space — latent, since no current status has two.
+    - **One helper, one palette.** `utils/status.js`'s `taskStatusClass(status)` maps the enum
+      explicitly (so the first-space bug can't recur) and returns a shared `wb-status wb-status--*`
+      pair; `Rework` and `Repair` share the `repair` modifier (both mean "sent back"), and anything
+      unmapped — `null`, `''`, an unrecognized string — gets `neutral` rather than silently
+      rendering with no class. The six modifiers (`globals.css`, next to `.wb-card-table`) reuse
+      `contrast.test.js`'s existing `TINT_PAIRS` opacities: accent/gold at 10% for Assigned, info
+      at 10% for In Progress, the item-33 `--color-warning` at 10% for For QA, success at 12% for
+      Approved, danger at 6% for Repair/Rework, and a solid `--color-border` fill for `neutral`.
+      `.wjo-status`, `.wjo-badge`, `.jod-status`, and `ph-badge`'s default case now carry only pill
+      shape (padding/radius/font-size/min-width); colour comes from whichever `.wb-status--*`
+      class `taskStatusClass()` adds alongside it. `JobOrderDetails.jsx`'s now-unused
+      `getStatusClass` helper and `admin.css`'s dead `.ph-badge-pending` rule were deleted outright
+      rather than left in place unreferenced.
+    - **A real contrast bug the badges' own translucency created, caught before it shipped.**
+      Each `.wb-status--*` tint is layered as `linear-gradient(rgba(...), rgba(...)), var(--color-surface)`
+      instead of a plain `rgba()` fill, so the pill always composites against opaque white
+      regardless of the row underneath it. Several of these rows (`.wjo-item`, `.jod-table tr`,
+      `.wjo-table tr`) turn `--color-surface-cream` on hover or when active; a danger tint computed
+      by hand against that cream backdrop (not `--color-surface`) measured only ~4.20:1, under
+      4.5:1 — a real, row-state-dependent failure axe's static sweep structurally cannot see, since
+      it never fires `:hover`. The gradient-over-opaque-white fix sidesteps the problem rather than
+      hand-tuning a second opacity for the cream case, and is also what makes `contrast.test.js`'s
+      `TINT_PAIRS` math (which composites each tint over `--color-surface` specifically) true for
+      these pills in *every* row state they can appear in, not just the resting one.
+    - **Filter pills aligned to match.** `worker.css`'s `.wjo-filter-btn.repair`/`.for-qa` used to
+      be a dark-espresso and golden-brown solid fill respectively — FR-9's own comment claimed
+      these "matched `.wjo-status`'s hues," which was never true, since `.wjo-status` had no colour
+      for Repair at all. Both now use the same `--color-danger`/`--color-warning` solid fills the
+      palette above uses, with the base rule's white text measuring ~4.98:1 and ~6.21:1.
+    - **Palette choices, open to the word "flagged as a one-line change" rather than decided
+      silently:** Repair/Rework landing on red, and For QA landing on the item-33 warning-amber,
+      are both one-line changes in `globals.css`'s `.wb-status--repair`/`--for-qa` if a different
+      pairing (the old espresso, the old cream) is preferred.
+    - **Tests.** A new `utils/status.test.js` covers every enum value, the `Rework`→`repair`
+      alias, and the `neutral` fallback for `null`/`''`/an unrecognized string.
+      `WorkerJobOrderDetail.test.jsx`'s existing Repair-reason test, `WorkerJobOrder.test.jsx`,
+      `JobOrderDetails.test.jsx`, and `ProjectHistory.test.jsx` each gained an assertion that a
+      Repair/For QA/Approved row renders with its matching `wb-status--*` class — 260 → 276 tests.
+      `contrast.test.js` gained the two filter-pill solid pairs
+      (`--color-text-inverse` on `--color-danger`/`--color-warning`) and the one `TINT_PAIRS` case
+      the existing set didn't cover (`--color-accent-text` on the accent tint, for Assigned).
+    - **Verification.** `npm test` 276/276; `npm run lint` clean at `--max-warnings 0`;
+      `npm run build` clean. Re-ran the scratchpad axe-core sweep (item 33's harness, whose
+      fixtures already exercise every `task_status` value) against the rebuilt `dist`: 0
+      violations, `incomplete` up from item 33's final 47 to 52 — exactly the five new
+      `.wb-status--*` pills, each flagged only because axe can't auto-resolve a `linear-gradient`
+      background, not because any of them actually fail; `contrast.test.js`'s `TINT_PAIRS`/`PAIRS`
+      math is what actually confirms each one passes. Pushed and watched CI go green.
+    - **Still open after this:** the declined role-shell consolidation, the ~150 possibly-dead
+      selectors item 34 recorded, and item 36 (font consistency) — the last approved phase of this
+      multi-part request.
