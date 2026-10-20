@@ -944,7 +944,6 @@
     padding: 30px;
     border-radius: 12px;
     text-align: center;
-    font-family: Arial, sans-serif;
     box-shadow: 0 5px 20px rgba(0,0,0,0.2);
     max-width: 400px;
     border-top: 6px solid var(--color-accent); /* Gold accent */
@@ -1008,7 +1007,6 @@
 .worker-list-container {
   width: 100%;
   padding: 20px;
-  font-family: Arial, sans-serif;
 }
 
 /* Search Header */
@@ -1035,7 +1033,7 @@
   color: var(--color-text);
   padding: 10px;
   font-size: 1rem;
-  font-family: Arial, sans-serif;
+  font-family: inherit; /* ARCHITECTURE_REVIEW.md item 36 — an input, doesn't inherit by default */
 }
 
 .search-bar input::placeholder {
@@ -1046,10 +1044,10 @@
 .filter-dropdown {
   padding: 10px 40px 10px 15px; /* Dinagdagan natin ng 40px sa right para hindi matakpan ang text ng arrow */
   border: 1px solid var(--color-accent);
-  border-radius: 25px; 
+  border-radius: 25px;
   color: #666;
   font-size: 1rem;
-  font-family: Arial, sans-serif;
+  font-family: inherit; /* ARCHITECTURE_REVIEW.md item 36 — a select, doesn't inherit by default */
   background-color: white;
   cursor: pointer;
 
@@ -1178,7 +1176,7 @@
   border-radius: 5px;
   cursor: pointer;
   font-size: 1rem;
-  font-family: Arial, sans-serif;
+  font-family: inherit; /* ARCHITECTURE_REVIEW.md item 36 — a button, doesn't inherit by default */
 }
 
 .btn-add-worker:hover {
@@ -1235,13 +1233,12 @@
   background-color: white;
   width: 100%;
   max-width: 700px;
-  max-height: 85vh; 
+  max-height: 85vh;
   display: flex;
-  flex-direction: column; 
+  flex-direction: column;
   margin: auto; /* Extra reinforcement para pumagitna */
   border-radius: 8px;
   overflow: hidden;
-  font-family: Arial, sans-serif;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   transform: translateX(150px);
 }
@@ -1278,7 +1275,7 @@
   padding: 10px 15px;
   border: 1px solid #ccc;
   border-radius: 8px !important; /* Nilagyan natin ng !important para hindi ma-override ng ibang CSS */
-  font-family: Arial, sans-serif;
+  font-family: inherit; /* ARCHITECTURE_REVIEW.md item 36 — an input, doesn't inherit by default */
   font-size: 0.95rem;
   background-color: white;
   width: 100%;
@@ -1294,7 +1291,7 @@
   padding: 10px 40px 10px 15px;
   border: 1px solid #ccc;
   border-radius: 25px !important; /* !important para laging maging oval */
-  font-family: Arial, sans-serif;
+  font-family: inherit; /* ARCHITECTURE_REVIEW.md item 36 — a select, doesn't inherit by default */
   font-size: 0.95rem;
   background-color: white;
   width: 100%;

@@ -3,7 +3,6 @@
    ========================================= */
 
 .inventory-container {
-    font-family: Arial, sans-serif;
     color: var(--color-text);
     padding: 20px;
 }
@@ -339,8 +338,7 @@
     border-radius: 20px;
     border: 1px solid #8e8055;
     box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-    font-family: serif;
-    
+
     /* --- MGA BAGONG LINYA PARA SA SCROLLING --- */
     max-height: 85vh; /* Limitahan ang taas hanggang 85% lang ng screen mo */
     overflow-y: auto; /* Papayagan na magka-scrollbar pababa kapag sumobra na ang laman */
@@ -377,7 +375,6 @@
     display: flex;
     flex-direction: column;
     gap: 20px;
-    font-family: Arial, sans-serif;
 }
 
 .form-group {

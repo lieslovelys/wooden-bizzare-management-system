@@ -8,7 +8,6 @@
     box-sizing: border-box;
     min-height: 100vh; /* fallback */
     min-height: 100dvh; /* DESIGN.md §3.6 */
-    font-family: Arial, sans-serif;
 }
 
 /* Lahat ng nasa ibaba ay gagana lang KUNG nasa loob sila ng .signup-wrapper */
@@ -26,13 +25,15 @@
     /* DESIGN.md §3 rule 10 — 1.1rem/900 doesn't clear the large-text contrast exemption
        (needs >=18.66px bold; this is 17.6px), so it needs the 4.5:1 normal-text bar. */
     color: var(--color-accent-text);
+    /* ARCHITECTURE_REVIEW.md item 36 — this property used to be set twice on this rule; a
+       second, later Georgia declaration silently overrode this one, so the heading had been
+       rendering in Georgia the whole time despite the comment above explaining this choice. */
     font-family: 'Playfair Display', serif;
     font-size: 1.1rem;
     font-weight: 900;
     margin-top: 0;
     margin-bottom: 30px;
     text-transform: uppercase;
-    font-family: Georgia, 'Times New Roman', Times, serif;
 }
 
 .signup-wrapper .signup-form {
@@ -67,7 +68,7 @@
     border: 1px solid #777; 
     border-radius: 15px;
     font-size: 1rem;
-    font-family: Arial, sans-serif;
+    font-family: inherit; /* ARCHITECTURE_REVIEW.md item 36 — input/select, don't inherit by default */
     background-color: white;
 }
 
@@ -96,7 +97,7 @@
     padding: 12px 25px;
     font-size: 1rem;
     cursor: pointer;
-    font-family: Georgia, 'Times New Roman', Times, serif;
+    font-family: inherit; /* ARCHITECTURE_REVIEW.md item 36 — a button, doesn't inherit by default */
 }
 
 .signup-wrapper .submit-group button:hover {

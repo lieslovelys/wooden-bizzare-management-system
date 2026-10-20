@@ -1,3 +1,8 @@
+/* ARCHITECTURE_REVIEW.md item 36 — confirmed never imported by any .jsx/.js (grep -rln
+   "dashboard.css" across frontend/src comes back empty), so this file has no live effect. The
+   font-family fixes below are cosmetic-only, included anyway since they're trivial one-line
+   edits — same precedent as item 33's .wjo-status.rework. Not re-opening item 34's separate
+   "~150 possibly-dead selectors" question; recorded here, not acted on further. */
 .admin-dashboard {
   /* Stats Grid */
   .stats-grid {
@@ -19,7 +24,7 @@
   }
 
   .stat-card h3 {
-    font-family: 'serif';
+    font-family: 'Playfair Display', serif; /* ARCHITECTURE_REVIEW.md item 36 */
     font-size: 1.125rem;
     color: black;
   }
@@ -51,7 +56,7 @@
 
   /* Notifications */
   .notif-section h2 {
-    font-family: 'serif';
+    font-family: 'Playfair Display', serif; /* ARCHITECTURE_REVIEW.md item 36 */
     color: var(--color-accent-text);
     display: flex;
     align-items: center;
