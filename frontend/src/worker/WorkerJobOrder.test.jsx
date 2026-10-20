@@ -78,6 +78,16 @@ describe('WorkerJobOrder', () => {
     );
   });
 
+  it('gives a Repair task its own status colour (ARCHITECTURE_REVIEW.md item 35)', async () => {
+    api.get.mockResolvedValue(pageOf([{ ...TASK, status: 'Repair' }]));
+    const { container } = renderPage();
+    await screen.findByText('Dining Set');
+
+    const badge = container.querySelector('.wjo-badge');
+    expect(badge).toHaveTextContent('Repair');
+    expect(badge).toHaveClass('wb-status--repair');
+  });
+
   it('pressing Enter on a task row opens its detail, same as a click (DESIGN.md §8 keyboard operability)', async () => {
     api.get.mockResolvedValue(pageOf([TASK]));
     renderPage();

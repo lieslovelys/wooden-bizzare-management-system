@@ -57,6 +57,8 @@ describe('WorkerJobOrderDetail', () => {
         expect(screen.getByText(/from Ana Reyes/)).toBeInTheDocument();
         expect(screen.queryByText('Not this one.')).not.toBeInTheDocument();
         expect(screen.getByText('WORK REPAIR')).toBeInTheDocument();
+        // ARCHITECTURE_REVIEW.md item 35 — Repair used to have no colour of its own here at all.
+        expect(screen.getAllByText('Repair')[0]).toHaveClass('wb-status--repair');
     });
 
     it('shows a disabled "APPROVED" button once approved', async () => {

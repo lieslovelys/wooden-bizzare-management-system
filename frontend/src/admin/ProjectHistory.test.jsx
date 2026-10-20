@@ -101,6 +101,29 @@ describe('ProjectHistory', () => {
     expect(screen.getAllByText('Early', { selector: 'span' })).toHaveLength(2);
   });
 
+  it('gives an unfinished task its own status colour instead of one flat "pending" style (ARCHITECTURE_REVIEW.md item 35)', async () => {
+    api.get.mockImplementation((url) => {
+      if (url.startsWith('/api/projects/history')) return Promise.resolve(HISTORY_PAGE);
+      if (url === '/api/job-orders/3') return Promise.resolve(PROJECT_DETAILS);
+      if (url === '/api/job-orders/3/assignments') {
+        return Promise.resolve({
+          success: true,
+          data: [
+            { assignment_id: 1, stage_name: 'Cutting', first_name: 'Juan', last_name: 'Dela Cruz', start_date: '2026-01-02', date_completed: null, due_date: null, status: 'For QA' },
+          ],
+        });
+      }
+      return Promise.resolve({ success: true, data: [] });
+    });
+
+    render(<ProjectHistory />);
+    await screen.findByText('Cabinet Set');
+    fireEvent.click(screen.getByText('Cabinet Set'));
+
+    const badge = await screen.findByText('For QA', { selector: 'span' });
+    expect(badge).toHaveClass('wb-status--for-qa');
+  });
+
   it('goes back to the list', async () => {
     render(<ProjectHistory />);
     await screen.findByText('Cabinet Set');

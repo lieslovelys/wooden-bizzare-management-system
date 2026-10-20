@@ -89,6 +89,8 @@ const PAIRS = [
   ['--color-focus', '--color-surface-cream', 3, 'the keyboard focus ring on cream (item 30)'],
   ['--color-warning', '--color-surface', 4.5, 'the "medium"/"high" priority orange as plain text on white (item 33)'],
   ['--color-warning', '--color-surface-cream', 4.5, 'the same, on cream (item 33)'],
+  ['--color-text-inverse', '--color-danger', 4.5, '.wjo-filter-btn.repair\'s white text (item 35)'],
+  ['--color-text-inverse', '--color-warning', 4.5, '.wjo-filter-btn.for-qa\'s white text (item 35)'],
 ];
 
 describe('design token contrast (DESIGN.md §3 rule 10)', () => {
@@ -112,6 +114,7 @@ const TINT_PAIRS = [
   ['--color-success', '--color-success-rgb', 0.12, '--color-surface', 4.5, 'success-tint badges, e.g. .att-status-badge.present/.status-pill.good'],
   ['--color-info', '--color-info-rgb', 0.1, '--color-surface', 4.5, 'info-tint badges, e.g. .ph-badge-ontime/.status-badge.in-progress (item 33)'],
   ['--color-warning', '--color-warning-rgb', 0.1, '--color-surface', 4.5, 'warning-tint badges, e.g. .jol-priority.medium (item 33)'],
+  ['--color-accent-text', '--color-accent-rgb', 0.1, '--color-surface', 4.5, '.wb-status--assigned (item 35)'],
 ];
 
 describe('design token tint-badge contrast (ARCHITECTURE_REVIEW.md item 33)', () => {

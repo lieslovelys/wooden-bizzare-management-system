@@ -103,6 +103,9 @@ describe('JobOrderDetails — mark as completed', () => {
         // DESIGN.md §7#10 — the mobile card conversion (css/globals.css's .wb-card-table) reads
         // a label off each <td>'s data-label attribute; this catches a cell missing one.
         expectCardLabels(container, '.jod-table');
+        // ARCHITECTURE_REVIEW.md item 35 — each status gets its own shared .wb-status--* colour.
+        expect(screen.getByText('Approved')).toHaveClass('wb-status--approved');
+        expect(screen.getByText('For QA')).toHaveClass('wb-status--for-qa');
     });
 
     it('completes the project once every assigned stage is Approved', async () => {
