@@ -161,19 +161,26 @@ const ProjectList = () => {
           <div className="pl-list">
             {filteredProjects.length > 0 ? (
               filteredProjects.map((proj) => (
-                <div 
+                <div
                   key={proj.id}
                   className={`pl-item ${activeRowId === proj.id ? 'active' : ''}`}
-                  {...clickableProps(() => setActiveRowId(proj.id))}
                 >
-                  <div className="pl-col id-col">{formatProjectId(proj.id)}</div>
-                  <div className="pl-col name-col">{proj.project_name}</div>
-                  
-                  {/* Status Badge */}
-                  <div className="pl-col">
-                    <span className={`status-badge ${proj.status ? proj.status.toLowerCase().replace(' ', '-') : 'pending'}`}>
-                        {proj.status || 'Pending'}
-                    </span>
+                  {/* ARCHITECTURE_REVIEW.md item 33 — clickableProps used to sit on the row
+                      itself, which contained the Edit/Delete <button>s below: axe's
+                      nested-interactive rule flags a role="button" wrapping another focusable
+                      control. This inner display:contents wrapper carries the row's own
+                      click/keyboard behavior instead, leaving the action buttons as siblings
+                      rather than descendants, with no change to the grid layout. */}
+                  <div {...clickableProps(() => setActiveRowId(proj.id))} style={{ display: 'contents' }}>
+                    <div className="pl-col id-col">{formatProjectId(proj.id)}</div>
+                    <div className="pl-col name-col">{proj.project_name}</div>
+
+                    {/* Status Badge */}
+                    <div className="pl-col">
+                      <span className={`status-badge ${proj.status ? proj.status.toLowerCase().replace(' ', '-') : 'pending'}`}>
+                          {proj.status || 'Pending'}
+                      </span>
+                    </div>
                   </div>
 
                   {/* Action Buttons */}

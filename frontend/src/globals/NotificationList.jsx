@@ -123,9 +123,15 @@ const NotificationList = ({ type, emptyMessage = 'No new notifications.', resolv
             <div
                 key={notif.id}
                 className={`notif-item ${notif.is_read ? 'read' : 'unread'}`}
-                {...clickableProps(() => handleNotifClick(notif))}
                 style={{ cursor: 'pointer' }}
             >
+              {/* ARCHITECTURE_REVIEW.md item 33 — clickableProps used to sit on this row, which
+                  contained the real delete <button> below: axe's nested-interactive rule flags a
+                  role="button" wrapping another focusable control. This inner display:contents
+                  wrapper carries the row's own click/keyboard behavior instead, leaving the
+                  delete button as a sibling rather than a descendant, with no change to the
+                  flex layout. */}
+              <div {...clickableProps(() => handleNotifClick(notif))} style={{ display: 'contents' }}>
                 <div className="notif-icon-wrapper">
                     {notif.type === 'project' ? (
                         /* PROJECT ICON: Document / Blueprint (Gold) */
@@ -160,6 +166,7 @@ const NotificationList = ({ type, emptyMessage = 'No new notifications.', resolv
                     </div>
                     <div className="notif-message">{notif.message}</div>
                 </div>
+              </div>
 
                 <button
                     className="notif-delete-btn"

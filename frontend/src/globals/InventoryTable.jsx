@@ -274,11 +274,15 @@ const InventoryTable = () => {
                                 const isExpanded = expandedRow === item.id;
                                 return (
                                     <React.Fragment key={item.id}>
+                                        {/* ARCHITECTURE_REVIEW.md item 33 — aria-expanded is only valid on a
+                                            treegrid row, not a plain table row (axe's aria-conditional-attr);
+                                            this table keeps its ordinary role="row" semantics, so the expand/
+                                            collapse state is conveyed by the .active class and the detail row
+                                            appearing in document order instead of this attribute. */}
                                         <tr
                                             className={`main-row ${isExpanded ? 'active' : ''}`}
                                             onClick={() => toggleRow(item.id)}
                                             tabIndex={0}
-                                            aria-expanded={isExpanded}
                                             onKeyDown={(e) => {
                                                 if (e.target !== e.currentTarget) return;
                                                 if (e.key === 'Enter' || e.key === ' ') {

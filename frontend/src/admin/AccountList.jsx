@@ -98,21 +98,29 @@ const AccountList = () => {
                 accounts.map((account) => (
                   <div
                     key={account.user_id}
-                    {...clickableProps(() => setActiveRowId(account.user_id))}
                     className={`al-item ${activeRowId === account.user_id ? 'active' : ''}`}
                   >
-                    <div className="al-col id-col">{account.formatted_id}</div>
-                    <div className="al-col name-col">{account.full_name}</div>
-                    
-                    {/* Role Badge */}
-                    <div className="al-col">
-                      <span className={`al-role-badge ${account.user_role ? account.user_role.toLowerCase() : ''}`}>
-                        {account.user_role}
-                      </span>
+                    {/* ARCHITECTURE_REVIEW.md item 33 — clickableProps used to sit on the row
+                        itself, which contained the real <button> below: axe's nested-interactive
+                        rule flags a role="button" wrapping another focusable control. This inner
+                        display:contents wrapper carries the row's own click/keyboard behavior
+                        instead, leaving the delete button as a sibling rather than a descendant,
+                        with no change to the grid layout (each child is still a direct grid item
+                        of .al-item). */}
+                    <div {...clickableProps(() => setActiveRowId(account.user_id))} style={{ display: 'contents' }}>
+                      <div className="al-col id-col">{account.formatted_id}</div>
+                      <div className="al-col name-col">{account.full_name}</div>
+
+                      {/* Role Badge */}
+                      <div className="al-col">
+                        <span className={`al-role-badge ${account.user_role ? account.user_role.toLowerCase() : ''}`}>
+                          {account.user_role}
+                        </span>
+                      </div>
+
+                      <div className="al-col">{account.username}</div>
                     </div>
-                    
-                    <div className="al-col">{account.username}</div>
-                    
+
                     {/* Action Button */}
                     <div className="al-col action-col">
                       <button

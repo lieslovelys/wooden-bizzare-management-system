@@ -83,7 +83,10 @@ describe('NotificationList', () => {
     api.put.mockResolvedValue({ message: 'ok' });
     renderList({});
 
-    const row = (await screen.findByText('Project A')).closest('.notif-item');
+    // ARCHITECTURE_REVIEW.md item 33 — clickableProps (role="button"/tabIndex/onKeyDown) moved
+    // off .notif-item onto an inner wrapper, so this no longer has keyboard behavior of its own
+    // (see NotificationList.jsx's nested-interactive fix).
+    const row = (await screen.findByText('Project A')).closest('[role="button"]');
     fireEvent.keyDown(row, { key: 'Enter' });
 
     await waitFor(() => expect(api.put).toHaveBeenCalledWith('/api/notifications/1/read'));
