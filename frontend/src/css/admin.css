@@ -210,9 +210,12 @@
     transition: transform 0.2s ease;
 }
 
+/* ARCHITECTURE_REVIEW.md item 33 — #fff0f0 + --color-danger measured ~4.49:1, a hair under
+   4.5:1; every site using this literal pair moves to the same 6%-tint formula used for the
+   other --color-danger badges (globals.css's danger-tint sites). */
 .account-list .delete-btn:hover {
-    background-color: #fff0f0; 
-    color: var(--color-danger); 
+    background-color: rgba(var(--color-danger-rgb), 0.06);
+    color: var(--color-danger);
 }
 
 .account-list .delete-btn:hover .trash-icon {
@@ -556,8 +559,9 @@
   justify-content: center;
 }
 
+/* ARCHITECTURE_REVIEW.md item 33 — see account-list .delete-btn:hover above. */
 .profit-delete-btn:hover {
-  background-color: #fff0f0;
+  background-color: rgba(var(--color-danger-rgb), 0.06);
   color: var(--color-danger); /* Solid Red */
   transform: scale(1.1);
 }
@@ -669,8 +673,9 @@
   align-items: center;
 }
 
+/* ARCHITECTURE_REVIEW.md item 33 — see account-list .delete-btn:hover above. */
 .profit-banner--error {
-  background: #fff0f0;
+  background: rgba(var(--color-danger-rgb), 0.06);
   color: var(--color-danger);
   border: 1px solid #ffcdd2;
 }
@@ -1146,9 +1151,12 @@
   display: inline-block;
 }
 
+/* ARCHITECTURE_REVIEW.md item 33 — white on this literal gold measured ~2.14:1. Folded onto the
+   same "gold fill needs --color-text-on-accent, not white" rule item 31 already applied
+   everywhere else (DESIGN.md §4). */
 .type-badge.regular {
-  background-color: #d5ad0b; /* Light yellow */
-  color: var(--color-text-inverse);
+  background-color: var(--color-accent);
+  color: var(--color-text-on-accent);
 }
 
 .type-badge.part-time {
@@ -1713,8 +1721,10 @@
 }
 
 /* Late (Red) */
+/* ARCHITECTURE_REVIEW.md item 33 — --color-danger at the usual 10% tint measured ~4.28:1; 6%
+   clears 4.5:1, same fix as every other --color-danger-tint badge. */
 .ph-badge-late {
-    background-color: rgba(var(--color-danger-rgb), 0.1);
+    background-color: rgba(var(--color-danger-rgb), 0.06);
     color: var(--color-danger);
 }
 
@@ -1789,9 +1799,14 @@
     background-color: var(--color-surface-cream); /* Very light cream */
 }
 
+/* ARCHITECTURE_REVIEW.md item 33 — opacity:0.85 washed .notif-message's #666666 text and this
+   row's own #fafafa background toward the page's white backdrop together, degrading
+   .notif-message to ~3.97:1 (under the 4.5:1 bar) even though the text color alone passes
+   ~5.75:1 on either background; same root cause as .wjo-filter-btn's opacity trick. The flat
+   #fafafa background already reads as "read" against .unread's cream fill, so the opacity
+   wash added nothing contrast couldn't already convey. */
 .notif-item.read {
     background-color: #fafafa;
-    opacity: 0.85; /* Slightly less opaque para di mukhang naka-disable */
 }
 
 /* Icon Wrapper */
@@ -1873,8 +1888,9 @@
     justify-content: center;
 }
 
+/* ARCHITECTURE_REVIEW.md item 33 — see account-list .delete-btn:hover above. */
 .notif-delete-btn:hover {
-    background-color: #fff0f0; /* Light red */
+    background-color: rgba(var(--color-danger-rgb), 0.06); /* Light red */
     color: var(--color-danger); /* Solid Red */
     transform: scale(1.1);
 }
@@ -2171,9 +2187,13 @@
 
 /* RANK 2: SILVER */
 .rank-silver td:first-child { border-left: 6px solid #b0bec5; }
-.rank-silver .rank-badge-container { 
-    background-color: #b0bec5; 
-    color: white; 
+/* ARCHITECTURE_REVIEW.md item 33 — white on this literal silver measured ~1.91:1, failing even
+   the 3:1 large-bold-text floor. Dark text on the unchanged literal fill, same "light fill needs
+   dark text" principle as --color-text-on-accent, fixes it to ~9.4:1 — rank-bronze's own fill is
+   dark enough that its white text already clears 3:1 and is left alone. */
+.rank-silver .rank-badge-container {
+    background-color: #b0bec5;
+    color: var(--color-text);
     box-shadow: 0 0 15px rgba(176, 190, 197, 0.5);
 }
 

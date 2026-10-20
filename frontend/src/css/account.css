@@ -171,9 +171,13 @@
   height: 50px;
 }
 
+/* ARCHITECTURE_REVIEW.md item 33 — white on #FF8A8A measured ~2.27:1 (found by item 31, fixed
+   here). --color-danger is already proven to pass with white text everywhere else it's used as
+   a solid fill (e.g. .wb-btn-yes.danger); filter: brightness() matches that same button's own
+   hover convention instead of a second literal. */
 .account-creation .btn-delete {
-  background-color: #FF8A8A;
-  color: white;
+  background-color: var(--color-danger);
+  color: var(--color-text-inverse);
   border: none;
   padding: 6px 18px;
   border-radius: 6px;
@@ -184,5 +188,5 @@
 }
 
 .account-creation .btn-delete:hover {
-  background-color: #e57373;
+  filter: brightness(0.9);
 }

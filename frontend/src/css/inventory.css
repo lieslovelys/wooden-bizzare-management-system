@@ -113,9 +113,12 @@
     justify-content: center;
 }
 
+/* ARCHITECTURE_REVIEW.md item 33 — a gold-ish fill item 31's sweep didn't reach; --color-accent-
+   text on it measured ~4.44:1, just under 4.5:1. Same "gold fill needs --color-text-on-accent"
+   rule as every other site that pass fixed (DESIGN.md §4), not a new color decision. */
 .variant-pill {
     background: #d4b86a;
-    color: var(--color-accent-text);
+    color: var(--color-text-on-accent);
     padding: 4px 10px;
     border-radius: 12px;
     font-size: 0.8rem;
@@ -129,14 +132,18 @@
     font-size: 0.9rem;
 }
 
+/* ARCHITECTURE_REVIEW.md item 33 — both solid fills measured well under 4.5:1 (~2.92:1 and
+   ~4.23:1). Folded onto the existing --color-danger/--color-success "soft tint" badge formula
+   used throughout the app (e.g. att-status-badge, ph-badge-*), at the same 6%/12% opacities that
+   already clear AA for these two colors. */
 .status-pill.low {
-    background: #ffb3b3;
+    background: rgba(var(--color-danger-rgb), 0.06);
     color: var(--color-danger);
 }
 
 .status-pill.good {
-    background: #a3ff99;
-    color: #008000;
+    background: rgba(var(--color-success-rgb), 0.12);
+    color: var(--color-success);
 }
 
 /* Action Buttons */

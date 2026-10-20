@@ -50,6 +50,15 @@
   --color-success-dark: #1e5631;
   --color-info: #2b4c7e;
   --color-info-rgb: 43, 76, 126;
+  /* ARCHITECTURE_REVIEW.md item 33 — the "Medium priority" orange this folds five sites onto
+     (#f57c00) measured only ~2.4-2.7:1 as foreground text in every context it was used in (plain
+     text, a 10%-tint badge, a solid filled button), and the "High priority" orange two more sites
+     used instead (#e67e22) failed the same way (~2.8:1) — neither is close enough to AA to just
+     retarget onto an existing darker token, so this is a new, deliberately darker shade of the
+     same hue rather than a literal-to-token rename. ~6.2:1 on white, ~5.4:1 inside a 10%-tint
+     badge — see the item 33 entry for the full computed-ratio table. */
+  --color-warning: #9a4b00;
+  --color-warning-rgb: 154, 75, 0;
 
   /* DESIGN.md §8: a dedicated focus token rather than reusing --color-info directly, so a
      redesign can retarget "what a keyboard focus ring looks like" without also retargeting every
@@ -2126,8 +2135,11 @@ html, body {
   background-color: rgba(180, 130, 30, 0.12);
   color: #8a5f10;
 }
+/* ARCHITECTURE_REVIEW.md item 33 — this literal red (close to, but not, --color-danger) at the
+   usual 10% tint measured ~4.26:1; folded onto the token and darkened to 6%, same as every other
+   --color-danger-tint badge, to clear 4.5:1 (~4.56:1). */
 .att-status-badge.absent {
-  background-color: rgba(198, 40, 40, 0.1);
+  background-color: rgba(var(--color-danger-rgb), 0.06);
   color: var(--color-danger);
 }
 
@@ -2251,7 +2263,10 @@ html, body {
   align-items: center;
   transition: all 0.2s;
 }
-.attendance-log-delete-btn:hover { background-color: #fff0f0; color: var(--color-danger); transform: scale(1.1); }
+/* ARCHITECTURE_REVIEW.md item 33 — #fff0f0 + --color-danger measured ~4.49:1, a hair under
+   4.5:1; every site using this literal pair moves to the same 6%-tint formula as the other
+   --color-danger badges above. */
+.attendance-log-delete-btn:hover { background-color: rgba(var(--color-danger-rgb), 0.06); color: var(--color-danger); transform: scale(1.1); }
 
 /* ============================================================
    3. CUSTOM MODALS (MODERNIZED)
@@ -2487,7 +2502,9 @@ html, body {
 
 .project-form-container .priority-select {
   font-weight: 600;
-  color: #e67e22; 
+  /* ARCHITECTURE_REVIEW.md item 33 — #e67e22 measured ~2.8:1 on white, same family as the
+     --color-warning fix below. */
+  color: var(--color-warning);
 }
 
 /* --- DYNAMIC SECTIONS (Materials / Workers) --- */
@@ -2509,7 +2526,8 @@ html, body {
 
 /* --- ADD / REMOVE BUTTONS --- */
 .project-form-container .btn-remove {
-  background-color: #fff0f0;
+  /* ARCHITECTURE_REVIEW.md item 33 — see .attendance-log-delete-btn:hover above. */
+  background-color: rgba(var(--color-danger-rgb), 0.06);
   color: var(--color-danger);
   border: none;
   border-radius: 10px;
@@ -2795,9 +2813,13 @@ html, body {
   color: #8b5a2b;
 }
 
+/* ARCHITECTURE_REVIEW.md item 33 — this literal blue measured only ~3.29:1 even on solid white
+   (too light a shade to work as foreground text at all, tint or no tint); folded onto the
+   existing --color-info token, used for the same "in progress" role elsewhere (e.g.
+   ph-badge-ontime, wjo-status.in-progress), which clears 4.5:1 with a lot of margin. */
 .project-list-container .status-badge.in-progress {
-  background-color: rgba(74, 144, 226, 0.1); 
-  color: #4a90e2;
+  background-color: rgba(var(--color-info-rgb), 0.1);
+  color: var(--color-info);
 }
 
 /* --- ACTION BUTTONS --- */
@@ -2906,8 +2928,10 @@ html, body {
   color: var(--color-danger); /* Red text */
 }
 
+/* ARCHITECTURE_REVIEW.md item 33 — #E67E22 measured ~2.8:1 at this box's 17.6px bold (just under
+   the large-text bold threshold, so it needs 4.5:1, not 3:1). */
 .details-main-wrapper .priority-text-high {
-  color: #E67E22; /* Orange text */
+  color: var(--color-warning);
 }
 
 .details-main-wrapper .details-variables-section {
@@ -3054,7 +3078,8 @@ html, body {
 
 /* Active states for filter buttons (Modern & Soft colors) */
 .jol-btn.active.high { background: var(--color-danger); border-color: var(--color-danger); color: var(--color-text-inverse); }
-.jol-btn.active.medium { background: #f57c00; border-color: #f57c00; color: var(--color-text-inverse); }
+/* ARCHITECTURE_REVIEW.md item 33 — white on #f57c00 measured ~2.7:1; --color-warning fixes it. */
+.jol-btn.active.medium { background: var(--color-warning); border-color: var(--color-warning); color: var(--color-text-inverse); }
 .jol-btn.active.low { background: #5b5035; border-color: #5b5035; color: var(--color-text-inverse); }
 
 .jol-list {
@@ -3113,8 +3138,13 @@ html, body {
 }
 
 /* Soft background tag colors */
-.jol-priority.high { background: rgba(var(--color-danger-rgb), 0.1); color: var(--color-danger); }
-.jol-priority.medium { background: rgba(245, 124, 0, 0.1); color: #f57c00; }
+/* ARCHITECTURE_REVIEW.md item 33 — --color-danger (#d32f2f) is just light enough that its usual
+   10%-opacity tint badge formula (used elsewhere for --color-success/--color-info, which both
+   have more luminance headroom) lands at ~4.26-4.28:1, under the 4.5:1 normal-text bar. 6% clears
+   it (~4.56:1) with a visually negligible change to the tint itself — same fix applied to every
+   other --color-danger-tint badge below. */
+.jol-priority.high { background: rgba(var(--color-danger-rgb), 0.06); color: var(--color-danger); }
+.jol-priority.medium { background: rgba(var(--color-warning-rgb), 0.1); color: var(--color-warning); }
 .jol-priority.low { background: rgba(91, 80, 53, 0.1); color: #5b5035; }
 
 /* =========================================
@@ -4126,9 +4156,10 @@ html, body {
 }
 
 /* Repair Button (Red Outline -> Red Solid on Hover) */
-.qc-pvd-btn.repair { 
-    background-color: #fff0f0; 
-    color: var(--color-danger); 
+/* ARCHITECTURE_REVIEW.md item 33 — see .attendance-log-delete-btn:hover above. */
+.qc-pvd-btn.repair {
+    background-color: rgba(var(--color-danger-rgb), 0.06);
+    color: var(--color-danger);
 }
 .qc-pvd-btn.repair:hover { 
     background-color: var(--color-danger); 
