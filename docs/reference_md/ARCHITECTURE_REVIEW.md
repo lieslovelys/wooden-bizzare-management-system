@@ -1802,5 +1802,53 @@ Not urgent, but each of these increases the cost of every future change until ad
       markup/ARIA/contrast correctness computed against rendered DOM styles, not a live
       assistive-technology or shop-floor pass.
     - **Still open after this:** only the declined role-shell consolidation remains on this
-      backlog's own list. The dead `.pv-*`/`.status-done`/`.status-progress` CSS family and the
-      unmapped-status-string distinguishability gaps above are separate, un-started candidates.
+      backlog's own list. The dead `.pv-*`/`.status-done`/`.status-progress` CSS family (removed
+      by item 34 below) and the unmapped-status-string distinguishability gaps above are separate
+      candidates — the former is now closed, the latter is item 35.
+
+34. **Cleanup: delete the dead CSS item 33 found, and bump CI's `actions/checkout`/`setup-node` to
+    v5.** Two small, unrelated fixes the user asked to pick up together right after item 33.
+    - **Dead-code confirmation, not just a grep.** A scratchpad script (never committed) pulled
+      every class selector out of `frontend/src/css/*.css` and checked whether that exact name
+      ever appears as a literal token in any `.jsx`/`.js` under `frontend/src` (excluding test
+      files). It deliberately over-reports: anything built dynamically, e.g.
+      `status.toLowerCase().replace(...)` producing `.in-progress`/`.for-qa`/`.rework`, or the
+      `.active`/`.read`/`.unread` state classes, never appears as a literal string and shows up as
+      a false positive — those were filtered out by hand, not deleted. Each real candidate was
+      also checked for a same-named rule living in a different stylesheet before deletion, since a
+      same-specificity collision (two files defining `.progress-bar` for two different screens,
+      for instance) would make "unreferenced in JSX" the wrong question to ask — the right
+      question is whether *this specific rule* is the one actually styling something live.
+    - **What came out:** `globals.css`'s legacy `JOB ORDER STYLES` section
+      (`.job-order-*`, `.details-*`, `.progress-*`/`.progress-table`/`.progress-bar*`,
+      `.stage-name`, `.submit-button`, `.submitted-button`) and `PROJECT VERIFICATION STYLES`
+      section (the whole `.pv-*` family) — about 640 lines, superseded by the newer
+      `.jod-*`/`.qc-pv-*` sections elsewhere in the same file and confirmed to have zero overlap
+      with any live selector anywhere else in `frontend/src/css/`. This also removes `#4a8a4a` and
+      `#5a7aba`, the two dead-but-mathematically-failing literals item 33 found and deliberately
+      left alone pending this item. `InventoryTable.jsx`'s own `.progress-bar`/
+      `.progress-bar-container` (a real, live variant-stock-level bar, `inventory.css`) share a
+      class name with the now-deleted dead rule but were independently confirmed self-contained in
+      `inventory.css` — deleting the dead copy only removes a latent same-name collision risk, it
+      changes nothing about how that bar renders.
+    - **Scope kept deliberately narrow.** The same scan surfaced roughly 150 more "possibly dead"
+      selectors across `account.css`, `dashboard.css`, `admin.css`, and `worker.css` (an old
+      `.notification-*`/`.admin-notification-*` family superseded by `NotificationList.jsx`'s
+      `.notif-*` classes, an old `.worker-modal`/`.worker-form-*`/`.worker-view-*` family, etc.).
+      These were named only in the "dead CSS" option offered to the user as the `.pv-*`/
+      `.status-*` family specifically, not a general dead-CSS audit, so they're left alone here —
+      recorded as a real, separate candidate for later, not silently rolled into this item's scope.
+    - **CI.** `.github/workflows/ci.yml`'s `actions/checkout` and `actions/setup-node` moved from
+      `@v4` to `@v5` in all three jobs (`backend`, `frontend`, `docker-build`'s one `checkout`
+      step) — this is exactly what GitHub's "forced to run on Node.js 24" annotation named.
+      `docker/setup-buildx-action@v3` and `docker/build-push-action@v6` weren't flagged and were
+      left as they are.
+    - **Verification.** `npm test` 260/260 (unchanged — nothing deleted was under test, since
+      nothing deleted was reachable); `npm run lint` clean at `--max-warnings 0`; `npm run build`
+      clean (one iteration caught a real mistake: a `*/` sequence inside the explanatory comment
+      left in place of the deleted block closed the CSS comment early and broke the build —
+      fixed by rewording before this ever reached a commit). Pushed and watched the GitHub Actions
+      run go green with the Node 20 deprecation annotation gone.
+    - **Still open after this:** the declined role-shell consolidation, the ~150 other
+      possibly-dead selectors noted above (not started), and item 35 (status-badge colors) and
+      item 36 (font consistency) — both approved as later phases of this same multi-part request.

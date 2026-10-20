@@ -115,15 +115,17 @@ this was done and verified):
 - `--color-accent-text`: also folded, item 30: `#c9a445` (`InventoryTable.jsx`'s `.min-text`, a
   gold literal that was never a token in the first place).
 
-**The literal tail.** ~85 distinct one-off colors (badge/status accents, rank silver/bronze, a
+**The literal tail.** ~75 distinct one-off colors (badge/status accents, rank silver/bronze, a
 handful of generic greys distinct from the muted-text family, etc.), each used a handful of times
 or fewer, stay as literals — forcing every incidental color onto an ill-fitting token isn't the
 goal; undoing the gold/brown/cream/border/text drift above was, and so was fixing the handful of
 these literals ARCHITECTURE_REVIEW.md item 33's axe sweep found actually failing AA (the warning
 oranges named in this paragraph until item 33 — see `--color-warning` above — plus a handful of
-one-off badge fills fixed in place without a new token; see that item for the full list). If the
-redesign changes the palette, `:root`'s definitions are the one place that needs updating for the
-change to propagate.
+one-off badge fills fixed in place without a new token; see that item for the full list). The
+count dropped from ~85 after item 34 deleted the dead `.status-done`/`.status-progress`/`.pv-*`
+CSS family item 33 had already flagged as unreachable, taking 10 of those literals with it rather
+than fixing them in place. If the redesign changes the palette, `:root`'s definitions are the one
+place that needs updating for the change to propagate.
 
 **Gold is a fill, not body text (ARCHITECTURE_REVIEW.md item 30 / §3 rule 10).**
 `--color-accent` measures ~2.4:1 on white and ~2.2:1 on cream — it fails AA's 4.5:1 floor by a wide
