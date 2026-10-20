@@ -140,10 +140,13 @@
 .wjo-filter-btn:active { transform: translateY(0) scale(0.98); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
 /* item 31 — overrides the base rule's white text; white on this gold fill measured ~2.3:1 */
 .wjo-filter-btn.assigned { background-color: var(--color-accent); color: var(--color-text-on-accent); } /* Gold */
-.wjo-filter-btn.repair { background-color: var(--color-surface-dark); } /* Dark Espresso */
-/* FR-9 remainder: the two new lifecycle filters — matches wjo-status's for-qa/approved hues,
-   solid instead of the pale badge background so an inactive vs. active filter stays legible. */
-.wjo-filter-btn.for-qa { background-color: var(--color-accent-text); } /* Golden Brown */
+/* ARCHITECTURE_REVIEW.md item 35 — FR-9's own comment used to say these matched .wjo-status's
+   hues, but .wjo-status never actually had a colour for "Repair" (item 33 recorded that gap).
+   Now both really do share the same colour, via the .wb-status--* palette (globals.css). White
+   text (the base rule's default) on --color-danger measures ~5:1, and on --color-warning
+   ~6.2:1. */
+.wjo-filter-btn.repair { background-color: var(--color-danger); }
+.wjo-filter-btn.for-qa { background-color: var(--color-warning); }
 .wjo-filter-btn.approved { background-color: var(--color-success); } /* Workshop Green */
 /* ARCHITECTURE_REVIEW.md item 33 — opacity:0.5 doesn't dim the fill in isolation, it composites
    the whole button (fill + white text together) over the page's white background, which washes
@@ -232,21 +235,17 @@
     justify-content: flex-end;
 }
 
+/* ARCHITECTURE_REVIEW.md item 35 — colour now comes from one of the shared .wb-status--*
+   modifiers (globals.css), applied via utils/status.js's taskStatusClass(). This rule keeps
+   only the pill's shape. */
 .wjo-badge {
     padding: 6px 14px;
     border-radius: 25px;
     font-size: 0.85rem;
     font-weight: 700;
-    color: var(--color-accent-text); /* DESIGN.md §3 rule 10 — normal-size text needs 4.5:1 */
-    background-color: rgba(var(--color-accent-rgb), 0.1); /* Soft Gold Background */
     text-align: center;
     min-width: 80px;
     letter-spacing: 0.5px;
-}
-
-.wjo-badge.repair { 
-    color: var(--color-text);
-    background-color: rgba(var(--color-surface-dark-rgb), 0.1); /* Soft Espresso Background */
 }
 
 /* Invert colors when row is active or pressed */
@@ -579,6 +578,11 @@
 .wjo-table tr:hover td { background-color: var(--color-surface-cream); }
 
 /* Modern Pill Status Badges */
+/* ARCHITECTURE_REVIEW.md item 35 — colour now comes from one of the shared .wb-status--*
+   modifiers (globals.css), applied via utils/status.js's taskStatusClass(). This closes the gap
+   item 33 recorded: "Repair" had no colour here at all (only the dead ".rework" class did,
+   since the status string never actually maps to it), and every status now has one explicit
+   mapping instead of being split across per-component rules that each had their own gaps. */
 .wjo-status {
     padding: 6px 14px;
     border-radius: 25px; /* Pill Shape */
@@ -589,17 +593,6 @@
     min-width: 80px;
     text-align: center;
 }
-
-.wjo-status.approved { background-color: rgba(var(--color-success-rgb), 0.1); color: var(--color-success); }
-.wjo-status.in-progress { background-color: rgba(var(--color-info-rgb), 0.1); color: var(--color-info); }
-/* ARCHITECTURE_REVIEW.md item 33 — same 10%-tint shortfall as every other --color-danger badge
-   (~4.28:1); fixed to 6% for consistency even though this exact class is currently unreachable
-   (the live "needs repair" status string is "Repair", which maps to .repair, not .rework — a
-   separate, pre-existing dead-class gap this item records but doesn't fix, since picking the
-   right status string is a product decision, not a contrast fix). */
-.wjo-status.rework { background-color: rgba(var(--color-danger-rgb), 0.06); color: var(--color-danger); }
-.wjo-status.assigned { background-color: rgba(var(--color-accent-rgb), 0.1); color: var(--color-accent-text); } /* DESIGN.md §3 rule 10 — normal-size text needs 4.5:1 */
-.wjo-status.for-qa { background-color: var(--color-surface-cream); color: var(--color-text); }
 
 /* FR-6/FR-9: the rejection reason shown above the action button when this worker's own stage
    came back for repair (worker/WorkerJobOrderDetail.jsx). */

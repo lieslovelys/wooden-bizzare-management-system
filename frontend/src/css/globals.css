@@ -2771,6 +2771,10 @@ html, body {
 }
 
 /* Status Badges */
+/* ARCHITECTURE_REVIEW.md item 35 — colour now comes from one of the shared .wb-status--*
+   modifiers below, applied via utils/status.js's taskStatusClass(). This rule keeps only the
+   pill's shape; it used to colour only "done" (dead — no live status is ever "done") and
+   "in-progress", leaving Assigned/For QA/Approved/Repair with no colour of their own. */
 .jod-status {
     padding: 6px 14px;
     border-radius: 25px; /* Pill shape */
@@ -2778,16 +2782,6 @@ html, body {
     font-weight: 700;
     display: inline-block;
     letter-spacing: 0.5px;
-}
-
-.jod-status.done { 
-    background-color: rgba(var(--color-success-rgb), 0.1); 
-    color: var(--color-success); 
-}
-
-.jod-status.in-progress {
-    background-color: rgba(var(--color-accent-rgb), 0.1);
-    color: var(--color-accent-text); /* DESIGN.md §3 rule 10 — normal-size text needs 4.5:1 */
 }
 
 /* =========================================
@@ -3602,6 +3596,45 @@ html, body {
         flex: 1;
         max-width: 160px;
     }
+}
+
+/* --- Task-status pill, shared (ARCHITECTURE_REVIEW.md item 35) --- */
+/* Replaces three independent, gapped colour mappings for the same task_status enum
+   (worker.css's .wjo-badge, .wjo-status, and .jod-status in this file) with one family, applied
+   via utils/status.js's taskStatusClass(). The three call sites keep their own class for shape
+   (padding/radius/font-size/min-width) and add one of these for colour.
+
+   Each tint is layered as a gradient over an explicitly opaque --color-surface, rather than a
+   plain translucent rgba() fill, so the pill always composites against white regardless of the
+   row it's actually sitting in — several of these rows (.wjo-item, .jod-table tr, .wjo-table tr)
+   turn cream on hover/active, and a translucent danger tint that clears 4.5:1 against white drops
+   to ~4.20:1 against that cream, which axe's own static sweep can't see since it's a hover state.
+   This is also what makes contrast.test.js's TINT_PAIRS math — which composites each tint over
+   --color-surface — true for these pills in every row state, not just the resting one. */
+.wb-status--assigned {
+  color: var(--color-accent-text); /* DESIGN.md §3 rule 10 — normal-size text needs 4.5:1 */
+  background: linear-gradient(rgba(var(--color-accent-rgb), 0.1), rgba(var(--color-accent-rgb), 0.1)), var(--color-surface);
+}
+.wb-status--in-progress {
+  color: var(--color-info);
+  background: linear-gradient(rgba(var(--color-info-rgb), 0.1), rgba(var(--color-info-rgb), 0.1)), var(--color-surface);
+}
+.wb-status--for-qa {
+  color: var(--color-warning);
+  background: linear-gradient(rgba(var(--color-warning-rgb), 0.1), rgba(var(--color-warning-rgb), 0.1)), var(--color-surface);
+}
+.wb-status--approved {
+  color: var(--color-success);
+  background: linear-gradient(rgba(var(--color-success-rgb), 0.12), rgba(var(--color-success-rgb), 0.12)), var(--color-surface);
+}
+/* Rework shares this with Repair — see utils/status.js. */
+.wb-status--repair {
+  color: var(--color-danger);
+  background: linear-gradient(rgba(var(--color-danger-rgb), 0.06), rgba(var(--color-danger-rgb), 0.06)), var(--color-surface);
+}
+.wb-status--neutral {
+  color: var(--color-text);
+  background: var(--color-border);
 }
 
 /* --- Raw <table> → mobile cards (DESIGN.md §7#10) --- */

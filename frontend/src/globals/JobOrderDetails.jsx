@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 
 import { api } from '../api/client';
 import { useToast } from '../context/ToastContext';
 import { formatDate, formatProjectId } from '../utils/format';
+import { taskStatusClass } from '../utils/status';
 import ConfirmModal from './ConfirmModal';
 import ProjectMaterials from './ProjectMaterials';
 
@@ -126,8 +127,6 @@ const JobOrderDetail = ({ jobId, onBack }) => {
         }
     };
 
-    const getStatusClass = (status) => status ? status.toLowerCase().replace(' ', '-') : '';
-
     if (loading) return <div className="jod-wrapper"><p style={{ textAlign: 'center' }}>Loading project data...</p></div>;
     if (!projectDetails) return <div className="jod-wrapper"><button className="jod-back-btn" onClick={onBack}>Back</button><p>Project not found.</p></div>;
 
@@ -223,7 +222,7 @@ const JobOrderDetail = ({ jobId, onBack }) => {
                                 <td data-label="Worker">{assignment.first_name} {assignment.last_name}</td>
                                 <td data-label="Start Date">{formatDate(assignment.start_date)}</td>
                                 <td data-label="Date Completed">{assignment.date_completed ? formatDate(assignment.date_completed) : '-'}</td>
-                                <td data-label="Status"><span className={`jod-status ${getStatusClass(assignment.status)}`}>{assignment.status}</span></td>
+                                <td data-label="Status"><span className={`jod-status ${taskStatusClass(assignment.status)}`}>{assignment.status}</span></td>
                             </tr>
                         ))}
                         {assignments.length === 0 && (

@@ -5,6 +5,7 @@ import { formatDate, formatProjectId } from '../utils/format';
 import { usePaginatedList } from '../hooks/usePaginatedList';
 import Pagination from '../globals/Pagination';
 import { clickableProps } from '../utils/a11y';
+import { taskStatusClass } from '../utils/status';
 
 const ProjectHistory = () => {
   const [remarksFilter, setRemarksFilter] = useState('All');
@@ -69,7 +70,9 @@ const ProjectHistory = () => {
       case 'Early': return 'ph-badge ph-badge-early';
       case 'On-time': return 'ph-badge ph-badge-ontime';
       case 'Late': return 'ph-badge ph-badge-late';
-      default: return 'ph-badge-pending';
+      // Not finished yet — `remark` is the raw task status (see taskRemark below), so it gets
+      // the same shared status colour every other screen uses instead of one flat cream style.
+      default: return `ph-badge ${taskStatusClass(remark)}`;
     }
   };
 
@@ -169,7 +172,10 @@ const ProjectHistory = () => {
                                                   <div>{formatDate(task.start_date)}</div>
                                                   <div>{formatDate(actualDateCompleted)}</div> {/* Gumamit na rin ng actualDateCompleted dito */}
                                                   <div>
-                                                      <span className={actualDateCompleted ? getBadgeClass(taskRemark) : 'ph-badge-pending'}>
+                                                      {/* getBadgeClass's default branch already covers every non-Early/On-time/Late
+                                                          value (including a raw task.status when the task isn't done yet), so
+                                                          there's no separate "not finished" fallback needed any more. */}
+                                                      <span className={getBadgeClass(taskRemark)}>
                                                           {taskRemark}
                                                       </span>
                                                   </div>

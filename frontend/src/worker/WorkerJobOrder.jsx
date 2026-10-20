@@ -8,6 +8,7 @@ import { UserContext } from '../context/UserContext';
 import { formatDateShort, formatProjectId } from '../utils/format';
 import { usePaginatedList } from '../hooks/usePaginatedList';
 import { clickableProps } from '../utils/a11y';
+import { taskStatusClass } from '../utils/status';
 
 const FILTERS = ['Assigned', 'Repair', 'For QA', 'Approved'];
 
@@ -138,7 +139,7 @@ const WorkerJobOrder = () => {
                             <div className="wjo-item-center">{formatDateShort(task.dueDate)}</div>
                             <div className={`wjo-item-center wjo-priority ${task.priority.toLowerCase()}`}>{task.priority}</div>
                             <div className="wjo-badge-container">
-                                <div className={`wjo-badge ${task.status.toLowerCase().replace(' ', '-')}`}>{task.status}</div>
+                                <div className={`wjo-badge ${taskStatusClass(task.status)}`}>{task.status}</div>
                             </div>
                         </div>
                     ))

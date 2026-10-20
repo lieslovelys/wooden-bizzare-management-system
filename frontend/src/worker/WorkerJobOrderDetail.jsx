@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { api } from '../api/client';
 import { useToast } from '../context/ToastContext';
 import { formatDate, formatProjectId } from '../utils/format';
+import { taskStatusClass } from '../utils/status';
 import ConfirmModal from '../globals/ConfirmModal';
 
 const WorkerJobOrderDetail = ({ projectId, assignmentId, workerStatus, onBack }) => {
@@ -217,7 +218,7 @@ const WorkerJobOrderDetail = ({ projectId, assignmentId, workerStatus, onBack })
                                 {/* FIX: Ginamit ang formatDate function dito */}
                                 <td data-label="Start Date">{formatDate(assign.start_date)}</td>
                                 <td data-label="Due Date">{formatDate(assign.due_date)}</td>
-                                <td data-label="Status"><span className={`wjo-status ${assign.status.toLowerCase().replace(' ', '-')}`}>{assign.status}</span></td>
+                                <td data-label="Status"><span className={`wjo-status ${taskStatusClass(assign.status)}`}>{assign.status}</span></td>
                             </tr>
                         ))}
                     </tbody>

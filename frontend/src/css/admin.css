@@ -1728,18 +1728,11 @@
     color: var(--color-danger);
 }
 
-/* Pending (Gray/Gold) */
-.ph-badge-pending {
-    padding: 6px 14px;
-    border-radius: 25px;
-    font-size: 0.85rem;
-    font-weight: 700;
-    display: inline-block;
-    background-color: var(--color-surface-cream);
-    color: var(--color-accent-text); /* DESIGN.md §3 rule 10 — normal-size text needs 4.5:1 */
-    text-align: center;
-    min-width: 80px;
-}
+/* ARCHITECTURE_REVIEW.md item 35 — the old flat "Pending" style (one cream/gold look for every
+   not-yet-finished task) is gone. ProjectHistory.jsx now routes an unfinished task's raw status
+   through utils/status.js's taskStatusClass() instead, so "Assigned"/"In Progress"/"For QA"/
+   "Repair" each get their own colour from the shared .wb-status--* family (globals.css) rather
+   than one undifferentiated badge. */
 
 /* =========================================
    NOTIFICATIONS (PREMIUM MODERN DASHBOARD)
