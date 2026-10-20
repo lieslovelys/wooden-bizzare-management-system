@@ -1898,10 +1898,10 @@ Not urgent, but each of these increases the cost of every future change until ad
       these "matched `.wjo-status`'s hues," which was never true, since `.wjo-status` had no colour
       for Repair at all. Both now use the same `--color-danger`/`--color-warning` solid fills the
       palette above uses, with the base rule's white text measuring ~4.98:1 and ~6.21:1.
-    - **Palette choices, open to the word "flagged as a one-line change" rather than decided
-      silently:** Repair/Rework landing on red, and For QA landing on the item-33 warning-amber,
-      are both one-line changes in `globals.css`'s `.wb-status--repair`/`--for-qa` if a different
-      pairing (the old espresso, the old cream) is preferred.
+    - **Palette choices, flagged rather than decided silently:** Repair/Rework landing on red, and
+      For QA landing on the item-33 warning-amber, are both one-line changes in `globals.css`'s
+      `.wb-status--repair`/`--for-qa` if a different pairing (the old espresso, the old cream) is
+      preferred.
     - **Tests.** A new `utils/status.test.js` covers every enum value, the `Rework`→`repair`
       alias, and the `neutral` fallback for `null`/`''`/an unrecognized string.
       `WorkerJobOrderDetail.test.jsx`'s existing Repair-reason test, `WorkerJobOrder.test.jsx`,
@@ -1920,3 +1920,52 @@ Not urgent, but each of these increases the cost of every future change until ad
     - **Still open after this:** the declined role-shell consolidation, the ~150 possibly-dead
       selectors item 34 recorded, and item 36 (font consistency) — the last approved phase of this
       multi-part request.
+
+36. **UI: fix the font-family inconsistency DESIGN.md §8 recorded.** The last of the four-part
+    request items 34–35 opened.
+    - **No app-wide default existed at all.** `globals.css`'s `html, body` reset set `margin`,
+      `padding`, and sizing, but never `font-family` — so every screen rendered whatever its own,
+      per-component declaration said, or the browser's default sans-serif where nothing was set.
+      Fixed with one line on that reset: `font-family: 'Inter', sans-serif;`, matching item
+      27/28's self-hosted base font.
+    - **A full audit of every `font-family` in `frontend/src/css/*.css`** (confirmed there's no
+      `font:` shorthand usage anywhere, so grepping the longhand property is a complete list)
+      found, beyond the expected stray `Arial`/`Georgia` one-offs:
+      - **A real, silent bug**: `TempSignup.css`'s `.signup-wrapper .form-title` declared
+        `font-family` *twice* on the same rule — `'Playfair Display', serif` (with a comment
+        explaining the contrast reasoning behind that choice), then four lines later
+        `Georgia, 'Times New Roman', Times, serif`. CSS takes the last declaration on a
+        duplicate property, so this heading had been silently rendering in Georgia the whole
+        time despite the comment's intent. Fixed by deleting the second, overriding line.
+      - **A typo**: `globals.css`'s `.attendance-log-title h3` had
+        `font-family: 'Arial', 'san-serif';` — the fallback is misspelled (missing an "s").
+        `Arial` itself is valid, so this mostly worked by accident; it's a heading, so it now
+        gets the same `Playfair Display` every other section title has.
+      - **`dashboard.css` is entirely dead** — confirmed via `grep -rln "dashboard.css"` against
+        every `.jsx`/`.js`: never imported anywhere. Its two bare-`serif` headings were fixed
+        anyway (trivial one-line edits, cosmetic-only, no live effect), the same precedent as
+        item 33's `.wjo-status.rework`, with a comment left in the file explaining why. This
+        doesn't reopen item 34's separate, larger "~150 possibly-dead selectors" question.
+    - **The fix, applied per element role, not blanket-deleted:** a heading/title gets
+      `'Playfair Display', serif`; a form control (`<input>`/`<select>`/`<button>`/`<textarea>`,
+      none of which inherit `font-family` from their ancestor by default in any browser) gets
+      `inherit`; everything else (a `div`/`form` wrapper, body text) simply loses the stray
+      declaration so it inherits the new `html`/`body` default. About 20 sites across
+      `globals.css`, `admin.css`, `inventory.css`, `TempSignup.css`, and `dashboard.css` were
+      touched this way. Two pre-existing `'Inter', Arial, sans-serif'` fallback stacks
+      (`globals.css`) and `account.css`'s `"Font Awesome 6 Free"` icon font were left alone —
+      already consistent, or not a typeface choice at all.
+    - **Regression guard.** A new `frontend/src/tests/fontConsistency.test.js`, built the same
+      way `thirdPartyAssets.test.js` is (same `listCssFiles` walk), asserts every `font-family:`
+      value found anywhere under `frontend/src/css/` is one of the five allowed values above — a
+      future stray declaration fails CI instead of drifting back in unnoticed.
+    - **Verification.** `npm test` 277/277 (276 → 277); `npm run lint` clean at
+      `--max-warnings 0`; `npm run build` clean. Re-ran the item-33 axe harness against the
+      rebuilt `dist`: still 0 violations, 52 `incomplete` (unchanged from item 35's final count —
+      a font swap doesn't touch color contrast, and this confirms it didn't). Took a handful of
+      Playwright screenshots of the screens with the most text-density risk from the metric
+      change (Admin dashboard, WorkerList, Attendance, Inventory) at 1280px and 360px and checked
+      by eye for new overflow or clipping. Pushed and watched CI go green.
+    - **Still open after this:** only the declined role-shell consolidation, and the ~150
+      possibly-dead selectors item 34 recorded, remain on this backlog's own list. This closes
+      out the full four-part request (items 34–36).

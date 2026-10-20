@@ -287,11 +287,18 @@ the current backlog — not overlooked:
   contrast/structural finding it found (including the two item 30 surfaced and left open). Still
   not independently verified, by either item: real screen-reader behavior (TalkBack/NVDA/
   VoiceOver) and legibility on a real device — see item 33 for exactly what its sweep could and
-  couldn't claim. Also recorded there as a finding for the planned redesign,
-  not something this pass touched: `html`/`body` sets no `font-family`, so several screens
-  (Inventory, WorkerList, the notification/job-order/pv-\* blocks, `.details-main-wrapper`) render
-  in Arial, Georgia, or the browser's default serif rather than the Inter/Playfair Display pair
-  item 27/28 self-hosted.
+  couldn't claim. ~~Also recorded there as a finding for the planned redesign, not something that
+  pass touched: `html`/`body` sets no `font-family`, so several screens (Inventory, WorkerList,
+  the notification/job-order/pv-\* blocks, `.details-main-wrapper`) render in Arial, Georgia, or
+  the browser's default serif rather than the Inter/Playfair Display pair item 27/28
+  self-hosted.~~ **Resolved** (ARCHITECTURE_REVIEW.md item 36): `html`/`body` now sets
+  `font-family: 'Inter', sans-serif` as the app-wide default; every stray `Arial`/`Georgia`/bare-
+  `serif` declaration (about 20 sites) was normalized onto Inter (deleted, so it inherits),
+  Playfair Display (headings/titles), or `inherit` (form controls, which don't inherit by
+  default in any browser) — including a genuine bug the audit found along the way:
+  `TempSignup.css`'s `.form-title` had declared `font-family` twice on the same rule, and the
+  second, unintended `Georgia` declaration had been silently winning the cascade the whole time.
+  A new `tests/fontConsistency.test.js` guards against the drift coming back.
 - ~~**Self-hosted fonts.** `index.html` loads Google Fonts and Font Awesome from CDNs. On an
   unreliable shop-floor connection this is a real cost, but it's a build/asset change, not a
   layout one.~~ **Resolved** (ARCHITECTURE_REVIEW.md items 27-28): Inter, Playfair Display, and the
