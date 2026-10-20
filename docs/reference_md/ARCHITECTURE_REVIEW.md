@@ -1571,7 +1571,7 @@ Not urgent, but each of these increases the cost of every future change until ad
       behavior (TalkBack/NVDA/VoiceOver) — everything above is markup/ARIA/contrast correctness,
       not a live assistive-technology pass. The axe sweep covered the Login page fully and three
       representative Admin screens via route-mocking; it did not cover every screen/role
-      combination in the app.
+      combination in the app — item 33 is that full sweep.
     - **Still open after this:** the two findings above (closed by item 31), plus the declined
       role-shell consolidation, which remains open on this backlog's own list. DESIGN.md §8's PWA
       deferral is blocked on TLS (service workers only register on HTTPS or `localhost`, and the
@@ -1615,7 +1615,9 @@ Not urgent, but each of these increases the cost of every future change until ad
       `.wjo-filter-btn:not(.active)` (white on a 50%-opacity grey fill) and every `:disabled` state
       (`.wb-btn-yes:disabled`, etc.) were also checked and left: WCAG doesn't require disabled
       controls to meet contrast, and the grey-fill case is a different problem than either of this
-      item's two fixes.
+      item's two fixes. Both `.btn-delete` and `.wjo-filter-btn:not(.active)` (not a `:disabled`
+      control, so actually in scope) are fixed by item 33, which also found the opacity trick
+      measures closer to ~1.4:1 against its real white backdrop than the ~50% figure above.
     - **Regression guard.** New `frontend/src/tests/contrast.test.js` parses `globals.css`'s
       `:root` tokens (resolving one-level `var()` aliases), computes the real WCAG contrast ratio,
       and checks it against every pair DESIGN.md §3 rule 10 promises — both new tokens, plus the
@@ -1671,3 +1673,134 @@ Not urgent, but each of these increases the cost of every future change until ad
       2026-09-28, confirming the Dockerfiles still build.
     - **Still open after this:** only the declined role-shell consolidation remains on this
       backlog's own list.
+
+33. **Full axe-core accessibility sweep, all five roles** — ✅ done, four commits on `main` plus
+    this doc pass. Item 30's own sweep covered only the Login page and three Admin screens; this
+    closes the gap that left open.
+    - **The harness.** A scratchpad-only Playwright + axe-core script (never committed, matching
+      items 29-31's own verification tooling) serves `frontend/dist` via `vite preview`
+      (`VITE_BACKEND_IP` empty, same-origin), mocks every `/api/*` call per role and per status
+      value via `page.route`, and visits all 26 routes across every role shell — Login, all 12
+      `Admin.jsx` routes, all 7 `ProductionManager.jsx` routes, all 3 `QualityChecker.jsx` routes,
+      both `Worker.jsx` routes, and `Inventory.jsx`'s one route — at 1280px and 360px, running
+      `axe.run` with the `wcag2a`/`wcag2aa`/`wcag21a`/`wcag21aa` tag set at each. Where a screen
+      only renders a state after a click (`JobOrderDetails`, `ProjectVerificationDetail`,
+      `WorkerJobOrderDetail`, `AccountList`'s and `ProjectList`'s own tabs inside
+      `CreateAccount`/`CreateProject`, the mobile nav drawer), the harness drives that click first
+      and runs axe again. `axe`'s `incomplete` results (gradients, pseudo-elements, a native
+      `<select>`'s background-image, text too short to classify, elements the mobile card layout's
+      absolute positioning overlaps) are axe's known inability to auto-resolve those cases, not
+      confirmed findings; each is a case this sweep's own fixes (the ones below) don't touch,
+      reviewed by hand where the fix mattered and otherwise left as the same expected noise
+      `wb-card-table`'s existing conventions already produce.
+    - **Found: a systemic gap in the ~85-color literal tail DESIGN.md §4 says was never
+      individually contrast-audited** — real violations across every group below, all fixed in
+      place (folded onto an existing passing token, never a new literal, per DESIGN.md §3 rule 7).
+      Most were caught directly by the sweep; a few sites it never actually rendered (reachable
+      only through an interaction deeper than the harness's own click-sequences went, e.g.
+      `ProjectDetails`/`EditProjectForm`'s priority text, or `ProjectList`'s in-progress badge
+      before its own fix made it render clean) were found the same way — computing the real WCAG
+      ratio from the literal values — and confirmed fixed by their absence from every later run:
+      - **The "medium"/"high" priority orange failed everywhere it was used as foreground text**
+        (`.jol-btn.active.medium`, `.jol-priority.medium`, `worker.css`'s `.wjo-priority.medium` —
+        all `#f57c00`, ~2.4-2.7:1 — plus `.project-form-container .priority-select` and
+        `.details-main-wrapper .priority-text-high`, both `#e67e22`, ~2.8:1). Neither literal was
+        close enough to any existing token to just retarget, so this is a new, deliberately darker
+        `--color-warning` (`#9a4b00`) rather than a same-value rename — ~6.2:1 on white, ~5.4:1
+        inside a 10%-tint badge.
+      - **Three sites a gold *fill* needed `--color-text-on-accent` on, the same rule item 31
+        applied everywhere else, that its own sweep (Login + 3 Admin screens) never reached:**
+        `admin.css`'s `.type-badge.regular` (white text, ~2.14:1), `inventory.css`'s
+        `.variant-pill` (`--color-accent-text`, ~4.44:1), and `admin.css`'s `.rank-silver` leaderboard
+        badge — a literal silver, not gold, but the identical "light fill needs dark text" problem
+        (white text, ~1.91:1, failing even the 3:1 large-bold-text floor; fixed with
+        `--color-text` on the unchanged literal fill, ~9.4:1).
+      - **`--color-danger`'s own 10%-opacity tint badge formula — reused from
+        `--color-success`/`--color-info`, which both have more luminance headroom — measured only
+        ~4.26-4.28:1.** `.jol-priority.high`, `.ph-badge-late`, and a literal-red variant on
+        `.att-status-badge.absent` (folded onto the token in the same change) all moved to 6%,
+        clearing 4.5:1 (~4.56:1) with a visually negligible change to the tint. The identical,
+        currently-unreachable `.wjo-status.rework` (today's "needs repair" status string is
+        `Repair`, which maps to `.repair`, not `.rework` — a separate, pre-existing dead-class gap
+        recorded below, not fixed) got the same fix for consistency. The literal `#fff0f0` +
+        `--color-danger` pairing used at 7 more sites (delete-button hover states in
+        `AccountList`/`Profit`/notifications/attendance, `.profit-banner--error`, the project-form
+        remove button, `ProjectVerificationDetail`'s repair button) measured a near-identical
+        ~4.49:1 and moved to the same 6%-tint formula.
+      - **`inventory.css`'s two solid-fill status pills** (`.status-pill.low` — `#ffb3b3` +
+        `--color-danger`, ~2.92:1; `.status-pill.good` — `#a3ff99` + `#008000`, ~4.23:1) moved onto
+        the same danger/success tint-badge formula as the rest of the app, fixing the ratio and
+        folding `#008000` onto `--color-success` in the same change.
+      - **`ProjectList.jsx`'s `.status-badge.in-progress`** (`#4a90e2`) measured only ~3.29:1 even
+        against solid white — too light a blue to work as text at all, tint or not. Folded onto
+        `--color-info`, used for the same "in progress" role elsewhere (`.ph-badge-ontime`,
+        `.wjo-status.in-progress`).
+      - **The two leftover findings item 31 recorded but didn't fix:** `account.css`'s
+        `.btn-delete` (white on `#FF8A8A`, 2.27:1) moved onto `--color-danger` with the same
+        `filter: brightness(0.9)` hover convention `.wb-btn-yes.danger` already uses.
+        `.wjo-filter-btn:not(.active)` actually measures ~1.4:1 against its real white backdrop —
+        worse than item 31's ~50% estimate, since `opacity: 0.5` composites the *whole* button
+        (grey fill and white text together) toward the page background rather than just dimming
+        the fill, and it isn't a `:disabled` control so it's in scope here. Fixed by dropping the
+        opacity trick for a solid `--color-border` fill with `--color-text`, the same pairing
+        `ConfirmModal`'s own `.wb-btn-no` secondary button already uses.
+      - **The same opacity-compositing bug, found on a second sweep pass after the structural fix
+        below:** `NotificationList.jsx`'s `.notif-item.read` used `opacity: 0.85` to look
+        "dimmer," which washed `.notif-message`'s `#666666` text (passes ~5.75:1 on its own) down
+        to ~3.97:1 together with the row's own `#fafafa` background. Fixed by dropping the
+        opacity, keeping the flat background, which already read as "read" against `.unread`'s
+        cream fill without it.
+    - **Found: two structural violations beyond color.**
+      - **`nested-interactive`** on `AccountList.jsx`, `ProjectList.jsx`, and
+        `NotificationList.jsx`'s list rows: each wraps a real `<button>` (delete, or Edit+Delete)
+        inside a `role="button"` row via `clickableProps()` (item 30's own fix for keyboard
+        operability) — axe correctly flags a widget role containing another focusable control,
+        regardless of the `e.target !== e.currentTarget` guard already preventing any actual
+        double-fire. Fixed the same way at each site: `clickableProps()` moves off the row onto an
+        inner `display: contents` wrapper around everything *except* the action button(s), which
+        become siblings instead of descendants — no layout change (`display: contents` makes the
+        wrapper's own children direct grid/flex items of the real row, exactly as before), and no
+        behavior change for anything but the DOM node an assistive-tech user's focus model now
+        sees. `ProjectHistory.jsx`, `Attendance.jsx`'s `.att-item`, `JobOrder.jsx`, and
+        `ProjectVerification.jsx` use the same `clickableProps()` pattern but don't nest a button
+        inside the row — checked and confirmed clean, not touched.
+      - **`aria-conditional-attr`** on `InventoryTable.jsx`'s expandable `<tr>`: `aria-expanded` is
+        only valid on a treegrid row, not a plain table row. Removed outright rather than
+        restructuring the table to `role="treegrid"` — the expand/collapse state is still
+        conveyed by the `.active` class and the detail row's own position in document order.
+    - **Checked and deliberately left alone, for reasons unrelated to any scoped fix above:**
+      - `globals.css`'s `.status-done`/`.status-progress`/`.pv-status-approved`/`.pv-btn-approve`/
+        `.pv-status-repair`/`.pv-btn-repair`/`.pv-table`/`.pv-action-buttons` family (several of
+        which independently measured as failing, by hand, during this item's audit) has no `.jsx`
+        reference anywhere in the app — dead CSS from a removed or refactored component, with no
+        live render path for the sweep itself to ever reach. Recorded here rather than fixed
+        silently, since cleaning up dead code is a different kind of change than an accessibility
+        fix.
+      - `.jod-status`/`worker.css`'s `.wjo-badge`/`.ph-badge-pending` render several distinct
+        status strings with no color override at all (no background, inherited text) rather than
+        failing contrast — e.g. `.wjo-badge` conflates `assigned`/`for-qa`/`approved` into one gold
+        tint since only `.repair` gets its own rule. Not a WCAG violation (nothing fails contrast
+        if nothing overrides it), so left alone; picking distinct colors for these states is a
+        design decision, not a contrast fix.
+    - **Regression guard.** `frontend/src/tests/contrast.test.js` gained a `--color-warning`
+      pair (plain text, the two literals it replaces) and a new `TINT_PAIRS` suite that
+      alpha-composites a `--color-x-rgb` token at its real badge opacity over `--color-surface`
+      before measuring — this is what makes `--color-danger`'s own borderline case a real,
+      automated regression check instead of something only a manual axe sweep (as happened twice
+      in this item) would catch. 254 → 260 tests.
+    - **Verification.** The harness ran three times against `frontend/dist`: once before any fix
+      (confirming the known item-31 leftovers plus every sweep-reachable finding above, deduped
+      from the raw per-screen/per-state axe output down to 13 distinct color-contrast CSS rules
+      and the 2 structural rule types), once more after the color/structural commits (down to the
+      single `.notif-message` opacity case above, missed in the first pass since it wasn't yet
+      fixed), and a final run at 0 violations — only axe's own expected `incomplete` noise
+      remains, 47 entries, all reviewed by hand per the categories above. `npm test` 260/260;
+      `npm run lint` clean at `--max-warnings 0`; `npm run build` clean. Pushed and watched the
+      resulting GitHub Actions run go green across `backend`, `frontend`, and `docker-build`.
+    - **Not independently verified, and not claimed:** real screen-reader behavior
+      (TalkBack/NVDA/VoiceOver) and legibility on a real device — everything above is
+      markup/ARIA/contrast correctness computed against rendered DOM styles, not a live
+      assistive-technology or shop-floor pass.
+    - **Still open after this:** only the declined role-shell consolidation remains on this
+      backlog's own list. The dead `.pv-*`/`.status-done`/`.status-progress` CSS family and the
+      unmapped-status-string distinguishability gaps above are separate, un-started candidates.

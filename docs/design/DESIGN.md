@@ -96,6 +96,7 @@ imports it first. New UI work references the token, not the literal — §3 rule
 | Semantic: success | `#2e6b3b` | `--color-success` (+ `-rgb`) | Approved states. |
 | Semantic: success (dark) | `#1e5631` | `--color-success-dark` | Hover shade. |
 | Semantic: info | `#2b4c7e` | `--color-info` (+ `-rgb`) | In-progress states. |
+| Semantic: warning | `#9a4b00` | `--color-warning` (+ `-rgb`) | ARCHITECTURE_REVIEW.md item 33 — "medium"/"high" priority oranges. Not a literal-to-token rename: the two literals folding onto it (`#f57c00`, `#e67e22`) both failed AA as foreground text (~2.4-2.8:1 depending on site), so this is a new, deliberately darker shade of the same hue rather than either original value — ~6.2:1 on white, ~5.4:1 inside a 10%-tint badge. |
 
 **Consolidation map** — the drift each token's migration folded onto it (see item 7 in §7 for how
 this was done and verified):
@@ -114,12 +115,15 @@ this was done and verified):
 - `--color-accent-text`: also folded, item 30: `#c9a445` (`InventoryTable.jsx`'s `.min-text`, a
   gold literal that was never a token in the first place).
 
-**The literal tail.** ~92 distinct one-off colors (badge/status accents, the warning oranges
-`#f57c00`/`#e67e22`, rank bronze/silver, a handful of generic greys distinct from the muted-text
-family, etc.), each used a handful of times or fewer, stay as literals — forcing every incidental
-color onto an ill-fitting token isn't the goal; undoing the gold/brown/cream/border/text drift
-above was. If the redesign changes the palette, `:root`'s definitions are the one place that
-needs updating for the change to propagate.
+**The literal tail.** ~85 distinct one-off colors (badge/status accents, rank silver/bronze, a
+handful of generic greys distinct from the muted-text family, etc.), each used a handful of times
+or fewer, stay as literals — forcing every incidental color onto an ill-fitting token isn't the
+goal; undoing the gold/brown/cream/border/text drift above was, and so was fixing the handful of
+these literals ARCHITECTURE_REVIEW.md item 33's axe sweep found actually failing AA (the warning
+oranges named in this paragraph until item 33 — see `--color-warning` above — plus a handful of
+one-off badge fills fixed in place without a new token; see that item for the full list). If the
+redesign changes the palette, `:root`'s definitions are the one place that needs updating for the
+change to propagate.
 
 **Gold is a fill, not body text (ARCHITECTURE_REVIEW.md item 30 / §3 rule 10).**
 `--color-accent` measures ~2.4:1 on white and ~2.2:1 on cream — it fails AA's 4.5:1 floor by a wide
@@ -265,11 +269,13 @@ the current backlog — not overlooked:
   return focus on close; the two concrete contrast failures found (`--color-text-muted`,
   `--color-accent` used as text on a light surface) are fixed, not just documented — see DESIGN.md
   §4's "Gold is a fill, not body text" note. `eslint-plugin-jsx-a11y`'s recommended config is a real
-  CI gate now, the same role `no-alert` plays for native dialogs. Not independently verified: real
-  screen-reader behavior (TalkBack/NVDA/VoiceOver) — see item 30 for exactly what was and wasn't
-  checked, and for two new, smaller contrast findings (white-on-gold active tab, red-on-dark
-  Logout label) the axe-core sweep surfaced and left for a separate pass, being pre-existing and
-  outside this item's two scoped fixes. Also recorded there as a finding for the planned redesign,
+  CI gate now, the same role `no-alert` plays for native dialogs. Item 30's own axe-core sweep
+  covered only the Login page and three Admin screens; ARCHITECTURE_REVIEW.md item 33 is the full
+  sweep across every role and screen that gap implied was still needed, and closes out every
+  contrast/structural finding it found (including the two item 30 surfaced and left open). Still
+  not independently verified, by either item: real screen-reader behavior (TalkBack/NVDA/
+  VoiceOver) and legibility on a real device — see item 33 for exactly what its sweep could and
+  couldn't claim. Also recorded there as a finding for the planned redesign,
   not something this pass touched: `html`/`body` sets no `font-family`, so several screens
   (Inventory, WorkerList, the notification/job-order/pv-\* blocks, `.details-main-wrapper`) render
   in Arial, Georgia, or the browser's default serif rather than the Inter/Playfair Display pair
