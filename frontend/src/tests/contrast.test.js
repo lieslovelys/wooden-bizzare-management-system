@@ -48,11 +48,28 @@ function relativeLuminance([r, g, b]) {
   return 0.2126 * R + 0.7152 * G + 0.0722 * B;
 }
 
-function contrastRatio(hex1, hex2) {
-  const l1 = relativeLuminance(hexToRgb(hex1));
-  const l2 = relativeLuminance(hexToRgb(hex2));
+function contrastRatioRgb(rgbA, rgbB) {
+  const l1 = relativeLuminance(rgbA);
+  const l2 = relativeLuminance(rgbB);
   const [lighter, darker] = l1 > l2 ? [l1, l2] : [l2, l1];
   return (lighter + 0.05) / (darker + 0.05);
+}
+
+function contrastRatio(hex1, hex2) {
+  return contrastRatioRgb(hexToRgb(hex1), hexToRgb(hex2));
+}
+
+// ARCHITECTURE_REVIEW.md item 33 — the "-rgb" tokens (e.g. --color-danger-rgb) exist for the
+// `rgba(var(--color-x-rgb), p)` soft-tint badges used throughout the app (status pills, priority
+// tags). Alpha-compositing over a solid background isn't a straight two-token lookup, so these
+// two helpers mix the tint over its real backdrop before measuring — the same math that found
+// --color-danger's usual 10% tint only clears ~4.28:1 against the 4.5:1 bar (see TINT_PAIRS below).
+function parseRgbTriple(str) {
+  return str.split(',').map((n) => parseInt(n.trim(), 10));
+}
+
+function mixOverBackground(tintRgb, bgRgb, alpha) {
+  return tintRgb.map((c, i) => Math.round(alpha * c + (1 - alpha) * bgRgb[i]));
 }
 
 const css = readFileSync(globalsCssPath, 'utf-8');
@@ -70,6 +87,8 @@ const PAIRS = [
   ['--color-accent-dark', '--color-surface', 3, 'gold icon fills on white (item 30)'],
   ['--color-focus', '--color-surface', 3, 'the keyboard focus ring on white (item 30)'],
   ['--color-focus', '--color-surface-cream', 3, 'the keyboard focus ring on cream (item 30)'],
+  ['--color-warning', '--color-surface', 4.5, 'the "medium"/"high" priority orange as plain text on white (item 33)'],
+  ['--color-warning', '--color-surface-cream', 4.5, 'the same, on cream (item 33)'],
 ];
 
 describe('design token contrast (DESIGN.md §3 rule 10)', () => {
@@ -78,6 +97,31 @@ describe('design token contrast (DESIGN.md §3 rule 10)', () => {
     expect(tokens[bg], `token ${bg} not found in :root`).toBeDefined();
 
     const ratio = contrastRatio(tokens[fg], tokens[bg]);
+    expect(ratio).toBeGreaterThanOrEqual(minRatio);
+  });
+});
+
+// ARCHITECTURE_REVIEW.md item 33 — each pair is [foreground token, its "-rgb" companion, the
+// tint's opacity, the real background it sits on, minimum ratio, what it's for]. --color-danger's
+// own luminance is just high enough that the 10% tint formula --color-success/--color-info use
+// comfortably (they're darker) measured only ~4.26-4.28:1 for danger, under the 4.5:1 bar — hence
+// the lower 6% for danger specifically. A future opacity or token-value edit that breaks this
+// again fails here instead of waiting for another manual axe sweep to notice.
+const TINT_PAIRS = [
+  ['--color-danger', '--color-danger-rgb', 0.06, '--color-surface', 4.5, 'danger-tint badges, e.g. .ph-badge-late/.status-pill.low (item 33)'],
+  ['--color-success', '--color-success-rgb', 0.12, '--color-surface', 4.5, 'success-tint badges, e.g. .att-status-badge.present/.status-pill.good'],
+  ['--color-info', '--color-info-rgb', 0.1, '--color-surface', 4.5, 'info-tint badges, e.g. .ph-badge-ontime/.status-badge.in-progress (item 33)'],
+  ['--color-warning', '--color-warning-rgb', 0.1, '--color-surface', 4.5, 'warning-tint badges, e.g. .jol-priority.medium (item 33)'],
+];
+
+describe('design token tint-badge contrast (ARCHITECTURE_REVIEW.md item 33)', () => {
+  it.each(TINT_PAIRS)('%s at %s opacity on %s clears %s:1 — %s', (fg, rgbToken, opacity, bg, minRatio) => {
+    expect(tokens[fg], `token ${fg} not found in :root`).toBeDefined();
+    expect(tokens[rgbToken], `token ${rgbToken} not found in :root`).toBeDefined();
+    expect(tokens[bg], `token ${bg} not found in :root`).toBeDefined();
+
+    const effectiveBg = mixOverBackground(parseRgbTriple(tokens[rgbToken]), hexToRgb(tokens[bg]), opacity);
+    const ratio = contrastRatioRgb(hexToRgb(tokens[fg]), effectiveBg);
     expect(ratio).toBeGreaterThanOrEqual(minRatio);
   });
 });
