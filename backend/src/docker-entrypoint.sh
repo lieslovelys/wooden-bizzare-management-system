@@ -9,12 +9,5 @@ set -e
 echo "[entrypoint] running database migrations..."
 npm run migrate
 
-# PRD.md C.2 "Storage discipline": moves any pre-existing worker_details.photo base64 value onto
-# the uploads volume, so an existing deployment backfills itself automatically on the next
-# deploy rather than needing a manual step — idempotent (see scripts/backfillPhotos.js), so this
-# is a no-op after the first run.
-echo "[entrypoint] backfilling legacy worker photos..."
-npm run photos:backfill
-
 echo "[entrypoint] starting: $*"
 exec "$@"

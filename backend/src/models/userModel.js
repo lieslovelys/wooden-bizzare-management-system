@@ -113,24 +113,10 @@ const getWorkerPhotoPath = async (user_id) => {
     }
 }
 
-const createWorkerDetails = async (user_id, job_type, job_role, contact, rate, photo = null) => {
-    try {
-        const text = `
-            INSERT INTO worker_details (user_id, job_type, job_role, contact, rate, photo)
-            VALUES ($1, $2, $3, $4, $5, $6)
-            RETURNING *;
-        `;
-        const result = await query(text, [user_id, job_type, job_role, contact, rate, photo]);
-        return result.rows[0];
-    } catch (e) {
-        throw e;
-    }
-}
-
 // P1-5: creates the `users` row and its `worker_details` row in one transaction. The two used
-// to be separate queries (userController.addWorker calling createUser then createWorkerDetails)
-// — a failure on the second left an orphaned login with no worker profile. Used by addWorker;
-// createUser/createWorkerDetails stay exported individually since other callers (bootstrap
+// to be separate queries (userController.addWorker calling createUser then a since-removed
+// createWorkerDetails) — a failure on the second left an orphaned login with no worker profile.
+// Used by addWorker; createUser stays exported individually since other callers (bootstrap
 // admin script) only need the users-row half.
 const createWorkerWithDetails = async (username, password, first_name, middle_name, last_name, suffix, job_type, job_role, contact, rate, photoPath = null) => {
     const client = await getClient();
@@ -184,10 +170,6 @@ const updateWorkerDetails = async (user_id, job_type, job_role, contact, rate, {
         const previousPhotoPath = existing.rows[0]?.photo_path ?? null;
         const nextPhotoPath = photoChanged ? photoPath : previousPhotoPath;
 
-        // photo (the legacy base64 column) is cleared whenever a NEW photo_path is written —
-        // otherwise a stale, pre-migration blob could keep rendering even after the worker's
-        // photo has moved to a real file. Left untouched when the photo isn't part of this edit
-        // at all, so an unrelated field edit doesn't race scripts/backfillPhotos.js.
         const result = await client.query(
             `INSERT INTO worker_details (user_id, job_type, job_role, contact, rate, photo_path)
              VALUES ($1, $2, $3, $4, $5, $6)
@@ -196,10 +178,9 @@ const updateWorkerDetails = async (user_id, job_type, job_role, contact, rate, {
                     job_role = EXCLUDED.job_role,
                     contact = EXCLUDED.contact,
                     rate = EXCLUDED.rate,
-                    photo_path = EXCLUDED.photo_path,
-                    photo = CASE WHEN $7 THEN NULL ELSE worker_details.photo END
+                    photo_path = EXCLUDED.photo_path
              RETURNING *`,
-            [user_id, job_type, job_role, contact, rate, nextPhotoPath, photoChanged]
+            [user_id, job_type, job_role, contact, rate, nextPhotoPath]
         );
 
         await client.query('COMMIT');
@@ -219,7 +200,6 @@ export default {
     deleteUserById,
     getAllWorkers,
     getWorkerPhotoPath,
-    createWorkerDetails,
     createWorkerWithDetails,
     updateWorkerDetails
 }

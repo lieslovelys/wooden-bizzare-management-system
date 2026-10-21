@@ -23,7 +23,6 @@ vi.mock('../models/userModel.js', () => ({
     deleteUserById: vi.fn(),
     getAllWorkers: vi.fn(),
     getWorkerPhotoPath: vi.fn(),
-    createWorkerDetails: vi.fn(),
     createWorkerWithDetails: vi.fn(),
     updateWorkerDetails: vi.fn(),
   },

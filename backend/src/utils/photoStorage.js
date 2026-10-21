@@ -1,6 +1,7 @@
 // PRD.md C.2 "Storage discipline": worker photos used to be unbounded base64 blobs inside a
-// Postgres `text` column (worker_details.photo). This is the one place that reads/writes the
-// real image files that replace it — every caller (userService.js, scripts/backfillPhotos.js)
+// Postgres `text` column (worker_details.photo, dropped by
+// migrations/1792604443343_drop-legacy-photo-columns.js). This is the one place that reads/writes
+// the real image files that replace it — every caller (userService.js, that same migration)
 // goes through here rather than touching `fs` directly, so the size cap, the magic-byte check,
 // and the traversal guard can't be bypassed by a new call site.
 import fs from 'fs';
@@ -18,7 +19,8 @@ export const UPLOAD_DIR = path.resolve(process.env.UPLOAD_DIR || path.join(impor
 // see frontend/src/utils/resizeImage.js). Deliberately smaller than the old 10mb body limit that
 // covered this field: 512 KB is generous for a small square avatar and keeps the 200-worker list
 // endpoint's worst case (if it ever re-added photos) in the tens of megabytes, not hundreds.
-// scripts/backfillPhotos.js intentionally does NOT use this cap — see its own header comment.
+// migrations/1792604443343_drop-legacy-photo-columns.js intentionally does NOT use this cap —
+// see its own header comment.
 export const MAX_PHOTO_BYTES = 512 * 1024;
 
 // Keyed by the three types PhotoUpload.jsx's resizer can actually produce, plus the pre-existing
@@ -104,8 +106,8 @@ export async function savePhoto(buffer, ext) {
 // neither case should ever throw past this point. Any OTHER failure (permissions, disk error) is
 // logged with the filename, per CLAUDE.md's "no raw objects, an event + an id" logging rule —
 // via the shared base logger, not req.log: this util is called from both request-scoped code
-// (services/userService.js) and a bare CLI script (scripts/backfillPhotos.js), neither of which
-// can hand it a `req` to log through even if it wanted to.
+// (services/userService.js) and a migration's `up()` (drop-legacy-photo-columns.js), neither of
+// which can hand it a `req` to log through even if it wanted to.
 export async function removePhoto(name) {
   if (!name) return;
   try {
