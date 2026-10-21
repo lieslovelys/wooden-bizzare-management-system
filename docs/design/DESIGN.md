@@ -138,8 +138,10 @@ than fixing them in place. Items 35–37 since added a handful of their own (new
 `InfoCard.jsx`'s dark-on-gold border/text shades), and item 39's dead-CSS sweep took another 14
 out along with the rest of that CSS — recounted with a plain `grep -ohE '#[0-9a-fA-F]{3,8}'`
 distinct-literal count across `src/css/*.css` rather than estimated, it went from 95 before that
-item to 81 after. If the redesign changes the palette, `:root`'s definitions are the one
-place that needs updating for the change to propagate.
+item to 81 after. Item 40 deleted `TempSignup.css` outright (replaced by `admin/AccountForm.jsx`,
+whose own CSS reuses existing tokens — no new literal added), taking its 2 remaining literals with
+it: 79. If the redesign changes the palette, `:root`'s definitions are the one place that needs
+updating for the change to propagate.
 
 **Gold is a fill, not body text (ARCHITECTURE_REVIEW.md item 30 / §3 rule 10).**
 `--color-accent` measures ~2.4:1 on white and ~2.2:1 on cream — it fails AA's 4.5:1 floor by a wide

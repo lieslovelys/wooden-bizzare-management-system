@@ -2198,3 +2198,66 @@ Not urgent, but each of these increases the cost of every future change until ad
     - **Still open after this:** the declined role-shell consolidation, the `braces` advisory (no
       fix exists upstream yet), and the legacy `worker_details.photo` column drop (item 21),
       which needs the user to say which real environments exist before it's safe.
+
+40. **Remove `TempSignup`, the user asked for it directly.** P0-1 (above) already closed the
+    security hole — `POST /signup` was put behind `requireRole('Admin')` and `/protoacc`, the
+    public unauthenticated route, was deleted — but left `TempSignup.jsx` itself in place as the
+    real body of the Admin "Account Creation" tab, since at the time it was the only way to create
+    a non-Worker account at all. The user asked for it to be removed outright and replaced with a
+    proper form, plus sample accounts seeded for local testing.
+    - **The gap this also closed:** `accountBody` (ex-`signupBody`) let a caller pick
+      `userRole: 'Worker'`, which created a `users` row with no matching `worker_details` — no
+      wage rate, no job role, until a second edit (PRD.md B.5's "Account provisioning" called this
+      out directly). `userRole` now excludes `'Worker'` server-side
+      (`z.enum(USER_ROLE.filter(r => r !== 'Worker'))`), so creating one that way is a 400, not a
+      silently incomplete account.
+    - **Backend: `POST /signup` → `POST /users`.** Moved to sit next to the existing
+      `GET`/`DELETE /users`, behind the same `ADMIN_ONLY`; returns 201 instead of 200;
+      `accountBody`'s password floor raised to 8 characters, matching
+      `scripts/createAdmin.js`'s own. New `tests/userRoutes.test.js` covers the 201 path, the
+      `Worker`-rejected-here path, the under-8-character-password rejection, and that
+      `/api/signup` now 404s. `tests/routeAuthorization.test.js`'s table follows the rename.
+    - **Frontend: new `admin/AccountForm.jsx`.** Renders in `CreateAccount.jsx`'s "Account
+      Creation" tab in `TempSignup`'s place. First/Middle/Last name, Suffix, Username, Password (8+
+      chars), Confirm Password, and a required Account Role select that starts empty so nobody
+      lands on a privileged role by default. Choosing Worker reveals a Job Information section
+      built from the same `admin/WorkerJobFields.jsx` pieces and `globals/PhotoUpload.jsx`
+      `AddWorkerModal.jsx` already uses — a photo is required, same as there. Submitting posts to
+      `POST /api/workers` for Worker and `POST /api/users` for everything else; a password
+      mismatch blocks the request client-side with a toast; a server failure keeps the form as
+      typed. `TempSignup.jsx`/`.test.jsx`/`.css` are deleted outright, along with `App.jsx`'s now
+      dead `/protoacc` comment and `globals.css`'s now-unreferenced `.signup` rule (tombstoned).
+      New `admin/AccountForm.test.jsx` covers every field by label, the Worker section appearing/
+      disappearing, both endpoints' exact request bodies, the disabled-until-photo state, and the
+      keep-form-on-error path.
+    - **New `scripts/seedSampleAccounts.js`** (`npm run seed:accounts`), the same shape as
+      `scripts/createAdmin.js`: one account per role (Admin/PM/Inventory/QC) plus one Worker per
+      `STAGE` value, passwords randomly generated per run
+      (`crypto.randomBytes(12).toString('base64url')`, 16 characters), written to
+      `docs/tmp/sample-accounts.md` — never to a commit, never to stdout. Refuses to run with
+      `NODE_ENV=production`. Idempotent: a username that already exists is left untouched, and
+      since its real password isn't known to a later run, the script now reads its OWN previous
+      output file first and carries that account's previously recorded password forward, rather
+      than overwriting the one place it's written down with a placeholder — caught by actually
+      re-running the script twice during verification and noticing the second run had silently
+      discarded the real passwords before this carry-forward existed.
+    - **`docs/tmp/`** added to the root `.gitignore` — these are real, working passwords on
+      whatever database `backend/src/.env` points at, and must never reach a commit.
+    - **Verification.** Backend: `npm test` 277/277. Frontend: `npm test` 287/287, `npm run lint
+      --max-warnings 0` clean, `npm run build` clean (CSS 175.38 kB → 175.24 kB). Ran
+      `npm run migrate` (nothing pending) then `npm run seed:accounts` for real against the local
+      database: all 9 accounts created, then a second run confirmed all 9 correctly skipped with
+      their passwords preserved. Started the real server and, for all 9 accounts, logged in via
+      `POST /api/login` and confirmed `GET /api/session-user`'s `user_role` matched; confirmed all
+      5 Workers appear in `GET /api/workers` with their job role/type/contact/rate. `git status`
+      confirmed `docs/tmp/` never appears as trackable. Re-ran the item-33 axe harness against the
+      rebuilt `dist` covering the new form: 0 violations. Stopped the server afterward and
+      confirmed via `netstat` that nothing was left listening.
+    - **A real, local-environment snag caught and fixed along the way, unrelated to the feature
+      itself:** the backend's login route is rate-limited (10/15min, `userRoutes.js`'s
+      `loginLimiter`) — re-running the 9-account login-verification script against a server that
+      had already seen several earlier attempts in the same window tripped it; restarting the dev
+      server (the in-memory limiter isn't Postgres-backed) reset it for the real check.
+    - **Still open after this:** the declined role-shell consolidation, the `braces` advisory (no
+      fix exists upstream yet), and the legacy `worker_details.photo` column drop (item 21),
+      which needs the user to say which real environments exist before it's safe.

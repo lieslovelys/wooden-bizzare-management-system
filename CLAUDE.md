@@ -50,7 +50,7 @@ backend/
     config/db.js, logger.js   # logger.js: shared structured (pino) logger — see below
     migrations/           # node-pg-migrate; ALL schema changes land here, including the initial
                            # schema (a fresh DB is just `npm run migrate`, nothing else first)
-    scripts/               createAdmin.js, migrate.js, backfillPhotos.js   # see below
+    scripts/               createAdmin.js, migrate.js, backfillPhotos.js, seedSampleAccounts.js   # see below
     middleware/            auth.js, errorHandler.js
     errors/                 AppError.js
     utils/                  pagination.js   # parsePagination/buildMeta/splitCountedRows — see below
@@ -63,7 +63,7 @@ frontend/
   Dockerfile, nginx.conf, .dockerignore
   .env                  (untracked, required — see below)
   src/
-    App.jsx, Login.jsx, TempSignup.jsx, main.jsx
+    App.jsx, Login.jsx, main.jsx
     Admin.jsx, ProductionManager.jsx, QualityChecker.jsx, Worker.jsx, Inventory.jsx   # role shells
     admin/ product_manager/ quality_checker/ worker/ globals/ auth-components/         # screens
     api/client.js                                                    # shared fetch wrapper
@@ -106,6 +106,8 @@ cd backend/src
 npm run migrate          # applies every migration, including the initial schema
 npm run migrate:down     # reverts the most recently applied migration
 npm run migrate:create   # scaffolds a new migration file
+npm run seed:accounts    # seeds one sample account per role for local testing — see
+                         # scripts/seedSampleAccounts.js; refuses to run with NODE_ENV=production
 ```
 
 **Via Docker Compose** (matches the deployed topology — one command builds and runs all three
@@ -304,9 +306,9 @@ the hook or the `<Pagination>` component.
   middleware) or the shared `logger` from `backend/src/config/logger.js` (everywhere else:
   services/models can't touch `req`, per the rule above; neither can `server.js`/`config/db.js`'s
   startup/shutdown code, which runs outside any request). Never plain `console.log`/
-  `console.error` in application code — the two exceptions are `scripts/migrate.js` and
-  `scripts/createAdmin.js`, one-shot CLI tools a human runs and reads directly, documented in
-  their own header comments.
+  `console.error` in application code — the exceptions are `scripts/migrate.js`,
+  `scripts/createAdmin.js`, and `scripts/seedSampleAccounts.js`, one-shot CLI tools a human runs
+  and reads directly, documented in their own header comments.
 - **Money is `numeric(12,2)`.** `net_profit` and `total_expenses` on `project_profit` are
   **generated stored columns** — computed by Postgres from the other columns. Never recompute
   profit in JS; read the generated column.

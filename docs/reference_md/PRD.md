@@ -310,12 +310,14 @@ workflow day to day, has no Create Project screen; new orders must go through Ad
 
 ## B.5 Workflows
 
-**1. Account provisioning.** Today, via the "Account Creation" tab (Admin → Account Creation),
-which embeds the same form exposed publicly at `/protoacc`: name, suffix, username, password, and
-a free choice of role (including Admin). A **separate, parallel path** exists for workers
-specifically — "Worker List → Add Worker" — which additionally captures job role, contact, and
-daily rate in one step. The two paths produce accounts with different completeness: a worker
-created via the general signup form has no wage rate or job-role until a second edit; there is no
+**1. Account provisioning.** Via the "Account Creation" tab (Admin → Account Creation,
+`admin/AccountForm.jsx`): name, suffix, username, password, and a role choice. Choosing Worker
+reveals the same job role/contact/daily-rate/photo fields "Worker List → Add Worker" has always
+captured, and the submission goes to `POST /api/workers` either way, so every Worker account is
+created complete — no second edit needed to add a wage rate or job role (item 40 closed this gap;
+it used to be possible to create a Worker with neither). Every other role goes to
+`POST /api/users`, which now rejects `userRole: 'Worker'` outright, so that split is enforced
+server-side too, not just by which button the Admin happens to click. There is still no
 password-reset or account-edit capability anywhere in the product once an account exists.
 
 **2. Project intake.** Admin fills in project name, client name, contact number, order date,
