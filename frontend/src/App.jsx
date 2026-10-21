@@ -71,8 +71,6 @@ const App = () => {
           <div className="app-container">
             <Routes>
               <Route path='/' element={<RoleBasedRedirect role={userRole}/>}/>
-              {/* /protoacc removed — TempSignup is now only reachable via the authenticated
-                  Admin "Account Creation" screen (admin/CreateAccount.jsx). */}
               <Route path='/login' element={userRole ? <Navigate to={'/'}/> : <Login login={() => setIsLoggedIn(true)} />} />
 
               <Route element={<ProtectedRoute isAllowed={userRole === 'Admin'}/>}>

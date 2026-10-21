@@ -5,7 +5,7 @@ import path from 'node:path';
 
 // ARCHITECTURE_REVIEW.md item 36: before this, html/body set no font-family at all, so every
 // screen fell back to whatever a stray per-component declaration said — Arial, Georgia, a bare
-// 'serif', even a typo'd 'Arial', 'san-serif' (TempSignup.css's .attendance-log-title h3) — or
+// 'serif', even a typo'd 'Arial', 'san-serif' (globals.css's .attendance-log-title h3) — or
 // the browser default where nothing was set. Item 36 normalized every one of those onto Inter
 // (the app-wide default, delete the stray declaration so it inherits), Playfair Display (section
 // headings/titles), or inherit (form controls, which don't inherit font-family by default). This
@@ -17,6 +17,10 @@ import path from 'node:path';
 // font-family declaration — turned out to be dead (never imported anywhere) and was deleted
 // along with it, so that allowlist entry went too; the icon font itself (main.jsx's
 // @fortawesome/fontawesome-free import) is unaffected.
+//
+// ARCHITECTURE_REVIEW.md item 40: TempSignup.css (the file this comment used to cite for the
+// typo'd 'san-serif' example above) is also gone, deleted along with TempSignup.jsx — replaced
+// by admin/AccountForm.jsx, which has no CSS file of its own (its rules live in admin.css).
 const thisFile = fileURLToPath(import.meta.url);
 const frontendRoot = path.join(path.dirname(thisFile), '..', '..');
 const cssDir = path.join(frontendRoot, 'src', 'css');

@@ -69,6 +69,112 @@
 /* ARCHITECTURE_REVIEW.md item 39 — .create-account .placeholder-box was dead, no JSX
    reference. */
 
+/* --- ACCOUNT FORM (item 40 — admin/AccountForm.jsx, replaces the old TempSignup page) --- */
+.account-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  row-gap: 15px;
+}
+
+.account-form-section-title {
+  grid-column: span 2;
+  font-family: 'Playfair Display', serif;
+  font-size: 1.05rem;
+  color: var(--color-text);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 8px;
+}
+
+.account-form-section-title:not(:first-child) {
+  margin-top: 10px;
+}
+
+/* Same uniform textbox/select shape as .add-worker-modal's form (admin/AddWorkerModal.jsx),
+   kept as its own block rather than sharing that modal's class name — this is a full-page form,
+   not a modal. */
+.account-form .form-group input,
+.account-form .form-group select {
+  min-height: 44px;
+  font-family: inherit; /* DESIGN.md/item 36 — inputs/selects don't inherit by default */
+  font-size: 0.95rem;
+  background-color: var(--color-surface);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.account-form .form-group input {
+  padding: 10px 15px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+}
+
+.account-form .form-group input:focus {
+  border-color: var(--color-accent);
+}
+
+.account-form .form-group select {
+  padding: 10px 40px 10px 15px;
+  border: 1px solid var(--color-border);
+  border-radius: 25px;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23CBA135%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+  background-repeat: no-repeat;
+  background-position: right 15px center;
+  background-size: 12px auto;
+}
+
+.account-form .form-group select:focus {
+  border-color: var(--color-accent);
+}
+
+.account-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 30px;
+}
+
+.account-form-submit {
+  background-color: var(--color-accent);
+  color: var(--color-text-on-accent); /* item 31 — white-ish text on this gold fill */
+  border: none;
+  padding: 10px 25px;
+  min-height: 44px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 1rem;
+}
+
+.account-form-submit:hover:not(:disabled) {
+  background-color: var(--color-accent-dark);
+}
+
+.account-form-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .account-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .account-form-section-title {
+    grid-column: span 1;
+  }
+
+  /* Rule 1 — the tab card's own 40px/30px padding plus a single-column form needs the extra
+     room to stay usable at 360px. */
+  .create-account .tab-content-container {
+    padding: 20px;
+  }
+
+  .create-account .account-management-wrapper {
+    padding: 15px;
+  }
+}
 
 /* =========================================
    ACCOUNT LIST STYLES (MODERN GRID / CARD - SCOPED)

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import TempSignup from '../TempSignup';
-import AccountList from './AccountList'; 
+import AccountForm from './AccountForm';
+import AccountList from './AccountList';
 import '../css/admin.css'; // Ibinalik ko yung import ng CSS para basahin niya yung design
 
 const AccountManagement = () => {
@@ -34,8 +34,7 @@ const AccountManagement = () => {
         {/* Tab Content Rendering */}
         <div className="tab-content-container">
           {activeTab === 'creation' ? (
-            /* Tinatawag dito yung existing component mo */
-            <TempSignup />
+            <AccountForm />
           ) : (
             <AccountList />
           )}

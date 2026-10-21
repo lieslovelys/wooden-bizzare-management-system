@@ -85,10 +85,8 @@
   outline-color: var(--color-accent);
 }
 
-.signup {
-    display: block;
-    text-align: center;
-}
+/* Item 40 — .signup was dead, no JSX reference (TempSignup.jsx, the only thing that ever
+   rendered it, is gone — replaced by admin/AccountForm.jsx). */
 
 /* =========================================
    LOGIN LAYOUT (PREMIUM FUTURISTIC ANIMATED)
