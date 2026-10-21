@@ -1006,13 +1006,13 @@ Not urgent, but each of these increases the cost of every future change until ad
       syntax-checking and by reading them against `docker-compose.yml`'s real service names, not
       by an actual running stack — the existing `docker-build` CI job remains the first place the
       Dockerfile itself gets built.
-    - **Deferred, and recorded rather than silently dropped:** dropping the legacy
-      `worker_details.photo` column (needs a later migration, once every environment — including
-      whichever one this deploys to first — has actually run the backfill; the entrypoint runs
-      migrations *before* the backfill script, so doing the drop in this same pass would destroy
-      any not-yet-migrated photo); `attendance.photo` (unused — no route or service reads or
-      writes it, so there's nothing to migrate); off-box backup sync automation (already
-      P1-10's own open item, unchanged by this).
+    - **Deferred at the time, closed by item 41 below:** dropping the legacy
+      `worker_details.photo` column (needed a later migration, once every environment — including
+      whichever one this deploys to first — had actually run the backfill; the entrypoint ran
+      migrations *before* the backfill script, so doing the drop in this same pass would have
+      destroyed any not-yet-migrated photo) and `attendance.photo` (unused — no route or service
+      reads or writes it, so there was nothing to migrate, only a column to drop). Still open:
+      off-box backup sync automation (already P1-10's own open item, unchanged by this).
 
 22. **PRD.md C.2 "Observability": structured logging, correlation IDs, and a first real latency
     measurement** — ✅ done, four commits on `main`. The last C.2 item that needed no one else's
@@ -2196,8 +2196,8 @@ Not urgent, but each of these increases the cost of every future change until ad
       `package.json`/lockfile changes, since this item touched no dependency.
     - Pushed both commits plus docs, watched CI go green.
     - **Still open after this:** the declined role-shell consolidation, the `braces` advisory (no
-      fix exists upstream yet), and the legacy `worker_details.photo` column drop (item 21),
-      which needs the user to say which real environments exist before it's safe.
+      fix exists upstream yet), and the legacy `worker_details.photo` column drop (item 21) —
+      closed by item 41 below.
 
 40. **Remove `TempSignup`, the user asked for it directly.** P0-1 (above) already closed the
     security hole — `POST /signup` was put behind `requireRole('Admin')` and `/protoacc`, the
@@ -2259,5 +2259,69 @@ Not urgent, but each of these increases the cost of every future change until ad
       had already seen several earlier attempts in the same window tripped it; restarting the dev
       server (the in-memory limiter isn't Postgres-backed) reset it for the real check.
     - **Still open after this:** the declined role-shell consolidation, the `braces` advisory (no
-      fix exists upstream yet), and the legacy `worker_details.photo` column drop (item 21),
-      which needs the user to say which real environments exist before it's safe.
+      fix exists upstream yet), and the legacy `worker_details.photo` column drop (item 21) —
+      closed by item 41 below.
+
+41. **Close out the backlog: drop `nodemon` (and the `braces` advisory with it), and drop the
+    legacy photo columns.** The user asked to "fix the remaining issues on backlog" — item 40's
+    own "still open" list, minus the role-shell consolidation, which the user confirmed stays
+    declined when asked directly (each of the five role-shell files is ~10 lines of genuinely
+    per-role routing; a shared `<RoleShell>` would cost more readability than the five small files
+    save).
+    - **The `braces` advisory.** It only ever reached the project through `nodemon` →
+      `chokidar@3` → `braces`, a dev-only chain with no fix: nodemon 3.1.14 is already the latest
+      release and still pins `chokidar ^3.5.2`. Replaced `"dev": "nodemon server.js"` with
+      `"dev": "node --watch server.js"` — Node 24 is used everywhere already (CI, both
+      Dockerfiles, local dev), and its `--watch` flag is stable and watches the imported module
+      graph, the same restart-on-save behavior nodemon gave. `npm uninstall nodemon` removes the
+      dependency outright. A fresh `npm audit` also turned up a new, unrelated finding — vitest's
+      own `vite` dependency, 3 launch-editor advisories, dev-only — fixed by a plain
+      `npm audit fix`. `npm audit` now reports 0 in both halves (it was already 0 on the frontend).
+    - **The legacy photo columns.** Item 21 deferred dropping `worker_details.photo` because
+      doing so safely needed every real environment to have already run
+      `scripts/backfillPhotos.js`, and nobody could say which environments existed yet. New
+      migration `1792604443343_drop-legacy-photo-columns.js` removes that dependency: its `up()`
+      moves any remaining legacy photo onto disk itself, as part of the same run that drops the
+      column, so it's safe to run against a database in any state — never backfilled, partially
+      backfilled, or fully backfilled. `attendance.photo` (unused — no route or service has ever
+      read or written it) is dropped alongside it, guarded by a preflight check that refuses the
+      drop if a value was somehow written there by hand. `scripts/backfillPhotos.js` and its test
+      are deleted (replaced by the migration); `docker-entrypoint.sh`'s standalone backfill step
+      goes with it, since `npm run migrate` already runs on every boot.
+    - **A real atomicity bug found and fixed by actually running this against the local
+      database, not just its mocked tests.** The first version of the migration wrote each row's
+      file and `photo_path` update as it went, planning to undo any already-written files if a
+      later row failed to decode — reasoning that the whole thing was protected by one
+      transaction. It wasn't: `pgm.db.query()` executes immediately against the migration's
+      connection, *before* node-pg-migrate opens the transaction that wraps this file's queued
+      `pgm.sql()`/`dropColumn()` calls (confirmed by reading node-pg-migrate's own
+      `MigrationBuilder._apply`, which fully awaits `up(pgm)` before collecting and
+      transaction-wrapping whatever it queued). Reproduced live: seeded one good legacy-photo row
+      and one corrupt one, ran the migration, and watched the good row's `photo_path` survive a
+      migration run that otherwise failed and rolled back the column drop — exactly the dangling
+      reference the design was supposed to prevent. Fixed by decoding every row up front (a pure,
+      side-effect-free check) before writing or updating anything at all, so the dominant failure
+      mode — a corrupt legacy value — now throws with zero side effects; a rarer failure during
+      the write phase itself (disk full, a dropped connection) is handled by having the function
+      undo every file write and `photo_path` update it already made this run.
+    - **`userModel.js` cleanup that follows from the drop:** `createWorkerDetails` (dead — its
+      last real caller was the now-deleted backfill script, and it inserted into the
+      now-nonexistent `photo` column) is removed; `updateWorkerDetails`'s
+      `photo = CASE WHEN $7 ...` clause and its extra parameter go with it, since there's no
+      longer a legacy column to clear.
+    - **Verification.** Backend: 277/277 (272 unaffected + the former `backfillPhotos.test.js`'s
+      5 cases moved and rewritten as `tests/dropLegacyPhotoColumns.test.js`'s 4, reflecting the
+      fixed decode-first design, including a dedicated case for the write-phase rollback).
+      `npm audit` and `npm audit --omit=dev`: 0 and 0; `npm ls braces nodemon`: empty. `npm run
+      dev` confirmed to start Node's own `--watch`, serve `/healthz`, and the process + port both
+      cleaned up afterward via PID/`netstat`. Against the real local database: a down/up round
+      trip with a genuine legacy base64 photo row confirmed `photo_path` was set and the file
+      readable on disk; a second down/up with a deliberately corrupt row confirmed the fixed
+      failure path leaves zero side effects (no `photo_path` set, no file written); fixing that
+      row and re-running confirmed a clean full pass. All test rows, their uploaded files, and two
+      unrelated orphaned files left over from an earlier, since-fixed test run were cleaned up
+      afterward. Frontend: unaffected, `npm test` re-run as a sanity check.
+    - **Still open after this:** only the declined role-shell consolidation remains on this
+      backlog's own list. Blocked on someone else, unchanged: the overtime rule (client), TLS/a
+      domain/real VPS latency/off-box backup automation (infra), the PWA deferral (needs TLS), and
+      a real screen-reader/device pass (human + devices).

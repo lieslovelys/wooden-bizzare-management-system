@@ -50,7 +50,7 @@ backend/
     config/db.js, logger.js   # logger.js: shared structured (pino) logger — see below
     migrations/           # node-pg-migrate; ALL schema changes land here, including the initial
                            # schema (a fresh DB is just `npm run migrate`, nothing else first)
-    scripts/               createAdmin.js, migrate.js, backfillPhotos.js, seedSampleAccounts.js   # see below
+    scripts/               createAdmin.js, migrate.js, seedSampleAccounts.js   # see below
     middleware/            auth.js, errorHandler.js
     errors/                 AppError.js
     utils/                  pagination.js   # parsePagination/buildMeta/splitCountedRows — see below
@@ -94,7 +94,7 @@ or runs both halves together. Treat this as two independent projects that happen
 # Backend (Express on $PORT, default 8080)
 cd backend/src
 npm install
-npm start          # or `npm run dev` for nodemon auto-restart
+npm start          # or `npm run dev` for Node's built-in --watch auto-restart
 
 # Frontend (Vite dev server on :5173)
 cd frontend

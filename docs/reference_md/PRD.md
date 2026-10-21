@@ -141,17 +141,17 @@ makes an off-by-one confusion an easy, silent bug to introduce.
 **`worker_details`** — one row per Worker user. `detail_id` (PK), `user_id` (FK → users, CASCADE,
 not unique — a user can have more than one row), `job_type`, `job_role` (specialization:
 Carpenter/Carver/Liha/Painter/Delivery), `contact`, `rate` (`numeric(10,2)`, daily wage),
-`photo_path` (varchar(64), a filename on the `uploads` volume — **C.2 resolved**, see below).
-`photo` (base64 `text`) is legacy and no longer written to; it's read once, by
-`scripts/backfillPhotos.js`, to move any pre-existing value onto disk, and is dropped in a later
-migration once every environment has run that backfill (see ARCHITECTURE_REVIEW.md item 21).
+`photo_path` (varchar(64), a filename on the `uploads` volume — **C.2 resolved**, see below). The
+legacy base64 `photo` column is gone (item 41): the drop migration backfills any remaining value
+onto disk itself before dropping the column, so it no longer needed every environment to have
+separately run a backfill first (see ARCHITECTURE_REVIEW.md item 21's and item 41's entries).
 
 **`attendance`** — the best-constrained table. `id` (PK), `worker_id` (FK → worker_details,
 CASCADE, NOT NULL), `date` (NOT NULL), `day_of_week`, `time_in`/`time_out` (`time`, no date part
 — cannot represent an overnight shift), `status` (varchar, `CHECK` constrained to
 Present/Absent/Half-day/Late, default `'Absent'`), `late_minutes`/`overtime_minutes` (integer,
-default 0), `notes`, `photo` (varchar — unused: no route or service reads or writes it; not part
-of the C.2 photo-storage work, since there's no code path to migrate), `created_at`/`updated_at`.
+default 0), `notes`, `created_at`/`updated_at`. Its own unused `photo` column (varchar — no route
+or service ever read or wrote it) is also gone, dropped alongside `worker_details.photo` (item 41).
 `UNIQUE(worker_id, date)`.
 
 **`projects`** — `id` (PK), `project_name` (NOT NULL), `client_name` (NOT NULL, no `clients`
@@ -511,7 +511,7 @@ rest of this table.
 | **Observability** | **✅ Resolved.** Structured (JSON), leveled logging via `pino`/`pino-http` (`backend/src/config/logger.js`), replacing morgan and every scattered `console.log`/`console.error` in the request path. Every request gets a correlation id (an incoming `X-Request-Id`, or a minted UUID), echoed back on the response and carried by `req.log` through routes and the centralized error handler — never a request body, per the existing logging rule. Health/readiness endpoints were already done (`/healthz`/`/readyz`, P1-8). |
 | **Resilience** | Graceful shutdown (drains in-flight requests, closes the DB pool cleanly) on `SIGTERM`. |
 | **Backups** | Documented, tested database backup and restore procedure with a defined recovery point objective, shipped off-box rather than stored on the same 50 GB volume as the running app. A Hostinger VM-level snapshot is not a substitute for this — it backs up the whole disk on the provider's schedule, not an application-consistent, restorable Postgres dump. |
-| **Storage discipline** | **✅ Resolved for worker photos** (the only photo field actually in use — see B.2's `attendance.photo` note). Worker photos are real files on the `uploads` Docker named volume (`backend/src/utils/photoStorage.js`), resized client-side to ~512px before upload (`frontend/src/utils/resizeImage.js`) and capped server-side at 512KB after decoding — `worker_details` stores only a filename (`photo_path`). `GET /api/workers` no longer inlines the photo into every row; a viewer fetches one at a time via `GET /api/workers/:id/photo`. `scripts/backfillPhotos.js` (run automatically on every container boot, `docker-entrypoint.sh`) moves any pre-existing base64 value out of the database. |
+| **Storage discipline** | **✅ Resolved, legacy column dropped.** Worker photos are real files on the `uploads` Docker named volume (`backend/src/utils/photoStorage.js`), resized client-side to ~512px before upload (`frontend/src/utils/resizeImage.js`) and capped server-side at 512KB after decoding — `worker_details` stores only a filename (`photo_path`). `GET /api/workers` no longer inlines the photo into every row; a viewer fetches one at a time via `GET /api/workers/:id/photo`. The legacy base64 `worker_details.photo`/`attendance.photo` columns are dropped outright (item 41) — the drop migration moves any remaining legacy value onto disk itself, so it's safe to run against a database in any state. |
 | **Time correctness** | All stored timestamps are timezone-aware (or explicitly and consistently normalized to Asia/Manila); attendance "day" boundaries match the shop's actual business day. Note the VM's OS clock defaults to UTC. |
 | **Schema evolution** | Schema changes are applied through a migration tool, are reviewable, and are re-applied automatically as part of deployment — not hand-run against production. |
 | **Deployment** | The app, database, and reverse proxy run as defined, versioned services (Docker Compose) that can be stood up identically in development and on the target Hostinger VPS. |
