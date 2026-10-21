@@ -1,5 +1,5 @@
 // One-time CLI script to bootstrap the very first Admin account on a fresh database.
-// Not an HTTP endpoint — POST /signup now requires an existing Admin session (see
+// Not an HTTP endpoint — POST /api/users now requires an existing Admin session (see
 // routes/userRoutes.js), so this is the only way to create the first account.
 //
 // Usage (from backend/src):

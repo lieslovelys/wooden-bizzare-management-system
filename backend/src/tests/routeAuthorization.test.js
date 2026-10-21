@@ -95,10 +95,10 @@ const selfOrAdmin = (paramName, ...roles) => ({ kind: 'SELF_OR_ADMIN', paramName
 // instead of silently testing the wrong thing.
 const ROUTES = [
   // userRoutes, mounted at /api
-  ['POST', '/api/signup', ['Admin']],
   ['POST', '/api/login', SKIP], // rate-limited + its own 401 semantics — covered by userService.test.js
   ['GET', '/api/session-user', ANY_AUTH], // no requireRole; the handler itself throws 401 with no session
   ['POST', '/api/logout', PUBLIC_NO_AUTH], // must keep answering 200 with no session at all — see its own comment
+  ['POST', '/api/users', ['Admin']], // item 40 — was POST /signup
   ['GET', '/api/users', ['Admin']],
   ['DELETE', '/api/users/:id', ['Admin']],
   ['GET', '/api/workers', ['Admin']],

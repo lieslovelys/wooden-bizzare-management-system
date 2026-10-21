@@ -6,7 +6,7 @@ import { parsePagination, buildMeta, MAX_LIMIT } from '../utils/pagination.js';
 import { ok } from '../utils/respond.js';
 import { validate } from '../middleware/validate.js';
 import { idParams } from '../schemas/common.js';
-import { signupBody, workerBody, workerUpdateBody } from '../schemas/userSchemas.js';
+import { accountBody, workerBody, workerUpdateBody } from '../schemas/userSchemas.js';
 import { AppError } from '../errors/AppError.js';
 
 const router = express.Router();
@@ -17,15 +17,6 @@ const loginLimiter = rateLimit({
     standardHeaders: true,
     legacyHeaders: false,
     message: { success: false, error: 'Too many login attempts, please try again later.' }
-});
-
-router.post('/signup', requireRole('Admin'), validate({ body: signupBody }), async (req, res) => {
-    const b = req.body;
-    // No try/catch: a failure here (duplicate username, invalid suffix, DB error) propagates to
-    // the centralized error handler, which logs it server-side and returns a sanitized message —
-    // it no longer echoes raw pg error fields back to the client.
-    const result = await User.createUser(b.username, b.password, b.firstName, b.middleName, b.lastName, b.suffix, b.userRole);
-    res.status(200).json(ok(result));
 });
 
 router.post('/login', loginLimiter, async (req, res) => {
@@ -86,6 +77,19 @@ router.post('/logout', (req, res) => {
 
 // --- BAGONG ROUTE PARA SA ACCOUNT LIST ---
 const ADMIN_ONLY = requireRole('Admin');
+
+// Item 40: was POST /signup — renamed now that it's reachable only from the authenticated Admin
+// "Account Creation" screen (admin/AccountForm.jsx), not a standalone signup page. accountBody
+// excludes 'Worker' from userRole; a Worker account is created via POST /workers instead, which
+// writes a matching worker_details row in the same transaction.
+router.post('/users', ADMIN_ONLY, validate({ body: accountBody }), async (req, res) => {
+    const b = req.body;
+    // No try/catch: a failure here (duplicate username, invalid suffix, DB error) propagates to
+    // the centralized error handler, which logs it server-side and returns a sanitized message —
+    // it no longer echoes raw pg error fields back to the client.
+    const result = await User.createUser(b.username, b.password, b.firstName, b.middleName, b.lastName, b.suffix, b.userRole);
+    res.status(201).json(ok(result));
+});
 
 // P1-3: capped-only (account list is headcount-bounded, no paging UI) — defaults to MAX_LIMIT
 // rather than the smaller DEFAULT_LIMIT so a client that sends no ?limit= keeps seeing
