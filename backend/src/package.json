@@ -10,7 +10,8 @@
     "migrate": "node scripts/migrate.js up",
     "migrate:down": "node scripts/migrate.js down",
     "migrate:create": "node-pg-migrate create --migrations-dir migrations",
-    "photos:backfill": "node scripts/backfillPhotos.js"
+    "photos:backfill": "node scripts/backfillPhotos.js",
+    "seed:accounts": "node scripts/seedSampleAccounts.js"
   },
   "keywords": [],
   "author": "",

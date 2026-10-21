@@ -1,2 +1,5 @@
 .env
 deploy/backups/
+# Local-only scratch docs — e.g. scripts/seedSampleAccounts.js's generated credentials file.
+# Never meant to be committed: see that script's own header comment.
+docs/tmp/
