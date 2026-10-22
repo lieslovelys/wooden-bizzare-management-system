@@ -2398,15 +2398,21 @@ Not urgent, but each of these increases the cost of every future change until ad
       healthcheck used `wget --spider`, matching a common pattern elsewhere — but it made `proxy`
       fail straight to `unhealthy` instead of the normal retry/interval cadence every single time,
       caught immediately by comparing the timing against `backend`'s own, passing healthcheck.
-      Switching to `wget -qO-` (matching `backend`'s proven-working form), and then to `curl`
-      (the official Caddy Alpine Dockerfile `apk add`s `curl` specifically, not `wget`, unlike
-      the plain `node:*-alpine` image `backend`'s healthcheck runs against) made no difference —
-      same instant, tool-independent failure every time. The real cause: `localhost` inside the
-      container resolved to `::1` first (musl libc's `getaddrinfo` ordering), and Caddy's admin
-      API binds only its IPv4 loopback address — an immediate `ECONNREFUSED` on every single
-      probe, never even reaching Caddy, which is exactly why swapping the HTTP client never
-      changed anything. Fixed by addressing it as `127.0.0.1:2019` explicitly. Confirmed by
-      re-running the compose smoke test, which now passes end to end.
+      Switching to `wget -qO-` (matching `backend`'s proven-working form), then to `curl` (the
+      official Caddy Alpine Dockerfile `apk add`s `curl` specifically, not `wget`), then to
+      `127.0.0.1:2019` instead of `localhost:2019` (ruling out `::1` resolving ahead of Caddy's
+      IPv4-only admin API) made no difference — same instant failure every single time,
+      regardless of tool or address, which in hindsight was the real signal that none of those
+      guesses were it. **The actual cause: a known, unfixed Docker Compose bug**
+      ([docker/compose#12424](https://github.com/docker/compose/issues/12424)) — `--wait` can
+      report a container "unhealthy" off its very *first* failed probe, bypassing `retries`
+      entirely, rather than waiting out the retry/interval cadence its own documentation
+      describes (and that `backend`'s/`db`'s healthchecks, which happened to pass on an early
+      check, never exposed). Caddy genuinely isn't listening yet in the first instant after the
+      container starts, whatever's being asked of it — that first failure was real, just never
+      supposed to be fatal on its own. Fixed with `start_period: 10s`, the workaround the issue
+      itself points to: real grace time before a failure counts at all. Confirmed by re-running
+      the compose smoke test, which now passes end to end.
     - **A new `deploy` job runs `ssh … deploy/deploy.sh <sha>`** — a plain `ssh` call, deliberately
       not a third-party GitHub Action, to avoid that supply-chain surface for something that can
       reach production. It's gated on the `DEPLOY_ENABLED` repository variable, so it stays a

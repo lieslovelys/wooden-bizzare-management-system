@@ -123,10 +123,18 @@ services:
       # `::1` first (musl's getaddrinfo ordering) with nothing listening on it — an immediate,
       # tool-independent `ECONNREFUSED` every single probe, which is why this looked identical
       # (and instant) across wget --spider, wget -qO- and curl in turn before this was found.
+      # `start_period` matters here specifically (unlike backend/db's healthchecks, which don't
+      # set one): `docker compose up --wait` has a known, unfixed race (docker/compose#12424)
+      # where a container's very first failed probe can be reported as "unhealthy" immediately,
+      # bypassing `retries` entirely — exactly what every earlier attempt at this healthcheck hit
+      # regardless of which HTTP client or address it used, since Caddy genuinely isn't listening
+      # yet in the first moment after the container starts. `start_period` gives it real grace
+      # time where an early failure doesn't trigger that race.
       test: ["CMD", "curl", "-fsS", "http://127.0.0.1:2019/config/"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 10s
     depends_on:
       backend:
         condition: service_healthy
