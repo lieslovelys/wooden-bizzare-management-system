@@ -116,7 +116,12 @@ services:
     # start, not for Caddy to actually finish loading its config and bind its listener — a race
     # CI's new compose smoke test (item 42) caught directly (`curl: Connection reset by peer`).
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:2019/config/"]
+      # `-qO-` (not `--spider`), matching `backend`'s own healthcheck below — BusyBox wget
+      # (this image's only wget, same as the node:*-alpine image backend's healthcheck already
+      # proved this pattern against) doesn't support `--spider`; it failed every probe outright
+      # with a usage error rather than a transient one, which is why the compose smoke test
+      # (item 42) saw `proxy` go straight to unhealthy instead of the normal retry/interval path.
+      test: ["CMD", "wget", "-qO-", "http://localhost:2019/config/"]
       interval: 10s
       timeout: 5s
       retries: 5

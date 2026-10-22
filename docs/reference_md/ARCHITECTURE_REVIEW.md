@@ -2394,8 +2394,13 @@ Not urgent, but each of these increases the cost of every future change until ad
       a real `healthcheck` to the `proxy` service, deliberately against Caddy's own admin API
       (`http://localhost:2019/config/`, always plain HTTP) rather than `/healthz` through the
       site itself — that stays identical whether `SITE_ADDRESS` is `:80` (CI, local) or a real
-      domain with Caddy's own automatic HTTPS redirect in front of it. Confirmed by re-running
-      the compose smoke test, which now passes end to end.
+      domain with Caddy's own automatic HTTPS redirect in front of it. The first version of that
+      healthcheck used `wget --spider`, matching a common pattern elsewhere — but it made `proxy`
+      fail straight to `unhealthy` instead of the normal retry/interval cadence (BusyBox wget,
+      the only wget in this Alpine-based image, doesn't support `--spider`), caught immediately
+      by re-running the smoke test and comparing the timing against `backend`'s own healthcheck,
+      which does pass. Fixed by matching `backend`'s already-proven `wget -qO-` form instead.
+      Confirmed by re-running the compose smoke test, which now passes end to end.
     - **A new `deploy` job runs `ssh … deploy/deploy.sh <sha>`** — a plain `ssh` call, deliberately
       not a third-party GitHub Action, to avoid that supply-chain surface for something that can
       reach production. It's gated on the `DEPLOY_ENABLED` repository variable, so it stays a
