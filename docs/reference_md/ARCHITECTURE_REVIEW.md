@@ -2394,7 +2394,7 @@ Not urgent, but each of these increases the cost of every future change until ad
       --spider`, `wget -qO-`, `curl`, `127.0.0.1` instead of `localhost`, a `start_period`) all
       failed identically and near-instantly, which in hindsight was the tell that the healthcheck
       was never the problem. `docker inspect`ing the container's full `.State` directly (rather
-      than guessing further) showed the real story: `"Restarting":true,"ExitCode":1"` — Caddy was
+      than guessing further) showed the real story: `"Restarting":true,"ExitCode":1` — Caddy was
       crash-looping, respawned every time by `restart: unless-stopped`, with nothing about the
       *healthcheck* at fault at all. **The actual cause:** `docker-compose.yml`'s own
       `PORTAINER_ADDRESS: ${PORTAINER_ADDRESS:-}` default. Compose substitution always sets this
