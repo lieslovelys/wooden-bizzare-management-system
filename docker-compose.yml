@@ -98,9 +98,14 @@ services:
       # (the VPS's .env) switches Caddy into automatic HTTPS for that domain.
       SITE_ADDRESS: ${SITE_ADDRESS:-:80}
       DOMAIN: ${DOMAIN:-woodenbizarre.tech}
-      # Unset locally/in CI, which leaves the Caddyfile's portainer.invalid placeholder inert —
-      # Portainer isn't part of the local dev stack at all (see the `portainer` service below).
-      PORTAINER_ADDRESS: ${PORTAINER_ADDRESS:-}
+      # Defaults to the SAME placeholder the Caddyfile itself falls back to — deliberately not
+      # empty. Compose substitution always sets this env var in the container even when unset
+      # here (as an empty string), and an empty-but-set value breaks the Caddyfile's own
+      # `{$PORTAINER_ADDRESS:portainer.invalid}` fallback (which only applies when the variable
+      # is truly unset, not when it's set-but-empty) — Caddy then tries to start a listener on a
+      # blank site address and crashes outright. Confirmed by a compose run crash-looping with
+      # that empty default, while the same image ran fine standalone with no env override at all.
+      PORTAINER_ADDRESS: ${PORTAINER_ADDRESS:-portainer.invalid}
     ports:
       - "80:80"
       - "443:443"

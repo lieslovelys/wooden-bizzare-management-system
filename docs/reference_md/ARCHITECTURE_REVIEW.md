@@ -2386,33 +2386,34 @@ Not urgent, but each of these increases the cost of every future change until ad
       missed on the first pass, caught by the compose smoke test still failing identically after
       the `config/db.js` fix alone. Fixed the same way there.
     - **A second, unrelated real bug, found once the first one stopped masking it:** with the
-      database connection fixed, the stack came up healthy but the smoke test's own `curl` still
-      failed — `Connection reset by peer`. `proxy` (Caddy) had no Docker `healthcheck` at all, so
-      `docker compose up --wait` only ever waited for the container *process* to start, not for
-      Caddy to finish loading its config and actually bind its listener — a startup race that
-      nothing had ever been positioned to notice before this smoke test existed. Fixed by adding
-      a real `healthcheck` to the `proxy` service, deliberately against Caddy's own admin API
-      (`http://localhost:2019/config/`, always plain HTTP) rather than `/healthz` through the
-      site itself — that stays identical whether `SITE_ADDRESS` is `:80` (CI, local) or a real
-      domain with Caddy's own automatic HTTPS redirect in front of it. The first version of that
-      healthcheck used `wget --spider`, matching a common pattern elsewhere — but it made `proxy`
-      fail straight to `unhealthy` instead of the normal retry/interval cadence every single time,
-      caught immediately by comparing the timing against `backend`'s own, passing healthcheck.
-      Switching to `wget -qO-` (matching `backend`'s proven-working form), then to `curl` (the
-      official Caddy Alpine Dockerfile `apk add`s `curl` specifically, not `wget`), then to
-      `127.0.0.1:2019` instead of `localhost:2019` (ruling out `::1` resolving ahead of Caddy's
-      IPv4-only admin API) made no difference — same instant failure every single time,
-      regardless of tool or address, which in hindsight was the real signal that none of those
-      guesses were it. **The actual cause: a known, unfixed Docker Compose bug**
-      ([docker/compose#12424](https://github.com/docker/compose/issues/12424)) — `--wait` can
-      report a container "unhealthy" off its very *first* failed probe, bypassing `retries`
-      entirely, rather than waiting out the retry/interval cadence its own documentation
-      describes (and that `backend`'s/`db`'s healthchecks, which happened to pass on an early
-      check, never exposed). Caddy genuinely isn't listening yet in the first instant after the
-      container starts, whatever's being asked of it — that first failure was real, just never
-      supposed to be fatal on its own. Fixed with `start_period: 10s`, the workaround the issue
-      itself points to: real grace time before a failure counts at all. Confirmed by re-running
-      the compose smoke test, which now passes end to end.
+      database connection fixed, the stack came up but the smoke test's own `curl` still failed —
+      `Connection reset by peer`, then (once `proxy` got a Docker `healthcheck`, added as part of
+      this same fix, so `--wait` would actually wait for Caddy's listener instead of just the
+      container process starting) the container settled into `unhealthy` and stayed there.
+      Chasing the healthcheck itself was a dead end — six different configurations (`wget
+      --spider`, `wget -qO-`, `curl`, `127.0.0.1` instead of `localhost`, a `start_period`) all
+      failed identically and near-instantly, which in hindsight was the tell that the healthcheck
+      was never the problem. `docker inspect`ing the container's full `.State` directly (rather
+      than guessing further) showed the real story: `"Restarting":true,"ExitCode":1"` — Caddy was
+      crash-looping, respawned every time by `restart: unless-stopped`, with nothing about the
+      *healthcheck* at fault at all. **The actual cause:** `docker-compose.yml`'s own
+      `PORTAINER_ADDRESS: ${PORTAINER_ADDRESS:-}` default. Compose substitution always sets this
+      env var inside the container, even when nothing configures it — as an *empty string*, not
+      as genuinely unset — and an empty-but-set value breaks the Caddyfile's own
+      `{$PORTAINER_ADDRESS:portainer.invalid}` fallback, which (like Go's usual env-var handling)
+      only applies when the variable is truly absent, not when it's present-but-blank. Caddy then
+      tries to stand up a listener on a blank site address and exits. Confirmed directly: the
+      same image run standalone, with no env override at all (so the Caddyfile's own literal
+      defaults applied), started cleanly and served without issue — real proof the image and
+      Caddyfile were never the problem, only this one compose default. Fixed by giving
+      `docker-compose.yml` the same default the Caddyfile already declares
+      (`PORTAINER_ADDRESS: ${PORTAINER_ADDRESS:-portainer.invalid}`), so the env var is never
+      actually empty. The `proxy` healthcheck added along the way (`curl -fsS` against Caddy's
+      own admin API, `http://127.0.0.1:2019/config/`, deliberately not `/healthz` through the
+      site itself, so it stays identical whether `SITE_ADDRESS` is `:80` or a real domain under
+      automatic HTTPS) is a real improvement kept regardless — `docker compose up --wait` only
+      ever waited for the container process to start before, not for Caddy to actually be ready.
+      Confirmed by re-running the compose smoke test, which now passes end to end.
     - **A new `deploy` job runs `ssh … deploy/deploy.sh <sha>`** — a plain `ssh` call, deliberately
       not a third-party GitHub Action, to avoid that supply-chain surface for something that can
       reach production. It's gated on the `DEPLOY_ENABLED` repository variable, so it stays a

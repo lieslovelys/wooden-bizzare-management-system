@@ -80,10 +80,11 @@ jobs:
             ${{ env.PROXY_IMAGE }}:latest
 
       # Runs the actual stack, the same docker-compose.yml the VPS uses, against the images just
-      # built — not a separate hand-rolled `docker run`. DOMAIN/PORTAINER_ADDRESS are pinned to
-      # the reserved .invalid TLD (RFC 2606) so Caddy's automatic-HTTPS attempt for those site
-      # blocks fails fast against a domain that can never resolve, instead of risking Let's
-      # Encrypt rate limits against the real woodenbizarre.tech from every CI run.
+      # built — not a separate hand-rolled `docker run`. DOMAIN is pinned to the reserved
+      # .invalid TLD (RFC 2606, same as docker-compose.yml's own PORTAINER_ADDRESS default) so
+      # Caddy's automatic-HTTPS attempt for those site blocks fails fast against a domain that
+      # can never resolve, instead of risking Let's Encrypt rate limits against the real
+      # woodenbizarre.tech from every CI run.
       - name: Write a throwaway .env for the smoke test
         run: |
           cat > .env <<'EOF'
@@ -95,35 +96,12 @@ jobs:
           COOKIE_SECURE=false
           DOMAIN=example.invalid
           EOF
-      # Temporary diagnostic in place of `--wait`: proxy's healthcheck has failed `--wait`
-      # identically and near-instantly across six different configurations with no clear cause,
-      # so this polls docker inspect directly for up to 60s and prints its raw Health state
-      # (including each individual probe's own output) every iteration, to see the real ground
-      # truth instead of guessing further. To be replaced once that's known.
+      # Fast syntax check before the full stack comes up — cheap, and fails faster than waiting
+      # on the whole compose bring-up when the Caddyfile itself is the problem.
       - name: Validate the Caddyfile directly against the built image
         run: docker run --rm --entrypoint caddy ${{ env.PROXY_IMAGE }}:${{ github.sha }} validate --config /etc/caddy/Caddyfile --adapter caddyfile
-      - name: Inspect the image's user/capabilities, and try actually running it standalone
-        run: |
-          docker run --rm --entrypoint sh ${{ env.PROXY_IMAGE }}:${{ github.sha }} -c "id; getcap /usr/bin/caddy || echo 'no getcap/no caps'"
-          docker run -d --name standalone-proxy -p 8888:80 ${{ env.PROXY_IMAGE }}:${{ github.sha }}
-          sleep 3
-          docker logs standalone-proxy
-          docker inspect standalone-proxy --format='{{json .State}}'
-          docker rm -f standalone-proxy
       - name: Bring up the compose stack
-        run: |
-          IMAGE_TAG=${{ github.sha }} docker compose up -d
-          for i in $(seq 1 15); do
-            echo "=== inspect attempt $i ==="
-            docker inspect wooden_bizarre-management-system-proxy-1 --format='{{json .State}}' | tee /tmp/state.json
-            echo
-            status=$(jq -r .Health.Status /tmp/state.json)
-            if [ "$status" = "healthy" ]; then echo "proxy became healthy"; exit 0; fi
-            sleep 2
-          done
-          echo "proxy never became healthy within 30s"
-          docker compose logs
-          exit 1
+        run: IMAGE_TAG=${{ github.sha }} docker compose up -d --wait
       - name: Smoke test through the proxy
         run: |
           curl -fsS http://localhost/healthz
