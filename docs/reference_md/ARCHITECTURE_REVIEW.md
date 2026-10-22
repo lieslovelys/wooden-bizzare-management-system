@@ -2325,3 +2325,81 @@ Not urgent, but each of these increases the cost of every future change until ad
       backlog's own list. Blocked on someone else, unchanged: the overtime rule (client), TLS/a
       domain/real VPS latency/off-box backup automation (infra), the PWA deferral (needs TLS), and
       a real screen-reader/device pass (human + devices).
+
+42. **Go live: Hostinger VPS + domain, automatic HTTPS, a GUI instead of bare SSH, and
+    auto-deploy from `main` — closing out item 40's TLS/domain/VPS-latency/backups block.** The
+    user had a VPS and domain (`woodenbizarre.tech`) ready and asked for three things: a guided
+    cutover, a server-management GUI instead of doing everything over SSH, and Render-style
+    auto-deploy on push.
+    - **Legacy VPS inventory, done first and read-only.** The VPS turned out to already be running
+      a bare-metal (no Docker) deploy of the app from a July 2026 commit — PM2 + system Nginx +
+      Postgres 16, with a working Certbot-issued certificate already live for the domain. Its
+      database held 5 users (1 admin, 4 clearly-test workers), 2 toy projects, and zero
+      attendance/profit/inventory rows — recognizably throwaway client-testing data, on a schema
+      that predates this repo's `pgmigrations` bookkeeping entirely (no photo-file storage, no
+      pagination indexes, nothing from items 1–41). Recommended against migrating it — mapping a
+      6-month-stale, un-tracked schema onto the current migration chain column-by-column was real
+      effort for data that didn't look worth preserving — and the user agreed: a cold backup for
+      the record, then a fresh database, the client re-tests on the real thing.
+    - **Caddy replaces Nginx in the `proxy` image, not Caddy in front of Nginx.** Caddy requests
+      and renews its own Let's Encrypt certificate for whatever `SITE_ADDRESS` names
+      (`frontend/Caddyfile`), with no separate certbot service or renewal cron. Replacing Nginx
+      outright, rather than stacking Caddy in front of it, keeps exactly **one** proxy hop in
+      front of the app — `app.js`'s `app.set('trust proxy', 1)` and `userRoutes.js`'s per-IP
+      `loginLimiter` both depend on that being true. A second hop would make every real visitor
+      look like the first proxy's IP to the app, collapsing every user into one shared
+      rate-limit bucket and breaking the `X-Forwarded-Proto` that `COOKIE_SECURE`'s `secure`
+      cookie flag depends on. `SITE_ADDRESS` defaults to `:80` (plain HTTP, no TLS) when unset —
+      local `docker compose up` and CI's new smoke test need no domain at all.
+    - **Images are built once, by CI, and the VPS only pulls.** `docker-compose.yml`'s `backend`
+      and `proxy` services now carry `image: ghcr.io/strydomph/wbms-…:${IMAGE_TAG:-latest}`
+      alongside their existing `build:` — `build:` still serves local dev and CI's own smoke test,
+      while the VPS pulls a tag it never has to compile. The one vCPU never spends a deploy
+      compiling anything.
+    - **CI (`images` job, replacing `docker-build`): builds both images, then actually *runs* the
+      full compose stack and smoke-tests it** (`curl` against `/`, `/healthz`, `/readyz` through
+      the proxy) — the first time this repo's CI has run the stack end to end rather than only
+      building the Dockerfiles. `DOMAIN`/`PORTAINER_ADDRESS` are pinned to the `.invalid` TLD
+      (RFC 2606) for that smoke test specifically so Caddy's automatic-HTTPS attempt for those
+      site blocks fails fast against a domain that can never resolve, instead of risking Let's
+      Encrypt rate limits against the real `woodenbizarre.tech` on every CI run. On `main` only,
+      it then pushes both images to GHCR (two tags each: the commit SHA and `latest`) and prunes
+      old package versions, since private GHCR packages are capped at 500MB on this plan.
+    - **A new `deploy` job runs `ssh … deploy/deploy.sh <sha>`** — a plain `ssh` call, deliberately
+      not a third-party GitHub Action, to avoid that supply-chain surface for something that can
+      reach production. It's gated on the `DEPLOY_ENABLED` repository variable, so it stays a
+      harmless no-op in Actions until the VPS side of the cutover is actually finished, and on
+      `concurrency: production` so two pushes can't race each other onto the server. The
+      workflow's own short-lived `GITHUB_TOKEN` is piped into the VPS's `docker login`, so no
+      long-lived registry credential is stored there at all.
+    - **`deploy/deploy.sh`**, run on the VPS: refuses to run against a dirty working tree (a sign
+      someone hand-edited the server instead of going through a commit), checks out the deployed
+      SHA, runs `backup.sh` as a pre-deploy safety net, pulls the new images, and
+      `docker compose up -d --wait` — which fails the whole deploy loudly if the backend's
+      migrate-on-boot crash-loops, rather than leaving the new containers silently unhealthy while
+      the old ones keep serving. A rollback is re-running an older successful Actions run; schema
+      migrations are not reversed by it.
+    - **Portainer** (`portainer/portainer-ce`, a new `portainer` service) is the GUI the user
+      asked for in place of bare SSH — container list, logs, restart/stop, resource use. It's
+      reached at its own subdomain (`portainer.woodenbizarre.tech`) proxied by Caddy with its own
+      automatic certificate, deliberately never sharing an origin (and so never sharing cookies or
+      CORS trust) with the app itself. Hostinger's own "Docker Manager" API/panel feature was
+      considered and rejected: it only works on their separate Docker OS template, which would
+      mean reinstalling the VPS's OS, and Hostinger itself documents it as experimental.
+    - **Docs:** `deploy/README.md` rewritten as the step-by-step cutover guide (DNS, firewall,
+      Docker install, a dedicated `deploy` user, a read-only `git` deploy key, `.env`, first
+      deploy, Portainer's first-login window, the GitHub secrets/variable, and a troubleshooting
+      section for the cookie/HTTPS mismatch, DNS propagation, and a failed migration on boot).
+      `PRD.md`'s one remaining "Nginx" mention (the C.2 database-pooling row) now says Caddy.
+    - **This repo-side half (CI, Caddy, compose, docs) is committed to `main` and verified in CI.**
+      The VPS cutover itself (DNS already pointed here from the legacy deploy; installing Docker;
+      creating the `deploy` user; the first `deploy/deploy.sh` run; Portainer's first login; the
+      GitHub secrets) is a separate, interactive pass with the user, since several of its steps
+      are destructive (stopping the legacy Nginx/PM2 deploy, freeing port 80/443) or need
+      credentials only they hold. `DEPLOY_ENABLED` stays unset — CI builds, smoke-tests, and
+      publishes images, but nothing reaches the VPS — until that pass is done.
+    - **Still open after this:** the VPS cutover itself (tracked above, not yet run), the overtime
+      rule (client), real VPS latency and off-box backup sync automation (infra, now partially
+      addressed — `deploy.sh` backs up before every deploy, but nothing ships the result off-box
+      yet), the PWA deferral (its TLS blocker is now resolved once the cutover lands), a real
+      screen-reader/device pass (human + devices), and the declined role-shell consolidation.

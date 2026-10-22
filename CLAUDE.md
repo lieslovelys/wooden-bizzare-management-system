@@ -16,25 +16,32 @@ UI rules and the mobile-responsiveness backlog (binding for new/changed UI work,
 the current priority): [`docs/design/DESIGN.md`](docs/design/DESIGN.md).
 
 **Hosting target:** a single **Hostinger VPS, KVM 1 plan — 1 vCPU, 4 GB RAM, 50 GB NVMe**
-(self-managed, root access, no managed database or load balancer). `docker-compose.yml` (repo
-root) runs it as three containers — `db` (Postgres), `backend` (Express, migrates itself on
-boot), `proxy` (Nginx — serves the built frontend and reverse-proxies `/api` to `backend`); a
-fourth named volume, `uploads`, holds worker photo files (`backend/src/utils/photoStorage.js`) —
-see `deploy/README.md` for first-time setup and `deploy/backup.sh`/`restore.sh` for the
-`pg_dump` + uploads-tarball backup story (a VPS snapshot alone is not a substitute — see that
-README for why). Currently **HTTP-only**: no domain is pointed at the VPS yet, so there's no TLS
-(Let's Encrypt can't certify a bare IP) — `COOKIE_SECURE` in `.env` must stay `false` until that
-changes, or sessions silently stop working. The single vCPU is the binding constraint, not RAM
-or disk: extra app containers don't add real parallelism on one core, so "scaling" here mostly
-means keeping the app efficient within that one core rather than fanning out replicas. See
-`PRD.md` C.2 and `ARCHITECTURE_REVIEW.md` P1-1/P1-2/P1-10 for what this changes concretely.
+(self-managed, root access, no managed database or load balancer), domain **woodenbizarre.tech**
+(item 42). `docker-compose.yml` (repo root) runs it as four containers — `db` (Postgres),
+`backend` (Express, migrates itself on boot), `proxy` (Caddy — serves the built frontend,
+reverse-proxies `/api` to `backend`, and handles TLS automatically via Let's Encrypt once
+`SITE_ADDRESS` names a real domain, see `frontend/Caddyfile`), `portainer` (a
+container-management GUI, reached at `portainer.woodenbizarre.tech`); a fifth named volume,
+`uploads`, holds worker photo files (`backend/src/utils/photoStorage.js`) — see
+`deploy/README.md` for first-time setup and `deploy/backup.sh`/`restore.sh` for the `pg_dump` +
+uploads-tarball backup story (a VPS snapshot alone is not a substitute — see that README for
+why). `backend`/`proxy` pull pre-built images from GHCR (CI builds and pushes on every push to
+`main`; the VPS only pulls — see `.github/workflows/ci.yml`'s `images`/`deploy` jobs and
+`deploy/deploy.sh`), so a deploy never costs the single core a build; the `deploy` job stays
+gated off (the `DEPLOY_ENABLED` repository variable) until the VPS cutover is actually done. Once
+it's live, `COOKIE_SECURE=true` in the VPS's `.env` — leave it `false` anywhere HTTPS isn't
+actually being terminated in front of the app (local dev, a domain-less deployment). The single
+vCPU is the binding constraint, not RAM or disk: extra app containers don't add real parallelism
+on one core, so "scaling" here mostly means keeping the app efficient within that one core rather
+than fanning out replicas. See `PRD.md` C.2 and `ARCHITECTURE_REVIEW.md` P1-1/P1-2/P1-10/item 42
+for what this changes concretely.
 
 ## Repo layout — read this before running anything
 
 ```
 docker-compose.yml      # 3 services: db, backend, proxy — see "Hosting target" above
 .env.example             # what docker-compose.yml reads; copy to untracked .env
-deploy/                  backup.sh, restore.sh, README.md
+deploy/                  backup.sh, restore.sh, deploy.sh, README.md
 .github/workflows/ci.yml # backend install, frontend lint+build, docker build (both images)
 backend/
   .gitignore
@@ -60,7 +67,7 @@ backend/
     tests/                 # vitest; services mocked via vi.mock, routes via supertest
 frontend/
   package.json, vite.config.js, index.html
-  Dockerfile, nginx.conf, .dockerignore
+  Dockerfile, Caddyfile, .dockerignore
   .env                  (untracked, required — see below)
   src/
     App.jsx, Login.jsx, main.jsx
@@ -168,7 +175,7 @@ for the Docker Compose path; not read by `npm start`/`npm run dev` at all.
 **`frontend/.env`** (untracked, required for local non-Docker dev)
 | Variable | Purpose |
 |---|---|
-| `VITE_BACKEND_IP` | Backend base URL, concatenated onto every API call (`import.meta.env.VITE_BACKEND_IP + '/path'`). Baked into the build at `vite build` time — changing it requires a rebuild. Empty string in the Docker deployment (frontend and API are same-origin behind Nginx there); a real cross-origin URL (e.g. `http://localhost:8080`) for local dev, where the Vite dev server and Express run on different ports. |
+| `VITE_BACKEND_IP` | Backend base URL, concatenated onto every API call (`import.meta.env.VITE_BACKEND_IP + '/path'`). Baked into the build at `vite build` time — changing it requires a rebuild. Empty string in the Docker deployment (frontend and API are same-origin behind Caddy there); a real cross-origin URL (e.g. `http://localhost:8080`) for local dev, where the Vite dev server and Express run on different ports. |
 
 **Traps worth knowing before you debug around them:**
 - `ALLOWED_ORIGINS=""` is falsy in JS, so CORS silently falls back to `http://localhost:5173`
@@ -329,11 +336,11 @@ the hook or the `<Pagination>` component.
   router's real route table and fails CI if a mounted route has no matching row, or a row no
   longer matches a real route.
 - **Every backend route lives under `/api`** (as of P1-10) — mount new routers with
-  `app.use('/api/...', ...)` in `server.js`, not at root. This is what lets the Nginx reverse
-  proxy (`frontend/nginx.conf`) use one general `/api/` rule instead of a growing list of
+  `app.use('/api/...', ...)` in `server.js`, not at root. This is what lets the Caddy reverse
+  proxy (`frontend/Caddyfile`) use one general `/api/*` rule instead of a growing list of
   root-level exceptions; a route added outside `/api` won't be reachable through the deployed
   stack at all. `/healthz`/`/readyz` are the one deliberate exception (infrastructure endpoints,
-  each with its own explicit Nginx `location` block).
+  each with its own explicit `handle` block).
 - **Schema changes go through `backend/src/migrations/`** (node-pg-migrate) — there is no other
   path; the historical `backend/index.sql` bootstrap has been folded into the first migration
   and deleted. Create a migration with `npm run migrate:create -- <name>` from `backend/src`,
@@ -347,12 +354,15 @@ the hook or the `<Pagination>` component.
 
 ## Known-broken / in-flight — don't mistake these for your own changes
 
-- **No TLS yet.** The Docker Compose deployment is HTTP-only until a domain is pointed at the
-  VPS — see "Hosting target" above. Don't set `COOKIE_SECURE=true` before that's actually true.
-- **Docker builds are unverified outside CI.** The Dockerfiles/`docker-compose.yml` were written
-  and reviewed on a machine without Docker installed — `.github/workflows/ci.yml`'s
-  `docker-build` job is the first place they're actually built. Watch that Actions run before
-  trusting a fresh image.
+- **Auto-deploy is gated off until the VPS cutover is actually done (item 42).** CI's `deploy`
+  job (`.github/workflows/ci.yml`) only runs when the `DEPLOY_ENABLED` repository variable is
+  `true` — see `deploy/README.md`. Until then, a push to `main` builds, smoke-tests and publishes
+  images to GHCR but doesn't touch the live server.
+- **`docker-compose.yml`'s `backend`/`proxy` images now live at GHCR** (`image:` plus `build:` —
+  `build:` is what local `docker compose up -d --build` and CI's smoke test use; the VPS instead
+  pulls the tag CI just pushed). Watch `.github/workflows/ci.yml`'s `images` job before trusting
+  a fresh image — it's the first place both Dockerfiles are actually built and the full stack is
+  actually run, not just built.
 P0 (authorization, session-secret fail-fast, rate limiting), P1a (session store, connection pool
 limits, indexes, transactions, uniqueness constraints, `timestamptz`, baseline production
 middleware), P1-10 (Docker Compose deployment, `/api` route namespace, backups, CI), the P2
