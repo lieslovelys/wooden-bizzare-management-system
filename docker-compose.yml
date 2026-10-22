@@ -109,6 +109,17 @@ services:
       # Persists Caddy's issued certificates and its ACME account across `up`/recreate, so a
       # redeploy doesn't re-request a certificate and risk Let's Encrypt's rate limits.
       - caddy_data:/data
+    # Hits Caddy's own admin API (always plain HTTP on 2019, unaffected by whatever TLS/redirect
+    # behavior the site itself has under a real SITE_ADDRESS) rather than /healthz through the
+    # site — that stays domain/TLS-agnostic between CI's plain-:80 case and the VPS's real-domain
+    # case. Without this, `docker compose up --wait` only waited for the container process to
+    # start, not for Caddy to actually finish loading its config and bind its listener — a race
+    # CI's new compose smoke test (item 42) caught directly (`curl: Connection reset by peer`).
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:2019/config/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     depends_on:
       backend:
         condition: service_healthy

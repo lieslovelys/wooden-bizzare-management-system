@@ -2384,8 +2384,18 @@ Not urgent, but each of these increases the cost of every future change until ad
       logic independently** (its own header comment explains why: it can't import `config/db.js`
       directly, since that module opens a real pool connection as an import-time side effect) —
       missed on the first pass, caught by the compose smoke test still failing identically after
-      the `config/db.js` fix alone. Fixed the same way there. Confirmed by re-running the compose
-      smoke test, which now passes end to end.
+      the `config/db.js` fix alone. Fixed the same way there.
+    - **A second, unrelated real bug, found once the first one stopped masking it:** with the
+      database connection fixed, the stack came up healthy but the smoke test's own `curl` still
+      failed — `Connection reset by peer`. `proxy` (Caddy) had no Docker `healthcheck` at all, so
+      `docker compose up --wait` only ever waited for the container *process* to start, not for
+      Caddy to finish loading its config and actually bind its listener — a startup race that
+      nothing had ever been positioned to notice before this smoke test existed. Fixed by adding
+      a real `healthcheck` to the `proxy` service, deliberately against Caddy's own admin API
+      (`http://localhost:2019/config/`, always plain HTTP) rather than `/healthz` through the
+      site itself — that stays identical whether `SITE_ADDRESS` is `:80` (CI, local) or a real
+      domain with Caddy's own automatic HTTPS redirect in front of it. Confirmed by re-running
+      the compose smoke test, which now passes end to end.
     - **A new `deploy` job runs `ssh … deploy/deploy.sh <sha>`** — a plain `ssh` call, deliberately
       not a third-party GitHub Action, to avoid that supply-chain surface for something that can
       reach production. It's gated on the `DEPLOY_ENABLED` repository variable, so it stays a
