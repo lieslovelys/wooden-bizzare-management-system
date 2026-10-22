@@ -95,8 +95,25 @@ jobs:
           COOKIE_SECURE=false
           DOMAIN=example.invalid
           EOF
+      # Temporary diagnostic in place of `--wait`: proxy's healthcheck has failed `--wait`
+      # identically and near-instantly across six different configurations with no clear cause,
+      # so this polls docker inspect directly for up to 60s and prints its raw Health state
+      # (including each individual probe's own output) every iteration, to see the real ground
+      # truth instead of guessing further. To be replaced once that's known.
       - name: Bring up the compose stack
-        run: IMAGE_TAG=${{ github.sha }} docker compose up -d --wait
+        run: |
+          IMAGE_TAG=${{ github.sha }} docker compose up -d
+          for i in $(seq 1 30); do
+            echo "=== inspect attempt $i ==="
+            docker inspect --format='{{json .State.Health}}' wooden_bizarre-management-system-proxy-1 | tee /tmp/health.json
+            status=$(jq -r .Status /tmp/health.json)
+            echo "status: $status"
+            if [ "$status" = "healthy" ]; then echo "proxy became healthy"; exit 0; fi
+            sleep 2
+          done
+          echo "proxy never became healthy within 60s"
+          docker compose logs
+          exit 1
       - name: Smoke test through the proxy
         run: |
           curl -fsS http://localhost/healthz
