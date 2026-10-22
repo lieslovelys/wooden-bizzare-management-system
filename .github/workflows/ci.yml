@@ -103,15 +103,15 @@ jobs:
       - name: Bring up the compose stack
         run: |
           IMAGE_TAG=${{ github.sha }} docker compose up -d
-          for i in $(seq 1 30); do
+          for i in $(seq 1 15); do
             echo "=== inspect attempt $i ==="
-            docker inspect --format='{{json .State.Health}}' wooden_bizarre-management-system-proxy-1 | tee /tmp/health.json
-            status=$(jq -r .Status /tmp/health.json)
-            echo "status: $status"
+            docker inspect wooden_bizarre-management-system-proxy-1 --format='{{json .State}}' | tee /tmp/state.json
+            echo
+            status=$(jq -r .Health.Status /tmp/state.json)
             if [ "$status" = "healthy" ]; then echo "proxy became healthy"; exit 0; fi
             sleep 2
           done
-          echo "proxy never became healthy within 60s"
+          echo "proxy never became healthy within 30s"
           docker compose logs
           exit 1
       - name: Smoke test through the proxy
