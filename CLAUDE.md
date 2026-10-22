@@ -164,6 +164,7 @@ for the Docker Compose path; not read by `npm start`/`npm run dev` at all.
 |---|---|
 | `SQL_USER`, `SQL_HOST`, `SQL_DB`, `SQL_PASS`, `SQL_PORT` | Postgres connection (read in `config/db.js`) |
 | `SQL_CA_CERT` | Optional path to a private CA cert file, for a non-localhost Postgres that isn't signed by a public CA. Certificate verification is otherwise mandatory (`rejectUnauthorized: true`) for any non-localhost connection — see `ARCHITECTURE_REVIEW.md` P1-2. |
+| `SQL_SSL` | Optional, defaults unset. Set to `false` to disable TLS to Postgres outright, for a host that's neither `localhost` nor a public/managed Postgres — the Docker Compose deployment sets this for the `backend` service, since its `db` host is reached only over the compose network's own private bridge (see `docker-compose.yml` and item 42). Leave unset anywhere else; the existing `localhost`/non-`localhost` default already does the right thing. |
 | `SECRET_KEY` | Session-cookie signing secret. **Required** — the server fails fast at startup (`process.exit(1)`) if unset; there is no fallback. |
 | `ALLOWED_ORIGINS` | Comma-separated CORS allowlist |
 | `COOKIE_SECURE` | `true` marks the session cookie HTTPS-only. Deliberately **not** tied to `NODE_ENV` (see P1-10) — leave `false` until the deployment actually terminates TLS somewhere, or the browser will never send the cookie back and every login will silently fail. |

@@ -2365,6 +2365,23 @@ Not urgent, but each of these increases the cost of every future change until ad
       Encrypt rate limits against the real `woodenbizarre.tech` on every CI run. On `main` only,
       it then pushes both images to GHCR (two tags each: the commit SHA and `latest`) and prunes
       old package versions, since private GHCR packages are capped at 500MB on this plan.
+    - **A real bug, found immediately by that smoke test actually running the stack for the first
+      time:** every backend container failed to boot, "the server does not support SSL
+      connections." `config/db.js`'s cert-verification-on-by-default logic (P1-2) only treated a
+      literal `localhost`/`127.0.0.1` host as safe to connect to without TLS; the compose
+      network's `db` hostname (how `backend` has always reached Postgres in
+      `docker-compose.yml`, hardcoded there, not read from `.env`) is neither, so it fell into the
+      `rejectUnauthorized: true` branch against a stock `postgres:17-alpine` that's never had TLS
+      configured at all. This bug has been latent in `docker-compose.yml` since P1-10 — the old
+      `docker-build` CI job only ever built the images, never ran them, and `CLAUDE.md` already
+      flagged "Docker builds are unverified outside CI" for exactly this reason. Fixed with a new
+      `SQL_SSL` env var: `false` opts a host out of TLS explicitly, on the same reasoning as the
+      existing `localhost` case one hop out — traffic between two containers on the same
+      Docker-created bridge network never leaves the VPS, so there's no MITM path for P1-2's
+      verification to defend against. `docker-compose.yml` sets it for exactly the `backend`
+      service; it stays unset (and so fully defended) everywhere else, including local dev and
+      any future real external Postgres host. Confirmed by re-running the compose smoke test,
+      which now passes end to end.
     - **A new `deploy` job runs `ssh … deploy/deploy.sh <sha>`** — a plain `ssh` call, deliberately
       not a third-party GitHub Action, to avoid that supply-chain surface for something that can
       reach production. It's gated on the `DEPLOY_ENABLED` repository variable, so it stays a

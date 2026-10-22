@@ -51,6 +51,11 @@ services:
       # service name, not whatever a human filled in for local (non-Docker) dev.
       SQL_HOST: db
       SQL_PORT: "5432"
+      # config/db.js: the stock `postgres:17-alpine` `db` service never has TLS configured, and
+      # this link never leaves the compose network's own private bridge — no MITM path for
+      # P1-2's cert verification to defend against. Found by item 42's new compose smoke test
+      # actually running the stack; see config/db.js's own comment for the full reasoning.
+      SQL_SSL: "false"
       SQL_DB: ${SQL_DB}
       SQL_PASS: ${SQL_PASS}
       SECRET_KEY: ${SECRET_KEY}

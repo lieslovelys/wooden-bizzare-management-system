@@ -8,6 +8,20 @@ dotenv.config();
 const { Pool } = pg;
 
 const isLocalHost = process.env.SQL_HOST === 'localhost' || process.env.SQL_HOST === '127.0.0.1';
+// Item 42: the Docker Compose deployment reaches Postgres over the compose network's own
+// private bridge, as `db` (docker-compose.yml's hardcoded SQL_HOST for the backend service) —
+// not a public hostname, and not "localhost" either, so it used to fall into the `ssl: {
+// rejectUnauthorized: true }` branch below despite the stock `postgres:17-alpine` image never
+// having TLS configured at all, failing every connection with "the server does not support SSL
+// connections". Caught by CI's new compose smoke test (item 42) actually running the stack for
+// the first time, rather than only building the images. `SQL_SSL=false` opts a host out of TLS
+// explicitly — same trust boundary as `isLocalHost`, just one hop out: traffic between two
+// containers on the same Docker-created bridge network never leaves the VPS, so there's no
+// network path for the MITM scenario P1-2's cert verification defends against. Unset (the local
+// non-Docker dev and any other real deployment's default) falls back to the existing
+// `isLocalHost` heuristic — this never weakens verification for an actual public/managed
+// Postgres host, which still needs to set nothing to get the secure default.
+const sslDisabled = isLocalHost || process.env.SQL_SSL === 'false';
 
 const pool = new Pool({
   user: process.env.SQL_USER,
@@ -16,14 +30,13 @@ const pool = new Pool({
   password: process.env.SQL_PASS,
   port: process.env.SQL_PORT,
 
-  // Kung local (localhost / 127.0.0.1), i-disable ang SSL.
+  // Kung local (localhost / 127.0.0.1) o SQL_SSL=false, i-disable ang SSL.
   // Kung live/Neon, gagamitin nito ang { rejectUnauthorized: false }
-  // P1-2: certificate verification is now on by default for any non-localhost host —
-  // `rejectUnauthorized: false` accepted any certificate at all, which is a MITM exposure on
-  // the DB connection. Supply a private CA via SQL_CA_CERT (a file path) if the target
-  // Postgres uses one; a public-CA-signed host (e.g. most managed Postgres providers) needs
-  // nothing extra.
-  ssl: isLocalHost
+  // P1-2: certificate verification is on by default for any other host — `rejectUnauthorized:
+  // false` accepted any certificate at all, which is a MITM exposure on the DB connection.
+  // Supply a private CA via SQL_CA_CERT (a file path) if the target Postgres uses one; a
+  // public-CA-signed host (e.g. most managed Postgres providers) needs nothing extra.
+  ssl: sslDisabled
     ? false
     : {
         rejectUnauthorized: true,
