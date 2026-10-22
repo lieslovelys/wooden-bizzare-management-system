@@ -1,0 +1,60 @@
+# Reverse-proxy + static-file service for the compose stack (see docker-compose.yml at the repo
+# root), replacing the Nginx config this file supersedes (item 42 — see
+# ARCHITECTURE_REVIEW.md). "backend" resolves via Docker Compose's internal DNS to the backend
+# service/container.
+#
+# {$SITE_ADDRESS} comes from the `proxy` service's environment (docker-compose.yml), itself read
+# from .env. It defaults to :80 (plain HTTP, no TLS) so a bare `docker compose up` with no domain
+# configured — local dev, CI's compose smoke test — still works. Set to a real domain
+# (woodenbizarre.tech) on the VPS, which is what switches Caddy into automatic HTTPS: it requests
+# and renews its own Let's Encrypt certificate for that domain with no separate certbot step, and
+# redirects bare HTTP to HTTPS on its own.
+{$SITE_ADDRESS::80} {
+	# Same limit as backend/src/app.js's express.json({ limit: '1mb' }) — PRD.md C.2's photo cap
+	# (512KB, checked server-side in utils/photoStorage.js after client-side resizing) plus
+	# base64's ~1.37x encoding overhead and a small JSON envelope fits comfortably under 1mb.
+	request_body {
+		max_size 1MB
+	}
+
+	encode gzip
+
+	# server.js's `trust proxy` setting (P1a) reads X-Forwarded-* to decide `secure` cookie
+	# behavior correctly — Caddy sets these reverse-proxy headers automatically.
+	handle /api/* {
+		reverse_proxy backend:8080
+	}
+
+	# Infrastructure endpoints, deliberately kept outside the /api/ namespace (see
+	# ARCHITECTURE_REVIEW.md P1-10) — proxied individually rather than folded into the rule above.
+	handle /healthz {
+		reverse_proxy backend:8080
+	}
+	handle /readyz {
+		reverse_proxy backend:8080
+	}
+
+	root * /srv
+	# Long-cache hashed build assets; never cache index.html itself, or a redeploy won't be
+	# picked up until the cache expires.
+	@hashed path *.js *.css *.png *.jpg *.jpeg *.gif *.svg *.ico *.woff *.woff2 *.ttf *.eot
+	header @hashed Cache-Control "public, immutable, max-age=31536000"
+	header /index.html Cache-Control "no-cache"
+
+	# SPA fallback.
+	try_files {path} /index.html
+	file_server
+}
+
+# www redirects to the root domain. Inert under the default :80 address (no host to match), so
+# local dev and CI are unaffected.
+www.{$DOMAIN:woodenbizarre.tech} {
+	redir https://{$DOMAIN:woodenbizarre.tech}{uri} permanent
+}
+
+# Portainer GUI (docker-compose.yml's `portainer` service), on its own subdomain so it never
+# shares an origin — and therefore never shares cookies or CORS trust — with the app itself.
+# Inert unless PORTAINER_ADDRESS is set (the VPS only).
+{$PORTAINER_ADDRESS:portainer.invalid} {
+	reverse_proxy portainer:9000
+}

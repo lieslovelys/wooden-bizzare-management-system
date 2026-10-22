@@ -1,13 +1,19 @@
 # Deployment target: a single Hostinger KVM 1 VPS (1 vCPU, 4 GB RAM, 50 GB NVMe) — see
-# CLAUDE.md and docs/reference_md/ARCHITECTURE_REVIEW.md P1-10. One vCPU is the binding
-# constraint, not RAM/disk: this stack is deliberately three single-replica services, not a
+# CLAUDE.md and docs/reference_md/ARCHITECTURE_REVIEW.md P1-10/item 42. One vCPU is the binding
+# constraint, not RAM/disk: this stack is deliberately four single-replica services, not a
 # scaled-out fleet — a second replica of anything here adds scheduling overhead, not
 # throughput, on one core.
 #
 # Reads variables from a root .env — copy .env.example to .env and fill in real values first.
-# HTTP-only for now (no TLS): no domain is pointed at this VPS yet, and Let's Encrypt can't
-# issue a certificate for a bare IP. Adding TLS later means adding a certbot service and a few
-# Nginx directives to frontend/nginx.conf — not a restructure of this file.
+# `backend`/`proxy` pull pre-built images from GHCR by default (IMAGE_TAG, set by CI on deploy —
+# see deploy/deploy.sh) so the VPS's single core never has to compile anything; `build:` is kept
+# alongside `image:` so a plain `docker compose up -d --build` (local dev, first-time setup, or a
+# CI smoke test with no registry access) still works, overriding the pulled image with a local
+# build of the same Dockerfile.
+#
+# TLS is automatic via Caddy (the `proxy` service) once SITE_ADDRESS names a real domain — see
+# frontend/Caddyfile. With SITE_ADDRESS unset it defaults to plain HTTP on :80, which is what
+# local dev and CI use.
 
 services:
   db:
@@ -20,7 +26,7 @@ services:
       POSTGRES_PASSWORD: ${SQL_PASS}
       POSTGRES_DB: ${SQL_DB}
     # P1-2: Postgres's default max_connections (100) reserves more RAM than this plan can
-    # spare alongside Node and Nginx on the same 4 GB box.
+    # spare alongside Node and Caddy on the same 4 GB box.
     command: ["postgres", "-c", "max_connections=30", "-c", "shared_buffers=128MB"]
     volumes:
       - pgdata:/var/lib/postgresql/data
@@ -35,6 +41,7 @@ services:
       retries: 5
 
   backend:
+    image: ghcr.io/strydomph/wbms-backend:${IMAGE_TAG:-latest}
     build:
       context: ./backend/src
     restart: unless-stopped
@@ -49,7 +56,8 @@ services:
       SECRET_KEY: ${SECRET_KEY}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
       # Default false: see server.js and CLAUDE.md — a `secure` cookie is never sent by the
-      # browser over plain HTTP, so this must stay false until TLS is added in front of Nginx.
+      # browser over plain HTTP, so this must stay true only once SITE_ADDRESS below is a real
+      # domain Caddy is actually terminating TLS for.
       COOKIE_SECURE: ${COOKIE_SECURE:-false}
       PORT: "8080"
       NODE_ENV: production
@@ -72,6 +80,7 @@ services:
     # compose network as http://backend:8080.
 
   proxy:
+    image: ghcr.io/strydomph/wbms-proxy:${IMAGE_TAG:-latest}
     build:
       context: ./frontend
       args:
@@ -79,12 +88,43 @@ services:
         # the shared API client's base URL is empty (relative paths), not a cross-origin host.
         VITE_BACKEND_IP: ""
     restart: unless-stopped
+    environment:
+      # frontend/Caddyfile: unset (local dev, CI) serves plain HTTP on :80. A real domain here
+      # (the VPS's .env) switches Caddy into automatic HTTPS for that domain.
+      SITE_ADDRESS: ${SITE_ADDRESS:-:80}
+      DOMAIN: ${DOMAIN:-woodenbizarre.tech}
+      # Unset locally/in CI, which leaves the Caddyfile's portainer.invalid placeholder inert —
+      # Portainer isn't part of the local dev stack at all (see the `portainer` service below).
+      PORTAINER_ADDRESS: ${PORTAINER_ADDRESS:-}
     ports:
       - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      # Persists Caddy's issued certificates and its ACME account across `up`/recreate, so a
+      # redeploy doesn't re-request a certificate and risk Let's Encrypt's rate limits.
+      - caddy_data:/data
     depends_on:
       backend:
         condition: service_healthy
 
+  # Container-management GUI for the VPS (item 42) — lets the operator see logs, restart a
+  # container, or check resource use from a browser instead of SSH. It has no published port of
+  # its own; `proxy` (Caddy) reverse-proxies to it over the compose network at
+  # PORTAINER_ADDRESS, with its own automatic HTTPS cert, so it never shares an origin with the
+  # app. docker.sock is mounted read-write, which is how Portainer controls the other
+  # containers — treat its own admin login as sensitive as root on this VPS.
+  portainer:
+    image: portainer/portainer-ce:lts
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+    # No ports published to the host — only `proxy` needs to reach this, over the internal
+    # compose network as http://portainer:9000.
+
 volumes:
   pgdata:
   uploads:
+  caddy_data:
+  portainer_data:

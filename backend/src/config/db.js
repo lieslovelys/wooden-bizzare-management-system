@@ -30,7 +30,7 @@ const pool = new Pool({
         ca: process.env.SQL_CA_CERT ? fs.readFileSync(process.env.SQL_CA_CERT, 'utf8') : undefined,
       },
 
-  // P1-2: sized for a single app container sharing 4 GB of RAM with Postgres and Nginx on the
+  // P1-2: sized for a single app container sharing 4 GB of RAM with Postgres and Caddy on the
   // target Hostinger KVM 1 VPS (1 vCPU) — each Postgres backend process has a real memory
   // cost, so a larger pool here is a net loss, not just unnecessary headroom. Timeouts make
   // requests fail fast under load instead of queuing indefinitely and let one slow query

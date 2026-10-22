@@ -22,8 +22,8 @@ if (!process.env.SECRET_KEY) {
 }
 
 // P1-8: the session config below already sets `proxy: true`, but without `trust proxy` the
-// `secure` cookie flag behaves unpredictably behind a reverse proxy (Nginx, in the planned
-// Docker Compose deployment) — Express won't know the original request was HTTPS.
+// `secure` cookie flag behaves unpredictably behind a reverse proxy (Caddy, in the Docker
+// Compose deployment — see item 42) — Express won't know the original request was HTTPS.
 app.set('trust proxy', 1);
 
 // P1-8: replaces the hand-rolled CSP that used to live here. `script-src 'unsafe-eval'` is
@@ -33,7 +33,7 @@ app.set('trust proxy', 1);
 // screens. Removing that dependency is a frontend refactor tracked separately (P2).
 // The Google Fonts / cdnjs origins that used to sit here are gone too (ARCHITECTURE_REVIEW.md
 // item 27/28) — fonts and icons are self-hosted npm packages now, and this CSP only governs API
-// responses anyway (Nginx serves the built frontend directly), so there's nothing left to allow.
+// responses anyway (Caddy serves the built frontend directly), so there's nothing left to allow.
 app.use(helmet({
     contentSecurityPolicy: {
         directives: {
@@ -101,8 +101,8 @@ app.use(httpLogger);
 // PRD.md C.2 "Storage discipline": lowered from the original 10mb once photo uploads got their
 // own real cap (512KB, checked in utils/photoStorage.js after client-side resizing — see
 // globals/PhotoUpload.jsx) — nothing else in this app sends a body anywhere near even 1mb, so
-// the old limit was pure unused exposure. Must match frontend/nginx.conf's client_max_body_size,
-// or Nginx rejects an on-cap request before it ever reaches here.
+// the old limit was pure unused exposure. Must match frontend/Caddyfile's request_body
+// max_size, or Caddy rejects an on-cap request before it ever reaches here.
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ limit: '1mb', extended: true }));
 
@@ -162,7 +162,7 @@ import inventoryRoutes from './routes/inventoryRoutes.js';
 
 // API Routes (Dapat nauuna ang mga ito kaysa sa React static files)
 // P1-10: moved from '/' to '/api' so every backend route lives under one namespace — the
-// Nginx reverse proxy introduced in this pass only needs a single `/api/` rule instead of a
+// reverse proxy in front of this (Caddy, item 42) only needs a single `/api/*` rule instead of a
 // growing list of root-level exceptions (login/signup/session-user/logout/users/workers).
 app.use('/api', userRoutes);
 app.use('/api/projects', projectRoutes);
@@ -182,8 +182,8 @@ app.use('/api/inventory', inventoryRoutes);
 // P1-10: this used to also serve the built frontend from backend/src/dist and catch-all
 // fallback to index.html for client-side routing — a directory that never existed in this
 // repo, so every non-API GET 500'd (see ARCHITECTURE_REVIEW.md P1-10). Removed rather than
-// fixed: the Docker Compose deployment's Nginx container now owns both jobs (frontend/
-// nginx.conf's `location /` does the SPA fallback), and local dev never needed this either —
+// fixed: the Docker Compose deployment's `proxy` container (Caddy, item 42) now owns both jobs
+// (frontend/Caddyfile's `try_files`/SPA fallback), and local dev never needed this either —
 // `npm run dev` in frontend/ serves the app via Vite's own dev server. This process is API-only
 // now.
 

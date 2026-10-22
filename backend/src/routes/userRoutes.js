@@ -117,7 +117,7 @@ router.get('/workers', ADMIN_ONLY, async (req, res) => {
 // utils/format.js's workerPhotoUrl(), rather than every list response inlining every worker's
 // full image. `Cross-Origin-Resource-Policy: same-site` (not helmet's default `same-origin`)
 // lets an <img> on the Vite dev server (a different origin from the API in local, non-Docker
-// dev) still load it; the Docker deployment is same-origin behind Nginx either way, so this only
+// dev) still load it; the Docker deployment is same-origin behind Caddy either way, so this only
 // relaxes the local-dev case, and only for this one route.
 router.get('/workers/:id/photo', ADMIN_ONLY, validate({ params: idParams() }), async (req, res) => {
     const { fullPath, photoPath } = await User.getWorkerPhoto(req.params.id);
