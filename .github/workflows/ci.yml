@@ -100,6 +100,8 @@ jobs:
       # so this polls docker inspect directly for up to 60s and prints its raw Health state
       # (including each individual probe's own output) every iteration, to see the real ground
       # truth instead of guessing further. To be replaced once that's known.
+      - name: Validate the Caddyfile directly against the built image
+        run: docker run --rm --entrypoint caddy ${{ env.PROXY_IMAGE }}:${{ github.sha }} validate --config /etc/caddy/Caddyfile --adapter caddyfile
       - name: Bring up the compose stack
         run: |
           IMAGE_TAG=${{ github.sha }} docker compose up -d
