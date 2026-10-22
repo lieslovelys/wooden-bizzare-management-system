@@ -102,6 +102,14 @@ jobs:
       # truth instead of guessing further. To be replaced once that's known.
       - name: Validate the Caddyfile directly against the built image
         run: docker run --rm --entrypoint caddy ${{ env.PROXY_IMAGE }}:${{ github.sha }} validate --config /etc/caddy/Caddyfile --adapter caddyfile
+      - name: Inspect the image's user/capabilities, and try actually running it standalone
+        run: |
+          docker run --rm --entrypoint sh ${{ env.PROXY_IMAGE }}:${{ github.sha }} -c "id; getcap /usr/bin/caddy || echo 'no getcap/no caps'"
+          docker run -d --name standalone-proxy -p 8888:80 ${{ env.PROXY_IMAGE }}:${{ github.sha }}
+          sleep 3
+          docker logs standalone-proxy
+          docker inspect standalone-proxy --format='{{json .State}}'
+          docker rm -f standalone-proxy
       - name: Bring up the compose stack
         run: |
           IMAGE_TAG=${{ github.sha }} docker compose up -d
