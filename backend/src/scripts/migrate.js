@@ -26,9 +26,13 @@ const __dirname = path.dirname(__filename);
 
 const direction = process.argv[2] === 'down' ? 'down' : 'up';
 
-// Same SSL policy as config/db.js (see P1-2): verify certificates by default, allow a private
-// CA via SQL_CA_CERT, skip TLS entirely for a local dev database.
+// Same SSL policy as config/db.js (see P1-2, and item 42's SQL_SSL): verify certificates by
+// default, allow a private CA via SQL_CA_CERT, skip TLS entirely for a local dev database or a
+// host that's explicitly opted out (SQL_SSL=false — the Docker Compose `backend` service's own
+// `db` host, reached only over the compose network's private bridge with no TLS configured on
+// that stock Postgres image at all).
 const isLocal = process.env.SQL_HOST === 'localhost' || process.env.SQL_HOST === '127.0.0.1';
+const sslDisabled = isLocal || process.env.SQL_SSL === 'false';
 
 const clientConfig = {
   user: process.env.SQL_USER,
@@ -36,7 +40,7 @@ const clientConfig = {
   database: process.env.SQL_DB,
   password: process.env.SQL_PASS,
   port: process.env.SQL_PORT,
-  ssl: isLocal
+  ssl: sslDisabled
     ? false
     : {
         rejectUnauthorized: true,

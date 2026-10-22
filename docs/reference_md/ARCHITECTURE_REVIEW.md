@@ -2380,8 +2380,12 @@ Not urgent, but each of these increases the cost of every future change until ad
       Docker-created bridge network never leaves the VPS, so there's no MITM path for P1-2's
       verification to defend against. `docker-compose.yml` sets it for exactly the `backend`
       service; it stays unset (and so fully defended) everywhere else, including local dev and
-      any future real external Postgres host. Confirmed by re-running the compose smoke test,
-      which now passes end to end.
+      any future real external Postgres host. **`scripts/migrate.js` duplicates this same SSL
+      logic independently** (its own header comment explains why: it can't import `config/db.js`
+      directly, since that module opens a real pool connection as an import-time side effect) —
+      missed on the first pass, caught by the compose smoke test still failing identically after
+      the `config/db.js` fix alone. Fixed the same way there. Confirmed by re-running the compose
+      smoke test, which now passes end to end.
     - **A new `deploy` job runs `ssh … deploy/deploy.sh <sha>`** — a plain `ssh` call, deliberately
       not a third-party GitHub Action, to avoid that supply-chain surface for something that can
       reach production. It's gated on the `DEPLOY_ENABLED` repository variable, so it stays a
