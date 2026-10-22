@@ -118,8 +118,12 @@ services:
     healthcheck:
       # `curl`, not `wget` — unlike the node:*-alpine image `backend`'s healthcheck runs wget
       # against, the official Caddy Alpine image's own Dockerfile `apk add`s curl specifically
-      # (no wget), so curl is the tool this image actually ships.
-      test: ["CMD", "curl", "-fsS", "http://localhost:2019/config/"]
+      # (no wget), so curl is the tool this image actually ships. `127.0.0.1`, not `localhost`:
+      # Caddy's admin API binds only its IPv4 loopback address, and `localhost` here resolved to
+      # `::1` first (musl's getaddrinfo ordering) with nothing listening on it — an immediate,
+      # tool-independent `ECONNREFUSED` every single probe, which is why this looked identical
+      # (and instant) across wget --spider, wget -qO- and curl in turn before this was found.
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:2019/config/"]
       interval: 10s
       timeout: 5s
       retries: 5
