@@ -1597,203 +1597,292 @@
    than one undifferentiated badge. */
 
 /* =========================================
-   NOTIFICATIONS (PREMIUM MODERN DASHBOARD)
+   NOTIFICATIONS — item 44 (Claude Design redesign)
 ========================================= */
 
+/* The panel: a flat 1px-bordered card at the content's full width, not a fixed 1000px block
+   floating in its own margin. */
 .notif-container {
-    width: 1000px;
-    max-width: 100%;
-    margin: 40px auto;
-    padding: 0 20px;
-    font-family: var(--font-sans); /* Consistent font */
+    width: 100%;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background-color: var(--color-surface);
+    font-family: var(--font-sans);
 }
 
 /* --- HEADER --- */
-.notif-header {
-    font-family: var(--font-sans); /* consistent app-wide font (item 43) */
-    font-size: 2.5rem;
-    font-weight: 700;
-    /* DESIGN.md §3 rule 10 — large text (>=24px) only needs the 3:1 bar. */
-    color: var(--color-accent-dark);
-    margin-bottom: 35px;
+.notif-panel-header {
     display: flex;
-    align-items: center; 
-    gap: 15px;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    padding: var(--space-1) var(--space-2) var(--space-1) var(--space-4);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.notif-header {
+    margin: 0;
+    font-family: var(--font-sans);
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    color: var(--color-text);
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-1);
+}
+
+.notif-unread-count {
+    font-size: var(--font-size-xs);
+    font-weight: 500;
+    color: var(--color-text-muted);
+}
+
+.notif-header-actions {
+    display: flex;
+}
+
+/* item 44 — a 44px hit area wrapping a smaller visual "face", so the hit target clears
+   DESIGN.md §3 rule 3 while the button itself reads as a compact, flat outline chip. */
+.notif-action-btn {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    padding: 0 var(--space-1);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font: inherit;
+}
+
+.notif-action-btn-face {
+    height: 30px;
+    padding: 0 var(--space-3);
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    border: 1px solid var(--color-text);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    color: var(--color-text);
+}
+
+.notif-action-btn:hover .notif-action-btn-face {
+    background-color: var(--color-surface-cream);
+}
+
+.notif-action-btn-danger .notif-action-btn-face {
+    border-color: var(--color-danger);
+    color: var(--color-danger);
+}
+
+.notif-action-btn-danger:hover .notif-action-btn-face {
+    background-color: rgba(var(--color-danger-rgb), 0.06);
 }
 
 .notif-list {
     display: flex;
     flex-direction: column;
-    gap: 15px; /* Dinagdagan konti ang gap */
 }
 
-/* --- THE MODERN CARD --- */
+/* --- THE ROW (hairline divider, not a floating card) --- */
 .notif-item {
-    background-color: var(--color-surface);
-    border: 1px solid var(--color-border); /* Softer border */
-    border-radius: 12px;
-    padding: 22px 25px; /* Dinagdagan ang padding para di masikip */
-    display: flex;
-    align-items: flex-start; 
-    gap: 18px;
-    cursor: pointer;
-    transition: all 0.3s ease;
     position: relative;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+    border-bottom: 1px solid var(--color-border);
+    padding: var(--space-3) 0 var(--space-3) var(--space-4);
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    cursor: pointer;
 }
 
 .notif-item:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 20px rgba(var(--color-accent-rgb), 0.1); /* Gold-tinted shadow */
-    border-color: var(--color-accent); /* Consistent Gold */
+    background-color: var(--color-surface-cream);
 }
 
-/* Unread state accent */
-.notif-item.unread {
-    border-left: 5px solid var(--color-accent);
-    background-color: var(--color-surface-cream); /* Very light cream */
+/* Unread state accent — a 3px left bar, same convention as .nav-item.active and .info-card's
+   top bar, instead of a cream block fill. */
+.notif-item.unread::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background-color: var(--color-accent);
 }
 
-/* ARCHITECTURE_REVIEW.md item 33 — opacity:0.85 washed .notif-message's #666666 text and this
-   row's own #fafafa background toward the page's white backdrop together, degrading
-   .notif-message to ~3.97:1 (under the 4.5:1 bar) even though the text color alone passes
-   ~5.75:1 on either background; same root cause as .wjo-filter-btn's opacity trick. The flat
-   #fafafa background already reads as "read" against .unread's cream fill, so the opacity
-   wash added nothing contrast couldn't already convey. */
-.notif-item.read {
-    background-color: #fafafa;
+.notif-item.unread .notif-title {
+    font-weight: 600;
 }
 
-/* Icon Wrapper */
+.notif-item.read .notif-title {
+    font-weight: 500;
+}
+
+/* Icon Wrapper — item 44: 32px (was 48px), bordered in the notification's own type color
+   (set via inline `color`, so `border: 1px solid currentColor` picks it up without a second
+   inline property). DESIGN.md: Font Awesome solid only — see NotificationList.jsx's iconMeta. */
 .notif-icon-wrapper {
-    background: var(--color-surface-cream); /* Soft Cream */
-    /* DESIGN.md §3 rule 10 — a non-text icon fill needs only the 3:1 bar. */
-    color: var(--color-accent-dark);
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
+    background: var(--color-surface-cream);
+    border: 1px solid currentColor;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-md);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.4rem;
+    font-size: var(--font-size-md);
     flex-shrink: 0;
 }
 
 /* --- CONTENT --- */
 .notif-content {
     flex-grow: 1;
+    min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 2px;
 }
 
 .notif-title-row {
     display: flex;
     align-items: center;
-    justify-content: space-between; /* Para pumunta sa kanan ang timestamp kung meron */
-    gap: 10px;
+    gap: var(--space-2);
 }
 
 /* ARCHITECTURE_REVIEW.md item 39 — .notif-title-group was dead, no JSX reference (the live
    .notif-title-row/.notif-title siblings stay). */
 
 .notif-title {
-    font-size: 1.1rem;
-    font-weight: 700;
+    font-size: var(--font-size-md);
     color: var(--color-text);
 }
 
-/* ARCHITECTURE_REVIEW.md item 39 — .notif-time was dead, no JSX reference. */
+.notif-time {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+}
 
-/* The Gold Dot */
+/* The Gold Dot — item 44: --color-accent-text (darker), matching the unread bar's companion
+   color in the redesign's spec table, not the lighter --color-accent. */
 .unread-dot {
     width: 8px;
     height: 8px;
-    background-color: var(--color-accent);
+    background-color: var(--color-accent-text);
     border-radius: 50%;
     display: inline-block;
     flex-shrink: 0;
 }
 
 .notif-message {
-    font-size: 0.95rem;
-    color: #666666;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
     line-height: 1.5;
 }
 
 /* --- DELETE BUTTON --- */
 .notif-delete-btn {
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
     background: transparent;
     border: none;
-    color: #b3b3b3; /* Neutral gray muna */
+    color: var(--color-text-muted);
     cursor: pointer;
-    padding: 8px;
-    transition: all 0.2s ease;
-    border-radius: 50%;
+    border-radius: var(--radius-md);
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
-/* ARCHITECTURE_REVIEW.md item 33 — see account-list .delete-btn:hover above. */
+/* ARCHITECTURE_REVIEW.md item 33 — see account-list .delete-btn:hover above. item 44: no scale
+   on hover (DESIGN.md: no hover-only lift/transform conveying state). */
 .notif-delete-btn:hover {
-    background-color: rgba(var(--color-danger-rgb), 0.06); /* Light red */
-    color: var(--color-danger); /* Solid Red */
-    transform: scale(1.1);
+    background-color: rgba(var(--color-danger-rgb), 0.06);
+    color: var(--color-danger);
 }
 
-/* --- ACTIONS FOOTER (Buttons sa baba) --- */
-.notif-actions {
-    margin-top: 30px;
+/* --- LOADING STATE --- */
+.notif-skeleton-row {
     display: flex;
-    justify-content: flex-end;
-    gap: 15px;
+    gap: var(--space-3);
+    align-items: center;
+    padding: var(--space-3) 0 var(--space-3) var(--space-4);
+    border-bottom: 1px solid var(--color-border);
 }
 
-.notif-btn-primary, .notif-btn-secondary {
-    padding: 10px 24px;
-    border-radius: 25px; /* Pill shape para consistent sa ibang buttons natin */
-    font-weight: 600;
-    font-family: var(--font-sans);
-    font-size: 0.9rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
+.notif-skeleton-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-md);
+    background: var(--color-border);
+    flex-shrink: 0;
 }
 
-.notif-btn-primary {
-    background-color: var(--color-accent-text); /* Dark Brown */
-    color: white;
-    border: none;
+.notif-skeleton-lines {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
 }
 
-.notif-btn-primary:hover {
-    background-color: var(--color-accent-text);
-    box-shadow: 0 4px 12px rgba(var(--color-accent-text-rgb), 0.2);
-    transform: translateY(-1px);
+.notif-skeleton-line {
+    height: 12px;
+    border-radius: var(--radius-sm);
+    background: var(--color-border);
 }
 
-.notif-btn-secondary {
-    background-color: transparent;
-    color: var(--color-accent-text);
-    border: 1.5px solid #d1ccbf; /* Soft gray border */
+.notif-skeleton-line-title {
+    width: 45%;
 }
 
-.notif-btn-secondary:hover {
-    background-color: var(--color-surface-cream);
-    border-color: var(--color-accent);
-    color: var(--color-accent-text); /* DESIGN.md §3 rule 10 — normal-size text needs 4.5:1 */
+.notif-skeleton-line-message {
+    width: 75%;
+    height: 10px;
+    background: var(--color-surface-cream);
+    border: 1px solid var(--color-border);
+}
+
+.notif-loading-label {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-4);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
 }
 
 /* --- EMPTY STATE --- */
 .notif-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-8) var(--space-4);
     text-align: center;
-    padding: 80px 20px;
+}
+
+.notif-empty-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-md);
+    background: var(--color-surface-cream);
+    border: 1px solid var(--color-border);
+    color: var(--color-accent-text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.notif-empty-title {
+    font-size: var(--font-size-md);
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.notif-empty-message {
+    font-size: var(--font-size-sm);
     color: var(--color-text-muted);
-    background: var(--color-surface);
-    border-radius: 16px;
-    border: 2px dashed var(--color-border);
-    font-weight: 500;
-    font-size: 1.05rem;
 }
 
 /* =========================================

@@ -63,8 +63,8 @@ const ManagerDashboard = () => {
 
       </div>
 
-      <div className="admin-divider" />
-      
+      {/* ARCHITECTURE_REVIEW.md item 44 — the 6px gradient divider is gone; the panel's own
+          margin/border now separate the sections (see REDESIGN.md and A_Dashboard.jsx). */}
       {/* Ipakita ang notifications sa ibaba. Palitan ang component kung iba ang gusto mong ilagay */}
       <PMNotification />
       

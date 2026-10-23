@@ -41,8 +41,8 @@ const QCDashboard = () => {
         </div>
       </div>
 
-      <div className="admin-divider" />
-      
+      {/* ARCHITECTURE_REVIEW.md item 44 — the 6px gradient divider is gone; the panel's own
+          margin/border now separate the sections (see REDESIGN.md and A_Dashboard.jsx). */}
       {/* Tatawagin natin dito yung na-filter na verification notifications lang */}
       <QualityCheckerNotification />
       

@@ -33,8 +33,16 @@ const Navbar = ({ tabs, accountType }) => {
             case 'Quality Checker': return 'QC';
             case 'Worker': return 'W';
             case 'Inventory Staff': return 'I';
-            default: return 'U'; 
+            default: return 'U';
         }
+    };
+
+    // ARCHITECTURE_REVIEW.md item 44 — the redesigned profile row shows initials rather than the
+    // role abbreviation, since the role itself is now printed as its own label underneath. Falls
+    // back to the role abbreviation when a name isn't available (e.g. not yet loaded).
+    const getInitials = (first, last) => {
+        const initials = `${first?.[0] ?? ''}${last?.[0] ?? ''}`.toUpperCase();
+        return initials || getRoleAbbreviation(userRole);
     };
 
     return (
@@ -50,6 +58,8 @@ const Navbar = ({ tabs, accountType }) => {
                 >
                     <i className="fa-solid fa-bars" aria-hidden="true"></i>
                 </button>
+                <img src="/wblogo.png" alt="" className="mobile-topbar-logo" />
+                <span className="mobile-topbar-title">The Wooden Bizarre</span>
             </header>
 
             {/* NAVBAR CONTAINER */}
@@ -61,17 +71,6 @@ const Navbar = ({ tabs, accountType }) => {
                 aria-modal={isMobileOpen ? 'true' : undefined}
                 aria-label={isMobileOpen ? 'Navigation menu' : undefined}
             >
-                
-                {/* CLOSE BUTTON PARA SA MOBILE MENU */}
-                {/* CLOSE BUTTON PARA SA MOBILE MENU */}
-                <button
-                className="close-mobile-btn"
-                aria-label="Close menu"
-                onClick={() => setIsMobileOpen(false)}
-                >
-                &times;
-                </button>
-
                 {/* LOGOUT MODAL KUNG TRUE ANG STATE */}
                 {showLogoutModal && (
                     <Logout onCancel={() => setShowLogoutModal(false)} />
@@ -81,25 +80,26 @@ const Navbar = ({ tabs, accountType }) => {
                     <img src="/wblogo.png" alt="The Wooden Bizarre logo" className="logo" />
                     <div className="title-group">
                         <h3>The Wooden Bizarre</h3>
-                        <p>Management System</p>
                     </div>
+                    {/* CLOSE BUTTON PARA SA MOBILE MENU — item 44: a real 44px button sitting in
+                        the header row, not an absolutely-positioned glyph floating over it. */}
+                    <button
+                        className="navbar-close-btn"
+                        aria-label="Close menu"
+                        onClick={() => setIsMobileOpen(false)}
+                    >
+                        <i className="fa-solid fa-xmark" aria-hidden="true"></i>
+                    </button>
                 </div>
 
                 <div className="user-profile">
                     <div className="avatar-circle">
-                        {getRoleAbbreviation(userRole)}
+                        {getInitials(firstName, lastName)}
                     </div>
-                    
-                    <div className="user-info" style={{ marginLeft: '10px' }}>
-                        <h2 style={{ margin: '0', fontSize: '1.2rem' }}>{userRole}</h2>
-                        {/* Not --color-text-muted: that token is calibrated for light surfaces
-                            (DESIGN.md §3 rule 10 / item 30) and its darkened value actually fails
-                            here (3.5:1 on this dark sidebar, found by an axe-core sweep run as
-                            part of that same item) — #A09A8E is the sidebar's own existing muted
-                            text color (used by .nav-item's default label), which passes at 6.4:1. */}
-                        <p style={{ margin: '0', fontSize: '0.9rem', color: '#A09A8E' }}>
-                            {firstName} {lastName}
-                        </p>
+
+                    <div className="user-info">
+                        <span className="user-role-label">{userRole}</span>
+                        <p className="user-name">{firstName} {lastName}</p>
                     </div>
                 </div>
 
@@ -129,38 +129,15 @@ const Navbar = ({ tabs, accountType }) => {
                         );
                     })}
 
-                    {/* 2. ITO YUNG PERMANENT LOGOUT BUTTON SA ILALIM */}
+                    {/* 2. ITO YUNG PERMANENT LOGOUT BUTTON SA ILALIM — item 44 moved the old
+                        inline style object into .logout-nav-item (globals.css) so the tablet-rail
+                        reset and any future token change reach it the same as every other nav
+                        item. */}
                     <button
                         type="button"
                         className="nav-item logout-nav-item"
                         onClick={() => setShowLogoutModal(true)}
-                        style={{
-                            marginTop: 'auto',
-                            cursor: 'pointer',
-                            // --color-danger-on-dark, not --color-danger: this sits on the dark
-                            // sidebar background, where the plain danger red only measures 3.61:1
-                            // (item 31) — the lighter token clears the 4.5:1 normal-text bar.
-                            color: 'var(--color-danger-on-dark)',
-                            fontWeight: 'bold',
-                            borderTop: '1px solid rgba(255, 255, 255, 0.1)', // Ginawang lighter ang border para mas kita sa dark theme
-                            paddingTop: '20px',
-                            // Button-reset: .nav-item's class CSS covers layout/color/padding, but
-                            // not background/border, which a real <button> gets from the UA
-                            // stylesheet — these undo that without touching the borderTop above
-                            // (the `border` shorthand would have reset it too).
-                            background: 'none',
-                            borderLeft: 'none',
-                            borderRight: 'none',
-                            borderBottom: 'none',
-                            width: '100%',
-                            textAlign: 'left',
-                            font: 'inherit',
-                        }}
                     >
-                        {/* marginRight dropped: .nav-item already has `gap: 15px` between
-                            children, and an inline style would win over any CSS override the
-                            tablet rail (DESIGN.md §7#9) needs to zero it out for the stacked
-                            icon-above-label layout. */}
                         <i className="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i>
                         <span className="nav-label">Logout</span>
                     </button>

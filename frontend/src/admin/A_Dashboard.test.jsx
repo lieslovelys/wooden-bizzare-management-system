@@ -19,13 +19,18 @@ beforeEach(() => {
 });
 
 describe('A_Dashboard', () => {
-  it('renders the stats cards with formatted currency', async () => {
+  it('renders the page header and the stats cards with formatted currency', async () => {
     api.get.mockResolvedValue({
       success: true,
       data: { activeProjects: 5, totalWorkers: 12, monthlyProfit: 34500.5 },
     });
     render(<A_Dashboard />);
 
+    // ARCHITECTURE_REVIEW.md item 44 — the compact page header replacing the old gradient divider.
+    expect(screen.getByRole('heading', { name: 'Dashboard', level: 1 })).toBeInTheDocument();
+    expect(screen.getByText('Active projects')).toBeInTheDocument();
+    expect(screen.getByText('Total workers')).toBeInTheDocument();
+    expect(screen.getByText('Monthly profit')).toBeInTheDocument();
     expect(await screen.findByText('5')).toBeInTheDocument();
     expect(screen.getByText('12')).toBeInTheDocument();
     expect(screen.getByText('₱34,500.50')).toBeInTheDocument();

@@ -14,6 +14,7 @@ import {
   formatWorkerId,
   formatDate,
   formatDateShort,
+  formatDateTime,
   formatTime12h,
   toDateInputValue,
   workerPhotoUrl,
@@ -78,6 +79,20 @@ describe('formatDateShort', () => {
   it('handles missing/invalid input', () => {
     expect(formatDateShort(null)).toBe('');
     expect(formatDateShort('not a date')).toBe('');
+  });
+});
+
+describe('formatDateTime', () => {
+  // ARCHITECTURE_REVIEW.md item 44 — runs in Asia/Manila (UTC+8), same TZ pin as toDateInputValue
+  // below (vite.config.js's test.env.TZ).
+  it('formats a timestamptz string as a local date and time', () => {
+    expect(formatDateTime('2026-10-21T07:45:00.000Z')).toBe('Oct 21, 2026, 3:45 PM');
+  });
+
+  it('handles missing/invalid input', () => {
+    expect(formatDateTime(null)).toBe('');
+    expect(formatDateTime('')).toBe('');
+    expect(formatDateTime('not a date')).toBe('');
   });
 });
 

@@ -68,6 +68,22 @@ export const workerPhotoUrl = (worker) => {
   return apiUrl(`/api/workers/${worker.user_id}/photo?v=${encodeURIComponent(worker.photo_path)}`);
 };
 
+// Oct 21, 2026, 3:45 PM — ARCHITECTURE_REVIEW.md item 44: the notification panel's new per-row
+// timestamp. Expects a full timestamptz string (e.g. `notifications.created_at`), unlike
+// formatDate/formatDateShort above, which only ever receive a bare calendar date.
+export const formatDateTime = (dateString) => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+};
+
 // 8:30 AM — expects a "HH:MM[:SS]" string (as returned by Postgres `time` columns).
 export const formatTime12h = (t) => {
   if (!t) return '—';

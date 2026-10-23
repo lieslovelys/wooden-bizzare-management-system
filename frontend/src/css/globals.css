@@ -66,11 +66,40 @@
      and cream surfaces. */
   --color-focus: var(--color-info);
 
+  /* ARCHITECTURE_REVIEW.md item 44 — the dark sidebar needed its own focus-ring token:
+     --color-focus (blue) is nearly invisible on --color-surface-dark, and gold already means
+     "focused/active" there (.nav-item.active). Aliased rather than a new literal. */
+  --color-focus-on-dark: var(--color-accent-light);
+
   /* ARCHITECTURE_REVIEW.md item 43 — one app-wide font token, replacing the Inter/Playfair
      Display split item 36 set up (Playfair read as "vintage" and is gone). Every font-family
      declaration in src/css/ now references this token instead of a literal family name, so a
      future swap is a one-line change here. main.jsx imports the matching self-hosted weights. */
   --font-sans: 'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  /* ARCHITECTURE_REVIEW.md item 44 — the Claude Design redesign's scale, used by the Admin
+     dashboard and the shared sidebar first. New UI should reach for these rather than a new
+     literal (DESIGN.md §3 rule 7), the same way color already works. */
+  --radius-sm: 2px;  /* badges */
+  --radius-md: 4px;  /* cards, buttons, inputs, nav items */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --font-size-xs: 12px;
+  --font-size-sm: 13px;
+  --font-size-md: 14px;
+  --font-size-lg: 16px;
+  --font-size-xl: 20px;
+  --font-size-2xl: 24px;
+  --font-size-kpi: 28px;
+  --shadow-sm: 0 1px 2px rgba(var(--color-surface-dark-rgb), 0.06);
+  /* The active-nav tint — gold at low alpha over the dark sidebar, not a new hex. */
+  --color-accent-tint: rgba(var(--color-accent-rgb), 0.14);
+  --sidebar-width: 236px;
+  --sidebar-rail: 80px;
 }
 
 /* DESIGN.md §8 rule 9 (§3): every `outline: none` in this codebase removed a visible keyboard
@@ -88,7 +117,7 @@
    gold already means "focused/active" there (.nav-item.active) and passes contrast easily. */
 .wooden-navbar :focus-visible,
 .mobile-topbar :focus-visible {
-  outline-color: var(--color-accent);
+  outline-color: var(--color-focus-on-dark);
 }
 
 /* Item 40 — .signup was dead, no JSX reference (TempSignup.jsx, the only thing that ever
@@ -647,7 +676,10 @@ html, body {
     flex: 1; /* Sasakop sa natitirang space sa tabi ng sidebar */
     min-width: 0; /* DESIGN.md §7#8 — a flex child's default min-width:auto let a wide table
                      stretch this past the viewport instead of shrinking to it */
-    padding: 40px; /* Mas maluwag na padding para mas premium tignan */
+    /* ARCHITECTURE_REVIEW.md item 44 — the Claude Design redesign's single gutter. Was 40px
+       (30px tablet); this is the one place that padding lives now, so a screen never stacks its
+       own padding on top of this (see .admin-dashboard below, which used to do exactly that). */
+    padding: var(--space-6);
     background-color: var(--color-surface);
 
     /* Crucial ito para sa scrolling behavior: */
@@ -667,7 +699,7 @@ html, body {
 /* --- TABLET VIEW --- */
 @media (max-width: 1024px) {
     .page-content {
-        padding: 30px; /* Medyo bawasan ang padding kapag tablet para mas lumawak ang content */
+        padding: var(--space-6); /* item 44 — same gutter as desktop now, not a separate value */
     }
 }
 
@@ -678,11 +710,11 @@ html, body {
     }
 
     .page-content {
-        /* THE GOLDEN FIX:
-           Ginawa nating 80px ang "Top Padding" para hindi matakpan
-           ng lumulutang na Hamburger Menu button ang mga title at content mo!
+        /* THE GOLDEN FIX, item 44 update:
+           The top offset still has to clear the 56px topbar; the sides/bottom are now the
+           same --space-4 (16px) every other mobile gutter in the redesign uses.
         */
-        padding: 72px 15px 20px 15px;
+        padding: 72px var(--space-4) var(--space-4) var(--space-4);
 
         /* Ibalik sa natural scrolling para mas smooth sa phone */
         height: auto;
@@ -698,18 +730,19 @@ html, body {
 
 /* --- 1. BASE STYLES (DESKTOP VIEW) --- */
 .wooden-navbar {
-    width: 300px;
+    /* ARCHITECTURE_REVIEW.md item 44 — the Claude Design redesign. Was a fixed 300px. */
+    width: var(--sidebar-width);
     height: 100vh; /* fallback */
     height: 100dvh; /* DESIGN.md §3.6 */
     background-color: var(--color-surface-dark); /* Deep warm charcoal/wood */
     border-right: 1px solid #2C261E; /* Manipis na dark border */
     display: flex;
     flex-direction: column;
-    font-family: var(--font-sans); 
+    font-family: var(--font-sans);
     position: sticky;
     top: 0;
-    overflow-y: auto; 
-    flex-shrink: 0; 
+    overflow-y: auto;
+    flex-shrink: 0;
     -ms-overflow-style: none;  /* Edge/IE hide scrollbar */
     scrollbar-width: none; /* Firefox hide scrollbar */
 }
@@ -719,53 +752,65 @@ html, body {
 .wooden-navbar::-webkit-scrollbar-thumb { background-color: #3A3228; border-radius: 10px; }
 .wooden-navbar::-webkit-scrollbar-track { background: transparent; }
 
-/* Header & Logo */
+/* Header & Logo — item 44: 55px/12px-radius logo and the "Management System" subline are gone,
+   per the redesign's flatter, smaller sidebar header. */
 .navbar-header {
     display: flex;
     align-items: center;
-    padding: 35px 25px 25px 25px; 
-    gap: 15px;
+    padding: var(--space-4) var(--space-2);
+    gap: var(--space-2);
 }
 .navbar-header .logo {
-    width: 55px; height: 55px; border-radius: 12px; object-fit: cover;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4); 
+    width: 34px; height: 34px; border-radius: var(--radius-md); object-fit: cover;
 }
 .title-group h3 {
-    margin: 0; font-family: var(--font-sans); font-size: 1.2rem;
-    font-weight: 700; color: var(--color-text-inverse); letter-spacing: -0.5px;
+    margin: 0; font-family: var(--font-sans); font-size: var(--font-size-lg);
+    font-weight: 700; line-height: 1.1; color: var(--color-text-inverse);
 }
-.title-group p {
-    margin: 3px 0 0 0; font-size: 0.75rem; font-weight: 600;
-    color: #A09A8E; text-transform: uppercase; letter-spacing: 1px;
-}
+/* item 44 — the "Management System" subline (.title-group p) is removed, per the redesign. */
 
-/* User Profile */
+/* User Profile — item 44: a hairline above/below instead of just a bottom gap, a smaller 32px
+   avatar, and the role label recolored to read on the dark fill. */
 .user-profile {
-    display: flex; align-items: center; padding: 0 25px 35px 25px; gap: 15px;
+    display: flex; align-items: center; padding: var(--space-2);
+    margin: 0 var(--space-2);
+    gap: var(--space-2);
+    border-top: 1px solid rgba(var(--color-surface-rgb), 0.12);
+    border-bottom: 1px solid rgba(var(--color-surface-rgb), 0.12);
 }
 .avatar-circle {
-    width: 50px; height: 50px; border-radius: 50%;
-    background: linear-gradient(135deg, var(--color-accent), var(--color-accent));
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--color-accent);
     /* item 31 — white on this solid gold fill measures ~2.3:1; the 22.4px/700 size doesn't clear
        the large-text bold threshold (>=18.66px bold does, so this is borderline, but white still
        fails even 3:1 here) — --color-text-on-accent is the dark-text pair for gold fills. */
     color: var(--color-text-on-accent); display: flex; justify-content: center; align-items: center;
-    font-size: 1.4rem; font-weight: 700; box-shadow: 0 4px 12px rgba(var(--color-accent-rgb), 0.15);
+    font-size: var(--font-size-sm); font-weight: 600; flex-shrink: 0;
 }
-.user-profile h2 { margin: 0; font-size: 1.15rem; font-weight: 700; color: var(--color-text-inverse); }
+.user-info { display: flex; flex-direction: column; line-height: 1.3; min-width: 0; }
+.user-role-label {
+    font-size: var(--font-size-xs); font-weight: 600; color: var(--color-accent-light);
+    text-transform: uppercase; letter-spacing: 0.06em;
+}
+.user-profile .user-name {
+    margin: 0; font-size: var(--font-size-md); font-weight: 500; color: var(--color-text-inverse);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
 
 /* Navigation Links */
 .nav-links {
-    display: flex; flex-direction: column; padding: 0 15px 30px 15px; gap: 5px; 
+    display: flex; flex-direction: column; padding: var(--space-2); gap: 2px;
 }
 .nav-item {
-    display: flex; align-items: center; padding: 14px 20px; border-radius: 12px; 
-    gap: 15px; font-size: 1rem; font-weight: 600; color: #A09A8E; 
-    transition: all 0.3s ease; cursor: pointer;
+    position: relative;
+    display: flex; align-items: center; min-height: 44px; padding: 0 var(--space-3);
+    border-radius: var(--radius-md);
+    gap: var(--space-3); font-size: var(--font-size-md); font-weight: 500; color: var(--color-text-inverse);
+    transition: background-color 0.15s ease; cursor: pointer;
 }
-.nav-item i { width: 24px; text-align: center; font-size: 1.2rem; transition: transform 0.2s ease; }
-.nav-item:hover { background-color: rgba(var(--color-accent-rgb), 0.1); color: var(--color-accent); }
-.nav-item:hover i { transform: scale(1.1); }
+.nav-item i { width: 16px; text-align: center; font-size: 1rem; color: var(--color-accent-light); }
+/* item 44 — a subtle wash, not the old scale+gold-tint hover (DESIGN.md: no hover-only lift). */
+.nav-item:hover { background-color: rgba(var(--color-surface-rgb), 0.06); }
 
 /* FR-4 unread badge — attached to the icon itself (not the nav-item's padding/hit area) so it
    shows identically whether the tab is rendering full text (desktop/mobile) or icon-only
@@ -776,16 +821,37 @@ html, body {
     background-color: var(--color-danger); color: var(--color-text-inverse);
     font-size: 0.65rem; font-weight: 700; line-height: 1;
     min-width: 16px; height: 16px; padding: 0 4px;
-    border-radius: 999px; display: flex; align-items: center; justify-content: center;
+    border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center;
 }
 
+/* item 44 — replaces the old solid-gold-fill-with-glow active state: a 3px accent bar plus a
+   low-alpha tint, so the sidebar stays flat and the gold reads as an accent, not a block fill. */
 .nav-item.active {
-    /* item 31 (originally flagged by item 30's axe sweep) — white on this gold fill measured
-       ~2.34:1; --color-text-on-accent is the dark-text pair for gold fills. */
-    background-color: var(--color-accent); color: var(--color-text-on-accent); font-weight: 700;
-    box-shadow: 0 4px 12px rgba(var(--color-accent-rgb), 0.2);
+    background-color: var(--color-accent-tint); color: var(--color-accent-light); font-weight: 600;
 }
-.nav-item.active i { color: var(--color-text-on-accent); }
+.nav-item.active::before {
+    content: ''; position: absolute; left: 0; top: 6px; bottom: 6px; width: 3px;
+    border-radius: var(--radius-sm); background-color: var(--color-accent);
+}
+.nav-item.active i { color: var(--color-accent); }
+
+/* item 44 — moved out of Navbar.jsx's inline `style` prop so the tablet-rail reset above (which
+   targets .nav-item generically) and any future token change apply to Logout too, same as every
+   other nav item. Button-reset: .nav-item's base rule covers layout/color/padding but not
+   background/border, which a real <button> gets from the UA stylesheet. */
+.logout-nav-item {
+    margin-top: auto;
+    width: 100%;
+    text-align: left;
+    font: inherit;
+    cursor: pointer;
+    background: none;
+    border: none;
+    border-top: 1px solid rgba(var(--color-surface-rgb), 0.12);
+    /* item 31 — --color-danger-on-dark, not --color-danger: the plain danger red only measures
+       3.61:1 on this dark sidebar. */
+    color: var(--color-danger-on-dark);
+}
 
 /* UI Elements (Nakatago sa Desktop) */
 .loading {
@@ -796,31 +862,52 @@ html, body {
     font-weight: 600; color: var(--color-accent-text); /* DESIGN.md §3 rule 10 — normal-size text needs 4.5:1 */
 }
 
-.close-mobile-btn {
+/* item 44 — .title-group is a flex item inside .navbar-header so it can grow and push
+   .navbar-close-btn to the row's end; this has no effect where .title-group itself is
+   display:none (desktop/tablet, since no close button shows there either). */
+.title-group { flex: 1; min-width: 0; }
+
+/* item 44 — replaces the old absolutely-positioned "&times;" glyph: a real 44px button, sitting
+   in the header row instead of floating over it, hidden outside the mobile drawer. */
+.navbar-close-btn {
     display: none !important; /* Laging nakatago sa desktop/tablet */
+    flex-shrink: 0;
+    width: 44px; height: 44px;
+    align-items: center; justify-content: center;
     background: transparent; border: none; color: var(--color-text-inverse);
-    position: absolute; right: 15px; top: 15px; font-size: 2rem;
-    cursor: pointer; z-index: 10;
+    font-size: 1rem; border-radius: var(--radius-md);
+    cursor: pointer;
 }
 
 /* DESIGN.md §7#5 — the button used to be position:fixed with nothing behind it, so once the
    page scrolled, content ran underneath it; .page-content's mobile top padding only cleared it
-   at scroll-top. It now lives inside a full-width bar it can't be scrolled behind. */
+   at scroll-top. It now lives inside a full-width bar it can't be scrolled behind. item 44: the
+   bar itself is now dark (matches the sidebar it opens) and carries the wordmark + a small logo,
+   not just a bare hamburger. */
 .mobile-topbar {
     display: none; /* Nakatago sa desktop/tablet */
+    gap: var(--space-2);
+    background-color: var(--color-surface-dark);
+}
+.mobile-topbar-logo {
+    width: 28px; height: 28px; border-radius: var(--radius-md); object-fit: cover; flex-shrink: 0;
+}
+.mobile-topbar-title {
+    font-size: var(--font-size-lg); font-weight: 700; color: var(--color-text-inverse);
 }
 
 .mobile-menu-btn {
     display: none; /* Nakatago sa desktop */
-    background: var(--color-surface-dark); color: var(--color-accent); border: 1px solid #2C261E;
-    padding: 10px 15px; border-radius: 8px; font-size: 1.2rem;
-    min-width: 44px; min-height: 44px;
+    background: transparent; color: var(--color-text-inverse); border: none;
+    border-radius: var(--radius-md); font-size: 1rem;
+    width: 44px; height: 44px; align-items: center; justify-content: center;
     cursor: pointer;
 }
 
 .mobile-overlay {
     display: none; position: fixed; inset: 0; /* DESIGN.md §3.5 — 100vw/100vh included the scrollbar width */
-    background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(2px); z-index: 9990;
+    /* item 44 — the dark-sidebar surface token at low alpha, not a one-off black literal. */
+    background: rgba(var(--color-surface-dark-rgb), 0.6); z-index: 9990;
 }
 
 
@@ -828,42 +915,41 @@ html, body {
    2. RESPONSIVE DESIGN (TABLET)
 ========================================= */
 @media (max-width: 1024px) {
-    /* DESIGN.md §7#9 — was icon-only with every label hidden outright, leaving Worker's rail (one
-       tab plus Notifications, since FR-4) down to two unlabeled icons; every tab now keeps its
-       label, stacked under the icon instead of beside it, so the rail can stay narrow. 96px
-       rather than 90px: "Notifications" doesn't fit one line at 90px even at this smaller size. */
+    /* ARCHITECTURE_REVIEW.md item 44 — the Claude Design redesign's rail: --sidebar-rail (80px),
+       a 16px icon over a 12px label. DESIGN.md §7#9's original note (that 90px was too narrow
+       for "Notifications") still applies at this narrower width — verified by measuring every
+       `.nav-label`'s scrollWidth against clientWidth at 1024px during item 44's verification
+       pass; see ARCHITECTURE_REVIEW.md item 44 for the result. */
     .wooden-navbar {
-        width: 96px;
+        width: var(--sidebar-rail);
         align-items: center;
     }
 
     /* Itago ang text, icons na lang ang matitira */
     .title-group,
-    .user-profile h2,
     .user-info { display: none; }
 
-    .navbar-header { padding: 30px 0 20px 0; justify-content: center; }
-    .navbar-header .logo { width: 45px; height: 45px; }
+    .navbar-header { padding: var(--space-3) 0; justify-content: center; }
+    .navbar-header .logo { width: 28px; height: 28px; }
 
-    .user-profile { padding: 0 0 30px 0; justify-content: center; }
-    .avatar-circle { width: 45px; height: 45px; font-size: 1.2rem; }
+    .user-profile { padding: var(--space-2) 0; margin: 0; justify-content: center; }
+    .avatar-circle { width: 28px; height: 28px; font-size: var(--font-size-xs); }
 
-    .nav-links { padding: 0 10px; width: 100%; align-items: center; }
+    .nav-links { padding: var(--space-2); width: 100%; align-items: center; }
     .nav-item {
         flex-direction: column;
         justify-content: center;
-        gap: 4px;
-        padding: 10px 4px;
+        gap: 2px;
+        padding: var(--space-1) 0;
         width: 100%;
         min-height: 44px; /* DESIGN.md §3.3 */
-        border-radius: 12px;
         text-align: center;
     }
     .nav-item i { margin: 0; }
     /* .nav-label, not a bare `span` — .nav-icon-wrap (the icon+badge wrapper) is also a <span>,
        and these font/wrap rules are only meant for the text label below it. */
     .nav-item .nav-label {
-        font-size: 0.68rem;
+        font-size: var(--font-size-xs);
         line-height: 1.15;
         white-space: normal; /* allows a two-word label ("For Repair"-length) to wrap to 2 lines */
     }
@@ -878,12 +964,12 @@ html, body {
     .wooden-navbar {
         position: fixed !important; /* Fix para di tumulak pababa ang page */
         left: 0; top: 0;
-        width: 280px;
+        width: 280px; /* item 44 — the Claude Design redesign's drawer width, unchanged from before */
         height: 100vh; /* fallback */
         height: 100dvh; /* DESIGN.md §3.6 */
         z-index: 9999;
         align-items: stretch;
-        
+
         transform: translateX(-100%);
         transition: transform 0.3s ease-in-out;
         box-shadow: none !important; /* Fix para walang anino pag nakasara */
@@ -896,14 +982,14 @@ html, body {
 
     /* Ibalik ang mga text na itinago nung Tablet View */
     .title-group,
-    .user-profile h2,
-    .user-info { display: block; }
+    .user-info { display: flex; }
     /* .nav-item .nav-label needs no restore here any more — DESIGN.md §7#9's labeled rail no
        longer hides it at tablet width at all (it stays visible, just stacked below the icon). */
 
-    .navbar-header { padding: 30px 25px 20px 25px; justify-content: flex-start; }
-    .user-profile { padding: 0 25px 30px 25px; justify-content: flex-start; }
-    .nav-links { padding: 0 15px 30px 15px; align-items: stretch; }
+    .navbar-header { padding: var(--space-4); justify-content: flex-start; }
+    .navbar-close-btn { display: flex !important; }
+    .user-profile { padding: var(--space-2) var(--space-4); margin: 0; justify-content: flex-start; }
+    .nav-links { padding: var(--space-2) var(--space-3); align-items: stretch; }
     /* Both this query and the tablet one above match at <=768px; since this one comes later in
        the file it wins on shared properties, but flex-direction/gap/text-align aren't
        re-declared by the pre-existing rule below, so without this reset the tablet rail's
@@ -912,37 +998,35 @@ html, body {
     .nav-item {
         flex-direction: row;
         justify-content: flex-start;
-        gap: 15px;
-        padding: 14px 20px;
+        gap: var(--space-3);
+        padding: 0 var(--space-3);
         width: 100%;
-        min-height: 0;
-        border-radius: 12px;
+        min-height: 44px;
         text-align: left;
     }
     .nav-item .nav-label {
-        font-size: 1rem;
+        font-size: var(--font-size-md);
         line-height: normal;
         white-space: normal;
     }
 
     /* Palabasin ang mga Mobile Buttons */
-    .close-mobile-btn { display: block !important; }
     .mobile-overlay.active { display: block; }
 
-    /* Bar the hamburger lives in, instead of floating loose over scrollable content. */
+    /* Bar the hamburger lives in, instead of floating loose over scrollable content. item 44:
+       dark, to match the drawer it opens, and now carries a small logo + wordmark alongside the
+       hamburger rather than a bare button. */
     .mobile-topbar {
         display: flex;
         align-items: center;
         position: fixed;
         inset: 0 0 auto 0;
         height: 56px;
-        padding: 0 15px;
-        background-color: var(--color-surface);
-        border-bottom: 1px solid var(--color-border);
+        padding: 0 var(--space-2) 0 6px;
         z-index: 9997; /* below the drawer (9999) and its overlay (9990 active), above page content */
     }
 
-    .mobile-menu-btn { display: block; }
+    .mobile-menu-btn { display: flex; }
 }
 
 
@@ -955,146 +1039,128 @@ html, body {
 /* =========================================
    ADMIN DASHBOARD STYLES
 ========================================= */
+/* ARCHITECTURE_REVIEW.md item 44 — the Claude Design redesign removed this screen's own 40px
+   padding entirely (DESIGN.md's `.page-content` gutter is now the only one) and its 100dvh
+   min-height, which used to force a scrollbar even on a short page. The sections stack with a
+   plain flex gap instead. */
 .admin-dashboard {
-  padding: 40px;
   flex: 1;
-  min-height: 100vh; /* fallback */
-  min-height: 100dvh; /* DESIGN.md §3.6 */
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
   background: var(--color-surface);
+}
+
+/* item 44 — a compact page header: the screen title plus the current month. */
+.admin-page-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+.admin-page-header h1 {
+  margin: 0;
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+}
+.admin-page-header .admin-page-subtitle {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
 }
 
 .admin-stats-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 32px;
-  margin-bottom: 64px;
+  gap: var(--space-4);
 }
 
-/* ARCHITECTURE_REVIEW.md item 37 — .admin-dashboard's own 40px padding used to stack on top of
-   .page-content's 15px side padding (globals.css's shared mobile RESPONSIVE DESIGN block,
-   above), leaving ~250px for the 3-column stat grid at 360px wide and clipping every card. This
-   must come after the unconditional rules above, not inside that earlier shared block — at
-   equal specificity, CSS resolves by source order, and an unconditional rule defined later
-   would otherwise win over an earlier media-query override, regardless of viewport. */
 @media (max-width: 768px) {
-  .admin-dashboard {
-    padding: 0; /* .page-content's own padding is the only gutter needed here */
-  }
-
-  /* The 3-column grid is the other half of the clip — stack to one column so each card gets
-     the full content width instead of ~1/3 of it. PM_dashboard.jsx/QCDashboard.jsx override
-     this with their own inline `style={{ display: 'flex', ... }}`, which wins regardless of
-     this media query, so they're unaffected either way. */
+  /* The 3-column grid stacks to one column so each card gets the full content width instead of
+     ~1/3 of it. PM_dashboard.jsx/QCDashboard.jsx override this with their own inline
+     `style={{ display: 'flex', ... }}`, which wins regardless of this media query, so they're
+     unaffected either way. */
   .admin-stats-grid {
     grid-template-columns: 1fr;
-    gap: 16px;
-    margin-bottom: 32px;
   }
 }
 
-/* ARCHITECTURE_REVIEW.md item 37 — .admin-stat-card/-label/-value/-sub used to live here. They
-   had no JSX reference anywhere (the live card is globals/InfoCard.jsx's .info-card family,
-   below); deleted as dead code, same confirmation method as item 34. Their names are what led
-   the item-36 writeup to misdiagnose which rules controlled the 360px stat-card clipping on this
-   screen — that's fixed below, on .info-card. */
+/* ARCHITECTURE_REVIEW.md item 44 — the 6px gradient divider is gone; the page's own flex gap
+   plus the notification panel's own header now separate the sections (see REDESIGN.md). */
 
-.admin-divider {
-  height: 6px;
-  background: linear-gradient(to right, var(--color-accent), var(--color-accent-light), var(--color-accent));
-  border-radius: 3px;
-  margin-bottom: 32px;
-}
-
-/* ARCHITECTURE_REVIEW.md item 39 — the old .admin-notifications- / .admin-notification- /
-   .admin-btn block used to live here. No JSX reference anywhere (the live notification UI is
-   NotificationList.jsx's .notif- family, below); deleted as dead code, same confirmation
-   method as item 34. */
 /* =========================================
-   INFO CARD STYLES (GOLD GRADIENT THEME)
+   INFO CARD STYLES (FLAT, item 44)
 ========================================= */
 .info-card {
-  background: linear-gradient(to right, var(--color-accent), var(--color-accent-light), var(--color-accent)); /* Ang request mong gradient! */
-  border-radius: 16px;
-  padding: 30px 25px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); /* Medyo nilakasan ang shadow para umangat */
-  /* ARCHITECTURE_REVIEW.md item 37 — was a fixed height with overflow:hidden below, which cut
-     off a wrapped label/value instead of letting the card grow. min-height keeps the usual look
-     when nothing wraps. */
-  min-height: 160px;
+  position: relative;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-4) var(--space-4) var(--space-4) 19px; /* left offset clears the 3px bar */
+  min-height: 100px;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  align-items: center;
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
+  gap: var(--space-1);
   /* item 37 — container-type lets .info-card-value's font-size respond to this card's own
      width (cqi units below) rather than the viewport, since the three dashboards give this
      card very different widths (a 1fr grid column, or a flex item with a 250–400px min/max). */
   container-type: inline-size;
-  border: 1px solid rgba(var(--color-surface-rgb), 0.4); /* Subtle white glow sa border */
 }
 
-/* Hover Effect: Aangat ang card at mag-go-glow yung gold shadow */
-.info-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 25px rgba(184, 160, 64, 0.4); 
+/* --- ACCENT BARS --- */
+/* item 44 — a 3px top-of-content bar in place of the old 10px gradient-fill side border; the
+   variant→color mapping also changed (REDESIGN.md): projects reads as info, workers as gold, and
+   profit (money) as success. */
+.info-card::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
 }
+.info-card-green::before { background-color: var(--color-success); }
+.info-card-gold::before { background-color: var(--color-accent); }
+.info-card-blue::before { background-color: var(--color-info); }
 
-/* --- SIDE BORDERS --- */
-/* Ginawang mas "dark" ang mga borders para lumutang sa ibabaw ng gold background */
-.info-card-green {
-  border-left: 10px solid var(--color-success-dark); /* Deep Forest Green */
-}
-
-.info-card-gold {
-  border-left: 10px solid #4a3510; /* Dark Espresso Brown (Dahil gold na ang background) */
-}
-
-.info-card-blue {
-  border-left: 10px solid #1a365d; /* Deep Navy Blue */
-}
-
-/* --- TYPOGRAPHY (Dark Colors for High Contrast) --- */
+/* --- TYPOGRAPHY --- */
 
 .info-card-label {
-  color: #4a3b12; /* Darker brown para madaling basahin */
+  margin: 0;
+  color: var(--color-text-muted);
   font-family: var(--font-sans);
-  font-weight: 700;
-  font-size: 0.85rem;
-  text-transform: uppercase; 
-  letter-spacing: 1.5px;
-  text-align: center;
-  margin-bottom: 8px;
+  font-weight: 500;
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
 }
 
 .info-card-value {
-  color: #1a1500; /* Almost Black-Brown */
+  color: var(--color-text);
   font-family: var(--font-sans);
-  font-size: 3rem; /* fallback for browsers without container query units */
-  font-size: min(3rem, 23cqi); /* item 37 — shrinks only once the card itself narrows (tablet
-    widths), so a short count (5, 12) still renders at the full 3rem on both desktop and phone */
-  font-weight: 800;
+  font-size: var(--font-size-kpi); /* fallback for browsers without container query units */
+  font-size: min(var(--font-size-kpi), 23cqi); /* item 37 — shrinks only once the card itself
+    narrows (tablet widths), so a short count (5, 12) still renders at full size on desktop/phone */
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
   margin: 0;
-  line-height: 1;
-  text-shadow: 1px 1px 2px rgba(var(--color-surface-rgb), 0.3); /* Subtle white shadow para umumbok yung text */
+  line-height: 1.15;
+  overflow-wrap: anywhere; /* item 44 — a long value wraps instead of clipping */
 }
 
 /* ARCHITECTURE_REVIEW.md item 37 — a currency value like ₱48,230.50 (or a real 7-figure
    monthly profit) is far longer than a worker/project count and was clipping at the fixed
-   3rem even on desktop (the ₱ ran off the card's left edge). InfoCard.jsx adds this modifier
+   size even on desktop (the ₱ ran off the card's left edge). InfoCard.jsx adds this modifier
    once the formatted value passes 7 characters; sized so a 13-character value fits the card's
    content box at any width this app renders it at. */
 .info-card-value--long {
-  font-size: min(3rem, 14cqi);
+  font-size: min(var(--font-size-kpi), 12.5cqi);
 }
 
 .info-card-sub {
   font-family: var(--font-sans);
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--color-accent-text); /* Dark brown */
-  margin-top: 10px;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
 }
 
 /* ARCHITECTURE_REVIEW.md item 39 — the whole "NOTIFICATION SECTION (GLOBAL)" .notification-

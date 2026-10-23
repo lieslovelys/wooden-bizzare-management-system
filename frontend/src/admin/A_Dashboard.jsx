@@ -39,27 +39,37 @@ const AdminDashboard = () => {
 
   return (
     <div className="admin-dashboard">
+      {/* ARCHITECTURE_REVIEW.md item 44 — a compact page header replaces the old 6px gradient
+          divider as the section separator; the month reuses the same dynamic value the profit
+          card's sub-line already computed. */}
+      <div className="admin-page-header">
+        <h1>Dashboard</h1>
+        <span className="admin-page-subtitle">{currentMonthYear}</span>
+      </div>
+
       <div className="admin-stats-grid">
-        <InfoCard 
-            label="ACTIVE PROJECTS" 
-            value={stats.activeProjects} 
-            variant="green" 
+        {/* item 44 — labels are sentence case (CSS still renders them uppercase) so a screen
+            reader doesn't spell out "ACTIVE PROJECTS" letter by letter; variants reassigned per
+            REDESIGN.md (projects = info, workers = gold, profit = success, since it's money). */}
+        <InfoCard
+            label="Active projects"
+            value={stats.activeProjects}
+            variant="blue"
         />
-        <InfoCard 
-            label="TOTAL WORKER" 
-            value={stats.totalWorkers} 
-            variant="gold" 
+        <InfoCard
+            label="Total workers"
+            value={stats.totalWorkers}
+            variant="gold"
         />
-        <InfoCard 
-            label="MONTHLY PROFIT" 
+        <InfoCard
+            label="Monthly profit"
             value={formatCurrency(stats.monthlyProfit)}
             sub={currentMonthYear} // Ipinalit natin dito yung dynamic date
-            variant="blue" 
+            variant="green"
         />
       </div>
-      <div className="admin-divider" />
-      
-      <AdminNotification />
+
+      <AdminNotification embedded />
     </div>
   );
 };

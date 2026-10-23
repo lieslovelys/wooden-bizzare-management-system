@@ -119,11 +119,15 @@ describe('NotificationList', () => {
     expect(mockRefreshUnread).toHaveBeenCalled();
   });
 
-  it('"Clear All" opens a confirm dialog, and Cancel issues no request', async () => {
+  // ARCHITECTURE_REVIEW.md item 44 — the panel's own action buttons are now sentence case
+  // ("Clear all"/"Mark all as read"); the ConfirmModal's own button keeps its original
+  // "Clear All" label (confirmLabel prop below, unchanged), which `{ selector: '.wb-btn-yes' }`
+  // disambiguates from the panel's own "Clear all" trigger.
+  it('"Clear all" opens a confirm dialog, and Cancel issues no request', async () => {
     api.get.mockResolvedValue(pageOf([PROJECT_NOTIF]));
     renderList({});
 
-    fireEvent.click(await screen.findByText('Clear All'));
+    fireEvent.click(await screen.findByText('Clear all'));
     expect(screen.getByRole('dialog')).toHaveTextContent('Other users will still see them');
     fireEvent.click(screen.getByText('Cancel'));
 
@@ -131,12 +135,12 @@ describe('NotificationList', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
-  it('"Clear All", once confirmed, with a type issues one scoped request, not one per row, and refreshes the unread count', async () => {
+  it('"Clear all", once confirmed, with a type issues one scoped request, not one per row, and refreshes the unread count', async () => {
     api.get.mockResolvedValue(pageOf([PROJECT_NOTIF]));
     api.delete.mockResolvedValue({ message: 'ok' });
     renderList({ type: 'project' });
 
-    fireEvent.click(await screen.findByText('Clear All'));
+    fireEvent.click(await screen.findByText('Clear all'));
     fireEvent.click(screen.getByText('Clear All', { selector: '.wb-btn-yes' }));
 
     await waitFor(() => expect(api.delete).toHaveBeenCalledTimes(1));
@@ -144,27 +148,60 @@ describe('NotificationList', () => {
     expect(mockRefreshUnread).toHaveBeenCalled();
   });
 
-  it('"Clear All", once confirmed, with no type issues one unscoped request (Admin behavior)', async () => {
+  it('"Clear all", once confirmed, with no type issues one unscoped request (Admin behavior)', async () => {
     api.get.mockResolvedValue(pageOf([PROJECT_NOTIF, VERIFICATION_NOTIF]));
     api.delete.mockResolvedValue({ message: 'ok' });
     renderList({});
 
-    fireEvent.click(await screen.findByText('Clear All'));
+    fireEvent.click(await screen.findByText('Clear all'));
     fireEvent.click(screen.getByText('Clear All', { selector: '.wb-btn-yes' }));
 
     await waitFor(() => expect(api.delete).toHaveBeenCalledTimes(1));
     expect(api.delete).toHaveBeenCalledWith('/api/notifications/clear/all');
   });
 
-  it('"Mark All as Read" with a type issues one scoped request and refreshes the unread count', async () => {
+  it('"Mark all as read" with a type issues one scoped request and refreshes the unread count', async () => {
     api.get.mockResolvedValue(pageOf([VERIFICATION_NOTIF]));
     api.put.mockResolvedValue({ message: 'ok' });
     renderList({ type: 'verification' });
 
-    fireEvent.click(await screen.findByText('Mark All as Read'));
+    fireEvent.click(await screen.findByText('Mark all as read'));
 
     await waitFor(() => expect(api.put).toHaveBeenCalledWith('/api/notifications/mark-all-read?type=verification'));
     expect(api.put).toHaveBeenCalledTimes(1);
     expect(mockRefreshUnread).toHaveBeenCalled();
+  });
+
+  it('embedded renders an h2 title; the default renders an h1', async () => {
+    api.get.mockResolvedValue(pageOf([PROJECT_NOTIF]));
+    const { rerender } = renderList({});
+    expect(await screen.findByRole('heading', { level: 1, name: /Notifications/ })).toBeInTheDocument();
+
+    rerender(
+      <MemoryRouter>
+        <NotificationList resolveTarget={() => null} embedded />
+      </MemoryRouter>
+    );
+    expect(await screen.findByRole('heading', { level: 2, name: /Notifications/ })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { level: 1 })).not.toBeInTheDocument();
+  });
+
+  it('shows the unread count among the visible rows', async () => {
+    api.get.mockResolvedValue(pageOf([PROJECT_NOTIF, { ...VERIFICATION_NOTIF, is_read: true }]));
+    renderList({});
+    expect(await screen.findByText('1 unread')).toBeInTheDocument();
+  });
+
+  it('shows a timestamp from created_at', async () => {
+    api.get.mockResolvedValue(pageOf([{ ...PROJECT_NOTIF, created_at: '2026-10-21T07:45:00.000Z' }]));
+    renderList({});
+    expect(await screen.findByText('Oct 21, 2026, 3:45 PM')).toBeInTheDocument();
+  });
+
+  it('shows the empty state with the caller-provided message when there are no rows', async () => {
+    api.get.mockResolvedValue(pageOf([]));
+    renderList({ emptyMessage: 'No new tasks to verify.' });
+    expect(await screen.findByText('No notifications')).toBeInTheDocument();
+    expect(screen.getByText('No new tasks to verify.')).toBeInTheDocument();
   });
 });

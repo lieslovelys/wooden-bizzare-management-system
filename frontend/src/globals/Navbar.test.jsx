@@ -37,9 +37,11 @@ beforeEach(() => {
 });
 
 describe('Navbar', () => {
-  it('shows the role abbreviation and name from UserContext', () => {
+  it('shows initials (falling back to the role abbreviation) and the name from UserContext', () => {
     renderNavbar();
-    expect(screen.getByText('A')).toBeInTheDocument();
+    // ARCHITECTURE_REVIEW.md item 44 — the avatar now shows initials from the name, not the role
+    // abbreviation (the role itself is printed as its own label below).
+    expect(screen.getByText('JD')).toBeInTheDocument();
     expect(screen.getByText('Admin')).toBeInTheDocument();
     expect(screen.getByText('Juan Dela Cruz')).toBeInTheDocument();
   });
@@ -88,7 +90,9 @@ describe('Navbar', () => {
     fireEvent.click(container.querySelector('.mobile-menu-btn'));
     expect(container.querySelector('.wooden-navbar')).toHaveClass('mobile-active');
 
-    fireEvent.click(screen.getByText('×'));
+    // ARCHITECTURE_REVIEW.md item 44 — the close button is now a real 44px button with an icon
+    // (found by its accessible name) rather than a bare "&times;" text glyph.
+    fireEvent.click(screen.getByRole('button', { name: 'Close menu' }));
     expect(container.querySelector('.wooden-navbar')).not.toHaveClass('mobile-active');
   });
 

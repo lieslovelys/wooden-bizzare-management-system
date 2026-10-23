@@ -91,6 +91,8 @@ const PAIRS = [
   ['--color-warning', '--color-surface-cream', 4.5, 'the same, on cream (item 33)'],
   ['--color-text-inverse', '--color-danger', 4.5, '.wjo-filter-btn.repair\'s white text (item 35)'],
   ['--color-text-inverse', '--color-warning', 4.5, '.wjo-filter-btn.for-qa\'s white text (item 35)'],
+  ['--color-text-inverse', '--color-surface-dark', 4.5, 'idle sidebar nav item text (item 44)'],
+  ['--color-accent-light', '--color-surface-dark', 3, '--color-focus-on-dark, the dark-sidebar keyboard focus ring (item 44)'],
 ];
 
 describe('design token contrast (DESIGN.md §3 rule 10)', () => {
@@ -115,6 +117,7 @@ const TINT_PAIRS = [
   ['--color-info', '--color-info-rgb', 0.1, '--color-surface', 4.5, 'info-tint badges, e.g. .ph-badge-ontime/.status-badge.in-progress (item 33)'],
   ['--color-warning', '--color-warning-rgb', 0.1, '--color-surface', 4.5, 'warning-tint badges, e.g. .jol-priority.medium (item 33)'],
   ['--color-accent-text', '--color-accent-rgb', 0.1, '--color-surface', 4.5, '.wb-status--assigned (item 35)'],
+  ['--color-accent-light', '--color-accent-rgb', 0.14, '--color-surface-dark', 4.5, 'active sidebar nav item text on --color-accent-tint (item 44)'],
 ];
 
 describe('design token tint-badge contrast (ARCHITECTURE_REVIEW.md item 33)', () => {

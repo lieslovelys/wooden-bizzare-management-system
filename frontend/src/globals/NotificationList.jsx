@@ -7,6 +7,7 @@ import { useNotifications } from '../context/NotificationContext';
 import Pagination from './Pagination';
 import ConfirmModal from './ConfirmModal';
 import { clickableProps } from '../utils/a11y';
+import { formatDateTime } from '../utils/format';
 
 // Shared by admin/AdminNotification.jsx, product_manager/PMNotification.jsx, and
 // quality_checker/QualityCheckerNotification.jsx — those three were ~90% line-for-line
@@ -17,7 +18,11 @@ import { clickableProps } from '../utils/a11y';
 // the actual bug fix from the P2 pass, not just dedup: the PM/QC forks used to loop and issue
 // one request per notification to fake a type-scoped bulk action, where Admin's always issued
 // exactly one.
-const NotificationList = ({ type, emptyMessage = 'No new notifications.', resolveTarget }) => {
+//
+// ARCHITECTURE_REVIEW.md item 44 — `embedded` (set by a dashboard screen, e.g. A_Dashboard.jsx)
+// renders the panel title as an <h2> instead of an <h1>, since a dashboard already has its own
+// page-level <h1>; the standalone Notification tabs render the default <h1>.
+const NotificationList = ({ type, emptyMessage = 'No new notifications.', resolveTarget, embedded = false }) => {
   const navigate = useNavigate();
   // FR-4: `arrivals` ticks up whenever NotificationProvider's poll sees the unread count go up,
   // so this list picks up a new notification without a manual reload — see
@@ -93,7 +98,9 @@ const NotificationList = ({ type, emptyMessage = 'No new notifications.', resolv
     if (target) navigate(target.path, { state: target.state });
   };
 
-  if (loading) return <div className="notif-container"><p style={{textAlign: 'center'}}>Loading notifications...</p></div>;
+  const hasRows = displayed.length > 0;
+  const unreadCount = displayed.filter((n) => !n.is_read).length;
+  const TitleTag = embedded ? 'h2' : 'h1';
 
   return (
     <div className="notif-container">
@@ -113,96 +120,119 @@ const NotificationList = ({ type, emptyMessage = 'No new notifications.', resolv
         />
       )}
 
-      <h1 className="notif-header">
-        <span className="notif-bell"></span> Notifications
-      </h1>
+      <div className="notif-panel-header">
+        <TitleTag className="notif-header">
+          Notifications
+          {!loading && hasRows && (
+            <span className="notif-unread-count">{unreadCount} unread</span>
+          )}
+        </TitleTag>
 
-      <div className="notif-list">
-        {displayed.length > 0 ? (
-          displayed.map((notif) => (
-            <div
-                key={notif.id}
-                className={`notif-item ${notif.is_read ? 'read' : 'unread'}`}
-                style={{ cursor: 'pointer' }}
+        {/* ARCHITECTURE_REVIEW.md item 44 — the bulk actions moved from a footer row into the
+            panel header, as compact outline buttons; still shown only when there's something to
+            act on. Sentence case ("Mark all as read"/"Clear all"), not the old pill shape. */}
+        {!loading && hasRows && (
+          <div className="notif-header-actions">
+            <button type="button" className="notif-action-btn" onClick={handleMarkAllAsRead}>
+              <span className="notif-action-btn-face">
+                <i className="fa-solid fa-check-double" aria-hidden="true"></i>
+                Mark all as read
+              </span>
+            </button>
+            <button
+              type="button"
+              className="notif-action-btn notif-action-btn-danger"
+              onClick={() => setConfirmClearAll(true)}
             >
-              {/* ARCHITECTURE_REVIEW.md item 33 — clickableProps used to sit on this row, which
-                  contained the real delete <button> below: axe's nested-interactive rule flags a
-                  role="button" wrapping another focusable control. This inner display:contents
-                  wrapper carries the row's own click/keyboard behavior instead, leaving the
-                  delete button as a sibling rather than a descendant, with no change to the
-                  flex layout. */}
-              <div {...clickableProps(() => handleNotifClick(notif))} style={{ display: 'contents' }}>
-                <div className="notif-icon-wrapper">
-                    {notif.type === 'project' ? (
-                        /* PROJECT ICON: Document / Blueprint (Gold) */
-                        /* DESIGN.md §3 rule 10 — icon stroke, 3:1 bar */
-                        <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" style={{ stroke: 'var(--color-accent-dark)' }} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                            <polyline points="14 2 14 8 20 8"></polyline>
-                            <line x1="16" y1="13" x2="8" y2="13"></line>
-                            <line x1="16" y1="17" x2="8" y2="17"></line>
-                            <polyline points="10 9 9 9 8 9"></polyline>
-                        </svg>
-                    ) : notif.type === 'verification' ? (
-                        /* VERIFICATION ICON: Checkmark Circle (Dark Brown) */
-                        <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" style={{ stroke: 'var(--color-accent-text)' }} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                        </svg>
-                    ) : (
-                        /* DEFAULT ICON (any other type) */
-                        <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" style={{ stroke: 'var(--color-text-muted)' }} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <line x1="12" y1="8" x2="12" y2="12"></line>
-                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                        </svg>
-                    )}
-                </div>
-
-                <div className="notif-content">
-                    <div className="notif-title-row">
-                        <div className="notif-title">{notif.title}</div>
-                        {!notif.is_read && <span className="unread-dot"></span>}
-                    </div>
-                    <div className="notif-message">{notif.message}</div>
-                </div>
-              </div>
-
-                <button
-                    className="notif-delete-btn"
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        handleDelete(notif.id);
-                    }}
-                    title="Delete Notification"
-                    aria-label={`Dismiss notification: ${notif.title}`}
-                >
-                    <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
-                        <path fillRule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
-                    </svg>
-                </button>
-            </div>
-          ))
-        ) : (
-          <div className="notif-empty">
-            {emptyMessage}
+              <span className="notif-action-btn-face">Clear all</span>
+            </button>
           </div>
         )}
       </div>
 
-      {displayed.length > 0 && (
-        <div className="notif-actions">
-          <button className="notif-btn-secondary" onClick={() => setConfirmClearAll(true)}>
-            Clear All
-          </button>
-          <button className="notif-btn-primary" onClick={handleMarkAllAsRead}>
-            Mark All as Read
-          </button>
+      {loading ? (
+        /* item 44 — a skeleton shell instead of a bare "Loading notifications..." line, so the
+           panel keeps its real height and shape while the first page is in flight. */
+        <div className="notif-list">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="notif-skeleton-row" aria-hidden="true">
+              <div className="notif-skeleton-icon"></div>
+              <div className="notif-skeleton-lines">
+                <div className="notif-skeleton-line notif-skeleton-line-title"></div>
+                <div className="notif-skeleton-line notif-skeleton-line-message"></div>
+              </div>
+            </div>
+          ))}
+          <div className="notif-loading-label">
+            <i className="fa-solid fa-spinner fa-spin" aria-hidden="true"></i>
+            Loading notifications…
+          </div>
+        </div>
+      ) : hasRows ? (
+        <div className="notif-list">
+          {displayed.map((notif) => {
+            // DESIGN.md: Font Awesome solid only — this used to be three bespoke inline SVGs.
+            // DESIGN.md §3 rule 10 — a non-text icon fill needs only the 3:1 bar; all three pass.
+            const iconMeta =
+              notif.type === 'project'
+                ? { icon: 'fa-file-lines', color: 'var(--color-info)' }
+                : notif.type === 'verification'
+                ? { icon: 'fa-circle-check', color: 'var(--color-success)' }
+                : { icon: 'fa-circle-info', color: 'var(--color-text-muted)' };
+
+            return (
+              <div key={notif.id} className={`notif-item ${notif.is_read ? 'read' : 'unread'}`}>
+                {/* ARCHITECTURE_REVIEW.md item 33 — clickableProps used to sit on this row, which
+                    contained the real delete <button> below: axe's nested-interactive rule flags
+                    a role="button" wrapping another focusable control. This inner
+                    display:contents wrapper carries the row's own click/keyboard behavior
+                    instead, leaving the delete button as a sibling rather than a descendant,
+                    with no change to the flex layout. */}
+                <div {...clickableProps(() => handleNotifClick(notif))} style={{ display: 'contents' }}>
+                  <div className="notif-icon-wrapper" style={{ color: iconMeta.color }}>
+                    <i className={`fa-solid ${iconMeta.icon}`} aria-hidden="true"></i>
+                  </div>
+
+                  <div className="notif-content">
+                    <div className="notif-title-row">
+                      <span className="notif-title">{notif.title}</span>
+                      {!notif.is_read && <span className="unread-dot"></span>}
+                    </div>
+                    <div className="notif-message">{notif.message}</div>
+                    {notif.created_at && (
+                      <time className="notif-time" dateTime={notif.created_at}>
+                        {formatDateTime(notif.created_at)}
+                      </time>
+                    )}
+                  </div>
+                </div>
+
+                <button
+                  className="notif-delete-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDelete(notif.id);
+                  }}
+                  title="Delete Notification"
+                  aria-label={`Dismiss notification: ${notif.title}`}
+                >
+                  <i className="fa-solid fa-trash" aria-hidden="true"></i>
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="notif-empty">
+          <div className="notif-empty-icon">
+            <i className="fa-solid fa-bell" aria-hidden="true"></i>
+          </div>
+          <div className="notif-empty-title">No notifications</div>
+          <div className="notif-empty-message">{emptyMessage}</div>
         </div>
       )}
 
-      <Pagination page={page} meta={meta} onChange={setPage} />
+      {!loading && <Pagination page={page} meta={meta} onChange={setPage} />}
     </div>
   );
 };
