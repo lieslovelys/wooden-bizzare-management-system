@@ -18,8 +18,11 @@ the dashboard, the sidebar, the shared primitives (buttons/panels/fields/badges/
 states/skeletons — see the "COMPONENT KIT" section in `frontend/src/css/globals.css` and §5 below
 for the tokens behind it), and one proof-of-generalization screen (Job Order detail). Most other
 screens still run on the item-44/pre-44 look and are item 49's "still open" list; a screen not yet
-migrated is debt, not a sign the kit doesn't apply to it. What *is* settled, effective now,
-regardless of the redesign:
+migrated is debt, not a sign the kit doesn't apply to it. The next screen in that migration is the
+Admin "Account Creation" tab — see
+[`REDESIGN-account-creation.md`](REDESIGN-account-creation.md) (ARCHITECTURE_REVIEW.md item 51)
+for its brief, including the new tabs component the kit hadn't needed yet. What *is* settled,
+effective now, regardless of the redesign:
 
 - **The app must be mobile responsive.** Not "should work if you squint" — genuinely usable on a
   small touch screen, per the rules in §3.

@@ -2905,3 +2905,31 @@ Not urgent, but each of these increases the cost of every future change until ad
       nothing overflows and the only visible change is Logout sitting at the sidebar's true
       bottom edge. Tab-key navigation through a short viewport scrolled the focused tab into view
       without clipping its focus ring, and Logout remained reachable after the last tab.
+
+51. **Docs only: a Claude Design brief for the Admin "Account Creation" tab.**
+    `docs/design/REDESIGN-account-creation.md`, the next screen in item 49's per-screen migration
+    list. Unlike item 48's brief, this one doesn't open a new design round — it points Claude
+    Design at the already-shipped tokens and `.wb-*` component kit (`globals.css`) and the live
+    Claude Design project (`74c0aaa0-cdb0-4957-b893-5957f7cf422c`) and asks for this one screen
+    (`admin/CreateAccount.jsx`'s two tabs, `AccountForm.jsx` and `AccountList.jsx`) to be brought
+    onto that language, not for a new one.
+    - **Measured findings** (all still live in `admin.css` lines 1–336, re-checked directly, not
+      carried over from memory): 25px pill tabs/select, radii off the shipped 4/6/8/10 scale
+      (16/12/8px), a hover-lift `transform: translateY(-2px)` on list rows (banned by
+      REDESIGN-v2.md §4), a stray `#b3b3b3` hex literal on the delete icon that also measures
+      under the 3:1 UI-boundary bar, non-token ad hoc shadows, inline-styled loading/empty states
+      instead of `.wb-skeleton`/`.wb-empty`, and two plain `<button>`s standing in for tabs with
+      no real ARIA tab semantics.
+    - **First real consumer of kit tabs.** REDESIGN-v2.md §5 specced a tabs component but item 49
+      shipped the kit without it, since nothing used it yet — this brief is where `.wb-tabs`
+      actually gets designed and then built.
+    - **Backend gap noted, not fixed here:** gathering the screen's real data contract surfaced
+      that a duplicate username on `POST /api/users`/`POST /api/workers` isn't caught by a
+      dedicated check — it falls through to the generic 500 handler instead of a clean `AppError`.
+      The brief flags where an inline field error would go and defers the actual fix.
+    - **Verified**: docs-only change. Every token, class, endpoint, and field name the brief cites
+      was grepped against `globals.css`, `admin.css`, `backend/src/schemas/userSchemas.js`,
+      `backend/src/routes/userRoutes.js`, and `backend/src/models/userModel.js` to confirm it's
+      real, not invented. No code changed, so the test suites are unaffected.
+    - **Still open**: the actual implementation (Phase B), once the user hands back a Claude
+      Design project for this brief — the same two-step flow as items 48 → 49.
