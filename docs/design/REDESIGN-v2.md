@@ -6,7 +6,8 @@ human: this is the brief, `DESIGN.md` is the binding rulebook it's constrained b
 history and isn't required reading, since every "current state" claim below is re-measured against
 the code as it stands today, after item 44 shipped.
 
-**Status: this brief is new, not yet run.** ARCHITECTURE_REVIEW.md item 48.
+**Status: implemented.** ARCHITECTURE_REVIEW.md item 48 (this brief and its backend) and item 49
+(the implementation, from Claude Design project `74c0aaa0-cdb0-4957-b893-5957f7cf422c`).
 
 **Attach a current screenshot of the Admin dashboard, plus 2–3 other screens (a Job Order detail
 page, the Worker List, and one modal, e.g. Add Worker) alongside this file when you hand it off.**

@@ -2752,7 +2752,125 @@ Not urgent, but each of these increases the cost of every future change until ad
       number the brief cites (radius/pill/gradient counts, token values) was re-measured against
       the CSS directly rather than carried over from item 44's figures, and every token the brief
       names exists in `globals.css`'s `:root`.
-    - **Still open: Phase B.** The frontend — the component kit's actual CSS, the dashboard's new
-      sections, and the icon-free notification list — waits on the user running
-      `REDESIGN-v2.md` through Claude Design and handing the resulting project back, the same
-      workflow item 44 used.
+    - **Phase B is done — see item 49.** The user ran `REDESIGN-v2.md` through Claude Design and
+      handed the resulting project back; item 49 is the implementation.
+
+49. **Phase B of item 48: implementing the Claude Design v2 project — the component kit, the
+    Admin dashboard v2, the sidebar refinement, icon-free notifications everywhere, and the Job
+    Order detail restyle.**
+    The user handed back Claude Design project `74c0aaa0-cdb0-4957-b893-5957f7cf422c`
+    (`Admin Dashboard Redesign.dc.html`, importing `DashboardV2`, `SidebarV2`, `ComponentKit`, and
+    `JobOrderDetail`), asking for it to be implemented. Read via `DesignSync` (read-only), the same
+    as item 44.
+    - **Tokens (`globals.css`'s `:root`).** `--radius-sm` stays 4px (badges); `--radius-md` moves
+      4px → 6px (buttons/inputs/nav). New `--radius-lg` (8px, cards/panels) and `--radius-xl` (10px,
+      modals). `--shadow-sm` is replaced by a 3-step `--shadow-1/2/3` ladder (resting/raised/
+      overlay). New color tokens: `--color-surface-page` (`#f7f5f0`, the page tint behind white
+      cards — `.role-layout`/`.page-content`'s new background, the "whole app foundation" scope the
+      user picked), `--color-border-strong`, five `--color-*-tint` tokens, `--color-scrim`,
+      `--color-sidebar-raised`/`-divider`, and three `--color-chart-*` tokens for the new chart. New
+      layout tokens: `--space-5`, `--section-gap`, `--control-height` (36px), `--hit-min` (44px),
+      `--focus-ring` (now what `:focus-visible` references, 2px not 3px), `--topbar-height`,
+      `--drawer-width`.
+    - **Deliberate deviations from the mock**, each with a reason:
+      1. **Danger tint stays at 6%, not the mock's proposed 8%.** Computed: `--color-danger` text
+         on an 8% danger tint over white measures **4.42:1**, below WCAG AA's 4.5:1. The existing
+         6% (`--color-danger-tint`) measures 4.55:1, and `contrast.test.js` already pinned it.
+         Every other proposed tint passes — assigned at 14% measures 7.70:1.
+      2. **Upcoming-project badges color by project status, not task status.** `/api/job-orders`
+         only ever returns `Pending`/`In Progress` (never a task_status value like "Repair"/"For
+         QA" — the mock's rows were explicitly labeled sample data). New `projectStatusClass()`
+         (`utils/status.js`) maps `In Progress` → `in-progress`, everything else → `neutral`.
+      3. **The real `/wblogo.png` is kept**, not the mock's "Logo placeholder" hammer tile.
+      4. **Job Order detail restyles the real screen**, not the mock's inferred layout — the mock
+         said its JobOrderDetail content (Contact, Contract price, Description) was invented since
+         only the dashboard screenshot was attached. The real sections (overview + variables,
+         progress + stages, materials, assign form) get the kit; no fields are invented.
+      5. **Pagination is restyled only** (range + Prev/Next) — the mock's numbered pages would be a
+         behavior change to a shared, separately-tested component, deferred.
+      6. **Status badges keep the opaque-`linear-gradient`-composite trick** (two identical
+         tint-token stops over `--color-surface`) — a contrast mechanism from item 35, not a
+         decorative gradient DESIGN.md §4 bans; it keeps badge text AA-compliant on the
+         upcoming-projects rows' cream hover state.
+    - **Component kit (new "COMPONENT KIT" section, `globals.css`).** `.wb-btn` (`--primary`/
+      `--secondary`/`--ghost`/`--danger`/`--danger-solid`/`--icon`; a visual 36px with the 44px hit
+      area added via an `::after` `inset: -4px 0` rather than padding, confirmed in the browser);
+      `.wb-panel` (header/title/subtitle/body/footer); `.wb-page-header`; `.wb-badge` (shape only —
+      the existing `.wb-status--*` classes still supply color, now reading the new tint tokens);
+      `.wb-field`/`.wb-input` (with a 44px tablet bump, matching the pre-existing `.jod-form-group`
+      rule); `.wb-table` (opt-in on top of `.wb-card-table`, whose mobile-card look also moves onto
+      the kit's radius/shadow); `.wb-empty`; `.wb-skeleton`; `.wb-visually-hidden`. The shared
+      `ConfirmModal`, `ToastProvider` (which now shows its success/error variant via a leading
+      Font Awesome icon, not fill color alone), and `Pagination` are restyled onto these tokens —
+      kept byte-identical between `globals.css` and `admin.css`'s duplicate `.wb-modal-*`/
+      `.wb-btn-yes`/`.wb-btn-no` rules (a pre-existing specificity-tie duplication, see that
+      comment in `globals.css`), so either stylesheet winning the load order renders the same
+      result.
+    - **Sidebar (`Navbar.jsx` markup unchanged, `globals.css` restyled).** The user-profile block
+      becomes a "raised tile" (`--color-sidebar-raised` fill, `--color-sidebar-divider` border,
+      `--radius-lg`); the active-nav bar moves from a 6px to a 12px top/bottom inset with an
+      outer-rounded corner; the tablet rail's item height grows 44px → 52px; the mobile drawer and
+      its scrim move onto `--drawer-width`/`--shadow-3`/`--color-scrim`.
+    - **Notifications, everywhere `NotificationList.jsx` renders** (the dashboard panel and the
+      standalone Admin/PM/QC/Worker tabs). The per-type icon box (`iconMeta`/`.notif-icon-wrapper`,
+      item 44) is removed — "pure notifications," per the user's request. The header's bulk-action
+      buttons move onto `.wb-btn--secondary`/`--danger`. A new `pageSize` prop (default 25) lets
+      the dashboard's embedded panel request 6 per page instead of the standalone tabs' 25.
+    - **Admin dashboard v2 (`A_Dashboard.jsx` + two new components).** A `.wb-page-header` holds
+      the title, month, and a new gold **"Create project"** button linking to
+      `/admin/create-project`. Below the existing KPI row, a new `.admin-dash-grid` (8fr/4fr at
+      desktop, 3fr/2fr at ≤1024px, stacked at ≤768px) holds:
+      - **`ProfitTrendChart.jsx`** — a hand-drawn bar chart over item 48's
+        `GET /api/dashboard/profit-trend`. A "nice" rounded axis max (the mock's own 1/1.5/2/2.5/
+        5/10 ladder, ported); a zero month renders a 2px grid-colored stub with a muted label
+        (not a gold bar — an actual bug caught during live verification, see below); a **negative**
+        month (not in the mock, but required by the brief) grows a red bar down from an explicit
+        zero line, with a scale spanning `niceMin..niceMax`; the current (last) month's label is
+        bold; a `.wb-visually-hidden` `<table>` gives the full `formatCurrency` values as the
+        chart's accessible alternative. Loading/error/all-zero-empty states included.
+      - **`UpcomingProjects.jsx`** — the next 5 active projects from `/api/job-orders?limit=5`
+        (already `ORDER BY due_date ASC, id ASC`, excluding Completed), each row linking to
+        `/admin/job-order` with `{ state: { targetProjectId } }`, reusing `JobOrder.jsx`'s existing
+        deep-link. Overdue is computed as `toDateInputValue(due_date) < today`, the same idiom
+        `JobOrderDetails.jsx` already used. Loading/error/empty states included, empty state has a
+        secondary "Create project" link.
+      - New `utils/format.js` function `formatCurrencyCompact` (₱0/₱950/₱23k/₱1.5k/₱1.23M, with a
+        leading `−` for negatives) for the chart's labels.
+      - `InfoCard`'s CSS moves onto `--radius-lg`/`--shadow-1`; its 3px side bar is replaced by an
+        8px square dot next to the label (the mock's KPI-row look), via `.info-card-label::before`
+        — PM/QC dashboards inherit this CSS-only change with no JSX edits.
+    - **Job Order detail on the kit (`JobOrderDetails.jsx` + `ProjectMaterials.jsx`, shared by
+      Admin and PM).** All logic/handlers/test-visible strings unchanged — only markup/classes.
+      The old bespoke `.jod-container`/`.jod-ov-*`/`.jod-container-title(-white)`/
+      `.jod-assign-header`/`.jod-form-group`/`.jod-submit-btn` rules (16px-radius cards, 25px pill
+      buttons, a dark-brown form header) had no remaining JSX reference afterward and were deleted
+      — confirmed via grep, same method as items 34/39. `.jod-wrapper`, `.jod-table`, `.jod-status`,
+      and `.jod-ov-detail-item` are kept (the existing tests query by these).
+    - **New frontend tests**: `admin/ProfitTrendChart.test.jsx`, `admin/UpcomingProjects.test.jsx`,
+      plus new cases in `A_Dashboard.test.jsx` (the Create project link, the two new sections),
+      `NotificationList.test.jsx` (no icon box; `pageSize` reaching the request), `format.test.js`
+      (`formatCurrencyCompact`), and `status.test.js` (`projectStatusClass`). `contrast.test.js`
+      gains pairs for the new page tint and the kit's border token, and the assigned-badge
+      `TINT_PAIRS` row moves to 14% alpha. `expectCardLabels`-based assertions in
+      `JobOrderDetails.test.jsx`/`ProjectMaterials.test.jsx` still hold against the restyled
+      markup, unchanged.
+    - **Verified**: frontend `npm test` 333/333, `npm run lint` and `npm run build` clean; backend
+      `npm test` 282/282 (unaffected, sanity check only). Live, via Playwright MCP against the real
+      dev database as `sample.admin`: screenshots at 1366/1024/360 match mocks 2a–2c closely; the
+      mobile drawer matches mock 2d; `scrollWidth === clientWidth` at 360 on both the dashboard and
+      Job Order detail; the "Create project" button's real hit area measured 44px tall via its
+      `::after` (36px visual + 4px top/bottom); a visible focus ring renders on the page tint
+      (Tab-to the Create project button); a project was created and carried through assign-worker
+      end to end, confirming the dashboard's Upcoming Projects widget renders real data (name,
+      `WB-127`, client, priority, "In Progress" badge, due date) and that the Job Order detail
+      screen's mobile card-table conversion renders correctly at 360px; `ConfirmModal`
+      ("Clear All") and an error `ToastProvider` toast both render correctly on the new tokens; the
+      PM dashboard, the PM Job Order detail, the standalone PM Notifications tab, and the QC
+      dashboard's embedded notifications all confirmed icon-free with no regression. One bug was
+      caught and fixed during this pass: a zero-profit month's chart bar initially rendered gold
+      (inheriting `.ptc-bar`'s default fill) instead of the intended grid-gray "no data" stub —
+      fixed by adding a `.ptc-bar--zero`/`.ptc-bar-label--zero` modifier.
+    - **Still open**: migrating the remaining screens (Worker/Inventory/Profit/Attendance/etc.) to
+      the kit screen by screen; the kit's tabs and numbered-pagination components, which have no
+      consumer yet; the mock's "future, needs backend" widgets (today's attendance summary,
+      inventory low-stock alerts, a per-worker productivity widget, a projects-awaiting-QA count).

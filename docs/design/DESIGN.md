@@ -11,10 +11,15 @@ underway, and nothing in this document should be read as "the design is settled.
 [`REDESIGN.md`](REDESIGN.md) for the brief covering the Admin dashboard and the shared sidebar —
 the first scope of that redesign, **built as of ARCHITECTURE_REVIEW.md item 44**. The user then
 said that build "looks like a 2009 UI" — see
-[`REDESIGN-v2.md`](REDESIGN-v2.md) (ARCHITECTURE_REVIEW.md item 48) for the follow-up brief, which
-changes direction (soft radii/shadows instead of item 44's flat 4px/no-shadow look) and widens the
-scope to an app-wide component kit plus a richer dashboard; it's pending a Claude Design handoff
-as of item 48. What *is* settled, effective now, regardless of the redesign:
+[`REDESIGN-v2.md`](REDESIGN-v2.md) (ARCHITECTURE_REVIEW.md items 48–49) for the follow-up brief,
+which changes direction (soft radii/shadows instead of item 44's flat 4px/no-shadow look) and
+widens the scope to an app-wide component kit plus a richer dashboard — **built as of item 49**:
+the dashboard, the sidebar, the shared primitives (buttons/panels/fields/badges/tables/empty-
+states/skeletons — see the "COMPONENT KIT" section in `frontend/src/css/globals.css` and §5 below
+for the tokens behind it), and one proof-of-generalization screen (Job Order detail). Most other
+screens still run on the item-44/pre-44 look and are item 49's "still open" list; a screen not yet
+migrated is debt, not a sign the kit doesn't apply to it. What *is* settled, effective now,
+regardless of the redesign:
 
 - **The app must be mobile responsive.** Not "should work if you squint" — genuinely usable on a
   small touch screen, per the rules in §3.
@@ -208,6 +213,17 @@ worker-path items — not folded into a worker-fix PR as a repo-wide find/replac
 
 Rule 7 (§3) now means exactly what it always pointed at: reference the token from §4, and if a
 genuinely new color is needed, add it as a token rather than a new literal.
+
+**ARCHITECTURE_REVIEW.md item 49** added the v2 kit's layout/shadow/radius tokens alongside the
+item-44 scale already in `:root`: `--radius-lg`/`--radius-xl` (cards/modals, `--radius-sm`/`-md`
+unchanged in role but `-md` moved 4px→6px); `--shadow-1`/`-2`/`-3` (replacing `--shadow-sm`);
+`--space-5`/`--section-gap`; `--control-height`/`--hit-min`/`--focus-ring`; `--topbar-height`/
+`--drawer-width`; `--color-surface-page` (the page tint behind white cards — rule 7's "add a
+token" in practice); `--color-border-strong`; five `--color-*-tint` tokens; `--color-scrim`;
+`--color-sidebar-raised`/`-divider`; three `--color-chart-*` tokens. New UI reaches for the
+`.wb-btn`/`.wb-panel`/`.wb-page-header`/`.wb-badge`/`.wb-field`/`.wb-input`/`.wb-table`/
+`.wb-empty`/`.wb-skeleton` classes in `globals.css`'s "COMPONENT KIT" section before writing a new
+one-off rule, the same reuse-first principle as the token rule above.
 
 ## 6. Priority: the Worker path
 

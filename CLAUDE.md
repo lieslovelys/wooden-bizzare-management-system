@@ -83,7 +83,8 @@ frontend/
                            # to the component they cover, e.g. globals/InventoryTable.test.jsx
 docs/
   reference_md/   PRD.md, ARCHITECTURE_REVIEW.md
-  design/         (empty)
+  design/         DESIGN.md (binding UI rules), REDESIGN.md/REDESIGN-v2.md (Claude Design briefs,
+                   items 44/48-49 — see DESIGN.md §1 for which is current)
 ```
 
 **The backend package root is `backend/src/`, not `backend/`.** `package.json`,
@@ -267,8 +268,12 @@ Colors come from the `:root` custom properties defined at the top of `frontend/s
 full list and what each means) — don't add a new hex literal or reuse an existing one directly; if
 none of the tokens fit, that's a real new color and should become a new token, not a one-off
 literal (DESIGN.md §3 rule 7). The same file also has `--radius-*`/`--space-*`/`--font-size-*`/
-`--shadow-sm` tokens (ARCHITECTURE_REVIEW.md item 44, the Claude Design redesign) — new UI should
-use those instead of a one-off `16px`/`4px` literal, the same rule as color. A table that needs a
+`--shadow-1`/`--shadow-2`/`--shadow-3` tokens (ARCHITECTURE_REVIEW.md items 44 and 49, the Claude
+Design redesign and its v2 implementation) — new UI should use those instead of a one-off
+`16px`/`4px` literal, the same rule as color. New UI also reaches for the `.wb-btn`/`.wb-panel`/
+`.wb-page-header`/`.wb-field`/`.wb-badge`/`.wb-table`/`.wb-empty`/`.wb-skeleton` component-kit
+classes (`globals.css`'s "COMPONENT KIT" section, item 49) before writing a new bespoke class for
+a button, card, form field, or empty/loading state. A table that needs a
 mobile-responsive layout uses the shared
 `.wb-card-table` utility (same file) plus a `data-label` attribute on every non-`colspan` `<td>`,
 rather than a bespoke per-table mobile conversion — see any of `globals/JobOrderDetails.jsx`,
