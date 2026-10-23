@@ -77,6 +77,12 @@
      future swap is a one-line change here. main.jsx imports the matching self-hosted weights. */
   --font-sans: 'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif;
 
+  /* ARCHITECTURE_REVIEW.md item 45 — deliberately narrow: the "The Wooden Bizarre" brand
+     wordmark only (the three sites tests/fontConsistency.test.js enumerates), not a general
+     heading font. Item 43's "one family, Geist, for everything" decision still holds for
+     everything else — this is a branding exception, not a reversal. */
+  --font-brand: 'Playfair Display', serif;
+
   /* ARCHITECTURE_REVIEW.md item 44 — the Claude Design redesign's scale, used by the Admin
      dashboard and the shared sidebar first. New UI should reach for these rather than a new
      literal (DESIGN.md §3 rule 7), the same way color already works. */
@@ -196,9 +202,11 @@
   filter: drop-shadow(0 0 10px rgba(var(--color-accent-rgb), 0.3)); /* Glowing logo */
 }
 
+/* ARCHITECTURE_REVIEW.md item 45 — --font-brand, not --font-sans: the brand wordmark is the one
+   deliberate exception to item 43's "Geist everywhere" rule. */
 .login-layout .brand-title h2 {
-  font-family: var(--font-sans);
-  font-size: 2.2rem; 
+  font-family: var(--font-brand);
+  font-size: 2.2rem;
   margin: 0;
   color: var(--color-text-inverse); /* White text on dark bg */
   letter-spacing: -0.5px;
@@ -763,8 +771,9 @@ html, body {
 .navbar-header .logo {
     width: 34px; height: 34px; border-radius: var(--radius-md); object-fit: cover;
 }
+/* ARCHITECTURE_REVIEW.md item 45 — --font-brand, not --font-sans: the brand wordmark exception. */
 .title-group h3 {
-    margin: 0; font-family: var(--font-sans); font-size: var(--font-size-lg);
+    margin: 0; font-family: var(--font-brand); font-size: var(--font-size-lg);
     font-weight: 700; line-height: 1.1; color: var(--color-text-inverse);
 }
 /* item 44 — the "Management System" subline (.title-group p) is removed, per the redesign. */
@@ -892,7 +901,9 @@ html, body {
 .mobile-topbar-logo {
     width: 28px; height: 28px; border-radius: var(--radius-md); object-fit: cover; flex-shrink: 0;
 }
+/* ARCHITECTURE_REVIEW.md item 45 — --font-brand, not --font-sans: the brand wordmark exception. */
 .mobile-topbar-title {
+    font-family: var(--font-brand);
     font-size: var(--font-size-lg); font-weight: 700; color: var(--color-text-inverse);
 }
 

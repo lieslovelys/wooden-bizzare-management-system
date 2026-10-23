@@ -28,6 +28,13 @@ import path from 'node:path';
 // open: three admin/*.jsx files had an inline `style={{ fontFamily: 'Arial, sans-serif' }}` that
 // this CSS-only scan never saw. The scan below now also walks non-test .jsx/.js for an inline
 // `fontFamily:` so that gap can't reopen silently.
+//
+// ARCHITECTURE_REVIEW.md item 45: Playfair Display comes back, but deliberately narrow — only
+// the "The Wooden Bizarre" brand wordmark, behind a second token, --font-brand, not a general
+// heading font (item 43's "one family, Geist, everywhere" still holds for everything else). The
+// EXPECTED_BRAND_SELECTORS check below pins exactly which three selectors may use it, so a
+// future "let's make every heading Playfair again" change has to edit this test on purpose
+// rather than drift into it unnoticed.
 const thisFile = fileURLToPath(import.meta.url);
 const frontendRoot = path.join(path.dirname(thisFile), '..', '..');
 const srcDir = path.join(frontendRoot, 'src');
@@ -45,10 +52,24 @@ function listFiles(dir, exts) {
 // not an occurrence of the words "font" and "family" inside a comment.
 const FONT_FAMILY_DECLARATION = /font-family\s*:\s*([^;]+);/g;
 
-const ALLOWED_VALUES = new Set(['var(--font-sans)', 'inherit']);
+const ALLOWED_VALUES = new Set(['var(--font-sans)', 'var(--font-brand)', 'inherit']);
 
-describe('font-family consistency (ARCHITECTURE_REVIEW.md items 36, 43)', () => {
-  it('every font-family declaration in src/css is the app\'s one font token, or inherit', () => {
+// Item 45 — the only selectors allowed to use --font-brand. All three render the literal brand
+// name "The Wooden Bizarre"; see Login.jsx and Navbar.jsx.
+const EXPECTED_BRAND_SELECTORS = new Set([
+  '.login-layout .brand-title h2',
+  '.title-group h3',
+  '.mobile-topbar-title',
+]);
+
+// Matches a whole CSS rule (selector + declaration block) so a --font-brand declaration can be
+// traced back to its selector. Simple brace-balance isn't needed here since none of this app's
+// rules nest braces (no @media around these three, no nested selectors) — the existing
+// FONT_FAMILY_DECLARATION regex makes the same non-nesting assumption.
+const CSS_RULE = /([^{}]+)\{([^{}]*)\}/g;
+
+describe('font-family consistency (ARCHITECTURE_REVIEW.md items 36, 43, 45)', () => {
+  it('every font-family declaration in src/css is one of the app\'s font tokens, or inherit', () => {
     const offenders = listFiles(cssDir, ['.css']).flatMap((filePath) => {
       const css = readFileSync(filePath, 'utf-8');
       const relPath = path.relative(frontendRoot, filePath);
@@ -59,6 +80,27 @@ describe('font-family consistency (ARCHITECTURE_REVIEW.md items 36, 43)', () => 
     });
 
     expect(offenders, `an unexpected font-family value was found: ${offenders.join(', ')}`).toEqual([]);
+  });
+
+  it('only the brand wordmark\'s three selectors use --font-brand', () => {
+    const foundSelectors = new Set();
+    for (const filePath of listFiles(cssDir, ['.css'])) {
+      // Strip comments first — CSS_RULE's selector group otherwise swallows a comment
+      // immediately above the selector too, since both sit between the previous `}` and the
+      // next `{`.
+      const css = readFileSync(filePath, 'utf-8').replace(/\/\*[\s\S]*?\*\//g, '');
+      for (const match of css.matchAll(CSS_RULE)) {
+        const [, selector, body] = match;
+        if (/font-family\s*:\s*var\(--font-brand\)/.test(body)) {
+          foundSelectors.add(selector.trim());
+        }
+      }
+    }
+
+    const missing = [...EXPECTED_BRAND_SELECTORS].filter((s) => !foundSelectors.has(s));
+    const unexpected = [...foundSelectors].filter((s) => !EXPECTED_BRAND_SELECTORS.has(s));
+    expect(missing, `expected selector(s) missing --font-brand: ${missing.join(', ')}`).toEqual([]);
+    expect(unexpected, `unexpected selector(s) using --font-brand: ${unexpected.join(', ')}`).toEqual([]);
   });
 
   // Item 43 — a CSS-only scan missed three admin/*.jsx files that set the font with an inline

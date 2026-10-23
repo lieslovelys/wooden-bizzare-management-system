@@ -12,11 +12,16 @@ import App from './App.jsx'
 // Geist, via globals.css's --font-sans token — see that file's :root. 700/800 are real weights,
 // not the browser's synthesized bold, matching the same weights the CSS already asks for (item
 // 28's lesson about faked weights applies here too).
+//
+// Item 45: Playfair Display comes back, but narrowly — only the "The Wooden Bizarre" brand
+// wordmark uses it now (globals.css's --font-brand token), not headings generally. Weight 700
+// only, the one weight the three wordmark sites actually ask for.
 import '@fontsource/geist/400.css'
 import '@fontsource/geist/500.css'
 import '@fontsource/geist/600.css'
 import '@fontsource/geist/700.css'
 import '@fontsource/geist/800.css'
+import '@fontsource/playfair-display/700.css'
 import '@fortawesome/fontawesome-free/css/fontawesome.min.css'
 import '@fortawesome/fontawesome-free/css/solid.min.css'
 import './css/globals.css'
