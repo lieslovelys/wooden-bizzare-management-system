@@ -268,10 +268,10 @@
 
 .login-layout .login-container {
   width: 100%;
-  max-width: 440px;
-  padding: 50px 40px;
+  max-width: 360px; /* item 47 — shrunk from 440px, see below for the rest of this card */
+  padding: var(--space-8) var(--space-6);
   background: var(--color-surface);
-  border-radius: 24px;
+  border-radius: 16px;
   box-shadow: 0 15px 35px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(var(--color-accent-rgb), 0.1); /* Subtle glowing border */
   opacity: 0;
   animation: fadeInUp 0.8s ease-out 0.5s forwards; /* Last to animate in */
@@ -279,34 +279,34 @@
 
 .login-layout .form-header {
   text-align: center;
-  margin-bottom: 40px;
+  margin-bottom: var(--space-6);
 }
 
 .login-layout .form-header h2 {
   font-family: var(--font-sans);
-  font-size: 2.6rem;
-  margin: 0 0 8px 0;
+  font-size: var(--font-size-kpi);
+  margin: 0 0 var(--space-1) 0;
   color: var(--color-text); /* Dark Espresso */
 }
 
 .login-layout .form-header p {
   margin: 0;
-  font-size: 1rem;
+  font-size: var(--font-size-md);
   color: var(--color-text-muted);
 }
 
 /* --- Input Fields --- */
 .login-layout .input-group {
-  margin-bottom: 25px;
+  margin-bottom: var(--space-4);
 }
 
 .login-layout .input-group label {
   padding-left: 5px;
   display: block;
   font-family: var(--font-sans);
-  font-size: 0.9rem;
+  font-size: var(--font-size-xs);
   font-weight: 700;
-  margin-bottom: 8px;
+  margin-bottom: var(--space-2);
   color: var(--color-text);
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -315,11 +315,12 @@
 .login-layout .input-group input[type="text"],
 .login-layout .input-group input[type="password"] {
   width: 100%;
-  padding: 16px 20px;
-  border: 1.5px solid var(--color-border); 
-  border-radius: 12px;
+  min-height: 44px; /* DESIGN.md §3 rule 3 — the hit area stays 44px even as the visual shrinks */
+  padding: 10px 14px;
+  border: 1.5px solid var(--color-border);
+  border-radius: 8px;
   font-family: var(--font-sans);
-  font-size: 1rem;
+  font-size: var(--font-size-md);
   box-sizing: border-box;
   background: #fafafa;
   color: var(--color-text);
@@ -361,17 +362,18 @@
 .login-layout .submit-container {
   display: flex;
   justify-content: center;
-  margin-top: 40px;
+  margin-top: var(--space-6);
 }
 
 .login-layout .submit-btn {
   background-color: var(--color-surface-dark); /* Dark Espresso Base */
   color: var(--color-text-inverse);
   border: none;
-  border-radius: 12px;
-  padding: 16px 0;
-  width: 100%; 
-  font-size: 1.05rem;
+  border-radius: 8px;
+  padding: 12px 0;
+  min-height: 44px; /* DESIGN.md §3 rule 3 */
+  width: 100%;
+  font-size: var(--font-size-md);
   font-family: var(--font-sans);
   font-weight: 700;
   letter-spacing: 1px;
@@ -412,11 +414,11 @@
 /* Footer Text */
 .login-layout .form-footer {
   text-align: center;
-  margin-top: 30px;
+  margin-top: var(--space-4);
 }
 
 .login-layout .form-footer p {
-  font-size: 0.95rem;
+  font-size: var(--font-size-sm);
   font-weight: 500;
   color: var(--color-text-muted);
 }

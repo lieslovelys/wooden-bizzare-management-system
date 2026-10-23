@@ -20,6 +20,15 @@ beforeEach(() => {
 });
 
 describe('Login', () => {
+  // Item 47 — "Welcome Back!" implied a returning visitor; renamed to a plain "Welcome" since
+  // first-time visitors see this screen too.
+  it('greets with "Welcome", not "Welcome Back"', () => {
+    render(<Login login={vi.fn()} />);
+
+    expect(screen.getByRole('heading', { name: 'Welcome', level: 2 })).toBeInTheDocument();
+    expect(screen.queryByText(/Welcome Back/)).not.toBeInTheDocument();
+  });
+
   it('logs in with the entered credentials and reloads on success', async () => {
     api.post.mockResolvedValue(null);
     const login = vi.fn().mockResolvedValue();

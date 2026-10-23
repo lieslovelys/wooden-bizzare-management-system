@@ -49,7 +49,7 @@ const Login = ({ login }) => {
             <div className="login-right">
                 <div className="login-container">
                     <div className="form-header">
-                        <h2>Welcome Back!</h2>
+                        <h2>Welcome</h2>
                         <p>Sign in to your workspace</p>
                     </div>
 
