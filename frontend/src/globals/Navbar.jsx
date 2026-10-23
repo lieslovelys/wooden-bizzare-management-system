@@ -128,11 +128,12 @@ const Navbar = ({ tabs, accountType }) => {
                             </Link>
                         );
                     })}
+                </nav>
 
-                    {/* 2. ITO YUNG PERMANENT LOGOUT BUTTON SA ILALIM — item 44 moved the old
-                        inline style object into .logout-nav-item (globals.css) so the tablet-rail
-                        reset and any future token change reach it the same as every other nav
-                        item. */}
+                {/* item 50 — pinned below the scrolling tab list, not inside <nav>: Logout is an
+                    action, not a navigation link, and sitting outside .nav-links keeps it on
+                    screen while the tab list scrolls independently. */}
+                <div className="navbar-footer">
                     <button
                         type="button"
                         className="nav-item logout-nav-item"
@@ -141,7 +142,7 @@ const Navbar = ({ tabs, accountType }) => {
                         <i className="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i>
                         <span className="nav-label">Logout</span>
                     </button>
-                </nav>
+                </div>
             </div>
 
             {/* OVERLAY PARA SA MOBILE MENU */}

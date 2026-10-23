@@ -225,6 +225,10 @@ token" in practice); `--color-border-strong`; five `--color-*-tint` tokens; `--c
 `.wb-empty`/`.wb-skeleton` classes in `globals.css`'s "COMPONENT KIT" section before writing a new
 one-off rule, the same reuse-first principle as the token rule above.
 
+**ARCHITECTURE_REVIEW.md item 50**: the sidebar's tab list (`.nav-links`) is the one scroll region
+inside `.wooden-navbar` — the logo header and user tile stay pinned above it, and Logout
+(`.navbar-footer`, `Navbar.jsx`) stays pinned below it, at all three breakpoints.
+
 ## 6. Priority: the Worker path
 
 "Make Worker responsive" spans more than `worker/`, since the role shell reuses shared

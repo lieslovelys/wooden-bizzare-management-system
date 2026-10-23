@@ -2874,3 +2874,34 @@ Not urgent, but each of these increases the cost of every future change until ad
       the kit screen by screen; the kit's tabs and numbered-pagination components, which have no
       consumer yet; the mock's "future, needs backend" widgets (today's attendance summary,
       inventory low-stock alerts, a per-worker productivity widget, a projects-awaiting-QA count).
+
+50. **Sidebar: the tab list now scrolls on its own, with the header, user tile and Logout
+    pinned on screen.**
+    On a short viewport, or a role with many tabs, the whole `.wooden-navbar` used to scroll
+    (`overflow-y: auto`), so the user tile scrolled away at the top and Logout scrolled away at
+    the bottom. Logout's `margin-top: auto` (`globals.css`) had never actually pinned it there —
+    it sat inside `.nav-links`, a non-stretching flex child, so the rule was dead the whole time.
+    - **`Navbar.jsx`**: the Logout `<button>` moved out of `<nav className="nav-links">` into a
+      new sibling `<div className="navbar-footer">`, right after `</nav>`. Markup, classes and the
+      click handler are unchanged — Logout is an action, not a navigation link, so sitting outside
+      `<nav>` is also the more correct semantics.
+    - **`globals.css`**: `.wooden-navbar` is now `overflow: hidden` (it no longer scrolls itself);
+      `.navbar-header` and `.user-profile` got `flex-shrink: 0` so they can't be squeezed;
+      `.nav-links` became the sidebar's one scroll region (`flex: 1 1 auto; min-height: 0;
+      overflow-y: auto; overscroll-behavior: contain`, the last one so a drawer scroll doesn't
+      chain into the page behind it on mobile); the hidden-scrollbar rules moved from
+      `.wooden-navbar` onto `.nav-links` along with them (and the scrollbar thumb's stray `#3A3228`
+      literal became `var(--color-sidebar-divider)`, with `--radius-sm` for its corner). A new
+      `.navbar-footer` (with its own tablet/mobile padding, matching `.nav-links`'s) holds Logout
+      below the scrolling list. `.logout-nav-item`'s dead `margin-top: auto` was removed; its
+      `border-top` hairline now reads as the divider between the list and the pinned footer.
+    - **Verified**: frontend `npm test` 333/333, `npm run lint` and `npm run build` clean
+      (`Navbar.test.jsx` finds Logout by text/role, unaffected by the markup move). Live, via
+      Playwright MCP as `sample.admin` (the role with the most tabs): at a short 1366×500 viewport,
+      `.nav-links` had `scrollHeight > clientHeight` while `.wooden-navbar` did not; scrolling
+      `.nav-links` to the bottom left `.user-profile` and `.logout-nav-item` at the same
+      `getBoundingClientRect()` as before scrolling, both still fully inside the viewport. Same
+      result at the 1024px tablet rail and the 360px mobile drawer. At a normal 1366×768 height,
+      nothing overflows and the only visible change is Logout sitting at the sidebar's true
+      bottom edge. Tab-key navigation through a short viewport scrolled the focused tab into view
+      without clipping its focus ring, and Logout remained reachable after the last tab.

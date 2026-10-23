@@ -792,16 +792,12 @@ html, body {
     font-family: var(--font-sans);
     position: sticky;
     top: 0;
-    overflow-y: auto;
+    /* item 50 — the column itself no longer scrolls; .nav-links below is the one scroll region,
+       so the header/user tile stay pinned at the top and .navbar-footer (Logout) stays pinned at
+       the bottom regardless of how many tabs overflow. */
+    overflow: hidden;
     flex-shrink: 0;
-    -ms-overflow-style: none;  /* Edge/IE hide scrollbar */
-    scrollbar-width: none; /* Firefox hide scrollbar */
 }
-
-/* Scrollbar (Dark Mode) */
-.wooden-navbar::-webkit-scrollbar { width: 4px; display: none; }
-.wooden-navbar::-webkit-scrollbar-thumb { background-color: #3A3228; border-radius: 10px; }
-.wooden-navbar::-webkit-scrollbar-track { background: transparent; }
 
 /* Header & Logo — item 44: 55px/12px-radius logo and the "Management System" subline are gone,
    per the redesign's flatter, smaller sidebar header. */
@@ -810,6 +806,7 @@ html, body {
     align-items: center;
     padding: var(--space-4) var(--space-2);
     gap: var(--space-2);
+    flex-shrink: 0; /* item 50 — pinned above the scrolling tab list */
 }
 .navbar-header .logo {
     width: 34px; height: 34px; border-radius: var(--radius-md); object-fit: cover;
@@ -832,6 +829,7 @@ html, body {
     background: var(--color-sidebar-raised);
     border: 1px solid var(--color-sidebar-divider);
     border-radius: var(--radius-lg);
+    flex-shrink: 0; /* item 50 — pinned above the scrolling tab list */
 }
 .avatar-circle {
     width: 32px; height: 32px; border-radius: 50%;
@@ -852,9 +850,25 @@ html, body {
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 
-/* Navigation Links */
+/* Navigation Links — item 50: the sidebar's one scroll region (see .wooden-navbar above), so the
+   header/user tile stay pinned above it and .navbar-footer (Logout) stays pinned below it. */
 .nav-links {
     display: flex; flex-direction: column; padding: var(--space-2); gap: 2px;
+    flex: 1 1 auto;
+    min-height: 0; /* lets it actually shrink and scroll instead of growing the flex column */
+    overflow-y: auto;
+    overscroll-behavior: contain; /* stop a drawer scroll from chaining into the page behind it */
+    -ms-overflow-style: none;  /* Edge/IE hide scrollbar */
+    scrollbar-width: none; /* Firefox hide scrollbar */
+}
+.nav-links::-webkit-scrollbar { width: 4px; display: none; }
+.nav-links::-webkit-scrollbar-thumb { background-color: var(--color-sidebar-divider); border-radius: var(--radius-sm); }
+.nav-links::-webkit-scrollbar-track { background: transparent; }
+
+/* item 50 — pinned footer below .nav-links; holds only the Logout button (Navbar.jsx). */
+.navbar-footer {
+    flex-shrink: 0;
+    padding: var(--space-2);
 }
 .nav-item {
     position: relative;
@@ -898,7 +912,9 @@ html, body {
    other nav item. Button-reset: .nav-item's base rule covers layout/color/padding but not
    background/border, which a real <button> gets from the UA stylesheet. */
 .logout-nav-item {
-    margin-top: auto;
+    /* item 50 — no longer `margin-top: auto`: that only did anything while this button sat
+       inside .nav-links (a non-stretching column, so it was already dead). It now lives in
+       .navbar-footer, a sibling pinned below the scrolling list by flex layout itself. */
     width: 100%;
     text-align: left;
     font: inherit;
@@ -998,6 +1014,7 @@ html, body {
     .avatar-circle { width: 28px; height: 28px; font-size: var(--font-size-xs); }
 
     .nav-links { padding: var(--space-2); width: 100%; align-items: center; }
+    .navbar-footer { width: 100%; box-sizing: border-box; } /* item 50 */
     .nav-item {
         flex-direction: column;
         justify-content: center;
@@ -1052,6 +1069,7 @@ html, body {
     .navbar-close-btn { display: flex !important; }
     .user-profile { padding: var(--space-2) var(--space-4); margin: 0; justify-content: flex-start; }
     .nav-links { padding: var(--space-2) var(--space-3); align-items: stretch; }
+    .navbar-footer { padding: var(--space-2) var(--space-3); } /* item 50 */
     /* Both this query and the tablet one above match at <=768px; since this one comes later in
        the file it wins on shared properties, but flex-direction/gap/text-align aren't
        re-declared by the pre-existing rule below, so without this reset the tablet rail's
