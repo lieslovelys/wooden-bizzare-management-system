@@ -7,8 +7,9 @@ disagrees with an existing screen, the existing screen is debt, not precedent.
 ## 1. Status
 
 The current UI is a working first pass and is **explicitly provisional** — a visual redesign is
-planned, and nothing in this document should be read as "the design is settled." What *is*
-settled, effective now, regardless of the redesign:
+planned, and nothing in this document should be read as "the design is settled." See
+[`REDESIGN.md`](REDESIGN.md) for the brief covering the Admin dashboard and the shared sidebar —
+the first scope of that redesign. What *is* settled, effective now, regardless of the redesign:
 
 - **The app must be mobile responsive.** Not "should work if you squint" — genuinely usable on a
   small touch screen, per the rules in §3.
