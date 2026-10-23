@@ -2440,15 +2440,24 @@ Not urgent, but each of these increases the cost of every future change until ad
       deploy, Portainer's first-login window, the GitHub secrets/variable, and a troubleshooting
       section for the cookie/HTTPS mismatch, DNS propagation, and a failed migration on boot).
       `PRD.md`'s one remaining "Nginx" mention (the C.2 database-pooling row) now says Caddy.
-    - **This repo-side half (CI, Caddy, compose, docs) is committed to `main` and verified in CI.**
-      The VPS cutover itself (DNS already pointed here from the legacy deploy; installing Docker;
-      creating the `deploy` user; the first `deploy/deploy.sh` run; Portainer's first login; the
-      GitHub secrets) is a separate, interactive pass with the user, since several of its steps
-      are destructive (stopping the legacy Nginx/PM2 deploy, freeing port 80/443) or need
-      credentials only they hold. `DEPLOY_ENABLED` stays unset — CI builds, smoke-tests, and
-      publishes images, but nothing reaches the VPS — until that pass is done.
-    - **Still open after this:** the VPS cutover itself (tracked above, not yet run), the overtime
-      rule (client), real VPS latency and off-box backup sync automation (infra, now partially
-      addressed — `deploy.sh` backs up before every deploy, but nothing ships the result off-box
-      yet), the PWA deferral (its TLS blocker is now resolved once the cutover lands), a real
-      screen-reader/device pass (human + devices), and the declined role-shell consolidation.
+    - **The VPS cutover itself: done, live at `https://woodenbizarre.tech`.** The legacy bare-metal
+      deploy (Phase 0's inventory) was backed up in place on the VPS (`pg_dump` + a tarball of the
+      app directory, under `/root/legacy-backup-<timestamp>/`, not deleted — a cold record per the
+      discard-the-data decision) and then its `nginx`/`pm2-deploy.service`/`postgresql@16-main`
+      were stopped and disabled, freeing 80/443/5432. Docker was installed; the pre-existing
+      `deploy` Linux user (from the legacy setup) was reused rather than replaced, added to the
+      `docker` group, and given a fresh read-only GitHub deploy key for a clean clone at
+      `/opt/wbms` (separate from the untouched legacy checkout). A real `.env` was written there
+      (`SECRET_KEY`/`SQL_PASS` generated on the server with `openssl rand`, never printed;
+      `COOKIE_SECURE=true`; `SITE_ADDRESS`/`DOMAIN=woodenbizarre.tech`;
+      `PORTAINER_ADDRESS=portainer.woodenbizarre.tech`). A separate CI-only SSH keypair was added
+      to the GitHub secrets (`VPS_HOST`/`VPS_USER`/`VPS_SSH_KEY`/`VPS_KNOWN_HOSTS`), the
+      `production` environment the `deploy` job targets was created, and `DEPLOY_ENABLED` was
+      flipped to `true` — all **before** the legacy takedown, so the only downtime window was the
+      gap between stopping the old stack and this same docs push triggering the first real,
+      fully-automated deploy through the normal CI path (no manual GHCR login on the VPS at all;
+      the first deploy used that run's own short-lived `GITHUB_TOKEN`, same as every deploy since).
+    - **Still open after this:** the overtime rule (client), a real off-box backup sync beyond
+      `deploy.sh`'s own pre-deploy local backup (infra), a real screen-reader/device pass (human +
+      devices), and the declined role-shell consolidation. TLS/domain/VPS latency are resolved;
+      the PWA deferral's TLS blocker is gone too, though the PWA itself is still unbuilt.

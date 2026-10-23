@@ -27,12 +27,12 @@ container-management GUI, reached at `portainer.woodenbizarre.tech`); a fifth na
 uploads-tarball backup story (a VPS snapshot alone is not a substitute — see that README for
 why). `backend`/`proxy` pull pre-built images from GHCR (CI builds and pushes on every push to
 `main`; the VPS only pulls — see `.github/workflows/ci.yml`'s `images`/`deploy` jobs and
-`deploy/deploy.sh`), so a deploy never costs the single core a build; the `deploy` job stays
-gated off (the `DEPLOY_ENABLED` repository variable) until the VPS cutover is actually done. Once
-it's live, `COOKIE_SECURE=true` in the VPS's `.env` — leave it `false` anywhere HTTPS isn't
-actually being terminated in front of the app (local dev, a domain-less deployment). The single
-vCPU is the binding constraint, not RAM or disk: extra app containers don't add real parallelism
-on one core, so "scaling" here mostly means keeping the app efficient within that one core rather
+`deploy/deploy.sh`), so a deploy never costs the single core a build. **Live as of item 42**: the
+`deploy` job (`DEPLOY_ENABLED` repository variable) auto-deploys every push to `main`, and
+`COOKIE_SECURE=true` on the VPS. Leave `COOKIE_SECURE` `false` anywhere HTTPS isn't actually being
+terminated in front of the app (local dev, a domain-less deployment). The single vCPU is the
+binding constraint, not RAM or disk: extra app containers don't add real parallelism on one core,
+so "scaling" here mostly means keeping the app efficient within that one core rather
 than fanning out replicas. See `PRD.md` C.2 and `ARCHITECTURE_REVIEW.md` P1-1/P1-2/P1-10/item 42
 for what this changes concretely.
 
@@ -355,10 +355,6 @@ the hook or the `<Pagination>` component.
 
 ## Known-broken / in-flight — don't mistake these for your own changes
 
-- **Auto-deploy is gated off until the VPS cutover is actually done (item 42).** CI's `deploy`
-  job (`.github/workflows/ci.yml`) only runs when the `DEPLOY_ENABLED` repository variable is
-  `true` — see `deploy/README.md`. Until then, a push to `main` builds, smoke-tests and publishes
-  images to GHCR but doesn't touch the live server.
 - **`docker-compose.yml`'s `backend`/`proxy` images now live at GHCR** (`image:` plus `build:` —
   `build:` is what local `docker compose up -d --build` and CI's smoke test use; the VPS instead
   pulls the tag CI just pushed). Watch `.github/workflows/ci.yml`'s `images` job before trusting
