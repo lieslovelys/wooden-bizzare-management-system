@@ -2698,3 +2698,61 @@ Not urgent, but each of these increases the cost of every future change until ad
       "Welcome Back" no longer appears anywhere on the page.
     - **Verified**: screenshots at 1366 and 360 show a visibly smaller card with the new heading;
       `scrollWidth === clientWidth` at 360; all three 44px hit-area checks pass.
+
+48. **A Claude Design v2 brief for the Admin dashboard and an app-wide component kit, plus the
+    backend it needs. Phase A (this item) only — the Claude Design handoff itself is pending.**
+    The user looked at the live, already-redesigned (item 44) Admin dashboard and said it "looks
+    like a 2009 UI," and asked for Claude Design to refine it again plus a richer dashboard: a
+    project list sorted by due date, a "Create project" shortcut, a profit trend chart, and the
+    existing notifications panel with its icons removed (text only).
+    - **Why item 44 wasn't enough.** That brief deliberately asked for a flat, 4px-radius,
+      no-shadow "information console" look. Combined with the rest of the app — which item 44
+      never touched — it reads dated: at least eight different corner radii in active use across
+      `globals.css`/`admin.css`/`worker.css`/`inventory.css` (30× 12px, 22× 8px, 21× 10px, 14×
+      20px, 10× 16px, plus smaller 5/6/15/30px tails), 27 full-pill (25px) buttons/badges, and 14
+      decorative `linear-gradient` fills — no shared button/input/card vocabulary anywhere outside
+      the dashboard and sidebar.
+    - **New `docs/design/REDESIGN-v2.md`**, written for Claude Design to read cold (same pattern
+      as `REDESIGN.md`, which is left frozen as item 44's history with a one-line forward
+      pointer). It reverses several of item 44's specific choices on purpose — a softer 6–10px
+      card radius and a real 2–3-step shadow scale, a subtly tinted page background instead of
+      flat white-on-white — while keeping item 44's "no gradients, no hover-lift, no pill
+      buttons" rules and its type scale. It widens scope app-wide: a component-kit spec (buttons,
+      fields, cards, tables, badges, tabs, modals, toasts, pagination, empty/loading states, a
+      shared page-header) that one representative screen (Job Order details) must demonstrate,
+      not just the dashboard. The dashboard section gives Claude Design the **real** data contract
+      for every new widget (exact JSON shapes captured from the dev database) so nothing is
+      designed against invented data, and is explicit that the notification icon box is removed
+      everywhere `NotificationList.jsx` renders (the dashboard panel and the standalone
+      Admin/PM/QC Notification tabs), not just on the dashboard.
+    - **New backend: `GET /api/dashboard/profit-trend`** (Admin only, like every `/api/profit`
+      route — money, not an ops status). `adminDashboardModel.getProfitTrend(months)` builds the
+      last `months` Manila calendar months with `generate_series` + `date_trunc`, left-joins
+      `project_profit` so a month with no recorded profit comes back as `0` rather than being
+      skipped, and reads the existing generated `net_profit` column — nothing is recomputed in
+      JS. It uses **the same month-attribution rule as `getDashboardStats`'s `monthlyProfit`**
+      (`project_profit.updated_at`, compared in Manila time, not the session's implicit default
+      timezone), so the chart's last bar always agrees with the KPI card — verified live: both
+      returned `0` for the current month against the dev database. `adminDashboardService.js`
+      fixes the window at 6 months (the user's choice; no query parameter, since nothing calls it
+      with any other value — YAGNI). `routeAuthorization.test.js` gets the new row, new
+      `tests/adminDashboardModel.test.js` checks the query is parameterized (not string-
+      interpolated, per CLAUDE.md's SQL rule) and that rows map to `{ month, netProfit }`, and new
+      `tests/adminDashboardRoutes.test.js` checks the envelope shape and the Admin-only gate.
+    - **`getAllJobOrders` also selects `client_name`**, a one-column addition so the
+      upcoming-projects widget can show the client — ordering is unchanged
+      (`due_date ASC, id ASC`, already unique-tiebroken). No existing consumer asserts the exact
+      row shape, so nothing else needed updating.
+    - **Verified**: backend `npm test` (282/282, including the 2 new files) and frontend
+      `npm test` (299/299, unaffected) both green. Against the real local database as
+      `sample.admin`: `/api/dashboard/profit-trend` returned 6 months oldest-first with the last
+      entry matching `/api/dashboard/stats`'s `monthlyProfit` (both `0` for October 2026); as
+      `sample.pm`, the same route 403'd; `/api/job-orders?limit=5` and `/api/projects` both
+      confirmed `client_name` resolves against the real `projects` table. Every "current state"
+      number the brief cites (radius/pill/gradient counts, token values) was re-measured against
+      the CSS directly rather than carried over from item 44's figures, and every token the brief
+      names exists in `globals.css`'s `:root`.
+    - **Still open: Phase B.** The frontend — the component kit's actual CSS, the dashboard's new
+      sections, and the icon-free notification list — waits on the user running
+      `REDESIGN-v2.md` through Claude Design and handing the resulting project back, the same
+      workflow item 44 used.

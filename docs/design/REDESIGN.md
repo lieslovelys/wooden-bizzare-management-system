@@ -7,7 +7,9 @@ human: this is the brief, `DESIGN.md` is the binding rulebook it's constrained b
 > Claude Design project this brief produced. Everything below describes the brief as written and
 > the *pre-item-44* state of the screen; it's kept as history and as the brief's own record, not
 > updated to describe the current code. See item 44 for what actually shipped and where it
-> diverged from (or filled a gap in) this brief.
+> diverged from (or filled a gap in) this brief. **Superseded by
+> [`REDESIGN-v2.md`](REDESIGN-v2.md)** (item 48): the user found the item-44 result still too
+> dated, so v2 changes direction and widens the scope beyond just this screen and the sidebar.
 
 ## 1. What this app is
 

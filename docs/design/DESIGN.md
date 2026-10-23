@@ -9,8 +9,12 @@ disagrees with an existing screen, the existing screen is debt, not precedent.
 The current UI is a working first pass and is **explicitly provisional** — a visual redesign is
 underway, and nothing in this document should be read as "the design is settled." See
 [`REDESIGN.md`](REDESIGN.md) for the brief covering the Admin dashboard and the shared sidebar —
-the first scope of that redesign, **built as of ARCHITECTURE_REVIEW.md item 44**. What *is*
-settled, effective now, regardless of the redesign:
+the first scope of that redesign, **built as of ARCHITECTURE_REVIEW.md item 44**. The user then
+said that build "looks like a 2009 UI" — see
+[`REDESIGN-v2.md`](REDESIGN-v2.md) (ARCHITECTURE_REVIEW.md item 48) for the follow-up brief, which
+changes direction (soft radii/shadows instead of item 44's flat 4px/no-shadow look) and widens the
+scope to an app-wide component kit plus a richer dashboard; it's pending a Claude Design handoff
+as of item 48. What *is* settled, effective now, regardless of the redesign:
 
 - **The app must be mobile responsive.** Not "should work if you squint" — genuinely usable on a
   small touch screen, per the rules in §3.

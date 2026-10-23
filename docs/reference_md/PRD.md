@@ -260,6 +260,7 @@ not done here. The 8 routes P1-11 added are listed separately below since they'r
 | DELETE | `/api/notifications/:id` | Dismiss one, for the caller only (FR-4) |
 | PUT | `/api/notifications/:id/read` | Mark one read, for the caller only (FR-4) |
 | GET | `/api/dashboard/stats` | Active projects / total workers / monthly net profit |
+| GET | `/api/dashboard/profit-trend` | Net profit per month, the last 6 Manila calendar months, Admin only (item 48) |
 | GET | `/api/profit/:projectId` | P&L + expense items |
 | POST | `/api/profit/:projectId` | Upsert P&L (a `POST` used for an idempotent update) |
 | DELETE | `/api/profit/:projectId` | Delete P&L |
