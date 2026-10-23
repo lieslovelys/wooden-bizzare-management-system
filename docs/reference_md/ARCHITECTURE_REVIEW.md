@@ -2655,3 +2655,23 @@ Not urgent, but each of these increases the cost of every future change until ad
       `scrollWidth === clientWidth` and screenshot-confirmed clean; the Login page's left panel
       wraps the wordmark onto 3 lines at 360px instead of clipping it, which it already did under
       Geist at that same 2.2rem size — not a regression this item introduced.
+
+46. **UI: extend item 45's exception to the Login hero tagline.** The user saw the live site and
+    asked for "Craft, tracked. Business, mastered." (and its subtext) back to its original font
+    too. Checked the pre-item-43 CSS directly (`git show 79bdf9a^:frontend/src/css/globals.css`):
+    `.login-layout .hero-text h1` (the tagline) was Playfair Display — straightforward to restore,
+    same as item 45's three sites. Its sibling, `.login-layout .hero-subtext` (the description
+    line underneath), **never had its own `font-family` declaration**, before or after item 43 —
+    it has always inherited whatever `html`/`body` sets. Asked the user; they confirmed leaving it
+    on Geist, which is the actual revert for that element (nothing about it ever changed).
+    - `.hero-text h1` switches from `var(--font-sans)` to `var(--font-brand)` — reusing item 45's
+      token rather than adding a second one, since this is the same kind of exception (branding
+      presentation on the login screen). `.gold-text` (the `<span>` around "mastered." inside that
+      `<h1>`) sets no font-family of its own, so it inherits the change with no separate edit.
+    - `tests/fontConsistency.test.js`'s `EXPECTED_BRAND_SELECTORS` gains
+      `.login-layout .hero-text h1` (four entries now); the `--font-brand` `:root` comment and
+      this test's own header comment both updated to say "wordmark and hero tagline."
+    - **Verified**: tagline renders serif at 1366 and 360 (including the gold "mastered." span),
+      subtext and "Welcome Back!" stay Geist (both untouched), no new horizontal overflow at 360
+      — the tagline already breaks onto its two lines via manual `<br/>` tags in the JSX, not
+      organic wrapping, so Playfair's extra width lands inside the same layout.

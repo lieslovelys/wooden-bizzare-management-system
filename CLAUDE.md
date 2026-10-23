@@ -240,14 +240,15 @@ action, e.g. a delete) — never `window.confirm`/`window.alert`, which `eslint.
 `no-alert` rule fails CI on (ARCHITECTURE_REVIEW.md item 26). The font is Geist behind
 `globals.css`'s `--font-sans` token (item 43 dropped the earlier Inter/Playfair Display split,
 which read as "vintage") for everything **except** the literal "The Wooden Bizarre" brand
-wordmark, which uses `--font-brand` (Playfair Display, reinstated item 45 as a deliberately
-narrow branding exception — see that item for the exact three sites). Fonts and icons (Font
-Awesome, solid style only) are self-hosted npm packages imported from `frontend/src/main.jsx`,
-not CDN `<link>`/`@import` references anywhere — not in `index.html`, not in a stylesheet —
-`frontend/src/tests/thirdPartyAssets.test.js` fails if either comes back (ARCHITECTURE_REVIEW.md
-items 27-28), and `frontend/src/tests/fontConsistency.test.js` fails if any CSS or inline JSX
-style names a font other than `var(--font-sans)`/`var(--font-brand)`/`inherit`, or if
-`--font-brand` turns up on a selector other than those three.
+wordmark and the Login page's hero tagline, which use `--font-brand` (Playfair Display,
+reinstated items 45-46 as a deliberately narrow branding exception — see those items for the
+exact four sites). Fonts and icons (Font Awesome, solid style only) are self-hosted npm packages
+imported from `frontend/src/main.jsx`, not CDN `<link>`/`@import` references anywhere — not in
+`index.html`, not in a stylesheet — `frontend/src/tests/thirdPartyAssets.test.js` fails if either
+comes back (ARCHITECTURE_REVIEW.md items 27-28), and `frontend/src/tests/fontConsistency.test.js`
+fails if any CSS or inline JSX style names a font other than
+`var(--font-sans)`/`var(--font-brand)`/`inherit`, or if `--font-brand` turns up on a selector
+other than those four.
 Display formatting (currency, project/worker IDs, dates, times) goes through the shared functions
 in `frontend/src/utils/format.js` rather than a local inline formatter, so the same value renders
 identically everywhere (P2; before this, the same project id rendered as `WB7`, `WB-7`, or

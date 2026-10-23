@@ -323,8 +323,10 @@ the current backlog — not overlooked:
   ARCHITECTURE_REVIEW.md item 43**: the Inter/Playfair Display split itself is gone — Playfair
   read as "vintage," so the whole app now uses one family, Geist, behind a single
   `--font-sans` token. **Item 45** then brought Playfair back as one deliberately narrow
-  exception — the literal "The Wooden Bizarre" brand wordmark only, behind its own
-  `--font-brand` token — not a reversal of item 43's "one family everywhere else" decision.
+  exception — the literal "The Wooden Bizarre" brand wordmark, behind its own `--font-brand`
+  token — not a reversal of item 43's "one family everywhere else" decision. **Item 46** extended
+  that same exception to the Login page's hero tagline, at the user's request, once they saw the
+  two side by side.
 - ~~**Self-hosted fonts.** `index.html` loads Google Fonts and Font Awesome from CDNs. On an
   unreliable shop-floor connection this is a real cost, but it's a build/asset change, not a
   layout one.~~ **Resolved** (ARCHITECTURE_REVIEW.md items 27-28): Inter, Playfair Display, and the
