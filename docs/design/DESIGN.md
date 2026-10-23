@@ -7,9 +7,10 @@ disagrees with an existing screen, the existing screen is debt, not precedent.
 ## 1. Status
 
 The current UI is a working first pass and is **explicitly provisional** — a visual redesign is
-planned, and nothing in this document should be read as "the design is settled." See
+underway, and nothing in this document should be read as "the design is settled." See
 [`REDESIGN.md`](REDESIGN.md) for the brief covering the Admin dashboard and the shared sidebar —
-the first scope of that redesign. What *is* settled, effective now, regardless of the redesign:
+the first scope of that redesign, **built as of ARCHITECTURE_REVIEW.md item 44**. What *is*
+settled, effective now, regardless of the redesign:
 
 - **The app must be mobile responsive.** Not "should work if you squint" — genuinely usable on a
   small touch screen, per the rules in §3.
@@ -98,6 +99,8 @@ imports it first. New UI work references the token, not the literal — §3 rule
 | Semantic: success (dark) | `#1e5631` | `--color-success-dark` | Hover shade. |
 | Semantic: info | `#2b4c7e` | `--color-info` (+ `-rgb`) | In-progress states. |
 | Semantic: warning | `#9a4b00` | `--color-warning` (+ `-rgb`) | ARCHITECTURE_REVIEW.md item 33 — "medium"/"high" priority oranges. Not a literal-to-token rename: the two literals folding onto it (`#f57c00`, `#e67e22`) both failed AA as foreground text (~2.4-2.8:1 depending on site), so this is a new, deliberately darker shade of the same hue rather than either original value — ~6.2:1 on white, ~5.4:1 inside a 10%-tint badge. |
+| Accent tint (active nav) | `rgba(var(--color-accent-rgb), .14)` | `--color-accent-tint` | ARCHITECTURE_REVIEW.md item 44 — the sidebar's active-nav background, replacing the old solid-gold-fill-with-glow state. Not a new hex; a low-alpha layer over the existing accent. |
+| Focus ring, on dark | aliases `--color-accent-light` | `--color-focus-on-dark` | ARCHITECTURE_REVIEW.md item 44 — `--color-focus` (blue) is nearly invisible on `--color-surface-dark`; this is the dark-sidebar equivalent, the same "alias, not a new literal" pattern `--color-text-on-accent` uses. |
 
 **Task-status palette** (ARCHITECTURE_REVIEW.md item 35) — one shared colour per `task_status`
 value, via `utils/status.js`'s `taskStatusClass()` and `globals.css`'s `.wb-status--*` family,
@@ -108,6 +111,14 @@ Approved → success tint (12%), Repair/Rework → danger tint (6%), anything un
 rather than a plain translucent fill, so the badge's real contrast doesn't depend on which row
 background (including the cream hover/active state several tables have) happens to sit behind
 it — see that item for the ~4.20:1 cream-hover failure this caught before it shipped.
+
+**Radius, spacing, type-size, and shadow tokens** (ARCHITECTURE_REVIEW.md item 44) — also real
+`:root` custom properties now, the same promise color already made: `--radius-sm`/`--radius-md`
+(2px/4px — badges vs. everything else), `--space-1` through `--space-8` (a 4px scale: 4/8/12/16/
+24/32), `--font-size-xs` through `--font-size-2xl` plus `--font-size-kpi` (12/13/14/16/20/24/28),
+and one `--shadow-sm` (`0 1px 2px rgba(var(--color-surface-dark-rgb), .06)`). Introduced for the
+Admin dashboard and shared sidebar redesign; new UI should reach for these instead of a one-off
+`16px`/`#eee`-style literal the same way it already should for color.
 
 **Consolidation map** — the drift each token's migration folded onto it (see item 7 in §7 for how
 this was done and verified):
@@ -141,8 +152,11 @@ out along with the rest of that CSS — recounted with a plain `grep -ohE '#[0-9
 distinct-literal count across `src/css/*.css` rather than estimated, it went from 95 before that
 item to 81 after. Item 40 deleted `TempSignup.css` outright (replaced by `admin/AccountForm.jsx`,
 whose own CSS reuses existing tokens — no new literal added), taking its 2 remaining literals with
-it: 79. If the redesign changes the palette, `:root`'s definitions are the one place that needs
-updating for the change to propagate.
+it: 79. Item 44's flat Admin-dashboard/sidebar redesign removed the gold gradient, several
+dark-on-gold border shades, and a handful of one-off greys (`#fafafa`, `#b3b3b3`, `#666666`,
+`#d1ccbf`, …) the gradient-era cards and notification rows used, dropping the count to 75. If the
+redesign changes the palette, `:root`'s definitions are the one place that needs updating for the
+change to propagate.
 
 **Gold is a fill, not body text (ARCHITECTURE_REVIEW.md item 30 / §3 rule 10).**
 `--color-accent` measures ~2.4:1 on white and ~2.2:1 on cream — it fails AA's 4.5:1 floor by a wide

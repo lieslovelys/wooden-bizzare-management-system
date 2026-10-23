@@ -262,7 +262,10 @@ Colors come from the `:root` custom properties defined at the top of `frontend/s
 (`--color-accent`, `--color-text`, `--color-danger`, etc. — see `docs/design/DESIGN.md` §4 for the
 full list and what each means) — don't add a new hex literal or reuse an existing one directly; if
 none of the tokens fit, that's a real new color and should become a new token, not a one-off
-literal (DESIGN.md §3 rule 7). A table that needs a mobile-responsive layout uses the shared
+literal (DESIGN.md §3 rule 7). The same file also has `--radius-*`/`--space-*`/`--font-size-*`/
+`--shadow-sm` tokens (ARCHITECTURE_REVIEW.md item 44, the Claude Design redesign) — new UI should
+use those instead of a one-off `16px`/`4px` literal, the same rule as color. A table that needs a
+mobile-responsive layout uses the shared
 `.wb-card-table` utility (same file) plus a `data-label` attribute on every non-`colspan` `<td>`,
 rather than a bespoke per-table mobile conversion — see any of `globals/JobOrderDetails.jsx`,
 `admin/Profit.jsx`, or `globals/InventoryTable.jsx` for the pattern, and

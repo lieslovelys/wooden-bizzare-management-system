@@ -2522,3 +2522,104 @@ Not urgent, but each of these increases the cost of every future change until ad
       radius redesign is a separate, larger pass — see `docs/design/REDESIGN.md`, the brief for
       Claude Design covering the Admin dashboard and shared sidebar, written just before this item
       and updated here to describe Geist (not the old Inter/Playfair split) as the current state.
+
+44. **UI: build the Claude Design redesign of the Admin dashboard and shared sidebar
+    (`REDESIGN.md`, item 42's brief).** The user ran that brief through Claude Design and handed
+    off a project (`claude_design` MCP, `Admin Dashboard Redesign.dc.html` plus its `Dashboard`
+    and `Sidebar` sub-components) to implement. Every hex color in the mockups resolved to an
+    existing `:root` token; two new ones were proposed and added (`--color-accent-tint`, the
+    active-nav tint at 14% alpha, and `--color-focus-on-dark`, aliased to `--color-accent-light`
+    for the one surface — the dark sidebar — where `--color-focus` reads too dark).
+    - **New tokens in `globals.css`'s `:root`:** `--radius-sm`/`--radius-md` (2/4px),
+      `--space-1` through `--space-8` (a 4px scale), `--font-size-xs` through `--font-size-2xl`
+      plus `--font-size-kpi`, `--shadow-sm`, `--sidebar-width` (236px) and `--sidebar-rail` (80px).
+      New UI should reach for these the same way color already works (DESIGN.md §3 rule 7) rather
+      than a one-off literal.
+    - **The shared page gutter** (`.page-content`, every role's shell) dropped from 40px
+      (30px tablet) to `--space-6` (24px) everywhere above 768px, and the mobile gutter's sides/
+      bottom dropped to `--space-4` (16px; the 72px top offset, which clears the mobile topbar,
+      is unchanged). `.admin-dashboard` lost its own second 40px padding and its `100dvh`
+      min-height (which forced a scrollbar even on a short page) — it's a plain flex column now.
+    - **Sidebar (`globals/Navbar.jsx`, `.wooden-navbar` and its children in `globals.css`):**
+      300px → `--sidebar-width`; a 55px/12px-radius logo → 34px/`--radius-md`, no shadow; the
+      "Management System" subline is gone; the profile row gained hairline dividers above/below
+      and a 32px avatar that now shows **initials** (falling back to the role abbreviation when a
+      name isn't loaded yet) instead of the role letter, since the role itself prints as its own
+      label underneath. Nav items: `min-height: 44px`, `--radius-md`, 14px/500 idle text in
+      `--color-text-inverse`. The active state is no longer a solid gold fill with a glow — it's a
+      3px `--color-accent` left bar plus a `--color-accent-tint` background and
+      `--color-accent-light` text, the same "bar + tint" convention `.info-card` and `.notif-item`
+      below also adopt. Logout's 25-line inline `style` prop moved into a `.logout-nav-item` CSS
+      class so the tablet-rail reset reaches it like every other nav item.
+      - **Tablet rail:** kept at 80px (not widened to the old 96px DESIGN.md §7#9 settled on) —
+        every `.nav-label`, including "Worker Productivity" and "Notification", was measured with
+        `scrollWidth`/`clientWidth` at 1024px during verification and none overflowed; the 12px
+        label just wraps to two lines, which the rail already allowed.
+      - **Mobile:** the topbar is now dark (`--color-surface-dark`, matching the drawer it opens)
+        and carries a small logo + the wordmark alongside the hamburger, not a bare button. The
+        drawer's close control is a real 44×44 `fa-xmark` button sitting in the header row,
+        replacing an absolutely-positioned `&times;` glyph that used to float over the content
+        instead of sitting in the layout.
+    - **KPI cards (`globals/InfoCard.jsx`, `.info-card*`):** the gold gradient fill, 16px radius,
+      160px fixed height, text-shadow, and hover-lift are all gone. A card is now a flat white
+      box, `--radius-md`, `--shadow-sm`, a 1px `--color-border`, `min-height: 100px`, with a 3px
+      left bar replacing the old 10px gradient-fill border. The variant→color mapping changed to
+      match the brief: projects = `--color-info`, workers = `--color-accent`, profit =
+      `--color-success` (money reads as success, not gold). The value keeps item 37's
+      container-query shrink for long currency but now also sets `overflow-wrap: anywhere`, so a
+      value longer than the shrink formula accounts for wraps instead of clipping. PM's and QC's
+      dashboards inherit this automatically, since they share the same component and classes.
+    - **Admin dashboard (`admin/A_Dashboard.jsx`):** gained a compact page header (`<h1>Dashboard
+      </h1>` plus the current month), and the 6px gold gradient `.admin-divider` is deleted
+      outright — the flex gap and the notification panel's own border now separate the sections.
+      Removed from `PM_dashboard.jsx`/`QCDashboard.jsx` too, since the class no longer exists.
+      Card labels changed from shouted caps ("TOTAL WORKER") to sentence case in the JSX (CSS
+      still renders them uppercase visually via `text-transform`), so a screen reader reads real
+      words instead of spelling out letters.
+    - **Notification panel (`globals/NotificationList.jsx`, `.notif-*` in `admin.css`), shared by
+      all three dashboards and the standalone Notification tabs:**
+      - A new `embedded` prop (forwarded by `AdminNotification.jsx`/`PMNotification.jsx`/
+        `QualityCheckerNotification.jsx`, all three now plain prop-spreading wrappers) renders the
+        panel title as `<h2>` when a dashboard already has its own `<h1>`; the standalone tabs
+        keep the default `<h1>`.
+      - The panel itself is no longer a fixed 1000px block with its own 40px auto margin — it's a
+        flat, full-width, 1px-bordered card (`--radius-md`), matching the KPI cards' language.
+      - "Mark all as read"/"Clear all" moved from a footer row into the panel header as compact
+        44px-hit-area/30px-visual outline buttons, sentence case (was "Mark All as Read"/"Clear
+        All" — the `ConfirmModal`'s own "Clear All" confirmation button is untouched). A muted "N
+        unread" count, counted from the currently-visible rows, sits next to the title.
+      - Rows are hairline dividers instead of floating cards with a cream fill; unread now reads
+        from a 3px `--color-accent` left bar (the same bar-only convention as the sidebar and KPI
+        cards) plus a 600-weight title and an `--color-accent-text` dot, instead of a whole-row
+        cream block. The three bespoke inline SVG icons (project/verification/default) are
+        replaced with Font Awesome solid icons (`fa-file-lines`/`fa-circle-check`/`fa-circle-info`,
+        DESIGN.md: icons are FA solid only), colored via one inline `color` style per row so
+        `border: 1px solid currentColor` on the icon box picks up the same color without a second
+        inline property.
+      - **A new per-row timestamp:** `formatDateTime` (`utils/format.js`) renders
+        `notifications.created_at` (already present in every row — `adminNotifModel.js` selects
+        `n.*`) as "Oct 21, 2026, 3:45 PM" inside a `<time dateTime>` element. The mockup showed
+        relative times ("12 min ago"); absolute was chosen as the simpler, testable value.
+      - **Loading** is a skeleton shell (three placeholder rows plus a spinner label) instead of a
+        bare "Loading notifications..." line, so the panel keeps its height and shape while the
+        first page is in flight. **Empty** gained a small bell icon and a "No notifications" title
+        above the caller-supplied `emptyMessage`, instead of one centered line of muted text.
+      - The delete button dropped its hover scale (DESIGN.md: nothing is conveyed by a hover-only
+        transform) and its `#b3b3b3` literal (now `--color-text-muted`).
+    - **Contrast (`tests/contrast.test.js`):** gained `--color-text-inverse`/`--color-surface-dark`
+      (4.5, idle sidebar text), `--color-accent-light`/`--color-surface-dark` (3,
+      `--color-focus-on-dark`'s own ring), and a `TINT_PAIRS` entry for
+      `--color-accent-light` over `--color-accent` at 14% on `--color-surface-dark` (4.5, the
+      active-nav text over its own tint).
+    - **Not built:** the brief's "future, needs backend" widgets (today's attendance, recent
+      projects, a profit trend chart, a QA-pending count) — the dashboard endpoint still answers
+      only the same 3 stats. Every other screen keeps its existing layout; only the shared gutter,
+      sidebar, and `InfoCard`/`NotificationList` components changed, since those are shared by all
+      of them. `REDESIGN.md`'s own "current state" numbers are now pre-item-44 history, not the
+      live layout — see the pointer added at its top.
+    - **Verified** with Playwright against the dev build: 1366/1024/360 (drawer open and closed),
+      the long-currency/empty/loading states (via `page.route` stubs), `scrollWidth <=
+      clientWidth` at 360 and for every `.nav-label` at 1024, every interactive element measured
+      at ≥44×44px, a visible focus ring tabbed to on both light and dark surfaces, and a spot check
+      of the PM/QC dashboards, Worker List (a dense, unrelated table), and the Worker role's Job
+      Order screen at 360 for regressions from the shared-shell changes.

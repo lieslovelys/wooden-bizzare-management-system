@@ -3,6 +3,12 @@
 This file is written for **Claude Design** to read cold, with no other repo context. If you're a
 human: this is the brief, `DESIGN.md` is the binding rulebook it's constrained by.
 
+> **Status: this brief has been implemented** — ARCHITECTURE_REVIEW.md item 44, built from the
+> Claude Design project this brief produced. Everything below describes the brief as written and
+> the *pre-item-44* state of the screen; it's kept as history and as the brief's own record, not
+> updated to describe the current code. See item 44 for what actually shipped and where it
+> diverged from (or filled a gap in) this brief.
+
 ## 1. What this app is
 
 Wooden Bizarre Management System — an internal operations tool for a custom woodworking shop. It
