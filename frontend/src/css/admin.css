@@ -797,11 +797,13 @@
    byte-identical duplicate of css/globals.css — removed as part of the P2 ToastProvider
    consolidation (see ARCHITECTURE_REVIEW.md), since globals.css is loaded app-wide already. */
 
-/* Custom Confirmation Modal */
+/* Custom Confirmation Modal — item 49 (REDESIGN-v2.md): kept byte-identical to the globals.css
+   version (see that file's own item-49 comment on why this duplicate's specificity matters) so
+   either stylesheet winning the load order renders the same result. */
 .wb-modal-overlay {
     position: fixed;
     inset: 0; /* DESIGN.md §3.5 — 100vw/100vh included the scrollbar width */
-    background: rgba(0, 0, 0, 0.5);
+    background: var(--color-scrim);
     z-index: 10000;
     display: flex;
     justify-content: center;
@@ -810,20 +812,19 @@
 }
 
 .wb-modal-box {
-    background: white;
-    padding: 30px;
-    border-radius: 12px;
+    background: var(--color-surface);
+    padding: var(--space-6);
+    border-radius: var(--radius-xl);
     text-align: center;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+    box-shadow: var(--shadow-3);
     max-width: 400px;
-    border-top: 6px solid var(--color-accent); /* Gold accent */
 }
 
 .wb-modal-title {
-    color: #5B4826;
+    color: var(--color-text);
     margin-bottom: 10px;
-    font-size: 1.3rem;
-    font-weight: bold;
+    font-size: var(--font-size-xl);
+    font-weight: 600;
 }
 
 .wb-modal-text {
@@ -835,34 +836,40 @@
 .wb-modal-actions {
     display: flex;
     justify-content: center;
-    gap: 15px;
+    gap: var(--space-2);
 }
 
 .wb-btn-yes {
+    height: var(--control-height);
     background: var(--color-accent);
     color: var(--color-text-on-accent); /* item 31 — white on this gold fill measured ~2.3:1 */
-    border: none;
-    padding: 10px 25px;
-    border-radius: 5px;
+    border: 1px solid var(--color-accent);
+    padding: 0 var(--space-4);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-1);
     cursor: pointer;
-    font-weight: bold;
+    font-size: var(--font-size-sm);
+    font-weight: 600;
     transition: background 0.2s;
 }
 
-.wb-btn-yes:hover { background: #b8962e; } /* item 31 — dark text above still reads fine here, ~6.4:1 */
+.wb-btn-yes:hover { background: var(--color-accent-light); border-color: var(--color-accent-light); } /* item 31 — dark text above still reads fine here, ~6.4:1 */
 
 .wb-btn-no {
-    background: var(--color-border);
+    height: var(--control-height);
+    background: var(--color-surface);
     color: var(--color-text);
-    border: none;
-    padding: 10px 25px;
-    border-radius: 5px;
+    border: 1px solid var(--color-border-strong);
+    padding: 0 var(--space-4);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-1);
     cursor: pointer;
-    font-weight: bold;
+    font-size: var(--font-size-sm);
+    font-weight: 600;
     transition: background 0.2s;
 }
 
-.wb-btn-no:hover { background: #d4d4d4; }
+.wb-btn-no:hover { background: var(--color-surface-cream); }
 
 @keyframes fadeIn {
     from { opacity: 0; }
@@ -1597,16 +1604,241 @@
    than one undifferentiated badge. */
 
 /* =========================================
+   PROFIT TREND CHART — item 49 (REDESIGN-v2.md)
+========================================= */
+.ptc-total {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+}
+.ptc-total-label {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+}
+.ptc-total-value {
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
+.ptc-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.ptc-plot-row {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    column-gap: var(--space-3);
+}
+
+.ptc-y-axis {
+    height: 210px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: flex-end;
+    font-size: var(--font-size-xs);
+    line-height: 12px;
+    color: var(--color-text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.ptc-plot {
+    position: relative;
+    height: 210px;
+    display: flex;
+    border-bottom: 1px solid var(--color-border);
+}
+.ptc-gridline {
+    position: absolute;
+    left: 0;
+    right: 0;
+    border-top: 1px dashed var(--color-chart-grid);
+}
+.ptc-gridline--top { top: 0; }
+.ptc-gridline--mid { top: 50%; }
+
+.ptc-bar-col {
+    flex: 1;
+    position: relative;
+}
+.ptc-bar {
+    position: absolute;
+    left: 0;
+    right: 0;
+    margin: 0 auto;
+    width: 46%;
+    max-width: 40px;
+    background: var(--color-chart-bar);
+    border-radius: 4px 4px 0 0;
+}
+/* A negative month's bar grows down from the zero line, so its rounded corner sits at the far
+   (bottom) edge instead. */
+.ptc-bar--negative {
+    background: var(--color-danger);
+    border-radius: 0 0 4px 4px;
+}
+/* A month with no recorded profit gets a 2px grid-colored stub, not a full-color bar — reads as
+   "no data" rather than "zero spent", matching DashboardV2.dc.html's own bg rule. */
+.ptc-bar--zero {
+    background: var(--color-chart-grid);
+}
+
+.ptc-bar-label {
+    position: absolute;
+    left: -8px;
+    right: -8px;
+    text-align: center;
+    font-size: var(--font-size-xs);
+    line-height: 1;
+    color: var(--color-text);
+}
+.ptc-bar-label--zero {
+    color: var(--color-text-muted);
+}
+
+.ptc-months {
+    display: flex;
+    padding-left: calc(44px + var(--space-3)); /* lines up under .ptc-plot, past the y-axis column */
+}
+.ptc-month {
+    flex: 1;
+    text-align: center;
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+}
+
+.ptc-skeleton-plot {
+    height: 210px;
+    display: flex;
+    align-items: flex-end;
+    gap: var(--space-2);
+    border-bottom: 1px solid var(--color-border);
+    margin-left: 44px;
+}
+.ptc-skeleton-col {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    height: 100%;
+    align-items: flex-end;
+}
+.ptc-skeleton-bar {
+    width: 46%;
+    max-width: 40px;
+    border-radius: 4px 4px 0 0;
+}
+
+/* =========================================
+   UPCOMING PROJECTS — item 49 (REDESIGN-v2.md)
+========================================= */
+.up-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.up-row {
+    display: flex;
+    gap: var(--space-3);
+    align-items: center;
+    justify-content: space-between;
+    min-height: 64px;
+    padding: var(--space-3) var(--space-5);
+    border-top: 1px solid var(--color-border);
+    text-decoration: none;
+    color: var(--color-text);
+}
+.up-row:hover {
+    background-color: var(--color-surface-cream);
+}
+
+.up-row-main {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.up-row-name {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+}
+.up-row-meta {
+    display: flex;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+    align-items: center;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+}
+.up-row-code {
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.up-priority {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--color-text-muted);
+}
+.up-priority--high {
+    color: var(--color-warning);
+}
+
+.up-row-side {
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+}
+
+.up-due {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+}
+.up-due--overdue {
+    color: var(--color-danger);
+    font-weight: 600;
+}
+
+.up-skeleton-row {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    min-height: 60px;
+    padding: var(--space-3) var(--space-5);
+    border-top: 1px solid var(--color-border);
+    box-sizing: border-box;
+}
+.up-skeleton-line {
+    height: 12px;
+    width: 50%;
+}
+.up-skeleton-line-sub {
+    height: 10px;
+    width: 70%;
+    background: var(--color-surface-page);
+}
+
+/* =========================================
    NOTIFICATIONS — item 44 (Claude Design redesign)
 ========================================= */
 
 /* The panel: a flat 1px-bordered card at the content's full width, not a fixed 1000px block
-   floating in its own margin. */
+   floating in its own margin. item 49 (REDESIGN-v2.md) — most of the panel look (border,
+   radius, shadow) now comes from the shared `.wb-panel` class added alongside this one in
+   NotificationList.jsx; `height: 100%` lets the embedded dashboard panel stretch to match its
+   grid-row siblings (the profit-trend/upcoming-projects column). */
 .notif-container {
     width: 100%;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    background-color: var(--color-surface);
+    height: 100%;
     font-family: var(--font-sans);
 }
 
@@ -1638,52 +1870,19 @@
     color: var(--color-text-muted);
 }
 
+/* item 49 (REDESIGN-v2.md) — the bespoke .notif-action-btn/.notif-action-btn-face chip is gone;
+   the header actions now render the shared .wb-btn kit directly (see NotificationList.jsx),
+   which already supplies its own 44px hit area, radius and hover. This wrapper just lays the
+   two buttons out. */
 .notif-header-actions {
     display: flex;
-}
-
-/* item 44 — a 44px hit area wrapping a smaller visual "face", so the hit target clears
-   DESIGN.md §3 rule 3 while the button itself reads as a compact, flat outline chip. */
-.notif-action-btn {
-    min-height: 44px;
-    display: flex;
-    align-items: center;
-    padding: 0 var(--space-1);
-    background: none;
-    border: none;
-    cursor: pointer;
-    font: inherit;
-}
-
-.notif-action-btn-face {
-    height: 30px;
-    padding: 0 var(--space-3);
-    display: flex;
-    align-items: center;
-    gap: var(--space-1);
-    border: 1px solid var(--color-text);
-    border-radius: var(--radius-md);
-    font-size: var(--font-size-sm);
-    font-weight: 500;
-    color: var(--color-text);
-}
-
-.notif-action-btn:hover .notif-action-btn-face {
-    background-color: var(--color-surface-cream);
-}
-
-.notif-action-btn-danger .notif-action-btn-face {
-    border-color: var(--color-danger);
-    color: var(--color-danger);
-}
-
-.notif-action-btn-danger:hover .notif-action-btn-face {
-    background-color: rgba(var(--color-danger-rgb), 0.06);
+    gap: var(--space-2);
 }
 
 .notif-list {
     display: flex;
     flex-direction: column;
+    flex: 1;
 }
 
 /* --- THE ROW (hairline divider, not a floating card) --- */
@@ -1719,21 +1918,9 @@
     font-weight: 500;
 }
 
-/* Icon Wrapper — item 44: 32px (was 48px), bordered in the notification's own type color
-   (set via inline `color`, so `border: 1px solid currentColor` picks it up without a second
-   inline property). DESIGN.md: Font Awesome solid only — see NotificationList.jsx's iconMeta. */
-.notif-icon-wrapper {
-    background: var(--color-surface-cream);
-    border: 1px solid currentColor;
-    width: 32px;
-    height: 32px;
-    border-radius: var(--radius-md);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: var(--font-size-md);
-    flex-shrink: 0;
-}
+/* item 49 (REDESIGN-v2.md) — .notif-icon-wrapper (the per-type icon tile, 32px/item 44) is
+   removed app-wide: the user asked for "pure notifications", text only, no icons. See
+   NotificationList.jsx — the iconMeta lookup that fed this is gone with it. */
 
 /* --- CONTENT --- */
 .notif-content {
@@ -1811,14 +1998,8 @@
     border-bottom: 1px solid var(--color-border);
 }
 
-.notif-skeleton-icon {
-    width: 32px;
-    height: 32px;
-    border-radius: var(--radius-md);
-    background: var(--color-border);
-    flex-shrink: 0;
-}
-
+/* item 49 — .notif-skeleton-icon (the icon-tile skeleton) is gone along with the icon box it
+   stood in for; see the .notif-icon-wrapper removal note above. */
 .notif-skeleton-lines {
     flex: 1;
     display: flex;
@@ -1853,36 +2034,13 @@
 }
 
 /* --- EMPTY STATE --- */
+/* item 49 (REDESIGN-v2.md) — the icon tile/title/text look now comes from the shared .wb-empty*
+   classes added alongside these in NotificationList.jsx (ComponentKit's "Empty state" spec);
+   `flex: 1` is this panel's own addition, so the empty block still centers inside the full
+   stretched panel height rather than collapsing to its own content height. */
 .notif-empty {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: var(--space-2);
-    padding: var(--space-8) var(--space-4);
-    text-align: center;
-}
-
-.notif-empty-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: var(--radius-md);
-    background: var(--color-surface-cream);
-    border: 1px solid var(--color-border);
-    color: var(--color-accent-text);
-    display: flex;
-    align-items: center;
+    flex: 1;
     justify-content: center;
-}
-
-.notif-empty-title {
-    font-size: var(--font-size-md);
-    font-weight: 600;
-    color: var(--color-text);
-}
-
-.notif-empty-message {
-    font-size: var(--font-size-sm);
-    color: var(--color-text-muted);
 }
 
 /* =========================================

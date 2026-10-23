@@ -85,15 +85,22 @@
 
   /* ARCHITECTURE_REVIEW.md item 44 — the Claude Design redesign's scale, used by the Admin
      dashboard and the shared sidebar first. New UI should reach for these rather than a new
-     literal (DESIGN.md §3 rule 7), the same way color already works. */
-  --radius-sm: 2px;  /* badges */
-  --radius-md: 4px;  /* cards, buttons, inputs, nav items */
+     literal (DESIGN.md §3 rule 7), the same way color already works.
+     item 49 — the v2 redesign (REDESIGN-v2.md) revised the radius/shadow scale: --radius-sm
+     4px→4px is unchanged in *value* for badges but --radius-md moved 4px→6px, and --shadow-sm
+     is replaced by the --shadow-1/2/3 ladder below. See ARCHITECTURE_REVIEW.md item 49. */
+  --radius-sm: 4px;  /* badges, skeleton bars */
+  --radius-md: 6px;  /* buttons, inputs, nav items, tabs */
+  --radius-lg: 8px;  /* cards, panels, toasts, icon tiles */
+  --radius-xl: 10px; /* modals, mobile drawer */
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
   --space-4: 16px;
+  --space-5: 20px;   /* item 49 — card/panel padding */
   --space-6: 24px;
   --space-8: 32px;
+  --section-gap: var(--space-8); /* item 49 — gap between dashboard sections */
   --font-size-xs: 12px;
   --font-size-sm: 13px;
   --font-size-md: 14px;
@@ -101,11 +108,38 @@
   --font-size-xl: 20px;
   --font-size-2xl: 24px;
   --font-size-kpi: 28px;
-  --shadow-sm: 0 1px 2px rgba(var(--color-surface-dark-rgb), 0.06);
+  /* item 49 — replaces --shadow-sm with a 3-step scale (REDESIGN-v2.md §4/§8). Same colour as
+     the old --shadow-sm (rgba(26,22,18,…), i.e. --color-surface-dark), just layered. */
+  --shadow-1: 0 1px 2px rgba(var(--color-surface-dark-rgb), 0.05), 0 1px 3px rgba(var(--color-surface-dark-rgb), 0.04);
+  --shadow-2: 0 4px 12px rgba(var(--color-surface-dark-rgb), 0.08), 0 1px 3px rgba(var(--color-surface-dark-rgb), 0.06);
+  --shadow-3: 0 16px 40px rgba(var(--color-surface-dark-rgb), 0.18), 0 2px 8px rgba(var(--color-surface-dark-rgb), 0.08);
   /* The active-nav tint — gold at low alpha over the dark sidebar, not a new hex. */
   --color-accent-tint: rgba(var(--color-accent-rgb), 0.14);
   --sidebar-width: 236px;
   --sidebar-rail: 80px;
+
+  /* item 49 (REDESIGN-v2.md) — the v2 component kit's tokens. */
+  --color-surface-page: #f7f5f0;   /* warm page tint behind white cards */
+  --color-border-strong: #8f877a;  /* input / secondary-button borders, >=3:1 on white */
+  --color-info-tint: rgba(var(--color-info-rgb), 0.10);
+  --color-warning-tint: rgba(var(--color-warning-rgb), 0.10);
+  --color-success-tint: rgba(var(--color-success-rgb), 0.12);
+  /* tests/contrast.test.js — the mock proposed 8% (danger text measures 4.42:1 on an 8% tint
+     over white, below the 4.5:1 AA bar); kept at the existing 6% (4.55:1) instead. See
+     ARCHITECTURE_REVIEW.md item 49, deviation 1. */
+  --color-danger-tint: rgba(var(--color-danger-rgb), 0.06);
+  --color-neutral-tint: rgba(var(--color-surface-dark-rgb), 0.05);
+  --color-scrim: rgba(var(--color-surface-dark-rgb), 0.55);
+  --color-sidebar-raised: rgba(var(--color-surface-rgb), 0.05);
+  --color-sidebar-divider: rgba(var(--color-surface-rgb), 0.08);
+  --color-chart-bar: var(--color-accent);
+  --color-chart-grid: var(--color-border);
+  --color-skeleton: var(--color-border);
+  --control-height: 36px;  /* visual button/input height */
+  --hit-min: 44px;         /* minimum hit area */
+  --focus-ring: 2px solid var(--color-focus);
+  --topbar-height: 56px;
+  --drawer-width: 280px;
 }
 
 /* DESIGN.md §8 rule 9 (§3): every `outline: none` in this codebase removed a visible keyboard
@@ -115,7 +149,9 @@
    after this one, so a component's own `:focus`/`:focus-within` ring (the gold glow several
    already have) layers on top of this rather than replacing it. */
 :focus-visible {
-  outline: 3px solid var(--color-focus);
+  /* item 49 — was a bare 3px solid; now the shared --focus-ring token so a redesign can retarget
+     it in one place. Same color, 2px instead of 3px, per REDESIGN-v2.md's kit spec. */
+  outline: var(--focus-ring);
   outline-offset: 2px;
 }
 
@@ -681,7 +717,9 @@ html, body {
     width: 100%;
     min-height: 100vh; /* fallback */
     min-height: 100dvh; /* DESIGN.md §3.6 */
-    background-color: var(--color-surface);
+    /* item 49 (REDESIGN-v2.md) — the app-wide "whole app foundation" tint behind white cards;
+       was --color-surface (flat white), the item-44 look. */
+    background-color: var(--color-surface-page);
 }
 
 /* Ang mismong white space kung saan lumalabas yung Dashboard, Logout, etc. */
@@ -693,7 +731,7 @@ html, body {
        (30px tablet); this is the one place that padding lives now, so a screen never stacks its
        own padding on top of this (see .admin-dashboard below, which used to do exactly that). */
     padding: var(--space-6);
-    background-color: var(--color-surface);
+    background-color: var(--color-surface-page); /* item 49 — see .role-layout above */
 
     /* Crucial ito para sa scrolling behavior: */
     height: 100vh; /* fallback */
@@ -748,7 +786,7 @@ html, body {
     height: 100vh; /* fallback */
     height: 100dvh; /* DESIGN.md §3.6 */
     background-color: var(--color-surface-dark); /* Deep warm charcoal/wood */
-    border-right: 1px solid #2C261E; /* Manipis na dark border */
+    border-right: 1px solid var(--color-sidebar-divider); /* item 49 — was a literal #2C261E */
     display: flex;
     flex-direction: column;
     font-family: var(--font-sans);
@@ -784,13 +822,16 @@ html, body {
 /* item 44 — the "Management System" subline (.title-group p) is removed, per the redesign. */
 
 /* User Profile — item 44: a hairline above/below instead of just a bottom gap, a smaller 32px
-   avatar, and the role label recolored to read on the dark fill. */
+   avatar, and the role label recolored to read on the dark fill.
+   item 49 (REDESIGN-v2.md) — becomes a "raised tile" per SidebarV2.dc.html: a subtle fill plus a
+   full border and --radius-lg, replacing the plain top/bottom hairlines. */
 .user-profile {
-    display: flex; align-items: center; padding: var(--space-2);
+    display: flex; align-items: center; padding: var(--space-3);
     margin: 0 var(--space-2);
     gap: var(--space-2);
-    border-top: 1px solid rgba(var(--color-surface-rgb), 0.12);
-    border-bottom: 1px solid rgba(var(--color-surface-rgb), 0.12);
+    background: var(--color-sidebar-raised);
+    border: 1px solid var(--color-sidebar-divider);
+    border-radius: var(--radius-lg);
 }
 .avatar-circle {
     width: 32px; height: 32px; border-radius: 50%;
@@ -823,8 +864,9 @@ html, body {
     transition: background-color 0.15s ease; cursor: pointer;
 }
 .nav-item i { width: 16px; text-align: center; font-size: 1rem; color: var(--color-accent-light); }
-/* item 44 — a subtle wash, not the old scale+gold-tint hover (DESIGN.md: no hover-only lift). */
-.nav-item:hover { background-color: rgba(var(--color-surface-rgb), 0.06); }
+/* item 44 — a subtle wash, not the old scale+gold-tint hover (DESIGN.md: no hover-only lift).
+   item 49 — now the shared --color-sidebar-raised token (same alpha), not its own literal. */
+.nav-item:hover { background-color: var(--color-sidebar-raised); }
 
 /* FR-4 unread badge — attached to the icon itself (not the nav-item's padding/hit area) so it
    shows identically whether the tab is rendering full text (desktop/mobile) or icon-only
@@ -839,13 +881,15 @@ html, body {
 }
 
 /* item 44 — replaces the old solid-gold-fill-with-glow active state: a 3px accent bar plus a
-   low-alpha tint, so the sidebar stays flat and the gold reads as an accent, not a block fill. */
+   low-alpha tint, so the sidebar stays flat and the gold reads as an accent, not a block fill.
+   item 49 (REDESIGN-v2.md) — the bar is now inset 12px top/bottom (was 6px), rounded on both
+   outer corners, matching SidebarV2.dc.html's active-indicator spec. */
 .nav-item.active {
     background-color: var(--color-accent-tint); color: var(--color-accent-light); font-weight: 600;
 }
 .nav-item.active::before {
-    content: ''; position: absolute; left: 0; top: 6px; bottom: 6px; width: 3px;
-    border-radius: var(--radius-sm); background-color: var(--color-accent);
+    content: ''; position: absolute; left: 0; top: 12px; bottom: 12px; width: 3px;
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0; background-color: var(--color-accent);
 }
 .nav-item.active i { color: var(--color-accent); }
 
@@ -861,7 +905,7 @@ html, body {
     cursor: pointer;
     background: none;
     border: none;
-    border-top: 1px solid rgba(var(--color-surface-rgb), 0.12);
+    border-top: 1px solid var(--color-sidebar-divider); /* item 49 — was a literal-alpha rgba() */
     /* item 31 — --color-danger-on-dark, not --color-danger: the plain danger red only measures
        3.61:1 on this dark sidebar. */
     color: var(--color-danger-on-dark);
@@ -922,8 +966,10 @@ html, body {
 
 .mobile-overlay {
     display: none; position: fixed; inset: 0; /* DESIGN.md §3.5 — 100vw/100vh included the scrollbar width */
-    /* item 44 — the dark-sidebar surface token at low alpha, not a one-off black literal. */
-    background: rgba(var(--color-surface-dark-rgb), 0.6); z-index: 9990;
+    /* item 44 — the dark-sidebar surface token at low alpha, not a one-off black literal.
+       item 49 — now the shared --color-scrim token (same colour, .55 vs .6 alpha — close enough
+       that the ComponentKit spec's single scrim token replaces this one-off .6). */
+    background: var(--color-scrim); z-index: 9990;
 }
 
 
@@ -958,7 +1004,7 @@ html, body {
         gap: 2px;
         padding: var(--space-1) 0;
         width: 100%;
-        min-height: 44px; /* DESIGN.md §3.3 */
+        min-height: 52px; /* item 49 (REDESIGN-v2.md) — was 44px (DESIGN.md §3.3's minimum) */
         text-align: center;
     }
     .nav-item i { margin: 0; }
@@ -980,7 +1026,7 @@ html, body {
     .wooden-navbar {
         position: fixed !important; /* Fix para di tumulak pababa ang page */
         left: 0; top: 0;
-        width: 280px; /* item 44 — the Claude Design redesign's drawer width, unchanged from before */
+        width: var(--drawer-width); /* item 49 — token; same 280px value as before (item 44) */
         height: 100vh; /* fallback */
         height: 100dvh; /* DESIGN.md §3.6 */
         z-index: 9999;
@@ -993,7 +1039,7 @@ html, body {
 
     .wooden-navbar.mobile-active {
         transform: translateX(0);
-        box-shadow: 5px 0 25px rgba(0,0,0,0.8) !important; /* Ibalik ang anino pag bukas */
+        box-shadow: var(--shadow-3) !important; /* item 49 — was a one-off rgba(0,0,0,.8) literal */
     }
 
     /* Ibalik ang mga text na itinago nung Tablet View */
@@ -1037,7 +1083,7 @@ html, body {
         align-items: center;
         position: fixed;
         inset: 0 0 auto 0;
-        height: 56px;
+        height: var(--topbar-height); /* item 49 — token, was a 56px literal */
         padding: 0 var(--space-2) 0 6px;
         z-index: 9997; /* below the drawer (9999) and its overlay (9990 active), above page content */
     }
@@ -1053,6 +1099,313 @@ html, body {
    ARCHITECTURE_REVIEW.md item 34; see that item for how dead-ness was confirmed. */
 
 /* =========================================
+   COMPONENT KIT (ARCHITECTURE_REVIEW.md item 49, REDESIGN-v2.md)
+   =========================================
+   The app-wide primitives the v2 Claude Design brief asked for (ComponentKit.dc.html). Each
+   block below names the mock section it implements. New UI should reach for these classes
+   before writing a new one-off rule — the same "reuse the token/class, don't invent a literal"
+   principle DESIGN.md §3 rule 7 already applies to colors/spacing. */
+
+/* --- Buttons --- */
+/* Visual height is --control-height (36px) inside a real 44px hit area; the hit area comes from
+   an ::after pseudo-element rather than padding, so the visible chip stays compact. `position:
+   relative` is required on every .wb-btn for that ::after to size against. */
+.wb-btn {
+    position: relative;
+    height: var(--control-height);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    padding: 0 var(--space-4);
+    border-radius: var(--radius-md);
+    font-family: var(--font-sans);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+.wb-btn::after {
+    content: '';
+    position: absolute;
+    inset: -4px 0; /* pads 36px up to the 44px minimum hit area, DESIGN.md §3.3 */
+}
+.wb-btn i { font-size: var(--font-size-xs); }
+.wb-btn:disabled, .wb-btn[aria-disabled="true"] {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.wb-btn--primary {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+    color: var(--color-text-on-accent); /* item 31 — ~7.7:1 */
+    box-shadow: var(--shadow-1);
+}
+.wb-btn--primary:hover:not(:disabled) { background: var(--color-accent-light); border-color: var(--color-accent-light); box-shadow: var(--shadow-2); }
+
+.wb-btn--secondary {
+    background: var(--color-surface);
+    border-color: var(--color-border-strong);
+    color: var(--color-text);
+    box-shadow: var(--shadow-1);
+}
+.wb-btn--secondary:hover:not(:disabled) { background: var(--color-surface-cream); }
+
+.wb-btn--ghost {
+    background: transparent;
+    color: var(--color-text);
+}
+.wb-btn--ghost:hover:not(:disabled) { background: var(--color-neutral-tint); }
+
+.wb-btn--danger {
+    background: var(--color-surface);
+    border-color: var(--color-danger);
+    color: var(--color-danger);
+}
+.wb-btn--danger:hover:not(:disabled) { background: var(--color-danger-tint); }
+
+.wb-btn--danger-solid {
+    background: var(--color-danger);
+    border-color: var(--color-danger);
+    color: var(--color-text-inverse);
+    box-shadow: var(--shadow-1);
+}
+.wb-btn--danger-solid:hover:not(:disabled) { filter: brightness(0.92); }
+
+/* Icon-only: 36px visual square, same 44px hit area via the shared ::after. */
+.wb-btn--icon {
+    width: var(--control-height);
+    padding: 0;
+    background: transparent;
+    color: var(--color-text-muted);
+}
+.wb-btn--icon:hover:not(:disabled) { background: var(--color-neutral-tint); }
+
+/* --- Panel / card --- */
+.wb-panel {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-1);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.wb-panel__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+    min-height: 64px;
+    padding: var(--space-2) var(--space-3) var(--space-2) var(--space-5);
+    box-sizing: border-box;
+}
+.wb-panel__title {
+    margin: 0;
+    font-size: var(--font-size-xl);
+    font-weight: 600;
+    line-height: 1.25;
+}
+.wb-panel__subtitle {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+}
+.wb-panel__body {
+    padding: var(--space-5);
+    border-top: 1px solid var(--color-border);
+}
+.wb-panel__footer {
+    padding: var(--space-3) var(--space-5);
+    border-top: 1px solid var(--color-border);
+    background: var(--color-surface-cream);
+}
+
+/* --- Page header --- */
+.wb-page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+}
+.wb-page-header__title {
+    margin: 0;
+    font-size: var(--font-size-2xl);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+.wb-page-header__subtitle {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+}
+
+/* --- Status badges --- */
+/* Shape only — the existing .wb-status--* classes (css/globals.css, item 35/utils/status.js)
+   still supply the colour/background. A new `.jod-status`-style caller adds both classes:
+   `wb-badge wb-status--approved`. */
+.wb-badge {
+    height: 22px;
+    padding: 0 var(--space-2);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    white-space: nowrap;
+}
+.wb-badge::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    flex-shrink: 0;
+}
+
+/* --- Form fields --- */
+.wb-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+}
+.wb-field__label {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--color-text);
+}
+.wb-input {
+    height: var(--control-height);
+    padding: 0 var(--space-3);
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    font-family: var(--font-sans);
+    font-size: var(--font-size-sm);
+    color: var(--color-text);
+    box-sizing: border-box;
+}
+.wb-input:focus-visible {
+    outline: var(--focus-ring);
+    outline-offset: 1px;
+}
+.wb-input:disabled {
+    background: var(--color-surface-page);
+    color: var(--color-text-muted);
+    cursor: not-allowed;
+}
+textarea.wb-input {
+    height: auto;
+    min-height: 80px;
+    padding: var(--space-2) var(--space-3);
+    resize: vertical;
+}
+select.wb-input {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath fill='%23756d5a' d='M6 8.5 1.5 4h9z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right var(--space-3) center;
+    padding-right: var(--space-6);
+}
+.wb-field__hint {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+}
+.wb-field__error {
+    font-size: var(--font-size-xs);
+    color: var(--color-danger);
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+}
+/* 1024px and below — matches the existing .jod-form-group tablet bump, so a kit field is never
+   smaller than that already-established tap-target fix. */
+@media (max-width: 1024px) {
+    .wb-input {
+        min-height: 44px;
+    }
+}
+
+/* --- Data table (opt-in on top of .wb-card-table) --- */
+.wb-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.wb-table th {
+    background: var(--color-surface-page);
+    color: var(--color-text-muted);
+    font-size: var(--font-size-xs);
+    font-weight: 500;
+    text-transform: none;
+    text-align: left;
+    padding: var(--space-2) var(--space-4);
+}
+.wb-table td {
+    height: 52px;
+    padding: var(--space-2) var(--space-4);
+    border-top: 1px solid var(--color-border);
+    font-size: var(--font-size-md);
+}
+.wb-num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+/* --- Empty state --- */
+.wb-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-8) var(--space-4);
+    text-align: center;
+}
+.wb-empty__icon {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-lg);
+    background: var(--color-surface-cream);
+    color: var(--color-accent-text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.wb-empty__title {
+    font-size: var(--font-size-md);
+    font-weight: 600;
+    color: var(--color-text);
+}
+.wb-empty__text {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+    max-width: 320px;
+}
+
+/* --- Skeleton --- */
+.wb-skeleton {
+    display: block;
+    border-radius: var(--radius-sm);
+    background: var(--color-skeleton);
+}
+
+/* --- Visually hidden (accessible text alternatives, e.g. the profit-trend chart's data table) --- */
+.wb-visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* =========================================
    ADMIN DASHBOARD STYLES
 ========================================= */
 /* ARCHITECTURE_REVIEW.md item 44 — the Claude Design redesign removed this screen's own 40px
@@ -1063,27 +1416,13 @@ html, body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: var(--space-6);
-  background: var(--color-surface);
+  gap: var(--section-gap);
+  background: transparent; /* item 49 — the page tint behind it is .page-content's now */
 }
 
-/* item 44 — a compact page header: the screen title plus the current month. */
-.admin-page-header {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--space-3);
-  flex-wrap: wrap;
-}
-.admin-page-header h1 {
-  margin: 0;
-  font-size: var(--font-size-2xl);
-  font-weight: 700;
-}
-.admin-page-header .admin-page-subtitle {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-muted);
-}
+/* item 44's .admin-page-header/.admin-page-subtitle (the screen title + month) is gone — see
+   the shared `.wb-page-header` kit class (COMPONENT KIT section above) that replaced it in
+   A_Dashboard.jsx, now carrying the "Create project" shortcut alongside the title too. */
 
 .admin-stats-grid {
   display: grid;
@@ -1101,19 +1440,46 @@ html, body {
   }
 }
 
-/* ARCHITECTURE_REVIEW.md item 44 — the 6px gradient divider is gone; the page's own flex gap
-   plus the notification panel's own header now separate the sections (see REDESIGN.md). */
+/* ARCHITECTURE_REVIEW.md item 49 (REDESIGN-v2.md) — the dashboard v2 grid: profit trend +
+   upcoming projects stacked in the left (wider) column, notifications filling the right column.
+   8fr/4fr at desktop widths, narrowing per the brief's own layout guidance. */
+.admin-dash-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 8fr) minmax(0, 4fr);
+  gap: var(--space-4);
+  align-items: stretch;
+}
+.admin-dash-grid-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+@media (max-width: 1024px) {
+  .admin-dash-grid {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  }
+}
+@media (max-width: 768px) {
+  .admin-dash-grid {
+    grid-template-columns: 1fr;
+  }
+}
 
 /* =========================================
-   INFO CARD STYLES (FLAT, item 44)
+   INFO CARD STYLES (item 49, REDESIGN-v2.md)
 ========================================= */
+/* item 49 — radius/shadow move onto the v2 kit tokens (--radius-lg/--shadow-1, was
+   --radius-md/--shadow-sm); the left accent bar is replaced by a small square dot next to the
+   label (ComponentKit's KPI card isn't in the kit spec directly, but the dashboard mock's own
+   KPI row draws exactly this: a coloured dot + uppercase label, not a side/top bar). */
 .info-card {
   position: relative;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-sm);
-  padding: var(--space-4) var(--space-4) var(--space-4) 19px; /* left offset clears the 3px bar */
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-1);
+  padding: var(--space-4);
   min-height: 100px;
   display: flex;
   flex-direction: column;
@@ -1125,24 +1491,13 @@ html, body {
   container-type: inline-size;
 }
 
-/* --- ACCENT BARS --- */
-/* item 44 — a 3px top-of-content bar in place of the old 10px gradient-fill side border; the
-   variant→color mapping also changed (REDESIGN.md): projects reads as info, workers as gold, and
-   profit (money) as success. */
-.info-card::before {
-  content: '';
-  position: absolute;
-  left: 0; top: 0; bottom: 0;
-  width: 3px;
-}
-.info-card-green::before { background-color: var(--color-success); }
-.info-card-gold::before { background-color: var(--color-accent); }
-.info-card-blue::before { background-color: var(--color-info); }
-
 /* --- TYPOGRAPHY --- */
 
 .info-card-label {
   margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
   color: var(--color-text-muted);
   font-family: var(--font-sans);
   font-weight: 500;
@@ -1150,6 +1505,18 @@ html, body {
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
+/* The coloured dot itself — a square, same radius token as a badge; the label text stays muted
+   regardless of variant, only the dot reads as colored (DashboardV2.dc.html's KPI row spec). */
+.info-card-label::before {
+  content: '';
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-sm);
+}
+.info-card-green .info-card-label::before { background-color: var(--color-success); }
+.info-card-gold .info-card-label::before { background-color: var(--color-accent); }
+.info-card-blue .info-card-label::before { background-color: var(--color-info); }
 
 .info-card-value {
   color: var(--color-text);
@@ -2393,356 +2760,173 @@ html, body {
 .jol-priority.low { background: rgba(91, 80, 53, 0.1); color: #5b5035; }
 
 /* =========================================
-   JOB ORDER DETAILS (PREMIUM MODERN)
-========================================= */
+   JOB ORDER DETAILS — item 49 (REDESIGN-v2.md kit applied; proof the kit generalizes past the
+   dashboard)
+   =========================================
+   ARCHITECTURE_REVIEW.md item 49 — this whole section is rewritten onto the shared .wb-panel,
+   .wb-field, .wb-table and .wb-btn kit (COMPONENT KIT section above). The old bespoke
+   .jod-container, .jod-ov-(header/id/name/info-bar/info-block/label/value/details-box/
+   details-header/details-title/scroll-area), .jod-container-title (and its -white variant),
+   .jod-assign-header, .jod-form-group and .jod-submit-btn rules (16px-radius cards, 25px pill
+   buttons/badges, a dark-brown form header) had no remaining JSX reference after
+   JobOrderDetails.jsx/ProjectMaterials.jsx were restyled and were removed — confirmed via grep,
+   same method as items 34/39. What's kept: .jod-wrapper, .jod-table, .jod-status and
+   .jod-ov-detail-item (JobOrderDetails.test.jsx/ProjectMaterials.test.jsx query by these). */
 
 .jod-wrapper {
     width: 100%;
-    max-width: 1000px; 
-    margin: 40px auto; 
-    font-family: var(--font-sans); /* Modern Font */
-    color: var(--color-text);
-    padding: 20px;
-    box-sizing: border-box;
-}
-
-/* --- BACK BUTTON --- */
-.jod-back-btn {
-    background: transparent;
-    border: none;
-    color: var(--color-text-muted);
-    font-size: 0.95rem;
-    font-weight: 600;
-    cursor: pointer;
-    margin-bottom: 20px;
-    padding: 0;
-    display: inline-flex; 
-    align-items: center;
-    gap: 8px;
-    transition: color 0.2s ease;
-}
-
-.jod-back-btn:hover {
-    color: var(--color-accent-text); /* DESIGN.md §3 rule 10 — normal-size text needs 4.5:1 */
-}
-
-/* DESIGN.md §7 "known residual gap" — was padding:0 with no explicit height, well under the 44px
-   tap minimum through 1024px; left scoped to tablet-and-below deliberately, matching that note's
-   own reasoning that resizing a control at every width including desktop is a design decision,
-   not a responsiveness fix. */
-@media (max-width: 1024px) {
-    .jod-back-btn {
-        padding: 10px 0;
-        min-height: 44px;
-    }
-}
-
-/* --- MAIN CONTAINERS (Premium Cards) --- */
-.jod-container {
-    background-color: var(--color-surface);
-    border: 1px solid var(--color-border); /* Soft border */
-    border-radius: 16px; /* Rounded corners */
-    margin-bottom: 25px;
-    overflow: hidden;
-    width: 100%;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03); /* Soft elegant shadow */
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.jod-container:hover {
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.06);
-}
-
-/* =========================================
-   CONTAINER 1: OVERVIEW
-========================================= */
-.jod-overview-container {
-    padding: 30px;
-}
-
-.jod-ov-header {
-    margin-bottom: 25px;
-}
-
-.jod-ov-id {
-    font-size: 0.95rem;
-    font-weight: 600;
-    color: var(--color-text-muted);
-    letter-spacing: 1px;
-    margin: 0 0 5px 0;
-}
-
-.jod-ov-name {
-    font-family: var(--font-sans);
-    font-weight: 700;
-    font-size: 2.2rem;
-    color: var(--color-text);
-    margin: 0;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-}
-
-/* Info Blocks (Gold / Dark Brown combo) */
-.jod-ov-info-bar {
     display: flex;
-    gap: 15px;
-    margin-bottom: 25px;
+    flex-direction: column;
+    gap: var(--space-6);
+    font-family: var(--font-sans);
+    color: var(--color-text);
+}
+
+.jod-back-btn {
+    align-self: flex-start;
+}
+
+/* --- PAGE HEADER --- */
+.jod-header-main {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+}
+.jod-header-title-row {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-3);
     flex-wrap: wrap;
 }
-
-.jod-ov-info-block {
-    background-color: var(--color-surface-cream); /* Light cream background */
-    border: 1px solid var(--color-border);
-    border-left: 5px solid var(--color-accent); /* Gold Accent Line */
-    border-radius: 10px;
-    padding: 12px 20px;
-    flex: 1;
-    min-width: 120px;
+.jod-id {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--color-text-muted);
+}
+.jod-name {
+    margin: 0;
+    font-size: var(--font-size-2xl);
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+.jod-header-meta {
     display: flex;
-    flex-direction: column;
+    align-items: center;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+}
+.jod-header-due {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
 }
 
-.jod-ov-label {
-    font-size: 0.75rem;
-    font-weight: 700;
+/* --- OVERVIEW PANEL --- */
+.jod-facts-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-4) var(--space-6);
+}
+@media (max-width: 768px) {
+    .jod-facts-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+.jod-fact {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+.jod-fact-value {
+    font-size: var(--font-size-md);
+    font-weight: 500;
+    overflow-wrap: anywhere;
+}
+
+.jod-details-section {
+    margin-top: var(--space-4);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--color-border);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+.jod-details-title {
+    font-size: var(--font-size-xs);
+    font-weight: 600;
     color: var(--color-text-muted);
     text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 6px;
+    letter-spacing: 0.06em;
 }
-
-.jod-ov-value {
-    font-size: 1.05rem;
-    font-weight: 700;
-    color: var(--color-text);
-}
-
-.due-date { color: var(--color-danger); } /* Solid Red for urgency */
-.priority-high { color: var(--color-danger); }
-
-/* Details Box */
-.jod-ov-details-box {
-    background-color: var(--color-surface-cream); /* Soft gold/cream */
-    border-radius: 12px;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-}
-
-.jod-ov-details-header {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 15px;
-}
-
-.jod-ov-details-title {
-    font-weight: 700;
-    font-size: 0.9rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: var(--color-accent-text); /* Dark Brown */
-}
-
-/* ARCHITECTURE_REVIEW.md item 39 — .jod-ov-scroll-icons was dead, no JSX reference. */
-
-.jod-ov-scroll-area {
+.jod-details-list {
     max-height: 150px;
     overflow-y: auto;
-    padding-right: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding-right: var(--space-2);
 }
-
-/* Custom Scrollbar for details area */
-.jod-ov-scroll-area::-webkit-scrollbar { width: 6px; }
-.jod-ov-scroll-area::-webkit-scrollbar-thumb { background-color: var(--color-accent); border-radius: 10px; }
+.jod-details-list::-webkit-scrollbar { width: 6px; }
+.jod-details-list::-webkit-scrollbar-thumb { background-color: var(--color-accent); border-radius: 10px; }
 
 .jod-ov-detail-item {
-    background-color: var(--color-surface);
-    padding: 12px 15px;
-    border-radius: 8px;
-    margin-bottom: 10px;
-    font-size: 0.95rem;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    background-color: var(--color-surface-page);
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-sm);
     border: 1px solid var(--color-border);
 }
 .jod-ov-detail-item strong { display: block; margin-bottom: 5px; color: var(--color-text); }
-.jod-ov-detail-item p { margin: 0; color: #666; line-height: 1.4; }
+.jod-ov-detail-item p { margin: 0; color: var(--color-text-muted); line-height: 1.4; }
 
-/* =========================================
-   CONTAINER 2: PROGRESS
-========================================= */
-.jod-progress-container {
-    padding: 0;
-}
-
-.jod-progress-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 20px 30px;
-    border-bottom: 1px solid var(--color-border);
-}
-
-.jod-container-title {
-    margin: 0;
-    font-family: var(--font-sans);
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--color-text);
-}
-
-/* Sleek Progress Bar */
+/* --- PROGRESS PANEL --- */
 .jod-progress-bar-wrapper {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: var(--space-3);
+    padding: 0 var(--space-5) var(--space-4);
 }
 
 .jod-progress-bar {
-    width: 250px;
-    height: 10px; /* Mas manipis para modern */
+    flex: 1;
+    max-width: 250px;
+    height: 6px;
     background-color: var(--color-border);
-    border-radius: 20px;
+    border-radius: var(--radius-sm);
     overflow: hidden;
 }
 
 .jod-progress-fill {
     height: 100%;
-    background: linear-gradient(to right, var(--color-accent), var(--color-accent-light)); /* Gold gradient */
-    border-radius: 20px;
+    background: var(--color-accent); /* item 49 — a solid fill, not a decorative gradient */
     transition: width 0.5s ease;
 }
 
 .jod-progress-text {
-    font-size: 0.95rem;
-    font-weight: 700;
-    color: var(--color-accent-text);
-}
-
-/* Modern Clean Table */
-.jod-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.95rem;
-}
-
-.jod-table th {
-    text-align: center;
-    padding: 15px 20px;
-    color: var(--color-text-muted);
-    font-size: 0.85rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    border-bottom: 2px solid var(--color-border);
-    font-weight: 700;
-}
-
-.jod-table td {
-    text-align: center;
-    padding: 15px 20px;
-    border-bottom: 1px solid var(--color-border);
-    color: var(--color-text);
-    font-weight: 500;
-    vertical-align: middle;
-}
-
-.jod-table tr:hover td {
-    background-color: var(--color-surface-cream); /* Soft highlight */
-}
-
-/* Status Badges */
-/* ARCHITECTURE_REVIEW.md item 35 — colour now comes from one of the shared .wb-status--*
-   modifiers below, applied via utils/status.js's taskStatusClass(). This rule keeps only the
-   pill's shape; it used to colour only "done" (dead — no live status is ever "done") and
-   "in-progress", leaving Assigned/For QA/Approved/Repair with no colour of their own. */
-.jod-status {
-    padding: 6px 14px;
-    border-radius: 25px; /* Pill shape */
-    font-size: 0.85rem;
-    font-weight: 700;
-    display: inline-block;
-    letter-spacing: 0.5px;
-}
-
-/* =========================================
-   CONTAINER 3: ASSIGN FORM
-========================================= */
-.jod-assign-header {
-    background-color: var(--color-accent-text); /* Dark Brown Header */
-    padding: 20px 30px;
-}
-
-.jod-container-title-white {
-    margin: 0;
-    color: var(--color-text-inverse);
-    font-family: var(--font-sans);
-    font-size: 1.5rem;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-}
-
-.jod-form {
-    padding: 30px;
-}
-
-.jod-form-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 25px;
-    margin-bottom: 25px;
-}
-
-.jod-form-group {
-    display: flex;
-    flex-direction: column;
-}
-
-.jod-form-group label {
-    font-size: 0.9rem;
+    font-size: var(--font-size-sm);
     font-weight: 600;
     color: var(--color-accent-text);
-    margin-bottom: 8px;
+    flex-shrink: 0;
 }
 
-/* Modern Inputs */
-.jod-form-group input,
-.jod-form-group select {
-    padding: 12px 15px;
-    border: 1.5px solid var(--color-border);
-    border-radius: 12px;
-    font-size: 0.95rem;
-    font-family: var(--font-sans);
-    color: var(--color-text);
-    background-color: var(--color-surface);
-    transition: all 0.3s ease;
+/* The table itself now gets its look from .wb-table/.wb-card-table; .jod-table stays only as a
+   stable selector for the tests and for the mobile-card data-label mechanism. */
+.jod-table { width: 100%; }
+
+/* ARCHITECTURE_REVIEW.md item 35 — colour comes from one of the shared .wb-status--* modifiers,
+   applied via utils/status.js's taskStatusClass(); shape now comes from .wb-badge (COMPONENT KIT
+   section above). .jod-status itself carries no declarations of its own any more — kept as a
+   stable class name for JobOrderDetails.test.jsx's `toHaveClass` checks. */
+
+/* --- ASSIGN FORM --- */
+.jod-form-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--space-4);
+    margin-bottom: var(--space-4);
 }
-
-.jod-form-group input:focus,
-.jod-form-group select:focus {
-    border-color: var(--color-accent);
-    box-shadow: 0 0 0 3px rgba(var(--color-accent-rgb), 0.15);
-}
-
-.jod-form-group select {
-    padding-right: 40px;
-    appearance: none;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%235c4a11'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 15px center; 
-    background-size: 20px;
-}
-
-.jod-form-group select::-ms-expand { display: none; }
-
-/* DESIGN.md §7 "known residual gap" — ~43-44px at the default size, borderline rather than a
-   clear failure; a guaranteed min-height closes the gap through the tablet range without
-   affecting desktop, same scoping as the back-button fixes above. */
-@media (max-width: 1024px) {
-    .jod-form-group input,
-    .jod-form-group select {
-        min-height: 44px;
-    }
+.jod-form-grid--3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .jod-form-actions {
@@ -2750,71 +2934,21 @@ html, body {
     justify-content: flex-end;
 }
 
-.jod-submit-btn {
-    background-color: var(--color-accent-text);
-    color: white;
-    border: none;
-    padding: 12px 35px;
-    border-radius: 25px; /* Pill Button */
-    font-size: 0.95rem;
-    font-weight: 600;
-    cursor: pointer;
-    font-family: var(--font-sans);
-    transition: all 0.3s ease;
-}
-
-.jod-submit-btn:hover {
-    background-color: var(--color-accent-text);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(var(--color-accent-text-rgb), 0.2);
-}
-
-/* --- MARK AS COMPLETED BUTTON --- */
-.jod-complete-wrapper {
-    background-color: transparent; 
-    display: flex; 
-    width: 100%;
-    box-sizing: border-box;
-}
-
-.jod-complete-btn {
-    width: 100%; 
-    background-color: var(--color-success); /* Deep Workshop Green */
-    color: white;
-    border: none;
-    padding: 18px; /* Mas makapal para premium tap button feel */
-    border-radius: 0 0 16px 16px; /* Rounded lang sa bottom part ng card */
-    font-size: 1.05rem;
-    font-weight: 700;
-    font-family: var(--font-sans);
-    cursor: pointer;
-    transition: all 0.3s ease;
-    text-align: center;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-}
-
-.jod-complete-btn:hover {
-    background-color: var(--color-success-dark); 
-}
-
-.jod-complete-btn:disabled {
-    background-color: #e0e0e0;
-    color: #a0a0a0;
-    cursor: not-allowed;
-}
-
 /* Responsive adjust para hindi magulo sa maliit na screen */
+@media (max-width: 1024px) {
+    .jod-form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 @media (max-width: 768px) {
     .jod-form-grid { grid-template-columns: 1fr; }
-    .jod-progress-header { flex-direction: column; align-items: flex-start; gap: 15px; }
 }
 
 /* =========================================
    CUSTOM TOAST & MODAL POP-UPS
    ========================================= */
 
-/* Toast Notification (Success/Error Messages) */
+/* Toast Notification (Success/Error Messages) — item 49 (REDESIGN-v2.md): white card with a
+   coloured leading icon, replacing the old solid-colour-fill toast. Variant reads from the icon
+   + its colour, not the card's background, per ComponentKit's "Toasts" spec. */
 .wb-toast-container {
     position: fixed;
     top: 20px;
@@ -2822,29 +2956,35 @@ html, body {
     z-index: 9999;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: var(--space-3);
 }
 
 .wb-toast {
-    padding: 15px 25px;
-    border-radius: 8px;
-    color: white;
-    font-weight: bold;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    max-width: 360px;
+    padding: var(--space-3) var(--space-1) var(--space-3) var(--space-4);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-2);
+    color: var(--color-text);
     animation: slideInRight 0.4s ease-out forwards;
     display: flex;
-    align-items: center;
-    gap: 10px;
+    align-items: flex-start;
+    gap: var(--space-3);
 }
 
-.wb-toast.success { 
-    background-color: #2E7D32; /* Green */
-    border-left: 6px solid #1B5E20; 
+.wb-toast-icon {
+    margin-top: 2px;
+    font-size: var(--font-size-lg);
 }
 
-.wb-toast.error { 
-    background-color: var(--color-danger); /* Red */
-    border-left: 6px solid #B71C1C; 
+.wb-toast.success .wb-toast-icon { color: var(--color-success); }
+.wb-toast.error .wb-toast-icon { color: var(--color-danger); }
+
+.wb-toast-message {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    line-height: 1.4;
 }
 
 @keyframes slideInRight {
@@ -2852,11 +2992,13 @@ html, body {
     to { transform: translateX(0); opacity: 1; }
 }
 
-/* Custom Confirmation Modal */
+/* Custom Confirmation Modal — item 49 (REDESIGN-v2.md): --radius-xl/--shadow-3/--color-scrim,
+   replacing the one-off literals and the gold top-border accent (ComponentKit's "Modal / drawer"
+   spec: scrim + radius + shadow, no accent border). */
 .wb-modal-overlay {
     position: fixed;
     inset: 0; /* DESIGN.md §3.5 — 100vw/100vh included the scrollbar width */
-    background: rgba(0, 0, 0, 0.5);
+    background: var(--color-scrim);
     z-index: 10000;
     display: flex;
     justify-content: center;
@@ -2865,22 +3007,21 @@ html, body {
 }
 
 .wb-modal-box {
-    background: white;
-    padding: 30px;
-    border-radius: 12px;
+    background: var(--color-surface);
+    padding: var(--space-6);
+    border-radius: var(--radius-xl);
     text-align: center;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+    box-shadow: var(--shadow-3);
     width: 90%;
     max-width: 400px;
-    border-top: 6px solid var(--color-accent);
     box-sizing: border-box;
 }
 
 .wb-modal-title {
-    color: #5B4826;
+    color: var(--color-text);
     margin-bottom: 10px;
-    font-size: 1.3rem;
-    font-weight: bold;
+    font-size: var(--font-size-xl);
+    font-weight: 600;
 }
 
 /* Destructive-action variant (ConfirmModal's `danger` prop) — replaces the inline
@@ -2897,61 +3038,72 @@ html, body {
 .wb-modal-actions {
     display: flex;
     justify-content: center;
-    gap: 15px;
+    gap: var(--space-2);
 }
 
+/* item 49 — .wb-btn-yes/.wb-btn-no now follow the kit's primary/secondary button recipe
+   (ComponentKit "Buttons" spec) instead of one-off padding/radius; visual height matches
+   --control-height inside a 44px hit area via the surrounding .wb-modal-actions gap. */
 .wb-btn-yes {
+    height: var(--control-height);
     background: var(--color-accent);
     color: var(--color-text-on-accent); /* item 31 — white on this gold fill measured ~2.3:1 */
-    border: none;
-    padding: 10px 25px;
-    border-radius: 5px;
+    border: 1px solid var(--color-accent);
+    padding: 0 var(--space-4);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-1);
     cursor: pointer;
-    font-weight: bold;
+    font-size: var(--font-size-sm);
+    font-weight: 600;
     transition: background 0.2s;
 }
 
-.wb-btn-yes:hover { background: #b8962e; } /* item 31 — dark text above still reads fine here, ~6.4:1 */
+.wb-btn-yes:hover { background: var(--color-accent-light); border-color: var(--color-accent-light); } /* item 31 — dark text above still reads fine here, ~6.4:1 */
 .wb-btn-yes:disabled {
     background: #d9cba0;
+    border-color: #d9cba0;
     cursor: not-allowed;
 }
 
-/* Destructive-action variant — see .wb-modal-title.danger above. Both `.wb-btn-yes` and its
-   `:hover` are also defined in css/admin.css at the same (0,3,0) specificity, so this explicit
-   `:hover` rule is needed to win regardless of which stylesheet loads last; `filter` avoids
-   adding a new hex literal (DESIGN.md §3 rule 7) for the darker hover shade. */
+/* Destructive-action variant — "danger-solid" in ComponentKit's Buttons spec. See
+   .wb-modal-title.danger above. Both `.wb-btn-yes` and its `:hover` are also defined in
+   css/admin.css at the same (0,3,0) specificity, so this explicit `:hover` rule is needed to win
+   regardless of which stylesheet loads last; `filter` avoids adding a new hex literal (DESIGN.md
+   §3 rule 7) for the darker hover shade. */
 /* item 31 — .wb-btn-yes's base rule now sets dark text for the gold fill; this variant's own
    fill is red, not gold, so it needs its own white text back (still ~5:1, unaffected by item 31). */
-.wb-btn-yes.danger { background: var(--color-danger); color: var(--color-text-inverse); }
-.wb-btn-yes.danger:hover { background: var(--color-danger); color: var(--color-text-inverse); filter: brightness(0.9); }
+.wb-btn-yes.danger { background: var(--color-danger); border-color: var(--color-danger); color: var(--color-text-inverse); }
+.wb-btn-yes.danger:hover { background: var(--color-danger); border-color: var(--color-danger); color: var(--color-text-inverse); filter: brightness(0.9); }
 
 /* FR-6: the repair-reason textarea in globals/ProjectVerificationDetail.jsx's ConfirmModal */
 .wb-modal-textarea {
     width: 100%;
     box-sizing: border-box;
     min-height: 80px;
-    padding: 10px;
-    margin-bottom: 20px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
+    padding: var(--space-2) var(--space-3);
+    margin-bottom: var(--space-4);
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-md);
     font-family: inherit;
-    font-size: 0.95rem;
+    font-size: var(--font-size-sm);
     resize: vertical;
 }
 
 .wb-btn-no {
-    background: var(--color-border);
+    height: var(--control-height);
+    background: var(--color-surface);
     color: var(--color-text);
-    border: none;
-    padding: 10px 25px;
-    border-radius: 5px;
+    border: 1px solid var(--color-border-strong);
+    padding: 0 var(--space-4);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-1);
     cursor: pointer;
-    font-weight: bold;
+    font-size: var(--font-size-sm);
+    font-weight: 600;
     transition: background 0.2s;
 }
 
-.wb-btn-no:hover { background: #d4d4d4; }
+.wb-btn-no:hover { background: var(--color-surface-cream); }
 
 @keyframes fadeIn {
     from { opacity: 0; }
@@ -3418,33 +3570,33 @@ html, body {
 
 .wb-pagination-range {
     font-family: var(--font-sans);
-    font-size: 0.8125rem;
-    font-weight: 600;
+    font-size: var(--font-size-sm);
+    font-weight: 500;
     color: var(--color-text-muted);
     font-variant-numeric: tabular-nums;
 }
 
+/* item 49 (REDESIGN-v2.md) — ComponentKit's "Pagination" spec: a plain secondary-button look
+   (--radius-md, --color-border-strong), not the old 25px pill. */
 .wb-pagination-btn {
-    padding: 8px 18px;
-    min-height: 44px; /* DESIGN.md §3.3 — was ~36px tall */
+    padding: 0 var(--space-4);
+    min-height: 44px; /* DESIGN.md §3.3 */
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    border: 1.5px solid #dcd7c9;
-    color: #5b5035;
+    border: 1px solid var(--color-border-strong);
+    color: var(--color-text);
     background: var(--color-surface);
     font-family: var(--font-sans);
-    font-size: 0.8125rem;
+    font-size: var(--font-size-sm);
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s ease;
-    border-radius: 25px;
+    transition: background-color 0.2s ease;
+    border-radius: var(--radius-md);
 }
 
 .wb-pagination-btn:hover:not(:disabled) {
     background: var(--color-surface-cream);
-    border-color: var(--color-accent);
-    color: #8a6d1f;
 }
 
 .wb-pagination-btn:disabled {
@@ -3485,26 +3637,35 @@ html, body {
    to ~4.20:1 against that cream, which axe's own static sweep can't see since it's a hover state.
    This is also what makes contrast.test.js's TINT_PAIRS math — which composites each tint over
    --color-surface — true for these pills in every row state, not just the resting one. */
+/* item 49 (REDESIGN-v2.md) — tints now reference the shared --color-*-tint tokens rather than
+   their own inline rgba() literal, so a future retint is a one-line token change. Still a flat
+   `linear-gradient(tint, tint)` over an opaque --color-surface, not a decorative gradient — see
+   this file's original comment above this block for why the opaque-composite trick exists. The
+   gradient's own two color-stops are now identical tint-token references, not the same literal
+   twice. Assigned moved from .10 to .14 alpha (matching --color-accent-tint, the active-sidebar-nav
+   tint) per ComponentKit.dc.html's "Status badges" spec; the rest keep their existing alpha
+   (ARCHITECTURE_REVIEW.md item 49 deviation 1 — the mock's proposed 8% danger tint measured
+   4.42:1, below AA, so danger stays at the existing 6%/--color-danger-tint). */
 .wb-status--assigned {
   color: var(--color-accent-text); /* DESIGN.md §3 rule 10 — normal-size text needs 4.5:1 */
-  background: linear-gradient(rgba(var(--color-accent-rgb), 0.1), rgba(var(--color-accent-rgb), 0.1)), var(--color-surface);
+  background: linear-gradient(var(--color-accent-tint), var(--color-accent-tint)), var(--color-surface);
 }
 .wb-status--in-progress {
   color: var(--color-info);
-  background: linear-gradient(rgba(var(--color-info-rgb), 0.1), rgba(var(--color-info-rgb), 0.1)), var(--color-surface);
+  background: linear-gradient(var(--color-info-tint), var(--color-info-tint)), var(--color-surface);
 }
 .wb-status--for-qa {
   color: var(--color-warning);
-  background: linear-gradient(rgba(var(--color-warning-rgb), 0.1), rgba(var(--color-warning-rgb), 0.1)), var(--color-surface);
+  background: linear-gradient(var(--color-warning-tint), var(--color-warning-tint)), var(--color-surface);
 }
 .wb-status--approved {
   color: var(--color-success);
-  background: linear-gradient(rgba(var(--color-success-rgb), 0.12), rgba(var(--color-success-rgb), 0.12)), var(--color-surface);
+  background: linear-gradient(var(--color-success-tint), var(--color-success-tint)), var(--color-surface);
 }
 /* Rework shares this with Repair — see utils/status.js. */
 .wb-status--repair {
   color: var(--color-danger);
-  background: linear-gradient(rgba(var(--color-danger-rgb), 0.06), rgba(var(--color-danger-rgb), 0.06)), var(--color-surface);
+  background: linear-gradient(var(--color-danger-tint), var(--color-danger-tint)), var(--color-surface);
 }
 .wb-status--neutral {
   color: var(--color-text);
@@ -3531,10 +3692,10 @@ html, body {
     .wb-card-table tr {
         margin-bottom: 15px;
         border: 1px solid var(--color-border);
-        border-radius: 12px;
+        border-radius: var(--radius-lg); /* item 49 — was 12px */
         padding: 15px;
         background-color: var(--color-surface);
-        box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+        box-shadow: var(--shadow-1); /* item 49 — was a bespoke one-off shadow */
     }
 
     .wb-card-table tr:hover td {
