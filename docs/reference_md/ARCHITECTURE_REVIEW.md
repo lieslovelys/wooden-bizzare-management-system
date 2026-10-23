@@ -2490,3 +2490,35 @@ Not urgent, but each of these increases the cost of every future change until ad
       `deploy.sh`'s own pre-deploy local backup (infra), a real screen-reader/device pass (human +
       devices), and the declined role-shell consolidation. TLS/domain/VPS latency are resolved;
       the PWA deferral's TLS blocker is gone too, though the PWA itself is still unbuilt.
+
+43. **UI: replace Inter + Playfair Display with a single font, Geist — the user said the serif
+    read as "vintage" and asked for something minimalist.** Playfair Display (item 36) was used in
+    roughly 30 heading/title/stat-value/number rules — section titles, the dashboard stat-card
+    values, the sidebar's "The Wooden Bizarre" wordmark, profit totals, the notification header —
+    against Inter everywhere else (62 declarations). The user picked Geist (a sans-serif,
+    self-hostable via `@fontsource/geist`, OFL-licensed like the other two) for the whole app, not
+    just as Playfair's replacement, so there's now exactly one family.
+    - `main.jsx` swaps the `@fontsource/inter` and `@fontsource/playfair-display` imports for
+      `@fontsource/geist` at the same five weights (400/500/600/700/800) the CSS already asked
+      for, so no weight is browser-synthesized (item 28's lesson still applies).
+    - `globals.css` gets one new token, `--font-sans: 'Geist', system-ui, -apple-system, 'Segoe
+      UI', sans-serif`, and `html`/`body` now reference it instead of the literal `'Inter',
+      sans-serif` item 36 set. Every other `font-family` declaration across `globals.css`,
+      `admin.css`, and `worker.css` (about 90 sites, all three previously-allowed values — `'Inter',
+      sans-serif`, `'Inter', Arial, sans-serif`, `'Playfair Display', serif`) now reads
+      `var(--font-sans)` too, so a future font swap is a one-line token change instead of a
+      repo-wide find/replace. `inherit` (form controls) is untouched.
+    - **A gap item 36 left open, found while auditing for this:** three `admin/*.jsx` files
+      (`AddWorkerModal.jsx`, `EditWorkerModal.jsx`, `WorkerList.jsx`) set `style={{ fontFamily:
+      'Arial, sans-serif' }}` inline on their outer wrapper — invisible to item 36's CSS-only scan,
+      since it only ever checked stylesheets. Removed; these elements now inherit `--font-sans`
+      like everything else.
+    - `tests/fontConsistency.test.js`'s allowlist collapses to `{ 'var(--font-sans)', 'inherit' }`,
+      and it gained a second check, reusing `stylesheetImports.test.js`'s `listFiles`/exclusion-
+      filter convention: every non-test `.jsx`/`.js` under `src` is scanned for an inline
+      `fontFamily`, and any hit fails — the same gap the three Arial styles above exploited can't
+      reopen silently.
+    - This is a pure font-family swap: no size, weight, or layout change. The sizing/spacing/
+      radius redesign is a separate, larger pass — see `docs/design/REDESIGN.md`, the brief for
+      Claude Design covering the Admin dashboard and shared sidebar, written just before this item
+      and updated here to describe Geist (not the old Inter/Playfair split) as the current state.

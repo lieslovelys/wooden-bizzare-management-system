@@ -305,7 +305,10 @@ the current backlog — not overlooked:
   default in any browser) — including a genuine bug the audit found along the way:
   `TempSignup.css`'s `.form-title` had declared `font-family` twice on the same rule, and the
   second, unintended `Georgia` declaration had been silently winning the cascade the whole time.
-  A new `tests/fontConsistency.test.js` guards against the drift coming back.
+  A new `tests/fontConsistency.test.js` guards against the drift coming back. **Superseded by
+  ARCHITECTURE_REVIEW.md item 43**: the Inter/Playfair Display split itself is gone — Playfair
+  read as "vintage," so the whole app now uses one family, Geist, behind a single
+  `--font-sans` token.
 - ~~**Self-hosted fonts.** `index.html` loads Google Fonts and Font Awesome from CDNs. On an
   unreliable shop-floor connection this is a real cost, but it's a build/asset change, not a
   layout one.~~ **Resolved** (ARCHITECTURE_REVIEW.md items 27-28): Inter, Playfair Display, and the
@@ -314,7 +317,9 @@ the current backlog — not overlooked:
   added Inter 700/800 and Playfair Display 800, which the CSS had been asking for all along and
   the browser was faking); `index.html` has no CDN `<link>` left and `globals.css` has no CDN
   `@import` left (item 27 landed the former but missed the latter — item 28 caught it), enforced
-  by `tests/thirdPartyAssets.test.js`.
+  by `tests/thirdPartyAssets.test.js`. Item 43 later replaced the Inter/Playfair Display pair
+  itself with a single self-hosted family, Geist — the self-hosting mechanism (`@fontsource/*`
+  from `main.jsx`) is unchanged.
 - **Installable / offline (PWA).** Significant scope on its own; not implied by "mobile
   responsive." Also genuinely blocked right now, not just deferred: a service worker (the piece
   that makes offline caching and a real install prompt possible) only registers over HTTPS or

@@ -91,9 +91,12 @@ marketing landing page.
 - **Gold as an accent, not a fill.** Thin bars, the active-nav indicator, focus rings, and primary
   actions. Never a large gold-filled surface like the current stat cards.
 - **A smaller type scale.** Suggested: 12 / 13 / 14 / 16 / 20 / 24px, with **14px as the default
-  body/UI text size** (down from the current ~16px base feel). Inter for all UI text, with
-  tabular figures for numbers (so currency columns align). Playfair Display is reserved for the
-  brand wordmark and, at most, a page title — not every label. Typography itself is open to
+  body/UI text size** (down from the current ~16px base feel). The app uses one typeface, **Geist**
+  (self-hosted, behind `globals.css`'s `--font-sans` token — ARCHITECTURE_REVIEW.md item 43
+  dropped the earlier Inter/Playfair Display split, which read as "vintage"), for everything
+  including the brand wordmark and page titles — no serif anywhere. Use tabular figures for
+  numbers (so currency columns align), and weight (600–800) rather than a second family to
+  distinguish a heading or wordmark from body text. Typography itself is still open to further
   change per DESIGN.md §1; this scale is a starting proposal, not a constraint.
 - **A 4px-based spacing scale.** Suggested: 4 / 8 / 12 / 16 / 24 / 32px. The page gutter should
   land around 24–32px total, not the current doubled 80px (see §6).
@@ -135,15 +138,16 @@ restyles the frame of the whole app, not just the dashboard.
   `padding: 40px` inside it — an **80px gutter** on desktop. This is a large part of why the page
   reads as oversized.
 - **Stat cards** (`globals/InfoCard.jsx`): gold gradient fill, 16px radius, `min-height: 160px`,
-  30×25px padding, a 10px solid-colour left border, centred content, value in Playfair 3rem/800
-  with a text-shadow, hover lift (`translateY(-5px)`). Grid: 3 columns, 32px gap, 64px bottom
-  margin. There are only 3 stats today (see §6's "out of scope" note).
+  30×25px padding, a 10px solid-colour left border, centred content, value in Geist 3rem/800
+  (Playfair Display before item 43 — same size/weight, font swapped) with a text-shadow, hover
+  lift (`translateY(-5px)`). Grid: 3 columns, 32px gap, 64px bottom margin. There are only 3 stats
+  today (see §6's "out of scope" note).
 - **Divider:** a 6px gold gradient bar between the stat grid and the notifications panel.
-- **Notifications panel** (`globals/NotificationList.jsx`): header in Playfair 2.5rem; rows padded
-  22×25px with 12px radius, a 48px icon box, 1.1rem title, 0.95rem message; unread rows get a
-  cream background fill plus a 5px gold left border and their own hover lift; actions are
-  25px-radius pill buttons; the whole panel has a fixed `width: 1000px` centred with `margin: 40px
-  auto`.
+- **Notifications panel** (`globals/NotificationList.jsx`): header in Geist 2.5rem (Playfair
+  before item 43); rows padded 22×25px with 12px radius, a 48px icon box, 1.1rem title, 0.95rem
+  message; unread rows get a cream background fill plus a 5px gold left border and their own
+  hover lift; actions are 25px-radius pill buttons; the whole panel has a fixed `width: 1000px`
+  centred with `margin: 40px auto`.
 
 **Target layout:**
 1. A compact page header: "Dashboard" title plus the current month/year, much smaller than the
@@ -157,7 +161,7 @@ restyles the frame of the whole app, not just the dashboard.
 - White background, 1px border, 4px radius, left-aligned content (not centred).
 - Roughly **96–110px tall** (down from 160px).
 - A small uppercase muted label (~12px).
-- A value around **28–32px**, Inter 700, tabular figures (down from Playfair 3rem).
+- A value around **28–32px**, Geist 700, tabular figures (down from 3rem).
 - An optional sub-line (e.g. "October 2026").
 - The per-card accent becomes a **thin 3px bar** (top or left edge) in the card's semantic color
   (success/gold/info), replacing the current 10px border on a gold-filled card.
