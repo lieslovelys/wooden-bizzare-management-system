@@ -2675,3 +2675,26 @@ Not urgent, but each of these increases the cost of every future change until ad
       subtext and "Welcome Back!" stay Geist (both untouched), no new horizontal overflow at 360
       — the tagline already breaks onto its two lines via manual `<br/>` tags in the JSX, not
       organic wrapping, so Playfair's extra width lands inside the same layout.
+
+47. **UI: a smaller Login form card, and "Welcome Back!" → "Welcome."** The user looked at the
+    live Login page and asked for two things: the sign-in card felt oversized next to the hero
+    panel, and "Welcome Back!" presumes a returning visitor, which isn't true for a first-time
+    login.
+    - `Login.jsx`: the heading text changes to "Welcome". The subtext "Sign in to your workspace"
+      is unchanged.
+    - `globals.css`'s `.login-layout` form block (`.login-container` through `.form-footer`)
+      shrinks using the item-44 `--space-*`/`--font-size-*` tokens rather than new literals, per
+      CLAUDE.md's rule: the card's `max-width` goes from 440px to 360px, its padding from 50×40px
+      to `var(--space-8) var(--space-6)` (32/24), and its corner radius from 24px to 16px. The
+      heading drops from 2.6rem to `var(--font-size-kpi)` (28px), inputs from 16×20px padding to
+      10×14px with their border-radius halved (12px → 8px), and every vertical gap (`form-header`,
+      `input-group`, `submit-container`, `form-footer`) moves onto the nearest `--space-*` step.
+    - The inputs and the Sign In button each gain an explicit `min-height: 44px` so the hit area
+      stays at the DESIGN.md §3 rule 3 floor even though the visual padding shrank — confirmed with
+      `getBoundingClientRect` in the browser, all three measuring exactly 44px.
+    - The hero (left) panel, the colours, the focus glow, the shine-sweep animation and the
+      ≤1024px stacking behavior are all untouched; this is a right-panel-only sizing pass.
+    - `Login.test.jsx` gains an assertion that the level-2 heading reads "Welcome" and that
+      "Welcome Back" no longer appears anywhere on the page.
+    - **Verified**: screenshots at 1366 and 360 show a visibly smaller card with the new heading;
+      `scrollWidth === clientWidth` at 360; all three 44px hit-area checks pass.
