@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { taskStatusClass } from './status';
+import { taskStatusClass, projectStatusClass } from './status';
 
 describe('taskStatusClass', () => {
   it.each([
@@ -20,6 +20,21 @@ describe('taskStatusClass', () => {
     'falls back to neutral for %s',
     (status) => {
       expect(taskStatusClass(status)).toBe('wb-status wb-status--neutral');
+    },
+  );
+});
+
+// ARCHITECTURE_REVIEW.md item 49 — the upcoming-projects dashboard widget colors `projects.status`
+// (Pending/In Progress/Completed), a different enum from task_status above.
+describe('projectStatusClass', () => {
+  it('maps In Progress to the in-progress modifier', () => {
+    expect(projectStatusClass('In Progress')).toBe('wb-status wb-status--in-progress');
+  });
+
+  it.each(['Pending', 'Completed', null, undefined, '', 'Some Made-Up Status'])(
+    'falls back to neutral for %s',
+    (status) => {
+      expect(projectStatusClass(status)).toBe('wb-status wb-status--neutral');
     },
   );
 });

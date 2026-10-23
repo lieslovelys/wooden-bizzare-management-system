@@ -22,7 +22,9 @@ import { formatDateTime } from '../utils/format';
 // ARCHITECTURE_REVIEW.md item 44 — `embedded` (set by a dashboard screen, e.g. A_Dashboard.jsx)
 // renders the panel title as an <h2> instead of an <h1>, since a dashboard already has its own
 // page-level <h1>; the standalone Notification tabs render the default <h1>.
-const NotificationList = ({ type, emptyMessage = 'No new notifications.', resolveTarget, embedded = false }) => {
+// item 49 (REDESIGN-v2.md) — `pageSize` lets the dashboard's embedded panel request a shorter
+// page (6, matching the mock) without affecting the standalone Notification tabs' default of 25.
+const NotificationList = ({ type, emptyMessage = 'No new notifications.', resolveTarget, embedded = false, pageSize = 25 }) => {
   const navigate = useNavigate();
   // FR-4: `arrivals` ticks up whenever NotificationProvider's poll sees the unread count go up,
   // so this list picks up a new notification without a manual reload — see
@@ -37,7 +39,7 @@ const NotificationList = ({ type, emptyMessage = 'No new notifications.', resolv
   // role-scoped screen (PM/QC) once the list is paged. See ARCHITECTURE_REVIEW.md P1-3.
   const { rows: displayed, setRows, meta, page, setPage, loading, refetch } = usePaginatedList('/api/notifications', {
     params: { type },
-    pageSize: 25,
+    pageSize,
     refreshKey: arrivals,
   });
 
@@ -103,7 +105,7 @@ const NotificationList = ({ type, emptyMessage = 'No new notifications.', resolv
   const TitleTag = embedded ? 'h2' : 'h1';
 
   return (
-    <div className="notif-container">
+    <div className="notif-container wb-panel">
       {/* Not `danger`: Clear All only dismisses the caller's own copy, not a destructive
           delete of anyone else's — see the confirmation text below. */}
       {confirmClearAll && (
@@ -129,22 +131,20 @@ const NotificationList = ({ type, emptyMessage = 'No new notifications.', resolv
         </TitleTag>
 
         {/* ARCHITECTURE_REVIEW.md item 44 — the bulk actions moved from a footer row into the
-            panel header, as compact outline buttons; still shown only when there's something to
-            act on. Sentence case ("Mark all as read"/"Clear all"), not the old pill shape. */}
+            panel header. item 49 (REDESIGN-v2.md) — restyled onto the shared .wb-btn kit
+            (secondary/danger) instead of the bespoke .notif-action-btn-face chip. */}
         {!loading && hasRows && (
           <div className="notif-header-actions">
-            <button type="button" className="notif-action-btn" onClick={handleMarkAllAsRead}>
-              <span className="notif-action-btn-face">
-                <i className="fa-solid fa-check-double" aria-hidden="true"></i>
-                Mark all as read
-              </span>
+            <button type="button" className="wb-btn wb-btn--secondary" onClick={handleMarkAllAsRead}>
+              <i className="fa-solid fa-check-double" aria-hidden="true"></i>
+              Mark all as read
             </button>
             <button
               type="button"
-              className="notif-action-btn notif-action-btn-danger"
+              className="wb-btn wb-btn--danger"
               onClick={() => setConfirmClearAll(true)}
             >
-              <span className="notif-action-btn-face">Clear all</span>
+              Clear all
             </button>
           </div>
         )}
@@ -152,11 +152,11 @@ const NotificationList = ({ type, emptyMessage = 'No new notifications.', resolv
 
       {loading ? (
         /* item 44 — a skeleton shell instead of a bare "Loading notifications..." line, so the
-           panel keeps its real height and shape while the first page is in flight. */
+           panel keeps its real height and shape while the first page is in flight.
+           item 49 — the icon-tile skeleton is gone along with the icon box it stood in for. */
         <div className="notif-list">
           {[0, 1, 2].map((i) => (
             <div key={i} className="notif-skeleton-row" aria-hidden="true">
-              <div className="notif-skeleton-icon"></div>
               <div className="notif-skeleton-lines">
                 <div className="notif-skeleton-line notif-skeleton-line-title"></div>
                 <div className="notif-skeleton-line notif-skeleton-line-message"></div>
@@ -170,65 +170,52 @@ const NotificationList = ({ type, emptyMessage = 'No new notifications.', resolv
         </div>
       ) : hasRows ? (
         <div className="notif-list">
-          {displayed.map((notif) => {
-            // DESIGN.md: Font Awesome solid only — this used to be three bespoke inline SVGs.
-            // DESIGN.md §3 rule 10 — a non-text icon fill needs only the 3:1 bar; all three pass.
-            const iconMeta =
-              notif.type === 'project'
-                ? { icon: 'fa-file-lines', color: 'var(--color-info)' }
-                : notif.type === 'verification'
-                ? { icon: 'fa-circle-check', color: 'var(--color-success)' }
-                : { icon: 'fa-circle-info', color: 'var(--color-text-muted)' };
-
-            return (
-              <div key={notif.id} className={`notif-item ${notif.is_read ? 'read' : 'unread'}`}>
-                {/* ARCHITECTURE_REVIEW.md item 33 — clickableProps used to sit on this row, which
-                    contained the real delete <button> below: axe's nested-interactive rule flags
-                    a role="button" wrapping another focusable control. This inner
-                    display:contents wrapper carries the row's own click/keyboard behavior
-                    instead, leaving the delete button as a sibling rather than a descendant,
-                    with no change to the flex layout. */}
-                <div {...clickableProps(() => handleNotifClick(notif))} style={{ display: 'contents' }}>
-                  <div className="notif-icon-wrapper" style={{ color: iconMeta.color }}>
-                    <i className={`fa-solid ${iconMeta.icon}`} aria-hidden="true"></i>
+          {displayed.map((notif) => (
+            <div key={notif.id} className={`notif-item ${notif.is_read ? 'read' : 'unread'}`}>
+              {/* ARCHITECTURE_REVIEW.md item 33 — clickableProps used to sit on this row, which
+                  contained the real delete <button> below: axe's nested-interactive rule flags
+                  a role="button" wrapping another focusable control. This inner
+                  display:contents wrapper carries the row's own click/keyboard behavior
+                  instead, leaving the delete button as a sibling rather than a descendant,
+                  with no change to the flex layout.
+                  item 49 (REDESIGN-v2.md) — the leading icon box (iconMeta/.notif-icon-wrapper)
+                  is removed app-wide per the user's request: "pure notifications", text only. */}
+              <div {...clickableProps(() => handleNotifClick(notif))} style={{ display: 'contents' }}>
+                <div className="notif-content">
+                  <div className="notif-title-row">
+                    <span className="notif-title">{notif.title}</span>
+                    {!notif.is_read && <span className="unread-dot"></span>}
                   </div>
-
-                  <div className="notif-content">
-                    <div className="notif-title-row">
-                      <span className="notif-title">{notif.title}</span>
-                      {!notif.is_read && <span className="unread-dot"></span>}
-                    </div>
-                    <div className="notif-message">{notif.message}</div>
-                    {notif.created_at && (
-                      <time className="notif-time" dateTime={notif.created_at}>
-                        {formatDateTime(notif.created_at)}
-                      </time>
-                    )}
-                  </div>
+                  <div className="notif-message">{notif.message}</div>
+                  {notif.created_at && (
+                    <time className="notif-time" dateTime={notif.created_at}>
+                      {formatDateTime(notif.created_at)}
+                    </time>
+                  )}
                 </div>
-
-                <button
-                  className="notif-delete-btn"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDelete(notif.id);
-                  }}
-                  title="Delete Notification"
-                  aria-label={`Dismiss notification: ${notif.title}`}
-                >
-                  <i className="fa-solid fa-trash" aria-hidden="true"></i>
-                </button>
               </div>
-            );
-          })}
+
+              <button
+                className="notif-delete-btn"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDelete(notif.id);
+                }}
+                title="Delete Notification"
+                aria-label={`Dismiss notification: ${notif.title}`}
+              >
+                <i className="fa-solid fa-trash" aria-hidden="true"></i>
+              </button>
+            </div>
+          ))}
         </div>
       ) : (
-        <div className="notif-empty">
-          <div className="notif-empty-icon">
+        <div className="notif-empty wb-empty">
+          <div className="notif-empty-icon wb-empty__icon">
             <i className="fa-solid fa-bell" aria-hidden="true"></i>
           </div>
-          <div className="notif-empty-title">No notifications</div>
-          <div className="notif-empty-message">{emptyMessage}</div>
+          <div className="notif-empty-title wb-empty__title">No notifications</div>
+          <div className="notif-empty-message wb-empty__text">{emptyMessage}</div>
         </div>
       )}
 

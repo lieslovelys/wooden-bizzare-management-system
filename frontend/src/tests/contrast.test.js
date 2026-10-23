@@ -93,6 +93,16 @@ const PAIRS = [
   ['--color-text-inverse', '--color-warning', 4.5, '.wjo-filter-btn.for-qa\'s white text (item 35)'],
   ['--color-text-inverse', '--color-surface-dark', 4.5, 'idle sidebar nav item text (item 44)'],
   ['--color-accent-light', '--color-surface-dark', 3, '--color-focus-on-dark, the dark-sidebar keyboard focus ring (item 44)'],
+  // ARCHITECTURE_REVIEW.md item 49 (REDESIGN-v2.md) — --color-surface-page is the new app-wide
+  // page tint behind white cards (.role-layout/.page-content); every text/icon color already
+  // checked against --color-surface/--color-surface-cream above needs to clear it too, since
+  // some UI (e.g. a panel's own header) can sit directly on the page tint rather than on a card.
+  ['--color-text-muted', '--color-surface-page', 4.5, 'muted text directly on the page tint (item 49)'],
+  ['--color-text', '--color-surface-page', 4.5, 'body text directly on the page tint (item 49)'],
+  ['--color-danger', '--color-surface-page', 4.5, 'danger text directly on the page tint (item 49)'],
+  ['--color-accent-text', '--color-surface-page', 4.5, 'gold-as-text directly on the page tint (item 49)'],
+  ['--color-focus', '--color-surface-page', 3, 'the keyboard focus ring on the page tint (item 49)'],
+  ['--color-border-strong', '--color-surface', 3, 'the kit\'s input/secondary-button border on white (item 49)'],
 ];
 
 describe('design token contrast (DESIGN.md §3 rule 10)', () => {
@@ -111,12 +121,19 @@ describe('design token contrast (DESIGN.md §3 rule 10)', () => {
 // comfortably (they're darker) measured only ~4.26-4.28:1 for danger, under the 4.5:1 bar — hence
 // the lower 6% for danger specifically. A future opacity or token-value edit that breaks this
 // again fails here instead of waiting for another manual axe sweep to notice.
+//
+// ARCHITECTURE_REVIEW.md item 49 (REDESIGN-v2.md) — the v2 ComponentKit mock proposed moving
+// every one of these onto a shared --color-*-tint token and raising "assigned" to 14% (matching
+// --color-accent-tint, the active-sidebar-nav tint) and danger to 8%. Assigned's 14% is adopted
+// here (7.70:1, still comfortably over 4.5); danger's proposed 8% measured only ~4.42:1 — below
+// the bar — so danger stays at the existing 6% (--color-danger-tint, 4.55:1). See
+// ARCHITECTURE_REVIEW.md item 49 deviation 1 for the full writeup.
 const TINT_PAIRS = [
   ['--color-danger', '--color-danger-rgb', 0.06, '--color-surface', 4.5, 'danger-tint badges, e.g. .ph-badge-late/.status-pill.low (item 33)'],
   ['--color-success', '--color-success-rgb', 0.12, '--color-surface', 4.5, 'success-tint badges, e.g. .att-status-badge.present/.status-pill.good'],
   ['--color-info', '--color-info-rgb', 0.1, '--color-surface', 4.5, 'info-tint badges, e.g. .ph-badge-ontime/.status-badge.in-progress (item 33)'],
   ['--color-warning', '--color-warning-rgb', 0.1, '--color-surface', 4.5, 'warning-tint badges, e.g. .jol-priority.medium (item 33)'],
-  ['--color-accent-text', '--color-accent-rgb', 0.1, '--color-surface', 4.5, '.wb-status--assigned (item 35)'],
+  ['--color-accent-text', '--color-accent-rgb', 0.14, '--color-surface', 4.5, '.wb-status--assigned, 10% → 14% (item 49)'],
   ['--color-accent-light', '--color-accent-rgb', 0.14, '--color-surface-dark', 4.5, 'active sidebar nav item text on --color-accent-tint (item 44)'],
 ];
 

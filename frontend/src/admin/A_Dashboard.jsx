@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import InfoCard from '../globals/InfoCard';
 import AdminNotification from './AdminNotification';
+import ProfitTrendChart from './ProfitTrendChart';
+import UpcomingProjects from './UpcomingProjects';
 import { api } from '../api/client';
 import { formatCurrency } from '../utils/format';
+import '../css/admin.css';
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState({
@@ -41,10 +45,18 @@ const AdminDashboard = () => {
     <div className="admin-dashboard">
       {/* ARCHITECTURE_REVIEW.md item 44 — a compact page header replaces the old 6px gradient
           divider as the section separator; the month reuses the same dynamic value the profit
-          card's sub-line already computed. */}
-      <div className="admin-page-header">
-        <h1>Dashboard</h1>
-        <span className="admin-page-subtitle">{currentMonthYear}</span>
+          card's sub-line already computed.
+          item 49 (REDESIGN-v2.md) — restyled onto the shared .wb-page-header kit class and adds
+          the "Create project" shortcut the user asked for. */}
+      <div className="wb-page-header">
+        <div>
+          <h1 className="wb-page-header__title">Dashboard</h1>
+          <span className="wb-page-header__subtitle">{currentMonthYear}</span>
+        </div>
+        <Link to="/admin/create-project" className="wb-btn wb-btn--primary">
+          <i className="fa-solid fa-plus" aria-hidden="true"></i>
+          Create project
+        </Link>
       </div>
 
       <div className="admin-stats-grid">
@@ -69,7 +81,15 @@ const AdminDashboard = () => {
         />
       </div>
 
-      <AdminNotification embedded />
+      {/* item 49 — the dashboard v2 grid: profit trend + upcoming projects on the left,
+          notifications (icon-free, 6 per page) filling the right column. */}
+      <div className="admin-dash-grid">
+        <div className="admin-dash-grid-main">
+          <ProfitTrendChart />
+          <UpcomingProjects />
+        </div>
+        <AdminNotification embedded pageSize={6} />
+      </div>
     </div>
   );
 };

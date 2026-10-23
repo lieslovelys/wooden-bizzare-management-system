@@ -10,6 +10,7 @@ vi.mock('../api/client', () => ({
 
 import {
   formatCurrency,
+  formatCurrencyCompact,
   formatProjectId,
   formatWorkerId,
   formatDate,
@@ -33,6 +34,36 @@ describe('formatCurrency', () => {
     expect(formatCurrency(undefined)).toBe('₱0.00');
     expect(formatCurrency(null)).toBe('₱0.00');
     expect(formatCurrency('not a number')).toBe('₱0.00');
+  });
+});
+
+// ARCHITECTURE_REVIEW.md item 49 — the profit-trend chart's axis/bar labels (DashboardV2.dc.html's
+// own `compact()` helper, ported here).
+describe('formatCurrencyCompact', () => {
+  it('formats zero as a bare ₱0', () => {
+    expect(formatCurrencyCompact(0)).toBe('₱0');
+  });
+
+  it('formats a sub-thousand value as a rounded whole peso amount', () => {
+    expect(formatCurrencyCompact(950)).toBe('₱950');
+  });
+
+  it('formats thousands with a k suffix, one decimal', () => {
+    expect(formatCurrencyCompact(23000)).toBe('₱23k');
+    expect(formatCurrencyCompact(1500)).toBe('₱1.5k');
+  });
+
+  it('formats millions with an M suffix, two decimals', () => {
+    expect(formatCurrencyCompact(1234567.89)).toBe('₱1.23M');
+  });
+
+  it('prefixes a negative value with a minus sign', () => {
+    expect(formatCurrencyCompact(-23000)).toBe('−₱23k');
+  });
+
+  it('falls back to ₱0 for non-numeric input', () => {
+    expect(formatCurrencyCompact(undefined)).toBe('₱0');
+    expect(formatCurrencyCompact('not a number')).toBe('₱0');
   });
 });
 

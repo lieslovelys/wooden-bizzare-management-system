@@ -84,6 +84,21 @@ export const formatDateTime = (dateString) => {
   });
 };
 
+// ₱0 / ₱950 / ₱23k / ₱1.5k / ₱1.23M — ARCHITECTURE_REVIEW.md item 49: the dashboard's profit-trend
+// chart axis/bar labels need a short label, not formatCurrency's full ₱1,234,567.89. Mirrors
+// DashboardV2.dc.html's own `compact()` helper. A negative value gets a leading '−' (not a
+// hyphen-minus) ahead of the same magnitude formatting, for a loss month.
+export const formatCurrencyCompact = (n) => {
+  const value = Number(n);
+  if (!Number.isFinite(value)) return '₱0';
+  const sign = value < 0 ? '−' : '';
+  const abs = Math.abs(value);
+  if (abs === 0) return '₱0';
+  if (abs >= 1e6) return `${sign}₱${+(abs / 1e6).toFixed(2)}M`;
+  if (abs >= 1e3) return `${sign}₱${+(abs / 1e3).toFixed(1)}k`;
+  return `${sign}₱${Math.round(abs)}`;
+};
+
 // 8:30 AM — expects a "HH:MM[:SS]" string (as returned by Postgres `time` columns).
 export const formatTime12h = (t) => {
   if (!t) return '—';

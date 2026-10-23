@@ -31,12 +31,19 @@ const ToastProvider = ({ children }) => {
     };
   }, []);
 
+  // item 49 (REDESIGN-v2.md) — the variant is now shown by icon + color, not color alone
+  // (DESIGN.md §3 rule 10's "nothing by color alone" applies to this non-text indicator too).
+  const icon = toast.type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-check';
+
   return (
     <ToastContext.Provider value={showToast}>
       {children}
       {toast.visible && (
         <div className="wb-toast-container">
-          <div className={`wb-toast ${toast.type}`}>{toast.message}</div>
+          <div className={`wb-toast ${toast.type}`}>
+            <i className={`fa-solid ${icon} wb-toast-icon`} aria-hidden="true"></i>
+            <span className="wb-toast-message">{toast.message}</span>
+          </div>
         </div>
       )}
     </ToastContext.Provider>

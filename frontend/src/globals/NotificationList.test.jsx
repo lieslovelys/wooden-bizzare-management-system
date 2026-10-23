@@ -204,4 +204,22 @@ describe('NotificationList', () => {
     expect(await screen.findByText('No notifications')).toBeInTheDocument();
     expect(screen.getByText('No new tasks to verify.')).toBeInTheDocument();
   });
+
+  // ARCHITECTURE_REVIEW.md item 49 — "pure notifications": the per-type icon tile is gone
+  // app-wide, dashboard panel and standalone tabs alike.
+  it('renders no notification icon, dashboard panel or standalone tab', async () => {
+    api.get.mockResolvedValue(pageOf([PROJECT_NOTIF]));
+    const { container } = renderList({});
+    await screen.findByText('Project A');
+    expect(container.querySelector('.notif-icon-wrapper')).toBeNull();
+  });
+
+  // item 49 — the dashboard's embedded panel requests a shorter page (6) than the standalone
+  // tabs' default of 25.
+  it('a custom pageSize reaches the request', async () => {
+    api.get.mockResolvedValue(pageOf([PROJECT_NOTIF]));
+    renderList({ pageSize: 6 });
+    await screen.findByText('Project A');
+    expect(api.get).toHaveBeenCalledWith('/api/notifications?page=1&limit=6');
+  });
 });
