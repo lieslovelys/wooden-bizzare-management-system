@@ -86,22 +86,22 @@ const ProjectMaterials = ({ projectId }) => {
     };
 
     return (
-        <div className="jod-container jod-materials-container">
-            <div className="jod-progress-header">
-                <h3 className="jod-container-title">Materials Used</h3>
+        <div className="wb-panel jod-materials-panel">
+            <div className="wb-panel__header">
+                <h2 className="wb-panel__title">Materials used</h2>
             </div>
 
             {loading ? (
-                <p style={{ textAlign: 'center', padding: '20px' }}>Loading materials...</p>
+                <p className="wb-field__hint" style={{ textAlign: 'center', padding: '20px' }}>Loading materials...</p>
             ) : (
-                <table className="jod-table wb-card-table">
+                <table className="jod-table wb-card-table wb-table">
                     <thead>
                         <tr>
-                            <th>ITEM</th>
-                            <th>VARIANT</th>
-                            <th>USED</th>
-                            <th>RETURNED</th>
-                            <th>NET</th>
+                            <th>Item</th>
+                            <th>Variant</th>
+                            <th>Used</th>
+                            <th>Returned</th>
+                            <th>Net</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -121,38 +121,39 @@ const ProjectMaterials = ({ projectId }) => {
                 </table>
             )}
 
-            <form className="jod-form" onSubmit={handleSubmit}>
-                <div className="jod-form-grid">
-                    <div className="jod-form-group">
-                        <label htmlFor={`${id}-variant`}>Variant</label>
-                        <select id={`${id}-variant`} value={variantId} onChange={(e) => setVariantId(e.target.value)}>
+            <form className="wb-panel__body jod-form" onSubmit={handleSubmit}>
+                <div className="jod-form-grid jod-form-grid--3">
+                    <div className="wb-field">
+                        <label className="wb-field__label" htmlFor={`${id}-variant`}>Variant</label>
+                        <select id={`${id}-variant`} className="wb-input" value={variantId} onChange={(e) => setVariantId(e.target.value)}>
                             <option value="">-- Select a variant --</option>
                             {variantOptions.map((option) => (
                                 <option key={option.id} value={option.id}>{option.label}</option>
                             ))}
                         </select>
                     </div>
-                    <div className="jod-form-group">
-                        <label htmlFor={`${id}-quantity`}>Quantity</label>
+                    <div className="wb-field">
+                        <label className="wb-field__label" htmlFor={`${id}-quantity`}>Quantity</label>
                         <input
                             id={`${id}-quantity`}
                             type="number"
+                            className="wb-input"
                             min="1"
                             step="1"
                             value={quantity}
                             onChange={(e) => setQuantity(e.target.value)}
                         />
                     </div>
-                    <div className="jod-form-group">
-                        <label htmlFor={`${id}-action`}>Action</label>
-                        <select id={`${id}-action`} value={mode} onChange={(e) => setMode(e.target.value)}>
+                    <div className="wb-field">
+                        <label className="wb-field__label" htmlFor={`${id}-action`}>Action</label>
+                        <select id={`${id}-action`} className="wb-input" value={mode} onChange={(e) => setMode(e.target.value)}>
                             <option value="Used">Used</option>
                             <option value="Returned">Returned</option>
                         </select>
                     </div>
                 </div>
                 <div className="jod-form-actions">
-                    <button type="submit" className="jod-submit-btn" disabled={submitting}>
+                    <button type="submit" className="wb-btn wb-btn--primary" disabled={submitting}>
                         {mode === 'Used' ? 'Record Usage' : 'Record Return'}
                     </button>
                 </div>

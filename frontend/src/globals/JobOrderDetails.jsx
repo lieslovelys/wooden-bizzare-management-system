@@ -138,6 +138,9 @@ const JobOrderDetail = ({ jobId, onBack }) => {
     // Disable kung walang assigned OR kung mas mababa ang completed sa total assigned
     const isCompleteDisabled = totalAssigned === 0 || completedStages < totalAssigned;
 
+    const priorityLevel = projectDetails.priority_level || 'Normal';
+    const isHighPriority = priorityLevel === 'High';
+
     return (
         <div className="jod-wrapper">
             {showConfirmModal && (
@@ -150,69 +153,87 @@ const JobOrderDetail = ({ jobId, onBack }) => {
                 />
             )}
 
-            <button className="jod-back-btn" onClick={onBack}>← Back to Job Order List</button>
+            {/* item 49 (REDESIGN-v2.md) — the kit's ghost button, replacing the bespoke
+                .jod-back-btn link styling. */}
+            <button className="wb-btn wb-btn--ghost jod-back-btn" onClick={onBack}>
+                <i className="fa-solid fa-arrow-left" aria-hidden="true"></i>
+                Job orders
+            </button>
 
-            <div className="jod-container jod-overview-container">
-                <div className="jod-ov-header">
-                    <h1 className="jod-ov-id">{formatProjectId(projectDetails.id)}</h1>
-                    <p className="jod-ov-name">{projectDetails.project_name}</p>
-                </div>
-
-                <div className="jod-ov-info-bar">
-                    <div className="jod-ov-info-block">
-                        <span className="jod-ov-label">Date Ordered</span>
-                        <span className="jod-ov-value">{formatDate(projectDetails.date_ordered)}</span>
+            <div className="jod-header">
+                <div className="jod-header-main">
+                    <div className="jod-header-title-row">
+                        <span className="jod-id">{formatProjectId(projectDetails.id)}</span>
+                        <h1 className="jod-name">{projectDetails.project_name}</h1>
                     </div>
-                    <div className="jod-ov-info-block jod-ov-due">
-                        <span className="jod-ov-label">Due Date</span>
-                        <span className="jod-ov-value due-date">{formatDate(projectDetails.due_date)}</span>
-                    </div>
-                    <div className="jod-ov-info-block jod-ov-priority">
-                        <span className="jod-ov-label">Priority</span>
-                        <span className={`jod-ov-value priority-${projectDetails.priority_level ? projectDetails.priority_level.toLowerCase() : 'low'}`}>
-                            {projectDetails.priority_level || 'Normal'}
+                    <div className="jod-header-meta">
+                        <span className={`up-priority${isHighPriority ? ' up-priority--high' : ''}`}>
+                            <i className="fa-solid fa-flag" aria-hidden="true"></i>
+                            {priorityLevel} priority
                         </span>
+                        <span className="jod-header-due">Due {formatDate(projectDetails.due_date)}</span>
                     </div>
                 </div>
+            </div>
 
-                <div className="jod-ov-details-box">
-                    <div className="jod-ov-details-header">
-                        <span className="jod-ov-details-title">PROJECT DETAILS</span>
+            <div className="wb-panel jod-overview-panel">
+                <div className="wb-panel__body">
+                    <div className="jod-facts-grid">
+                        <div className="jod-fact">
+                            <span className="wb-field__hint">Date ordered</span>
+                            <span className="jod-fact-value">{formatDate(projectDetails.date_ordered)}</span>
+                        </div>
+                        <div className="jod-fact">
+                            <span className="wb-field__hint">Due date</span>
+                            <span className="jod-fact-value">{formatDate(projectDetails.due_date)}</span>
+                        </div>
+                        <div className="jod-fact">
+                            <span className="wb-field__hint">Priority</span>
+                            <span className="jod-fact-value">{priorityLevel}</span>
+                        </div>
                     </div>
-                    <div className="jod-ov-scroll-area">
+
+                    <div className="jod-details-section">
+                        <span className="jod-details-title">Project details</span>
                         {projectDetails.variables && projectDetails.variables.length > 0 ? (
-                            projectDetails.variables.map(variable => (
-                                <div key={variable.id} className="jod-ov-detail-item">
-                                    <strong>{variable.variable_name}</strong>
-                                    <p>{variable.variable_detail}</p>
-                                </div>
-                            ))
+                            <div className="jod-details-list">
+                                {projectDetails.variables.map(variable => (
+                                    <div key={variable.id} className="jod-ov-detail-item">
+                                        <strong>{variable.variable_name}</strong>
+                                        <p>{variable.variable_detail}</p>
+                                    </div>
+                                ))}
+                            </div>
                         ) : (
-                            <p style={{ fontSize: '12px', fontStyle: 'italic', color: 'var(--color-text-muted)' }}>No variables assigned.</p>
+                            <p className="wb-field__hint" style={{ fontStyle: 'italic' }}>No variables assigned.</p>
                         )}
                     </div>
                 </div>
             </div>
 
-            <div className="jod-container jod-progress-container">
-                <div className="jod-progress-header">
-                    <h3 className="jod-container-title">Project Progress</h3>
-                    <div className="jod-progress-bar-wrapper">
-                        <div className="jod-progress-bar">
-                            <div className="jod-progress-fill" style={{ width: `${progressPercent}%` }}></div>
-                        </div>
-                        <span className="jod-progress-text">{completedStages}/{totalAssigned}</span>
+            <div className="wb-panel jod-progress-panel">
+                <div className="wb-panel__header">
+                    <div>
+                        <h2 className="wb-panel__title">Project progress</h2>
+                        <span className="wb-panel__subtitle">{completedStages} of {totalAssigned} approved</span>
                     </div>
                 </div>
-                
-                <table className="jod-table wb-card-table">
+
+                <div className="jod-progress-bar-wrapper">
+                    <div className="jod-progress-bar">
+                        <div className="jod-progress-fill" style={{ width: `${progressPercent}%` }}></div>
+                    </div>
+                    <span className="jod-progress-text">{completedStages}/{totalAssigned}</span>
+                </div>
+
+                <table className="jod-table wb-card-table wb-table">
                     <thead>
                         <tr>
-                            <th>STAGE</th>
-                            <th>WORKER</th>
-                            <th>START DATE</th>
-                            <th>DATE COMPLETED</th>
-                            <th>STATUS</th>
+                            <th>Stage</th>
+                            <th>Worker</th>
+                            <th>Start date</th>
+                            <th>Date completed</th>
+                            <th>Status</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -222,7 +243,7 @@ const JobOrderDetail = ({ jobId, onBack }) => {
                                 <td data-label="Worker">{assignment.first_name} {assignment.last_name}</td>
                                 <td data-label="Start Date">{formatDate(assignment.start_date)}</td>
                                 <td data-label="Date Completed">{assignment.date_completed ? formatDate(assignment.date_completed) : '-'}</td>
-                                <td data-label="Status"><span className={`jod-status ${taskStatusClass(assignment.status)}`}>{assignment.status}</span></td>
+                                <td data-label="Status"><span className={`jod-status wb-badge ${taskStatusClass(assignment.status)}`}>{assignment.status}</span></td>
                             </tr>
                         ))}
                         {assignments.length === 0 && (
@@ -231,22 +252,17 @@ const JobOrderDetail = ({ jobId, onBack }) => {
                     </tbody>
                 </table>
 
-                <div className="jod-complete-wrapper" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
-                    <button 
-                        onClick={() => setShowConfirmModal(true)} 
-                        className="jod-complete-btn" 
+                <div className="wb-panel__footer jod-complete-wrapper">
+                    <button
+                        onClick={() => setShowConfirmModal(true)}
+                        className="wb-btn wb-btn--primary jod-complete-btn"
                         disabled={isCompleteDisabled}
-                        style={{ 
-                            opacity: isCompleteDisabled ? 0.5 : 1, 
-                            cursor: isCompleteDisabled ? 'not-allowed' : 'pointer',
-                            width: '100%' // In-adjust para maging pantay sa design
-                        }}
                     >
                         Mark as Completed
                     </button>
                     {/* INFO TEXT: Para malaman ni PM kung bakit disabled yung button */}
                     {isCompleteDisabled && totalAssigned > 0 && (
-                        <span style={{ fontSize: '12px', color: 'var(--color-danger)', fontStyle: 'italic' }}>
+                        <span className="wb-field__hint" style={{ color: 'var(--color-danger)', fontStyle: 'italic' }}>
                             *All assigned stages must be Approved before completing.
                         </span>
                     )}
@@ -255,15 +271,15 @@ const JobOrderDetail = ({ jobId, onBack }) => {
 
             <ProjectMaterials projectId={jobId} />
 
-            <div className="jod-container jod-assign-container">
-                <div className="jod-assign-header">
-                    <h3 className="jod-container-title-white">Assign Worker</h3>
+            <div className="wb-panel jod-assign-panel">
+                <div className="wb-panel__header">
+                    <h2 className="wb-panel__title">Assign worker</h2>
                 </div>
-                <form className="jod-form" onSubmit={handleAssign}>
+                <form className="wb-panel__body jod-form" onSubmit={handleAssign}>
                     <div className="jod-form-grid">
-                        <div className="jod-form-group">
-                            <label htmlFor={`${id}-stage`}>Stage</label>
-                            <select id={`${id}-stage`} name="stage" value={formData.stage} onChange={handleChange}>
+                        <div className="wb-field">
+                            <label className="wb-field__label" htmlFor={`${id}-stage`}>Stage</label>
+                            <select id={`${id}-stage`} name="stage" className="wb-input" value={formData.stage} onChange={handleChange}>
                                 {ALL_STAGES.map(stageName => (
                                     <option key={stageName} value={stageName} disabled={assignedStages.includes(stageName)}>
                                         {stageName} {assignedStages.includes(stageName) ? '(Assigned)' : ''}
@@ -272,9 +288,9 @@ const JobOrderDetail = ({ jobId, onBack }) => {
                             </select>
                         </div>
 
-                        <div className="jod-form-group">
-                            <label htmlFor={`${id}-workerId`}>Worker</label>
-                            <select id={`${id}-workerId`} name="workerId" value={formData.workerId} onChange={handleChange}>
+                        <div className="wb-field">
+                            <label className="wb-field__label" htmlFor={`${id}-workerId`}>Worker</label>
+                            <select id={`${id}-workerId`} name="workerId" className="wb-input" value={formData.workerId} onChange={handleChange}>
                                 {filteredWorkers.length > 0 ? (
                                     filteredWorkers.map(worker => (
                                         <option key={worker.user_id} value={worker.user_id}>
@@ -287,17 +303,17 @@ const JobOrderDetail = ({ jobId, onBack }) => {
                             </select>
                         </div>
 
-                        <div className="jod-form-group">
-                            <label htmlFor={`${id}-startDate`}>Start Date</label>
-                            <input id={`${id}-startDate`} type="date" name="startDate" value={formData.startDate} onChange={handleChange} required min={today} />
+                        <div className="wb-field">
+                            <label className="wb-field__label" htmlFor={`${id}-startDate`}>Start date</label>
+                            <input id={`${id}-startDate`} type="date" name="startDate" className="wb-input" value={formData.startDate} onChange={handleChange} required min={today} />
                         </div>
-                        <div className="jod-form-group">
-                            <label htmlFor={`${id}-dueDate`}>Due Date</label>
-                            <input id={`${id}-dueDate`} type="date" name="dueDate" value={formData.dueDate} onChange={handleChange} required min={formData.startDate || today} />
+                        <div className="wb-field">
+                            <label className="wb-field__label" htmlFor={`${id}-dueDate`}>Due date</label>
+                            <input id={`${id}-dueDate`} type="date" name="dueDate" className="wb-input" value={formData.dueDate} onChange={handleChange} required min={formData.startDate || today} />
                         </div>
                     </div>
                     <div className="jod-form-actions">
-                        <button type="submit" className="jod-submit-btn" disabled={!formData.workerId || assignedStages.includes(formData.stage)}>
+                        <button type="submit" className="wb-btn wb-btn--primary" disabled={!formData.workerId || assignedStages.includes(formData.stage)}>
                             Assign
                         </button>
                     </div>
