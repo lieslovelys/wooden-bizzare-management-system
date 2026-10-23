@@ -19,6 +19,22 @@ set -a
 . ./.env
 set +a
 
+# Found by item 42's first real deploy (nothing to run this against yet, on a brand-new VPS):
+# `docker compose exec` failing here used to go unnoticed — it's the non-last command in a pipe
+# to `gzip`, so `set -e` never saw its exit code, and `gzip` happily wrote a small, valid-looking,
+# but EMPTY gzip file, with no error at all. Guard explicitly instead of relying on that pipe.
+# No container for `db` at all (`-a`, any state) means this stack has never been deployed yet —
+# that's deploy.sh's own first-ever run, not a failure, so skip cleanly. A container that EXISTS
+# but isn't currently running is a real problem (the app is down) and should fail loudly instead.
+if [ -z "$(docker compose ps -a -q db 2>/dev/null)" ]; then
+    echo "backup.sh: no 'db' container exists yet (nothing has been deployed here before) — nothing to back up. Skipping."
+    exit 0
+fi
+if [ -z "$(docker compose ps -q db 2>/dev/null)" ]; then
+    echo "backup.sh: 'db' container exists but isn't running — investigate before trusting any backup from this host." >&2
+    exit 1
+fi
+
 mkdir -p deploy/backups
 STAMP=$(date +%Y%m%d_%H%M%S)
 OUT="deploy/backups/${SQL_DB}_${STAMP}.sql.gz"

@@ -2457,6 +2457,19 @@ Not urgent, but each of these increases the cost of every future change until ad
       gap between stopping the old stack and this same docs push triggering the first real,
       fully-automated deploy through the normal CI path (no manual GHCR login on the VPS at all;
       the first deploy used that run's own short-lived `GITHUB_TOKEN`, same as every deploy since).
+    - **A real bug, found by this actually being the first time `deploy.sh` ever ran against a
+      brand-new VPS with nothing deployed yet:** the first deploy failed — `deploy.sh`'s pre-deploy
+      `backup.sh` call tried to `docker compose exec` a `db`/`backend` that didn't exist yet. Worse
+      than just failing loudly: the database-dump line pipes `docker compose exec ... pg_dump`
+      into `gzip`, so a failing `exec` (service not running) was the *non-last* command in that
+      pipeline — `set -e` only sees the last command's exit status, and `gzip` happily wrote a
+      small, valid-looking, but **empty** gzip file with no error reported at all. That's a latent
+      silent-corruption bug in `backup.sh` itself, not specific to `deploy.sh` — it would have hit
+      a cron-triggered nightly backup too, if `db` ever happened to be down at 2am. Fixed by
+      checking explicitly: no `db` container at all (any state) means this stack has never been
+      deployed before, which isn't an error — skip cleanly. A `db` container that exists but isn't
+      currently running is treated as the real problem it is, and fails loudly instead of writing
+      a corrupt file silently.
     - **Still open after this:** the overtime rule (client), a real off-box backup sync beyond
       `deploy.sh`'s own pre-deploy local backup (infra), a real screen-reader/device pass (human +
       devices), and the declined role-shell consolidation. TLS/domain/VPS latency are resolved;
