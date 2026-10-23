@@ -32,9 +32,15 @@ import path from 'node:path';
 // ARCHITECTURE_REVIEW.md item 45: Playfair Display comes back, but deliberately narrow — only
 // the "The Wooden Bizarre" brand wordmark, behind a second token, --font-brand, not a general
 // heading font (item 43's "one family, Geist, everywhere" still holds for everything else). The
-// EXPECTED_BRAND_SELECTORS check below pins exactly which three selectors may use it, so a
-// future "let's make every heading Playfair again" change has to edit this test on purpose
-// rather than drift into it unnoticed.
+// EXPECTED_BRAND_SELECTORS check below pins exactly which selectors may use it, so a future
+// "let's make every heading Playfair again" change has to edit this test on purpose rather than
+// drift into it unnoticed.
+//
+// ARCHITECTURE_REVIEW.md item 46: the Login page's hero tagline joins the same exception (the
+// user asked for it back too, after seeing it next to the now-restored wordmark) — one more
+// entry in EXPECTED_BRAND_SELECTORS, not a new token. Its sibling, .hero-subtext, is deliberately
+// left alone: it never had its own font-family in the first place, so there's no "original" to
+// revert there.
 const thisFile = fileURLToPath(import.meta.url);
 const frontendRoot = path.join(path.dirname(thisFile), '..', '..');
 const srcDir = path.join(frontendRoot, 'src');
@@ -54,12 +60,14 @@ const FONT_FAMILY_DECLARATION = /font-family\s*:\s*([^;]+);/g;
 
 const ALLOWED_VALUES = new Set(['var(--font-sans)', 'var(--font-brand)', 'inherit']);
 
-// Item 45 — the only selectors allowed to use --font-brand. All three render the literal brand
-// name "The Wooden Bizarre"; see Login.jsx and Navbar.jsx.
+// Items 45-46 — the only selectors allowed to use --font-brand: the three that render the
+// literal brand name "The Wooden Bizarre" (Login.jsx and Navbar.jsx), plus the Login page's hero
+// tagline, a deliberate one-off branding exception alongside them.
 const EXPECTED_BRAND_SELECTORS = new Set([
   '.login-layout .brand-title h2',
   '.title-group h3',
   '.mobile-topbar-title',
+  '.login-layout .hero-text h1',
 ]);
 
 // Matches a whole CSS rule (selector + declaration block) so a --font-brand declaration can be
@@ -68,7 +76,7 @@ const EXPECTED_BRAND_SELECTORS = new Set([
 // FONT_FAMILY_DECLARATION regex makes the same non-nesting assumption.
 const CSS_RULE = /([^{}]+)\{([^{}]*)\}/g;
 
-describe('font-family consistency (ARCHITECTURE_REVIEW.md items 36, 43, 45)', () => {
+describe('font-family consistency (ARCHITECTURE_REVIEW.md items 36, 43, 45, 46)', () => {
   it('every font-family declaration in src/css is one of the app\'s font tokens, or inherit', () => {
     const offenders = listFiles(cssDir, ['.css']).flatMap((filePath) => {
       const css = readFileSync(filePath, 'utf-8');
@@ -82,7 +90,7 @@ describe('font-family consistency (ARCHITECTURE_REVIEW.md items 36, 43, 45)', ()
     expect(offenders, `an unexpected font-family value was found: ${offenders.join(', ')}`).toEqual([]);
   });
 
-  it('only the brand wordmark\'s three selectors use --font-brand', () => {
+  it('only the expected brand/hero selectors use --font-brand', () => {
     const foundSelectors = new Set();
     for (const filePath of listFiles(cssDir, ['.css'])) {
       // Strip comments first — CSS_RULE's selector group otherwise swallows a comment

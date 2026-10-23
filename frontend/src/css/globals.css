@@ -77,10 +77,10 @@
      future swap is a one-line change here. main.jsx imports the matching self-hosted weights. */
   --font-sans: 'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif;
 
-  /* ARCHITECTURE_REVIEW.md item 45 — deliberately narrow: the "The Wooden Bizarre" brand
-     wordmark only (the three sites tests/fontConsistency.test.js enumerates), not a general
-     heading font. Item 43's "one family, Geist, for everything" decision still holds for
-     everything else — this is a branding exception, not a reversal. */
+  /* ARCHITECTURE_REVIEW.md items 45-46 — deliberately narrow: the "The Wooden Bizarre" brand
+     wordmark and the Login page's hero tagline (the four sites tests/fontConsistency.test.js
+     enumerates), not a general heading font. Item 43's "one family, Geist, for everything"
+     decision still holds for everything else — this is a branding exception, not a reversal. */
   --font-brand: 'Playfair Display', serif;
 
   /* ARCHITECTURE_REVIEW.md item 44 — the Claude Design redesign's scale, used by the Admin
@@ -229,8 +229,11 @@
   animation: fadeInUp 0.8s ease-out 0.3s forwards; /* Delayed entrance */
 }
 
+/* ARCHITECTURE_REVIEW.md item 46 — --font-brand, not --font-sans: the hero tagline joins the
+   wordmark as a deliberate branding exception. .hero-subtext below is untouched — it never had
+   its own font-family (always inherited the app default), so there's no "original" to revert. */
 .login-layout .hero-text h1 {
-  font-family: var(--font-sans);
+  font-family: var(--font-brand);
   font-size: 4rem;
   line-height: 1.15;
   margin: 0 0 25px 0;
