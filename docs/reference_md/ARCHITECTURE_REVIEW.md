@@ -2470,6 +2470,22 @@ Not urgent, but each of these increases the cost of every future change until ad
       deployed before, which isn't an error — skip cleanly. A `db` container that exists but isn't
       currently running is treated as the real problem it is, and fails loudly instead of writing
       a corrupt file silently.
+    - **A real, user-visible bug, found by actually curling the live site after the first deploy
+      succeeded — not by CI, which this exposed as a real gap in its own smoke test.**
+      `/healthz` and `/readyz` both returned the SPA's `index.html` instead of their real JSON
+      body. A bare, matcher-less `file_server`/`try_files` outside of any `handle` block is NOT
+      excluded by an earlier `handle` match — Caddy's fixed default directive ordering runs
+      `file_server`/`try_files` ahead of `handle` regardless of source order, so every one of
+      `frontend/Caddyfile`'s routes was silently falling through to the SPA fallback (still a
+      `200`, just the wrong body). CI's own smoke test never caught this, because
+      `curl -fsS` only checks for a `2xx` status — the SPA's `200` passed that check just as well
+      as the real endpoint would have. Fixed by putting the static-file fallback in its own
+      trailing, matcher-less `handle` block too, so all four routes are one real
+      mutually-exclusive, first-match-wins group instead of three `handle`s plus three
+      independent bare directives — the idiomatic Caddy pattern for this. The smoke test itself
+      was also strengthened at the same time: it now asserts on `/healthz`'s/`/readyz`'s real
+      JSON body and that `/` actually contains the SPA's root `<div>`, not just a passing status
+      code, so this class of bug fails CI next time instead of reaching production unnoticed.
     - **Still open after this:** the overtime rule (client), a real off-box backup sync beyond
       `deploy.sh`'s own pre-deploy local backup (infra), a real screen-reader/device pass (human +
       devices), and the declined role-shell consolidation. TLS/domain/VPS latency are resolved;

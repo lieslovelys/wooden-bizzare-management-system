@@ -102,11 +102,14 @@ jobs:
         run: docker run --rm --entrypoint caddy ${{ env.PROXY_IMAGE }}:${{ github.sha }} validate --config /etc/caddy/Caddyfile --adapter caddyfile
       - name: Bring up the compose stack
         run: IMAGE_TAG=${{ github.sha }} docker compose up -d --wait
+      # Asserts on the real response body, not just a 2xx status — a status-only check already
+      # missed a real bug once (item 42): a Caddyfile routing mistake made /healthz and /readyz
+      # silently fall through to the SPA's index.html, which is also a 200.
       - name: Smoke test through the proxy
         run: |
-          curl -fsS http://localhost/healthz
-          curl -fsS http://localhost/readyz
-          curl -fsS http://localhost/ -o /dev/null
+          [ "$(curl -fsS http://localhost/healthz)" = '{"status":"ok"}' ]
+          [ "$(curl -fsS http://localhost/readyz)" = '{"status":"ready"}' ]
+          curl -fsS http://localhost/ | grep -q '<div id="root">'
       - name: Compose logs (on failure)
         if: failure()
         run: docker compose logs

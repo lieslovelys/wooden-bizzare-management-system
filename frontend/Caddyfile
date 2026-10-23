@@ -21,6 +21,16 @@
 
 	# server.js's `trust proxy` setting (P1a) reads X-Forwarded-* to decide `secure` cookie
 	# behavior correctly — Caddy sets these reverse-proxy headers automatically.
+	#
+	# IMPORTANT, found by actually curling /healthz/readyz against a real deploy rather than just
+	# checking their status code (which is all the CI smoke test's `curl -fsS` ever checked): a
+	# bare top-level `file_server`/`try_files` outside of any `handle` is NOT excluded by an
+	# earlier `handle` match — Caddy's fixed default directive ordering runs `file_server`/
+	# `try_files` ahead of `handle` regardless of source order, so every one of these routes was
+	# silently falling through to the SPA's index.html (still a 200, just the wrong body) instead
+	# of ever reaching `reverse_proxy`. The fix: put the static-file fallback in its own trailing,
+	# matcher-less `handle` block too, so all four routes below are one real mutually-exclusive,
+	# first-match-wins group instead of three `handle`s plus three independent bare directives.
 	handle /api/* {
 		reverse_proxy backend:8080
 	}
@@ -34,16 +44,18 @@
 		reverse_proxy backend:8080
 	}
 
-	root * /srv
-	# Long-cache hashed build assets; never cache index.html itself, or a redeploy won't be
-	# picked up until the cache expires.
-	@hashed path *.js *.css *.png *.jpg *.jpeg *.gif *.svg *.ico *.woff *.woff2 *.ttf *.eot
-	header @hashed Cache-Control "public, immutable, max-age=31536000"
-	header /index.html Cache-Control "no-cache"
+	# Everything else: the built SPA.
+	handle {
+		root * /srv
+		# Long-cache hashed build assets; never cache index.html itself, or a redeploy won't be
+		# picked up until the cache expires.
+		@hashed path *.js *.css *.png *.jpg *.jpeg *.gif *.svg *.ico *.woff *.woff2 *.ttf *.eot
+		header @hashed Cache-Control "public, immutable, max-age=31536000"
+		header /index.html Cache-Control "no-cache"
 
-	# SPA fallback.
-	try_files {path} /index.html
-	file_server
+		try_files {path} /index.html
+		file_server
+	}
 }
 
 # www redirects to the root domain. Inert under the default :80 address (no host to match), so
