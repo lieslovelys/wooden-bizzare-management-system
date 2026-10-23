@@ -6,11 +6,16 @@ human: this is the brief, `DESIGN.md` is the binding rulebook it's constrained b
 **Status: brief — not yet implemented.** ARCHITECTURE_REVIEW.md item 51 (this brief).
 Implementation will be its own later item, the same two-phase flow as items 48 → 49.
 
+This brief covers **two things**: the Account Creation screen (§5), and a new piece of **app-wide
+shared chrome** — a top bar with a breadcrumb and the user's identity — mocked on this screen
+first (§6) but meant to render on every role's pages.
+
 This app already has a shipped design system: Claude Design project
 `74c0aaa0-cdb0-4957-b893-5957f7cf422c` (`Admin Dashboard Redesign.dc.html` — `DashboardV2`,
 `SidebarV2`, `ComponentKit`, `JobOrderDetail`). **Open that project and treat it as the visual
 reference before proposing anything new.** This brief is not a fresh design round — it's asking
-for one more screen to be brought onto a language that's already decided (§2).
+for one more screen, plus one new piece of shared chrome, to be brought onto a language that's
+already decided (§2).
 
 **Attach these screenshots alongside this file when you hand it off:**
 - the Account Creation tab, both its plain-role view and its Worker view (the extra "Job
@@ -18,6 +23,10 @@ for one more screen to be brought onto a language that's already decided (§2).
 - the Account List tab
 - the delete-account confirmation modal
 - the Admin dashboard, as the live reference for the already-shipped look
+- **a reference screenshot of a top bar from another product** (attached separately) showing a
+  breadcrumb on the left and a user/alerts area on the right. It's a **layout reference only** —
+  its blue color scheme and its sidebar's grouped-section headings don't apply here; §6 below
+  specifies what to actually build against this app's own tokens and data.
 
 ## 1. What this app and screen are
 
@@ -36,6 +45,11 @@ Admin-only and has two tabs:
 (`admin/AddWorkerModal.jsx`) can also create a Worker account, and shares its job-info fields
 with this form (`admin/WorkerJobFields.jsx`, `globals/PhotoUpload.jsx`). Restyling that modal is a
 separate, later screen — not this brief.
+
+**The scope also includes a new top bar (§6)** that isn't specific to this screen — it's shared
+chrome every role's pages will render, above `.page-content`, next to the existing dark sidebar
+(`globals/Navbar.jsx`). It's specified here, and mocked on this screen, because this is the
+screen currently being brought onto the kit — not because it's an Account-Creation-only feature.
 
 ## 2. The design language is already decided. Reuse it, don't re-propose it.
 
@@ -265,7 +279,94 @@ Columns: ID (`formatted_id`), Name (`full_name`), Role (badge), Username, and a 
 - Visible focus rings on: each tab, every field, the submit button, and every row's delete
   button.
 
-## 6. Out of scope / "future, needs backend"
+## 6. App-wide top bar (new shared chrome)
+
+New shared chrome, specified here and mocked on this screen, but meant to render above
+`.page-content` on **every** role's pages — not an Account-Creation-only feature. It's based on a
+layout reference the user supplied (see the header's "attach" list) — reuse only its layout idea
+(a breadcrumb on the left, identity/alerts on the right); its colors and its sidebar's grouped
+sections don't apply to this app.
+
+**This also changes the sidebar.** The decision is to **move** the sidebar's existing user tile
+into this bar, not duplicate it — `globals/Navbar.jsx`'s `.user-profile` block (the avatar,
+`userRole` label, and full name, pinned at the sidebar's top since item 50) goes away, and that
+identity now lives only in the top bar. The sidebar's nav list starts right under the logo header
+once the tile is gone. **Logout is unaffected** — it stays in the sidebar's pinned footer
+(item 50), regardless of this change.
+
+### Placement (desktop/tablet)
+- A light bar (`--color-surface` background, `--color-border` bottom hairline) spanning the width
+  of the content column — to the right of the dark sidebar, above `.page-content`.
+- It stays visible while the page scrolls underneath it (sticky, or structurally outside the
+  scroll region — propose which, and say so).
+- Use `--topbar-height` (56px) as its height unless you have a stated reason not to.
+
+### Left: breadcrumb
+- A `<nav aria-label="Breadcrumb">` with an ordered list of links, the last one plain text with
+  `aria-current="page"`.
+- Trail: **role** (links to that role's dashboard) **/ current page** (the sidebar tab's own
+  name, e.g. "Account Creation") **/ sub-tab** — the last segment only appears on a screen that
+  has its own internal tabs (e.g. "Account list", once §5's tabs ship).
+  - This is **not** the reference screenshot's fixed "Section / Overview / Page" shape — this
+    app's sidebars are flat tab lists with no grouping, so two or three segments is normal,
+    depending on the page.
+  - Every segment is real data already in the app: `userRole` from `context/UserContext.js`, and
+    each tab's own `name` string from that role's tabs array (e.g. `Admin.jsx`'s `adminTabs`).
+    Don't invent a naming scheme that doesn't match those strings.
+- Separators are decorative (`aria-hidden`).
+- A long page name must truncate gracefully rather than wrap the bar to a second line or force
+  horizontal scroll.
+
+### Right: notifications button
+- A `.wb-btn--secondary`-or-ghost button: a Font Awesome solid bell plus a "Notifications" label
+  at desktop width; it may collapse to icon-only at narrower widths, but needs an accessible name
+  either way (e.g. `aria-label="Notifications, 3 unread"`).
+- Links to that role's existing Notification tab (e.g. `/admin/notification`,
+  `/production-manager/notifications`, `/quality-check/notifications`,
+  `/worker/notifications`).
+- The unread count is `useNotifications().unreadCount` (`context/NotificationContext.js`) — the
+  same source the sidebar's own tab badge already reads. Don't invent a second count.
+- Unread must not be color-only — show a number (capping the same way the sidebar badge does,
+  "99+") or at minimum an accessible label naming the state, not just a colored dot.
+- **Not shown for Inventory Staff** — that role has no `NotificationProvider`/Notification tab at
+  all (`Inventory.jsx`), so there's nothing for this button to link to.
+- Propose whether the sidebar's own Notification-tab badge stays alongside this (default: yes,
+  it stays — this button is a shortcut, not a replacement for the tab).
+
+### Right: identity chip (moved from the sidebar)
+- A circular avatar with initials (first + last initial, falling back to the role abbreviation —
+  the same rule `Navbar.jsx`'s `getInitials` already implements), the full name, and the role
+  beneath it — matching the reference screenshot's layout, not its colors.
+- Display-only by default. If you propose turning it into a menu (e.g. with Logout inside it),
+  flag that explicitly as a deviation — **Logout stays in the sidebar footer either way**
+  (item 50); don't remove it from there even if you also add it to a menu here.
+
+### Mobile (≤768px)
+The existing dark `.mobile-topbar` (hamburger, logo, wordmark — `Navbar.jsx`) stays; this isn't
+replacing it. Propose how the breadcrumb, notifications, and identity chip fit within
+`--topbar-height` at 360px with no horizontal scroll. Two acceptable directions, pick one (or
+propose a better one):
+1. Fold an icon-only bell and an avatar-only chip into the right side of the existing dark bar,
+   and drop the breadcrumb to just the current page's name (or omit it).
+2. Add a second, thin light strip beneath the dark bar carrying the current page name.
+
+Either way, the mobile drawer must still show who's logged in somewhere once the tile leaves the
+sidebar proper — a minimal name/role line in the drawer's own header is enough if the avatar chip
+itself isn't visible on mobile.
+
+### Constraints
+Same as §4: ≥44px hit areas, a visible focus-visible ring on every crumb link and the bell
+(`--focus-ring` on the light bar; `--color-focus-on-dark` on the dark mobile bar), nothing
+hover-only, gold never as text on this light surface, no new hex literals, no gradients.
+
+### States to design
+- Zero unread, a few unread, 99+ unread.
+- A long name and a long role label ("Production Manager").
+- Inventory Staff (no bell at all).
+- A breadcrumb with and without the third (sub-tab) segment.
+- Focus-visible on each breadcrumb link and the bell.
+
+## 7. Out of scope / "future, needs backend"
 
 List these as ideas, don't design them against invented data:
 - Editing an existing account.
@@ -279,8 +380,10 @@ List these as ideas, don't design them against invented data:
   a backend change — don't design it as if the backend already supports it.
 - Restyling Worker List's own Add Worker / Edit Worker modals, even though they share
   `WorkerJobFields.jsx` and `PhotoUpload.jsx` with this form.
+- A global search field in the top bar.
+- A role or account switcher in the top bar.
 
-## 7. Implementation mapping
+## 8. Implementation mapping
 
 So the output translates back into real code without guesswork:
 
@@ -293,6 +396,14 @@ So the output translates back into real code without guesswork:
 | Account list | `frontend/src/admin/AccountList.jsx` | `.account-list .al-*` in `admin.css` |
 | Delete confirm | `frontend/src/globals/ConfirmModal.jsx` | already on the kit |
 | Tabs (new) | new kit component | new `.wb-tabs*` rules, `globals.css`'s "COMPONENT KIT" section |
+| Top bar (new) | new shared component, e.g. `globals/TopBar.jsx`, rendered in each role shell's `.role-layout` | new `.wb-topbar*` rules, "COMPONENT KIT" section |
+| Breadcrumb data | each role shell's tabs array (e.g. `Admin.jsx`'s `adminTabs`) + `useLocation` | — |
+| Identity chip | logic moved from `Navbar.jsx`'s `.user-profile`/`getInitials` | moves from `globals.css`'s sidebar block to the new topbar rules |
+| Unread count | `context/NotificationContext.js`'s `useNotifications()` | — |
+
+Note for implementers: `globals/Navbar.test.jsx` currently asserts the initials/role/name text
+via the sidebar tile (`it('shows initials ... and the name from UserContext')`) — that assertion
+moves with the chip when this is implemented, it isn't deleted.
 
 **Data sources** (already implemented):
 - `POST /api/users` — Admin only, every role except Worker.
@@ -301,15 +412,19 @@ So the output translates back into real code without guesswork:
 - `DELETE /api/users/:id` — Admin only; returns `400` "You cannot delete your own account" if the
   caller targets their own row. Cover this as an error-toast case, or propose hiding the delete
   action on the caller's own row.
+- `useNotifications().unreadCount` — every role except Inventory Staff.
 
-## 8. Deliverables requested
+## 9. Deliverables requested
 
 - Mockups at **1366px** (desktop), **1024px** (tablet), and **360px** (mobile):
-  - the Create tab, both the non-Worker and the Worker variant
-  - the List tab
+  - the Create tab, both the non-Worker and the Worker variant, **with the new top bar**
+  - the List tab, with the top bar
   - the List tab at 360px in its card-table form
+  - **the Admin dashboard with the top bar**, to show it's shared chrome, not a one-screen add-on
+  - the sidebar at all three breakpoints with the user tile removed
 - A **tabs component spec sheet** covering every state in §5.
-- The **states listed in §5**, not just the happy path.
+- A **top bar spec sheet** covering every state in §6.
+- The **states listed in §5 and §6**, not just the happy path.
 - A **token table**: every new or changed token, with its value, intended use, and reason. An
   empty table ("no new tokens needed") is the expected and preferred outcome — this brief exists
   to reuse §2's language, not extend it.

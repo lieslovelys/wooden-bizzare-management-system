@@ -21,8 +21,10 @@ screens still run on the item-44/pre-44 look and are item 49's "still open" list
 migrated is debt, not a sign the kit doesn't apply to it. The next screen in that migration is the
 Admin "Account Creation" tab — see
 [`REDESIGN-account-creation.md`](REDESIGN-account-creation.md) (ARCHITECTURE_REVIEW.md item 51)
-for its brief, including the new tabs component the kit hadn't needed yet. What *is* settled,
-effective now, regardless of the redesign:
+for its brief, including the new tabs component the kit hadn't needed yet, and a new app-wide
+top bar (breadcrumb + notifications shortcut + the user's identity, moved out of the sidebar)
+specified there as shared chrome for every role's pages. What *is* settled, effective now,
+regardless of the redesign:
 
 - **The app must be mobile responsive.** Not "should work if you squint" — genuinely usable on a
   small touch screen, per the rules in §3.

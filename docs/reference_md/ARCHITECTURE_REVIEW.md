@@ -2933,3 +2933,19 @@ Not urgent, but each of these increases the cost of every future change until ad
       real, not invented. No code changed, so the test suites are unaffected.
     - **Still open**: the actual implementation (Phase B), once the user hands back a Claude
       Design project for this brief — the same two-step flow as items 48 → 49.
+    - **Extended at the user's request with an app-wide top bar.** The user shared a reference
+      screenshot (another product's breadcrumb + alerts + user-chip top bar) and asked for the
+      same idea added to this brief — as shared chrome for every role's pages, mocked on this
+      screen first, not an Account-Creation-only widget. Decisions confirmed with the user: the
+      sidebar's existing `.user-profile` identity tile (`Navbar.jsx`, pinned since item 50) is
+      **moved** into the new top bar rather than duplicated, and the notifications shortcut is
+      **omitted for Inventory Staff**, which has no notification screen to link to. Logout stays
+      in the sidebar footer regardless (unaffected by item 50's pin). The brief's §6 specs the
+      breadcrumb (role / page / sub-tab, built from data the app already has — `userRole` and
+      each role shell's own tab names, not the reference screenshot's fixed three-level shape),
+      the notifications button (`useNotifications().unreadCount`, the same source as the
+      sidebar's own tab badge), the moved identity chip, and a mobile-topbar fallback. Every
+      reference in it (route paths, `getInitials`, `useNotifications`, the
+      `Navbar.test.jsx` assertion that moves with the chip) was checked against the real code,
+      including correcting an initial `/quality-checker/...` route guess to the real
+      `/quality-check/...` base path (`App.jsx`).
