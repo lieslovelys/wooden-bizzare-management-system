@@ -23,7 +23,7 @@ export const getAllJobOrders = async ({ limit, offset, priority, sort } = {}) =>
     const offsetIdx = params.length;
 
     const sqlString = `
-        SELECT id, project_name, due_date, priority_level, status, COUNT(*) OVER() AS total_count
+        SELECT id, project_name, client_name, due_date, priority_level, status, COUNT(*) OVER() AS total_count
         FROM projects
         WHERE ${conditions.join(' AND ')}
         ORDER BY due_date ${direction}, id ASC

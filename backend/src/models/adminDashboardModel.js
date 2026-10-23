@@ -30,3 +30,32 @@ export const getDashboardStats = async () => {
         monthlyProfit: parseFloat(rows[0].total_monthly_profit)
     };
 };
+
+// Item 48 — the dashboard's new profit-trend widget. generate_series builds the last `months`
+// Manila calendar months (including the current one, so the last entry always matches
+// getDashboardStats's own monthlyProfit — same attribution rule: project_profit.updated_at,
+// compared in Manila time, not the session's implicit default timezone). LEFT JOIN + COALESCE
+// means a month with no recorded profit comes back as 0 rather than being skipped.
+export const getProfitTrend = async (months) => {
+    const sql = `
+        WITH month_series AS (
+            SELECT date_trunc('month', NOW() AT TIME ZONE 'Asia/Manila')
+                     - (n || ' months')::interval AS month_start
+              FROM generate_series($1::int - 1, 0, -1) AS n
+        )
+        SELECT
+            to_char(ms.month_start, 'YYYY-MM') AS month,
+            COALESCE(SUM(pp.net_profit), 0) AS net_profit
+        FROM month_series ms
+        LEFT JOIN project_profit pp
+               ON date_trunc('month', pp.updated_at AT TIME ZONE 'Asia/Manila') = ms.month_start
+        GROUP BY ms.month_start
+        ORDER BY ms.month_start ASC
+    `;
+    const { rows } = await query(sql, [months]);
+
+    return rows.map(row => ({
+        month: row.month,
+        netProfit: parseFloat(row.net_profit)
+    }));
+};

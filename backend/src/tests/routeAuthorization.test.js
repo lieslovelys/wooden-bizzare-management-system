@@ -139,6 +139,7 @@ const ROUTES = [
 
   // adminDashboardRoutes, mounted at /api/dashboard
   ['GET', '/api/dashboard/stats', ['Admin', 'Production Manager']],
+  ['GET', '/api/dashboard/profit-trend', ['Admin']],
 
   // profitRoutes, mounted at /api/profit
   ['GET', '/api/profit/:projectId', ['Admin']],
