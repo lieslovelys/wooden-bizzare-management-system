@@ -21,15 +21,23 @@ import path from 'node:path';
 // ARCHITECTURE_REVIEW.md item 40: TempSignup.css (the file this comment used to cite for the
 // typo'd 'san-serif' example above) is also gone, deleted along with TempSignup.jsx — replaced
 // by admin/AccountForm.jsx, which has no CSS file of its own (its rules live in admin.css).
+//
+// ARCHITECTURE_REVIEW.md item 43: Inter and Playfair Display (read as "vintage") are gone,
+// replaced by a single Geist family behind one token, globals.css's --font-sans — so every CSS
+// declaration is now that var() or inherit, nothing else. This also closes a gap item 36 left
+// open: three admin/*.jsx files had an inline `style={{ fontFamily: 'Arial, sans-serif' }}` that
+// this CSS-only scan never saw. The scan below now also walks non-test .jsx/.js for an inline
+// `fontFamily:` so that gap can't reopen silently.
 const thisFile = fileURLToPath(import.meta.url);
 const frontendRoot = path.join(path.dirname(thisFile), '..', '..');
-const cssDir = path.join(frontendRoot, 'src', 'css');
+const srcDir = path.join(frontendRoot, 'src');
+const cssDir = path.join(srcDir, 'css');
 
-function listCssFiles(dir) {
+function listFiles(dir, exts) {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
     const entryPath = path.join(dir, entry.name);
-    if (entry.isDirectory()) return listCssFiles(entryPath);
-    return entry.name.endsWith('.css') ? [entryPath] : [];
+    if (entry.isDirectory()) return listFiles(entryPath, exts);
+    return exts.some((ext) => entry.name.endsWith(ext)) ? [entryPath] : [];
   });
 }
 
@@ -37,16 +45,11 @@ function listCssFiles(dir) {
 // not an occurrence of the words "font" and "family" inside a comment.
 const FONT_FAMILY_DECLARATION = /font-family\s*:\s*([^;]+);/g;
 
-const ALLOWED_VALUES = new Set([
-  "'Inter', sans-serif",
-  "'Playfair Display', serif",
-  'inherit',
-  "'Inter', Arial, sans-serif",
-]);
+const ALLOWED_VALUES = new Set(['var(--font-sans)', 'inherit']);
 
-describe('font-family consistency (ARCHITECTURE_REVIEW.md item 36)', () => {
-  it('every font-family declaration in src/css is one of the app\'s two typefaces, or inherit', () => {
-    const offenders = listCssFiles(cssDir).flatMap((filePath) => {
+describe('font-family consistency (ARCHITECTURE_REVIEW.md items 36, 43)', () => {
+  it('every font-family declaration in src/css is the app\'s one font token, or inherit', () => {
+    const offenders = listFiles(cssDir, ['.css']).flatMap((filePath) => {
       const css = readFileSync(filePath, 'utf-8');
       const relPath = path.relative(frontendRoot, filePath);
       return [...css.matchAll(FONT_FAMILY_DECLARATION)]
@@ -56,5 +59,23 @@ describe('font-family consistency (ARCHITECTURE_REVIEW.md item 36)', () => {
     });
 
     expect(offenders, `an unexpected font-family value was found: ${offenders.join(', ')}`).toEqual([]);
+  });
+
+  // Item 43 — a CSS-only scan missed three admin/*.jsx files that set the font with an inline
+  // `style={{ fontFamily: '...' }}` instead of a stylesheet rule (stylesheetImports.test.js's
+  // listFiles/exclusion-filter convention, reused here). No inline fontFamily is allowed at all:
+  // every element should inherit --font-sans from html/body rather than override it per-component.
+  it('no component sets font-family inline — everything inherits --font-sans', () => {
+    const jsFiles = listFiles(srcDir, ['.jsx', '.js']).filter(
+      (f) => !f.endsWith('.test.js') && !f.endsWith('.test.jsx') && !f.includes(`${path.sep}tests${path.sep}`)
+    );
+
+    const offenders = jsFiles.flatMap((filePath) => {
+      const code = readFileSync(filePath, 'utf-8');
+      const relPath = path.relative(frontendRoot, filePath);
+      return code.includes('fontFamily') ? [relPath] : [];
+    });
+
+    expect(offenders, `inline fontFamily found in: ${offenders.join(', ')}`).toEqual([]);
   });
 });

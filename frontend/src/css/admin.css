@@ -8,7 +8,7 @@
   margin: 0 auto; 
   padding: 30px; /* Breathing room sa gilid */
   box-sizing: border-box;
-  font-family: 'Inter', sans-serif; /* Modern font */
+  font-family: var(--font-sans); /* Modern font */
 }
 
 /* --- MODERN PILL TABS --- */
@@ -26,7 +26,7 @@
   border: none;
   cursor: pointer;
   background: transparent;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-sans);
   border-radius: 25px; /* Pill shape */
   color: var(--color-text-muted); /* Soft gray para sa inactive */
   transition: all 0.3s ease;
@@ -79,7 +79,7 @@
 
 .account-form-section-title {
   grid-column: span 2;
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-sans);
   font-size: 1.05rem;
   color: var(--color-text);
   border-bottom: 1px solid var(--color-border);
@@ -200,7 +200,7 @@
     display: grid;
     grid-template-columns: 1fr 2.5fr 1.5fr 1.5fr 0.5fr; /* Eksaktong hatian ng column sizes */
     padding: 0 25px 10px 25px;
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-sans);
     text-transform: uppercase;
     font-size: 0.85rem;
     font-weight: 700;
@@ -231,7 +231,7 @@
     padding: 18px 25px; 
     background-color: var(--color-surface);
     cursor: pointer;
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-sans);
     font-size: 0.95rem;
     transition: all 0.3s ease;
     border-radius: 12px;
@@ -340,7 +340,7 @@
 ========================================= */
 
 .profit-container {
-  font-family: 'Inter', sans-serif; /* Pinalitan ang Georgia para modern */
+  font-family: var(--font-sans); /* Pinalitan ang Georgia para modern */
   flex: 1;
   padding: 40px;
   background-color: transparent; /* Hinahayaan nating lumutang ang card */
@@ -375,7 +375,7 @@
   /* DESIGN.md §3 rule 10 — large text (>=24px) only needs the 3:1 bar, which --color-accent-dark
      clears; plain --color-accent (gold) doesn't even clear that. */
   color: var(--color-accent-dark);
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-sans);
   letter-spacing: 0.5px;
 }
 
@@ -408,7 +408,7 @@
   border: 1.5px solid var(--color-border);
   padding: 14px 20px;
   font-size: 0.95rem;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-sans);
   font-weight: 500;
   color: var(--color-text);
   background: var(--color-surface);
@@ -450,7 +450,7 @@
   border: none;
   padding: 14px 16px;
   font-size: 0.95rem;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-sans);
   color: var(--color-text);
   background: transparent;
   font-weight: 500;
@@ -517,7 +517,7 @@
   border-radius: 12px;
   padding: 12px 16px;
   font-size: 0.95rem;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-sans);
   color: var(--color-text);
   background: var(--color-surface);
   transition: all 0.3s ease;
@@ -540,7 +540,7 @@
   padding: 10px 20px;
   font-size: 0.95rem;
   cursor: pointer;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-sans);
   font-weight: 600;
   transition: all 0.3s ease;
 }
@@ -623,7 +623,7 @@
   border: 1px solid transparent;
   background: transparent;
   font-size: 0.95rem;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-sans);
   color: var(--color-text);
   padding: 8px 10px;
   border-radius: 8px;
@@ -706,7 +706,7 @@
 
 .profit-net-value {
   font-size: 1.8rem;
-  font-family: 'Playfair Display', serif; /* Premium look for final amount */
+  font-family: var(--font-sans); /* Premium look for final amount */
   font-weight: 800;
   color: var(--color-success); /* Deep Workshop Green para sa kita */
 }
@@ -726,7 +726,7 @@
   padding: 12px 35px;
   font-size: 0.95rem;
   cursor: pointer;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-sans);
   font-weight: 600;
   transition: all 0.3s ease;
 }
@@ -764,7 +764,7 @@
   border-radius: 12px;
   margin-bottom: 25px;
   font-size: 0.95rem;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-sans);
   font-weight: 600;
   display: flex;
   align-items: center;
@@ -1258,7 +1258,7 @@
 
 .ph-container {
     padding: 30px;
-    font-family: 'Inter', sans-serif; /* Modern base font */
+    font-family: var(--font-sans); /* Modern base font */
     /* DESIGN.md §3.8/§7#8 — was an unguarded `width: 1000px`, forcing a horizontal scroll on
        anything narrower; max-width keeps the same large-screen cap without forcing it. */
     width: 100%;
@@ -1270,7 +1270,7 @@
 .ph-title {
     /* DESIGN.md §3 rule 10 — large text (>=24px) only needs the 3:1 bar. */
     color: var(--color-accent-dark);
-    font-family: 'Playfair Display', serif;
+    font-family: var(--font-sans);
     font-size: 2.2rem;
     font-weight: 700;
     border-bottom: 2px solid var(--color-border); 
@@ -1291,7 +1291,7 @@
     border: 1.5px solid var(--color-border);
     border-radius: 25px; 
     color: var(--color-text);
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-sans);
     font-size: 0.95rem;
     font-weight: 600;
     cursor: pointer;
@@ -1328,7 +1328,7 @@
     display: grid;
     grid-template-columns: 1fr 2fr 1.5fr 1.5fr 1fr; /* Hatian ng 5 columns */
     padding: 0 25px 10px 25px;
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-sans);
     text-transform: uppercase;
     font-size: 0.85rem;
     font-weight: 700;
@@ -1351,7 +1351,7 @@
     padding: 18px 25px; 
     background-color: var(--color-surface);
     cursor: pointer;
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-sans);
     font-size: 0.95rem;
     font-weight: 500;
     color: var(--color-text); /* Dark Espresso */
@@ -1395,7 +1395,7 @@
     background: transparent;
     border: none;
     color: var(--color-text-muted);
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-sans);
     font-size: 0.95rem;
     font-weight: 600;
     cursor: pointer;
@@ -1436,7 +1436,7 @@
 
 .ph-card-name {
     color: var(--color-text); /* DARK ESPRESSO */
-    font-family: 'Playfair Display', serif;
+    font-family: var(--font-sans);
     font-size: 2.2rem;
     font-weight: 700;
     margin-top: 0;
@@ -1524,7 +1524,7 @@
 
 .ph-progress-header h2 {
     color: var(--color-text); /* DARK ESPRESSO */
-    font-family: 'Playfair Display', serif;
+    font-family: var(--font-sans);
     margin: 0;
     font-size: 1.5rem;
     font-weight: 700;
@@ -1605,12 +1605,12 @@
     max-width: 100%;
     margin: 40px auto;
     padding: 0 20px;
-    font-family: 'Inter', sans-serif; /* Consistent font */
+    font-family: var(--font-sans); /* Consistent font */
 }
 
 /* --- HEADER --- */
 .notif-header {
-    font-family: 'Playfair Display', serif; /* Consistent serif header */
+    font-family: var(--font-sans); /* consistent app-wide font (item 43) */
     font-size: 2.5rem;
     font-weight: 700;
     /* DESIGN.md §3 rule 10 — large text (>=24px) only needs the 3:1 bar. */
@@ -1754,7 +1754,7 @@
     padding: 10px 24px;
     border-radius: 25px; /* Pill shape para consistent sa ibang buttons natin */
     font-weight: 600;
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-sans);
     font-size: 0.9rem;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -1801,7 +1801,7 @@
 ========================================= */
 
 .prod-wrapper {
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-sans);
     width: 1000px;
     max-width: 100%; 
     margin: 0 auto;  
@@ -1811,7 +1811,7 @@
 
 /* --- HEADER TITLE (Glowing & Elegant) --- */
 .prod-header-title {
-    font-family: 'Playfair Display', serif;
+    font-family: var(--font-sans);
     /* DESIGN.md §3 rule 10 — large text (>=24px) only needs the 3:1 bar. */
     color: var(--color-accent-dark);
     font-size: 2.0rem;
@@ -1840,7 +1840,7 @@
     border: 1.5px solid var(--color-border);
     border-radius: 30px; /* Pill shape */
     cursor: pointer;
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-sans);
     transition: all 0.3s ease;
 }
 
@@ -1872,7 +1872,7 @@
     color: var(--color-text);
     font-weight: 600;
     font-size: 0.95rem;
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-sans);
     cursor: pointer;
     box-shadow: 0 2px 10px rgba(0,0,0,0.02);
     transition: all 0.3s ease;

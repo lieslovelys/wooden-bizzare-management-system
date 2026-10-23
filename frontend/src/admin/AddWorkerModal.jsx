@@ -97,7 +97,7 @@ const AddWorkerModal = ({ isOpen, onClose, onSave }) => {
   };
 
   return (
-    <div className="modal-overlay" style={{ fontFamily: 'Arial, sans-serif' }}>
+    <div className="modal-overlay">
       <div ref={dialogRef} className="add-worker-modal" style={{ maxWidth: '700px' }} role="dialog" aria-modal="true" aria-labelledby={`${id}-title`}>
         <div className="modal-header">
           <h3 id={`${id}-title`} style={{ margin: 0, fontSize: '1.1rem', fontWeight: 'bold' }}>Add Worker Account & Details</h3>

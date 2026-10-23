@@ -74,7 +74,7 @@ const EditWorkerModal = ({ isOpen, onClose, workerData, onUpdate }) => {
   const isSaveDisabled = !formData.contactNumber || !formData.dailyRate;
 
   return (
-    <div className="modal-overlay" style={{ fontFamily: 'Arial, sans-serif' }}>
+    <div className="modal-overlay">
       <div ref={dialogRef} className="add-worker-modal" style={{ maxWidth: '500px' }} role="dialog" aria-modal="true" aria-labelledby={`${id}-title`}>
         <div className="modal-header">
           <h3 id={`${id}-title`} style={{ margin: 0, fontSize: '1.1rem', fontWeight: 'bold' }}>

@@ -83,7 +83,7 @@ const WorkerList = () => {
   });
 
   return (
-    <div className="worker-list-container" style={{ fontFamily: 'Arial, sans-serif' }}>
+    <div className="worker-list-container">
 
       {/* Search Header Area */}
       <div className="worker-search-header">
