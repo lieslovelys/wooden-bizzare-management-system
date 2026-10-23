@@ -2623,3 +2623,35 @@ Not urgent, but each of these increases the cost of every future change until ad
       at ≥44×44px, a visible focus ring tabbed to on both light and dark surfaces, and a spot check
       of the PM/QC dashboards, Worker List (a dense, unrelated table), and the Worker role's Job
       Order screen at 360 for regressions from the shared-shell changes.
+
+45. **UI: bring Playfair Display back, but only for the "The Wooden Bizarre" brand wordmark.**
+    The user looked at item 44's rebuilt Login page and asked for the original font back on just
+    the business name, since it's branding — item 43's "use Geist for everything" still holds
+    everywhere else. The wordmark appears in exactly three places (grepped for the literal text,
+    confirmed exhaustive): `Login.jsx`'s `.brand-title h2` (the left hero panel), `Navbar.jsx`'s
+    `.title-group h3` (the desktop/drawer sidebar header), and `Navbar.jsx`'s
+    `.mobile-topbar-title` (item 44's new dark mobile topbar).
+    - `@fontsource/playfair-display` is reinstalled (it's OFL-licensed, the same self-hosting
+      story Geist already uses) — `main.jsx` imports only weight 700, the one weight all three
+      sites actually use, matching item 28's "import exactly the weights the CSS asks for" rule.
+    - `globals.css` gets one new token, `--font-brand: 'Playfair Display', serif`, documented in
+      its own `:root` comment as deliberately narrow — the wordmark only, not a general heading
+      font, so it can't be read as walking back item 43's decision. The three selectors above
+      switch from `var(--font-sans)` to `var(--font-brand)`; nothing else about them (size,
+      weight, color, layout) changes.
+    - `tests/fontConsistency.test.js`: `ALLOWED_VALUES` gains `'var(--font-brand)'`, and a new
+      second check parses every CSS rule for a `font-family: var(--font-brand)` declaration and
+      asserts its selector set is *exactly* `{.login-layout .brand-title h2, .title-group h3,
+      .mobile-topbar-title}` — not just "some values use this token," but "only these three
+      selectors do." A future change that sprinkles Playfair onto more headings fails this test
+      on purpose rather than drifting in unnoticed. (The rule-parsing regex strips `/* ... */`
+      comments first — an early version of this check mistakenly folded a comment sitting
+      directly above a selector into the "selector" text it captured.)
+    - **Verified** the build emits `playfair-display-*-700-*` assets alongside the `geist-*`
+      ones, and checked the one real risk a serif swap creates that a sans-to-sans swap (item 43)
+      didn't: Playfair's wider letterforms clipping or overflowing the wordmark's narrowest
+      containers — the 280px mobile drawer header (next to the 44px close button) and the 360px
+      dark mobile topbar (next to the hamburger and a small logo). Both measured
+      `scrollWidth === clientWidth` and screenshot-confirmed clean; the Login page's left panel
+      wraps the wordmark onto 3 lines at 360px instead of clipping it, which it already did under
+      Geist at that same 2.2rem size — not a regression this item introduced.
